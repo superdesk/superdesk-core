@@ -100,6 +100,14 @@ Feature: Content Publishing
         "lock_user": "__none__"
         }]}
       """
+      When we get "/user_metrics/"
+      Then we get existing resource
+      """
+      {"_items": [
+        {"name": "published_articles", "value": 1, "user": "#CONTEXT_USER_ID#"}
+      ]}
+      """
+
       When we enqueue published
       When we get "/publish_queue"
       Then we get list with 3 items
@@ -2741,6 +2749,13 @@ Feature: Content Publishing
           }
         }
       }
+      """
+      When we get "/user_metrics/"
+      Then we get existing resource
+      """
+      {"_items": [
+        {"name": "published_articles", "value": 3, "user": "#CONTEXT_USER_ID#"}
+      ]}
       """
 
     @auth

@@ -93,7 +93,7 @@ def update_config(conf):
     conf["MACROS_MODULE"] = "superdesk.macros"
     conf["DEFAULT_TIMEZONE"] = "Europe/Prague"
     conf["LEGAL_ARCHIVE"] = True
-    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
+    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns", "apps.user_availability"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
@@ -375,6 +375,8 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
         app.init_indexes()
         cache.clean()
 
+    return app
+
 
 def setup_auth_user(context, user=None):
     setup_db_user(context, user)
@@ -387,6 +389,7 @@ def add_to_context(context, token, user, auth_id=None):
     context.user = user
     set_placeholder(context, "CONTEXT_USER_ID", str(user.get("_id")))
     set_placeholder(context, "AUTH_ID", str(auth_id))
+    set_placeholder(context, f"{user.get('username').upper()}_USER_ID", str(user.get("_id")))
 
 
 def set_placeholder(context, name, value):

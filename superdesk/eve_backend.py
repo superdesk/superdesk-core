@@ -12,6 +12,7 @@
 from typing import Dict, Any, Literal
 import eve.io.base
 import json as std_json
+import pymongo.collection
 
 from pymongo.cursor import Cursor as MongoCursor
 from pymongo.collation import Collation
@@ -169,6 +170,11 @@ class EveBackend:
         cache.clean([endpoint_name])
         return result
 
+    def get_mongo_collection(self, endpoint_name) -> pymongo.collection.Collection:
+        backend = self._backend(endpoint_name)
+        datasource = self._datasource(endpoint_name)
+        return backend.pymongo(endpoint_name).db[datasource]
+
     def create(self, endpoint_name, docs, **kwargs):
         """Insert documents into given collection.
 
@@ -311,6 +317,15 @@ class EveBackend:
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
         cache.clean([endpoint_name])
+
+        # with soft delete enabled eve uses replace to update the document
+        if document.get("_deleted") and not original.get("_deleted"):
+            self._push_resource_notification("deleted", endpoint_name, _id=str(id))
+        else:
+            self._push_resource_notification(
+                "updated", endpoint_name, _id=str(id), fields=get_diff_keys(document, original)
+            )
+
         return res
 
     def update_in_mongo(self, endpoint_name, id, updates, original):

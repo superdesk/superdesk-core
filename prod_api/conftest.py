@@ -1,10 +1,13 @@
 import os
-import json
 import pytest
-from pathlib import Path
+import random
+import string
+
 from bson import ObjectId
-from flask import url_for
+from pathlib import Path
+from flask import url_for, json
 from requests.auth import _basic_auth_str
+from eve.methods.common import parse
 
 from superdesk.tests import get_mongo_uri, setup, clean_dbs
 from superdesk.factory import get_app as get_sd_app
@@ -18,6 +21,11 @@ from planning.events.events_schema import events_schema
 MONGO_DB = "prodapi_tests"
 ELASTICSEARCH_INDEX = MONGO_DB
 AUTH_SERVER_SHARED_SECRET = "2kZOf0VI9T70vU9uMlKLyc5GlabxVgl6"
+
+
+def generate_random_string(length=6) -> str:
+    """Generate a random string of specified length"""
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
 def get_test_prodapi_app(extra_config=None):
@@ -49,6 +57,8 @@ def get_test_prodapi_app(extra_config=None):
     # this will not happen in a production environment
     # as the index/types should already be created
     EventsResource.schema = {"dates": events_schema["dates"]}
+
+    clean_dbs(prodapi_app)
 
     # put elastic mapping
     with prodapi_app.app_context():
@@ -103,13 +113,7 @@ def superdesk_app(request):
     extra_config = getattr(request, "param", {})
     app = get_test_superdesk_app(extra_config)
 
-    def test_app_teardown():
-        """
-        Drop test db and test app
-        """
-        teardown_app(app)
-
-    request.addfinalizer(test_app_teardown)
+    teardown_app(app)
 
     return app
 
@@ -137,7 +141,7 @@ def prodapi_app(request):
     return app
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def prodapi_app_with_data(request):
     """
     Prod api app with prefilled collections and with disabled auth.
@@ -157,20 +161,15 @@ def prodapi_app_with_data(request):
         p = Path(os.path.join(os.path.dirname(__file__), "tests/fixtures"))
         for fixture_file in [x for x in p.iterdir() if x.is_file()]:
             with fixture_file.open() as f:
-                app.data.insert(resource=fixture_file.stem, docs=json.loads(f.read()))
-
-    def test_app_teardown():
-        """
-        Drop test db and test app
-        """
-        teardown_app(app)
-
-    request.addfinalizer(test_app_teardown)
+                resource = fixture_file.stem
+                values = json.load(f)
+                docs = [parse(value, resource) for value in values]
+                app.data.insert(resource=resource, docs=docs)
 
     return app
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def prodapi_app_with_data_client(prodapi_app_with_data):
     """Test client for prod api with filled data"""
 
@@ -213,9 +212,9 @@ def auth_server_registered_clients(request, superdesk_app):
             # register clients
             clients_data.append(
                 {
-                    "name": str(ObjectId()),  # just a random string
+                    "name": generate_random_string(),
                     "client_id": str(ObjectId()),
-                    "password": str(ObjectId()),  # just a random string
+                    "password": generate_random_string(),
                     "scope": param,
                 }
             )
@@ -234,9 +233,9 @@ def issued_tokens(request, superdesk_app, superdesk_client):
         for param in request.param:
             clients_data.append(
                 {
-                    "name": str(ObjectId()),  # just a random string
+                    "name": generate_random_string(),
                     "client_id": str(ObjectId()),
-                    "password": str(ObjectId()),  # just a random string
+                    "password": generate_random_string(),
                     "scope": param,
                 }
             )

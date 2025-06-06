@@ -14,6 +14,7 @@ from apps import auth
 
 from .users import UsersResource
 from .services import UsersService, DBUsersService, is_admin  # noqa
+from .user_metrics import UserMetricsResource, user_metrics_service  # noqa
 
 
 def init_app(app) -> None:
@@ -33,6 +34,8 @@ def init_app(app) -> None:
             "username_pattern": app.config.get("USER_USERNAME_PATTERN"),
         }
     )
+
+    UserMetricsResource(user_metrics_service.datasource, app=app, service=user_metrics_service)
 
 
 def get_user_from_request(required=False):

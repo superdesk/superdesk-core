@@ -1,0 +1,100 @@
+openapi: '3.0.2'
+
+info:
+  title: Superdesk Production API
+  version: "2.0"
+  description: API for accessing Superdesk production data
+
+paths:
+  /user_availability:
+    get:
+      summary: Get user availability information
+      tags:
+        - User Availability
+      parameters:
+        - $ref: '#/components/parameters/month'
+      responses:
+        '200':
+          description: List of user availabilities
+          content:
+            application/json:
+              schema:
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserAvailability'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /user_availability/{id}:
+    parameters:
+      - $ref: '#/components/parameters/userId'
+      - $ref: '#/components/parameters/month'
+
+    get:
+      summary: Get specific user availability
+      tags:
+        - User Availability
+      responses:
+        '200':
+          description: User availability record
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAvailability'
+        '401':
+          $ref: '#/components/responses/401'
+        '404':
+          description: User availability record not found
+
+components:
+  parameters:
+    userId:
+      in: path
+      name: id
+      description: User ID
+      schema:
+        type: string
+      required: true
+
+    month:
+      in: query
+      name: month
+      description: Filter availability by month (YYYY-MM format)
+      schema:
+        type: string
+      example: "2023-05"
+
+  schemas:
+    UserAvailability:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "admin"
+        availability:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+                example: "2023-05-01"
+              status:
+                enum:
+                  - available
+                  - unavailable
+                  - partial
+                example: "available"
+              published_articles:
+                type: integer
+                example: 5
+              published_events:
+                type: integer
+                example: 2
+
+  responses:
+    '401':
+      description: Unauthorized

@@ -828,10 +828,14 @@ def step_impl_when_post_url_with_success(context, url):
 def step_impl_when_put_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = get_res(url, context)
-        headers = if_match(context, res.get("_etag"))
+        try:
+            res = get_res(url, context)
+            headers = if_match(context, res.get("_etag"))
+        except AssertionError:
+            headers = {"content-type": "application/json"}
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, url)
+
         context.response = context.client.put(href, data=data, headers=headers)
         context.outbox = outbox
 
@@ -1726,7 +1730,15 @@ def when_we_switch_user(context):
 
 @when("we setup test user")
 def when_we_setup_test_user(context):
-    tests.setup_auth_user(context, tests.test_user)
+    if context.text:
+        user_data = json.loads(apply_placeholders(context, context.text))
+        user_data.setdefault("username", "test-user-123")
+        user_data.setdefault("password", "pwd")
+        user_data.setdefault("email", "test123@example.com")
+    else:
+        user_data = deepcopy(tests.test_user)
+
+    tests.setup_auth_user(context, user_data)
 
 
 @when('we get my "{url}"')
@@ -2759,3 +2771,13 @@ def then_we_get_picture_metadta(context, media):
         metadata = read_metadata(binary.read())
     context_data = json.loads(apply_placeholders(context, context.text))
     assert json_match(context_data, metadata), str(context_data) + "\n != \n" + str(metadata)
+
+
+@when('we add privilege "{privilege}" to user "{username}"')
+def step_impl(context, privilege: str, username: str) -> None:
+    with context.app.app_context():
+        user = get_resource_service("users").find_one(req=None, username=username)
+        assert user is not None, "User {} not found".format(username)
+        privileges = user.get("privileges") or {}
+        privileges[privilege] = 1
+        get_resource_service("users").system_update(user["_id"], {"privileges": privileges}, user)
