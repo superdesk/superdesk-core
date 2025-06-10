@@ -114,6 +114,20 @@ class PAParserTestCase(TestCase):
         self.assertNotIn("<chron>", body_html)
         self.assertNotIn("<org>", body_html)
 
+    def test_custom_tags_stripped_from_body(self):
+        """
+        Test that custom tags are stripped from body_html.
+        """
+        body_html = self.item.get("body_html")
+        self.assertNotIn("<chron>", body_html)
+        self.assertNotIn("</chron>", body_html)
+        self.assertNotIn("<org>", body_html)
+        self.assertNotIn("</org>", body_html)
+        self.assertNotIn("<person>", body_html)
+        self.assertNotIn("</person>", body_html)
+        self.assertNotIn("<location>", body_html)
+        self.assertNotIn("</location>", body_html)
+
     def test_embargo(self):
         """
         Test if embargo is correctly parsed.
