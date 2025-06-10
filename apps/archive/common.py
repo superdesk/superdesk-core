@@ -564,7 +564,7 @@ async def remove_media_files(doc, published=False):
 
                 if await references.count() == 0:
                     logger.info("Deleting media:%s", media)
-                    app.media.delete_async(media)
+                    await app.media.delete_async(media)
                 else:
                     logger.info("Keeping media:%s due to references", media)
             except Exception:
