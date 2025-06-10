@@ -11,11 +11,13 @@
 from datetime import datetime
 from superdesk.utc import utc
 from superdesk.etree import etree
+from superdesk.errors import ParserError
+from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.registry import register_feed_parser
-from superdesk.io.feed_parsers.nitf import NITFFeedParser
+from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 
 
-class PAParser(NITFFeedParser):
+class PAParser(XMLFeedParser):
     """
     Feed Parser for PA (Press Association) XML files.
     """
@@ -24,186 +26,183 @@ class PAParser(NITFFeedParser):
     label = "PA Parser"
 
     def can_parse(self, xml):
-        """
-        Check if the XML can be parsed by this parser.
-        """
-        return xml.tag == "document" and xml.find("nitf") is not None
+        try:
+            return xml.tag == "NewsML" and xml.find(".//nitf") is not None
+        except AttributeError:
+            return False
 
     def parse(self, xml, provider=None):
-        """
-        Parse the XML and return a single dictionary representing the news item.
-        """
-        item = {}
-        nitf = xml.find("nitf")
-        if nitf is not None:
-            self.parse_head(nitf, item)
-            self.parse_body(nitf, item)
-            self.parse_resource(xml, item)
-        return item
+        try:
+            item = {}
+            self.root = xml
 
-    def parse_head(self, nitf, item):
-        """
-        Parse the head section of the NITF document.
-        """
-        head = nitf.find("head")
-        if head is not None:
-            title = head.find("title")
-            if title is not None and title.text:
-                item["headline"] = title.text
+            self.parse_news_envelope(xml, item)
+            self.parse_identification(xml, item)
+            self.parse_news_management(xml, item)
+            self.parse_newslines(xml, item)
+            self.parse_descriptive_metadata(xml, item)
+            self.parse_rights_metadata(xml, item)
+            self.parse_content(xml, item)
+            self.parse_embargo(xml, item)
 
-    def parse_body(self, nitf, item):
-        """
-        Parse the body section of the NITF document.
-        """
-        body = nitf.find("body")
-        if body is not None:
-            self.parse_body_head(body, item)
-            self.parse_body_content(body, item)
+            item[ITEM_TYPE] = CONTENT_TYPE.TEXT
 
-    def parse_body_head(self, body, item):
-        """
-        Parse the body.head section of the NITF document.
-        """
-        body_head = body.find("body.head")
-        if body_head is not None:
-            self.parse_hedline(body_head, item)
-            self.parse_byline(body_head, item)
+            if "guid" not in item:
+                item["guid"] = f"pa-{datetime.now().timestamp()}"
+            if "headline" not in item:
+                item["headline"] = "No headline available"
+            if "versioncreated" not in item:
+                item["versioncreated"] = datetime.now(tz=utc)
 
-    def parse_hedline(self, body_head, item):
-        """
-        Parse the hedline section of the NITF document.
-        """
-        hedline = body_head.find("hedline")
-        if hedline is not None:
-            hl1 = hedline.find("hl1")
-            if hl1 is not None and hl1.text:
-                item["headline"] = hl1.text
+            return item
+        except Exception as ex:
+            raise ParserError.parseFileError(exception=ex, provider=provider)
 
-    def parse_byline(self, body_head, item):
-        """
-        Parse the byline section of the NITF document.
-        """
-        byline = body_head.find("byline")
-        if byline is not None:
-            bytag = byline.find("bytag")
-            if bytag is not None and bytag.text:
-                item["byline"] = bytag.text
+    def parse_news_envelope(self, tree, item):
+        envelope = tree.find("NewsEnvelope")
+        if envelope is not None:
+            sent_from = envelope.find("SentFrom/Party")
+            if sent_from is not None:
+                item["original_source"] = sent_from.get("FormalName", "")
 
-    def parse_body_content(self, body, item):
-        """
-        Parse the body.content section of the NITF document and clean up HTML content.
-        """
-        body_content = body.find("body.content")
-        if body_content is not None:
-            body_html = etree.tostring(body_content, encoding="unicode", method="html")
+            date_and_time = envelope.find("DateAndTime")
+            if date_and_time is not None and date_and_time.text:
+                item["firstcreated"] = self.parse_datetime(date_and_time.text)
+
+            priority = envelope.find("Priority")
+            if priority is not None:
+                item["priority"] = self.map_priority(priority.get("FormalName"))
+
+    def parse_identification(self, tree, item):
+        """Parse NewsItem identification with version number handling."""
+        news_id = tree.find("NewsItem/Identification/NewsIdentifier")
+        if news_id is not None:
+            provider_id = news_id.find("ProviderId")
+            if provider_id is not None and provider_id.text:
+                item["ingest_provider"] = provider_id.text
+
+            public_id = news_id.find("PublicIdentifier")
+            if public_id is not None and public_id.text:
+                item["guid"] = public_id.text
+
+            revision = news_id.find("RevisionId")
+            if revision is not None:
+                if revision.get("PreviousRevision"):
+                    item["previous_version"] = str(revision.get("PreviousRevision"))
+
+    def parse_news_management(self, tree, item):
+        mgmt = tree.find("NewsItem/NewsManagement")
+        if mgmt is not None:
+            first_created = mgmt.find("FirstCreated")
+            if first_created is not None and first_created.text:
+                item["firstcreated"] = self.parse_datetime(first_created.text)
+
+            this_revision = mgmt.find("ThisRevisionCreated")
+            if this_revision is not None and this_revision.text:
+                item["versioncreated"] = self.parse_datetime(this_revision.text)
+
+            status = mgmt.find("Status")
+            if status is not None:
+                item["pubstatus"] = status.get("FormalName", "").lower()
+
+            urgency = mgmt.find("Urgency")
+            if urgency is not None:
+                item["urgency"] = int(urgency.get("FormalName", 5))
+
+            news_item_type = mgmt.find("NewsItemType")
+            if news_item_type is not None:
+                item["type"] = news_item_type.get("FormalName", "")
+
+    def parse_newslines(self, tree, item):
+        newslines = tree.find("NewsItem/NewsComponent/NewsLines")
+        if newslines is not None:
+            headline = newslines.find("HeadLine")
+            if headline is not None and headline.text:
+                item["headline"] = headline.text
+
+            byline = newslines.find("ByLine")
+            if byline is not None and byline.text:
+                item["byline"] = byline.text
+
+            slugline = newslines.find("SlugLine")
+            if slugline is not None and slugline.text:
+                item["slugline"] = slugline.text
+
+            copyright_line = newslines.find("CopyrightLine")
+            if copyright_line is not None and copyright_line.text:
+                item["copyrightnotice"] = copyright_line.text
+
+    def parse_descriptive_metadata(self, tree, item):
+        """Parse DescriptiveMetadata section with proper ANPA category handling."""
+        desc_meta = tree.find("NewsItem/NewsComponent/DescriptiveMetadata")
+        if desc_meta is not None:
+            subjects = []
+            for prop in desc_meta.findall("Property[@FormalName='Topic']"):
+                subjects.append({"name": prop.get("Value"), "qcode": prop.get("Value"), "scheme": "topics"})
+            if subjects:
+                item["subject"] = subjects
+
+            keywords = []
+            for prop in desc_meta.findall("Property[@FormalName='Keyword']"):
+                keywords.append(prop.get("Value"))
+            if keywords:
+                item["keywords"] = keywords
+
+            category = desc_meta.find("Property[@FormalName='Category']")
+            if category is not None:
+                category_value = category.get("Value")
+                item["anpa_category"] = [
+                    {
+                        "name": category_value,
+                        "qcode": category_value,
+                    }
+                ]
+
+    def parse_rights_metadata(self, tree, item):
+        rights = tree.find("NewsItem/NewsComponent/RightsMetadata/Copyright")
+        if rights is not None:
+            holder = rights.find("CopyrightHolder")
+            if holder is not None and holder.text:
+                item["copyrightnotice"] = holder.text
+
+            date = rights.find("CopyrightDate")
+            if date is not None and date.text:
+                item["copyrightholder"] = (
+                    f"{holder.text if holder is not None and holder.text else ''} {date.text}".strip()
+                )
+
+    def parse_content(self, tree, item):
+        content = tree.find(".//body.content")
+        if content is not None:
+            body_html = etree.tostring(content, encoding="unicode", method="html")
+            body_html = body_html.replace("<body.content>", "").replace("</body.content>", "")
+            wrapped_html = f"<div>{body_html}</div>"
             parser = etree.HTMLParser()
-            tree = etree.fromstring(body_html, parser)
-            etree.strip_tags(tree, "section", "body", "span", "body.content")
-            cleaned_html = "".join(etree.tostring(child, encoding="unicode", method="html") for child in tree)
-            item["body_html"] = cleaned_html
-
-    def parse_resource(self, xml, item):
-        """
-        Parse the Resource section of the XML document.
-        """
-        resource = xml.find(".//xn:Resource", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"})
-        if resource is not None:
-            for vendor_data in resource.findall(
-                ".//xn:vendorData", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"}
-            ):
-                if vendor_data.text and "PRESSUK_:Document ID=" in vendor_data.text:
-                    document_id = vendor_data.text.split("PRESSUK_:Document ID=")[-1].strip()
-                    if document_id:
-                        item["guid"] = document_id
-                        break
-            self.parse_versioncreated(resource, item)
-            self.parse_firstcreated(resource, item)
-            self.parse_abstract(resource, item)
-            self.parse_usageterms(resource, item)
-            self.parse_word_count(resource, item)
-            self.parse_keywords(resource, item)
-            self.parse_embargo(resource, item)
-            self.parse_priority(resource, item)
-
-    def parse_versioncreated(self, resource, item):
-        """
-        Parse the versioncreated timestamp from the Resource section.
-        """
-        publication_time = resource.find(
-            "xn:publicationTime", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"}
-        )
-        if publication_time is not None and publication_time.text:
-            item["versioncreated"] = datetime.strptime(publication_time.text, "%Y-%m-%dT%H:%M:%S+00:00").replace(
-                tzinfo=utc
+            cleaned_tree = etree.fromstring(wrapped_html, parser)
+            etree.strip_tags(cleaned_tree, "chron", "org", "location", "person")
+            item["body_html"] = "".join(
+                etree.tostring(child, encoding="unicode", method="html") for child in cleaned_tree.xpath("body/div/*")
             )
 
-    def parse_firstcreated(self, resource, item):
-        """
-        Parse the firstcreated timestamp from the Resource section.
-        """
-        received_time = resource.find("xn:receivedTime", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"})
-        if received_time is not None and received_time.text:
-            item["firstcreated"] = datetime.strptime(received_time.text, "%Y-%m-%dT%H:%M:%S+00:00").replace(tzinfo=utc)
+    def parse_embargo(self, tree, item):
+        comment = tree.find(".//Comment")
+        if comment is not None and comment.text and "Embargoed" in comment.text:
+            item["embargo"] = self.parse_embargo_text(comment.text)
 
-    def parse_abstract(self, resource, item):
-        """
-        Parse the abstract from the Resource section.
-        """
-        description = resource.find("xn:description", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"})
-        if description is not None and description.text:
-            item["abstract"] = description.text
+    def parse_embargo_text(self, text):
+        return text.strip()
 
-    def parse_usageterms(self, resource, item):
-        """
-        Parse the usage terms (copyright) from the Resource section.
-        """
-        copyright = resource.find("xn:copyright", namespaces={"xn": "http://www.xmlnews.org/namespaces/meta#"})
-        if copyright is not None and copyright.text:
-            item["usageterms"] = copyright.text
+    def parse_datetime(self, date_str):
+        try:
+            return datetime.strptime(date_str, "%Y%m%dT%H%M%S%z")
+        except ValueError:
+            return datetime.strptime(date_str[:14], "%Y%m%dT%H%M%S").replace(tzinfo=utc)
 
-    def parse_embargo(self, resource, item):
-        """
-        Parse the embargo timestamp from the Resource section.
-        """
-        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
-            if vendor_data.text and "PRESSUK_:Expiration Date=" in vendor_data.text:
-                embargo = vendor_data.text.split("PRESSUK_:Expiration Date=")[-1].strip()
-                if embargo:
-                    try:
-                        embargo_dt = datetime.strptime(embargo, "%Y-%m-%dT%H:%M:%S%z")
-                        item["embargo"] = embargo_dt.isoformat()
-                    except ValueError:
-                        pass
-
-    def parse_word_count(self, resource, item):
-        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
-            if vendor_data.text and "PRESSUK_:Word Count=" in vendor_data.text:
-                word_count = vendor_data.text.split("PRESSUK_:Word Count=")[-1].strip()
-                if word_count:
-                    try:
-                        item["word_count"] = int(word_count)
-                    except ValueError:
-                        pass
-
-    def parse_priority(self, resource, item):
-        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
-            if vendor_data.text and "PRESSUK_:PA Priority=" in vendor_data.text:
-                priority = vendor_data.text.split("PRESSUK_:PA Priority=")[-1].strip()
-                if priority:
-                    try:
-                        item["priority"] = int(priority)
-                    except ValueError:
-                        pass
-
-    def parse_keywords(self, resource, item):
-        keywords = []
-        for vendor_data in resource.findall("{http://www.xmlnews.org/namespaces/meta#}vendorData"):
-            if vendor_data.text and "PRESSUK_:Keyword=" in vendor_data.text:
-                keyword = vendor_data.text.split("PRESSUK_:Keyword=")[-1].strip()
-                if keyword:
-                    keywords.append(keyword)
-        if keywords:
-            item["keywords"] = keywords
+    def map_priority(self, priority):
+        try:
+            return int(priority)
+        except (ValueError, TypeError):
+            return 5
 
 
 register_feed_parser(PAParser.NAME, PAParser())
