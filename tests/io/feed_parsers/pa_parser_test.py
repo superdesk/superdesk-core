@@ -9,6 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
+from datetime import datetime
+from superdesk.utc import utc
 from superdesk.etree import etree
 from superdesk.tests import TestCase
 from superdesk.io.feed_parsers.pa_parser import PAParser
@@ -16,7 +18,7 @@ from superdesk.io.feed_parsers.pa_parser import PAParser
 
 class PAParserTestCase(TestCase):
     """
-    Test case for the PA Parser.
+    Test case for the PA NewsML Parser.
     """
 
     def setUp(self):
@@ -32,73 +34,114 @@ class PAParserTestCase(TestCase):
         """
         Test if the headline is correctly parsed.
         """
-        self.assertEqual(
-            self.item.get("headline"),
-            "MORE THAN FOUR IN FIVE SCHOOL LEADERS ABUSED BY PARENTS IN PAST YEAR - SURVEY",
-        )
+        self.assertEqual(self.item.get("headline"), "EDINBURGH FESTIVAL FRINGE PROGRAMME LAUNCHED")
 
     def test_byline(self):
         """
         Test if the byline is correctly parsed.
         """
-        self.assertEqual(
-            self.item.get("byline"),
-            "By Eleanor Busby, PA Education Correspondent",
-        )
+        self.assertEqual(self.item.get("byline"), "By Sarah Ward, PA Scotland")
+
+    def test_slugline(self):
+        """
+        Test if the slugline is correctly parsed.
+        """
+        self.assertEqual(self.item.get("slugline"), "ARTS Fringe")
 
     def test_versioncreated(self):
         """
         Test if the versioncreated timestamp is correctly parsed.
         """
-        self.assertEqual(
-            self.item.get("versioncreated").isoformat(),
-            "2025-03-04T00:01:00+00:00",
-        )
+        expected = datetime(2025, 6, 2, 10, 46, 50, tzinfo=utc)
+        self.assertEqual(self.item.get("versioncreated"), expected)
 
     def test_firstcreated(self):
         """
         Test if the firstcreated timestamp is correctly parsed.
         """
-        self.assertEqual(
-            self.item.get("firstcreated").isoformat(),
-            "2025-03-03T02:45:45+00:00",
-        )
+        expected = datetime(2025, 6, 2, 10, 46, 50, tzinfo=utc)
+        self.assertEqual(self.item.get("firstcreated"), expected)
 
-    def test_abstract(self):
+    def test_guid(self):
         """
-        Test if the abstract is correctly parsed.
+        Test if the guid is correctly parsed.
         """
-        self.assertEqual(
-            self.item.get("abstract"),
-            "The majority of school leaders have reported being abused by parents in the past year, a survey has suggested.",
-        )
+        self.assertEqual(self.item.get("guid"), "urn:newsml:pa.press.net:20250602:PA-HHH-ARTS-Fringe:11839114654855")
+
+    def test_priority(self):
+        """
+        Test if the priority is correctly parsed.
+        """
+        self.assertEqual(self.item.get("priority"), 4)
+
+    def test_urgency(self):
+        """
+        Test if the urgency is correctly parsed.
+        """
+        self.assertEqual(self.item.get("urgency"), 4)
+
+    def test_subjects(self):
+        """
+        Test if subjects are correctly parsed.
+        """
+        subjects = self.item.get("subject", [])
+        self.assertEqual(len(subjects), 2)
+        self.assertIn({"name": "ARTS", "qcode": "ARTS", "scheme": "topics"}, subjects)
+        self.assertIn({"name": "SCOTLAND", "qcode": "SCOTLAND", "scheme": "topics"}, subjects)
 
     def test_keywords(self):
         """
         Test if the keywords are correctly parsed.
         """
-        self.assertIn("EDUCATION", self.item.get("keywords"))
+        self.assertEqual(self.item.get("keywords"), ["Fringe"])
 
-    def test_word_count(self):
+    def test_copyright(self):
         """
-        Test if the word count is correctly parsed.
+        Test if copyright notice is correctly parsed.
         """
-        self.assertEqual(self.item.get("word_count"), 749)
+        self.assertEqual(self.item.get("copyrightnotice"), "Press Association")
 
     def test_body_html(self):
         """
         Test if the body HTML is correctly parsed.
         """
         body_html = self.item.get("body_html")
-        self.assertTrue(body_html.startswith("<p>The majority of school leaders have reported being abused by parents"))
-        self.assertIn("<p>More than two in five school leaders (42%)", body_html)
-        self.assertIn("<p>One in 10 school leaders said they had suffered physical violence", body_html)
+        self.assertTrue(body_html.startswith("<p>The programme for the Edinburgh Festival Fringe has been launched"))
+        self.assertIn("<p>Topics include the apocalypse, rave culture, disability and sexuality", body_html)
+        # Test that inline tags were stripped but content remains
+        self.assertIn("August 1 to 25", body_html)
+        self.assertIn("Hibernian Football Club's", body_html)
+        self.assertNotIn("<chron>", body_html)
+        self.assertNotIn("<org>", body_html)
 
-    def test_usageterms(self):
+    def test_custom_tags_stripped_from_body(self):
         """
-        Test if the usage terms (copyright) are correctly parsed.
+        Test that custom tags are stripped from body_html.
         """
-        self.assertEqual(
-            self.item.get("usageterms"),
-            "Press Association 2025",
-        )
+        body_html = self.item.get("body_html")
+        self.assertNotIn("<chron>", body_html)
+        self.assertNotIn("</chron>", body_html)
+        self.assertNotIn("<org>", body_html)
+        self.assertNotIn("</org>", body_html)
+        self.assertNotIn("<person>", body_html)
+        self.assertNotIn("</person>", body_html)
+        self.assertNotIn("<location>", body_html)
+        self.assertNotIn("</location>", body_html)
+
+    def test_embargo(self):
+        """
+        Test if embargo is correctly parsed.
+        """
+        self.assertTrue("embargo" in self.item)
+
+    def test_original_source(self):
+        """
+        Test if original source is correctly parsed.
+        """
+        self.assertEqual(self.item.get("original_source"), "The Press Association")
+
+    def test_pubstatus(self):
+        """
+        Test if pubstatus is correctly parsed.
+        """
+        self.assertEqual(self.item.get("pubstatus"), "embargoed")
