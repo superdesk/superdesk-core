@@ -167,9 +167,9 @@ class PAParser(XMLFeedParser):
 
             date = rights.find("CopyrightDate")
             if date is not None and date.text:
-                item["copyrightholder"] = (
-                    f"{holder.text if holder is not None and holder.text else ''} {date.text}".strip()
-                )
+                item[
+                    "copyrightholder"
+                ] = f"{holder.text if holder is not None and holder.text else ''} {date.text}".strip()
 
     def parse_content(self, tree, item):
         content = tree.find(".//body.content")
