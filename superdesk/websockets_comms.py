@@ -159,7 +159,7 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         with sentry_sdk.start_transaction(transaction):
             logger.debug("Queue: {}. Broadcasting message {}".format(self.queue.name, body))
             with sentry_sdk.start_span(op="queue.process", name="queue_consumer") as span:
-                span.set_data("messaging.message.id", message.headers["message-id"])
+                span.set_data("messaging.message.id", message.headers.get("message-id", ""))
                 span.set_data("messaging.destination.name", self.exchange_name)
                 span.set_data("messaging.message.body.size", len(body))
                 try:
