@@ -52,6 +52,7 @@ item_create = signals.signal("item:create")
 #: :param sender: PublishService
 #: :param item: item to publish
 item_publish = signals.signal("item:publish")
+item_publish_async = AsyncSignal[dict, dict]("item:publish")
 
 #: Sent when item is published.
 #:
