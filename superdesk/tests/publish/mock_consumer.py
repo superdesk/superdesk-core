@@ -6,7 +6,7 @@ class MockPublishConsumer(AsyncioPublishConsumer):
     name: str = "mock"
 
     async def transmit_item(self, task: PublishQueueResource) -> bool:
-        if task.destination.delivery_type == "File":
+        if task.destination and task.destination.delivery_type == "File":
             # If the destination is a local file, then follow normal consumer code
             return await super().transmit_item(task)
 

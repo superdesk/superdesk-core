@@ -468,31 +468,11 @@ class VocabulariesService(AsyncBaseService):
         article_item.update({"scheme": scheme})
         return article_item
 
-    def get_items(
-        self,
-        _id: str,
-        qcode: Optional[str] = None,
-        is_active: bool = True,
-        name: Optional[str] = None,
-        lang: Optional[str] = None,
-    ) -> List:
-        """
-        Return `items` with specified filters from the CV with specified `_id`.
-        If `lang` is provided then `name` is looked in `items.translations.name.{lang}`,
-        otherwise `name` is looked in `items.name`.
-
-        :param _id: custom vocabulary _id
-        :param qcode: items.qcode filter
-        :param is_active: items.is_active filter
-        :param name: items.name filter
-        :param lang: items.lang filter
-        :return: items list
-        """
-
-        # This function won't be needed once we use the VocabulariesService async service in it's place
-
-        projection: Dict[str, Any] = {}
-        lookup = {"_id": _id}
+    def _get_items_lookup_and_projection(
+        self, cv_id: str, qcode: str | None = None, name: str | None = None, lang: str | None = None
+    ) -> tuple[dict, dict]:
+        projection: dict = {}
+        lookup = {"_id": cv_id}
 
         if qcode:
             elem_match = projection.setdefault("items", {}).setdefault("$elemMatch", {})
@@ -514,29 +494,79 @@ class VocabulariesService(AsyncBaseService):
                 "$options": "i",
             }
 
+        return lookup, projection
+
+    def _get_items_response(self, scheme_id: str, items: list[dict], is_active: bool | None) -> list[dict]:
+        def format_item(item: dict):
+            item.pop("is_active", None)
+            item["scheme"] = scheme_id
+            return item
+
+        # $elemMatch projection contains only the first element matching the condition,
+        # that"s why `is_active` filter is filtered via python
+        return [format_item(item) for item in items if is_active is None or item.get("is_active") is is_active]
+
+    def get_items(
+        self,
+        _id: str,
+        qcode: str | None = None,
+        is_active: bool | None = True,
+        name: str | None = None,
+        lang: str | None = None,
+    ) -> list[dict]:
+        """
+        Return `items` with specified filters from the CV with specified `_id`.
+        If `lang` is provided then `name` is looked in `items.translations.name.{lang}`,
+        otherwise `name` is looked in `items.name`.
+
+        :param _id: custom vocabulary _id
+        :param qcode: items.qcode filter
+        :param is_active: items.is_active filter
+        :param name: items.name filter
+        :param lang: items.lang filter
+        :return: items list
+        """
+
+        lookup, projection = self._get_items_lookup_and_projection(_id, qcode, name, lang)
         cursor = self.get_from_mongo(req=None, lookup=lookup, projection=projection)
 
         try:
             items = cursor.next()["items"]
-        except (StopIteration, KeyError):
+        except (StopIteration, KeyError, TypeError):
             return []
 
-        # $elemMatch projection contains only the first element matching the condition,
-        # that"s why `is_active` filter is filtered via python
-        if is_active is not None:
-            items = [i for i in items if i.get("is_active", True) == is_active]
+        return self._get_items_response(_id, items, is_active)
 
-        def format_item(item):
-            try:
-                del item["is_active"]
-            except KeyError:
-                pass
-            item["scheme"] = _id
-            return item
+    async def get_items_async(
+        self,
+        _id: str,
+        qcode: str | None = None,
+        is_active: bool | None = True,
+        name: str | None = None,
+        lang: str | None = None,
+    ) -> list[dict]:
+        """
+        Return `items` with specified filters from the CV with specified `_id`.
+        If `lang` is provided then `name` is looked in `items.translations.name.{lang}`,
+        otherwise `name` is looked in `items.name`.
 
-        items = list(map(format_item, items))
+        :param _id: custom vocabulary _id
+        :param qcode: items.qcode filter
+        :param is_active: items.is_active filter
+        :param name: items.name filter
+        :param lang: items.lang filter
+        :return: items list
+        """
 
-        return items
+        lookup, projection = self._get_items_lookup_and_projection(_id, qcode, name, lang)
+        cursor = await self.get_from_mongo_async(req=None, lookup=lookup, projection=projection)
+
+        try:
+            items = (await cursor.next())["items"]
+        except (StopAsyncIteration, KeyError, TypeError):
+            return []
+
+        return self._get_items_response(_id, items, is_active)
 
     def get_languages(self):
         # This function won't be needed once we use the VocabulariesService async service in it's place

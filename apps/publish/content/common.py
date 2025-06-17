@@ -296,6 +296,7 @@ class BasePublishService(AsyncBaseService):
                     self._update_picture_metadata(updates, original, updated)
 
                 signals.item_publish.send(self, item=updated, updates=updates)
+                await signals.item_publish_async.send(updated, updates)
                 await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
 
                 await self.update_published_collection(published_item_id=original[ID_FIELD], updated=updated)
