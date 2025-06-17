@@ -5,6 +5,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from typing import Any
+from inspect import isawaitable
+
 from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
@@ -91,6 +93,9 @@ class AIService(AsyncBaseService):
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
         analyzed_data = service.analyze(item, doc.get("tags"))
+        if isawaitable(analyzed_data):
+            analyzed_data = await analyzed_data
+
         docs[0].update({"analysis": analyzed_data})
         return [0]
 
@@ -161,6 +166,9 @@ class AIDataOpService(AsyncBaseService):
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
         result = service.data_operation("POST", operation, name, data)
+        if isawaitable(result):
+            result = await result
+
         docs[0].update({"result": result})
         return [0]
 
@@ -225,6 +233,9 @@ class AIImageSuggestionService(AsyncBaseService):
             raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
 
         res_data = service.search_images(items)
+        if isawaitable(res_data):
+            res_data = await res_data
+
         docs[0].update({"result": res_data})
         return [0]
 
