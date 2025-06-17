@@ -124,7 +124,7 @@ class APMediaFeedParser(FeedParser):
         except ValueError:
             return datetime.datetime.strptime(string, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=utc)
 
-    def categorisation_mapping(self, in_item, item):
+    async def categorisation_mapping(self, in_item, item):
         """
         Function that maps categorisation fields may be overloaded if not required
         :param in_item:
@@ -135,18 +135,17 @@ class APMediaFeedParser(FeedParser):
             categories = [{"qcode": c.get("code")} for c in in_item.get("subject") if c.get("rels") == ["category"]]
             if len(categories):
                 item["anpa_category"] = [categories[0]]
-                self._map_category_codes(item)
+                await self._map_category_codes(item)
 
         self._map_sluglines_to_subjects(item=item)
 
-    def _map_category_codes(self, item):
+    async def _map_category_codes(self, item):
         """Map the category code that has been received to a more palatable value
 
         :param item:
         :return:
         """
-        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
-        category_code_map = get_resource_service("vocabularies").find_one(req=None, _id="ap_category_map")
+        category_code_map = await get_resource_service("vocabularies").find_one_async(req=None, _id="ap_category_map")
         if category_code_map:
             map = {c["ap_code"]: c["category_code"] for c in category_code_map["items"] if c["is_active"]}
             for category in item.get("anpa_category", []):
@@ -255,7 +254,7 @@ class APMediaFeedParser(FeedParser):
             if in_item.get("headline_extended"):
                 item["abstract"] = in_item.get("headline_extended")
 
-            self.categorisation_mapping(in_item, item)
+            await self.categorisation_mapping(in_item, item)
 
             # Map the urgency to urgency and priority
             if in_item.get("urgency"):
