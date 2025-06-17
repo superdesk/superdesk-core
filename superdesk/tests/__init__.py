@@ -18,7 +18,7 @@ from dataclasses import dataclass
 
 from copy import deepcopy
 from unittest.mock import patch
-from quart import Response
+from quart import Response, Quart
 from quart.testing import QuartClient
 from werkzeug.datastructures import Authorization
 from eve.events import Events
@@ -737,6 +737,31 @@ class AsyncTestCase(IsolatedAsyncioTestCase):
 
     def assertDictContains(self, source: dict, contains: dict):
         self.assertDictEqual({key: val for key, val in source.items() if key in contains}, contains)
+
+
+class AsyncQuartTestCase(IsolatedAsyncioTestCase):
+    """Asyncio TestCase where a Quart instance is needed and not the full Superdesk app"""
+
+    app: Quart
+    app_config: dict | None = None
+
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app = Quart(__name__)
+        if self.app_config:
+            self.app.config.update(deepcopy(self.app_config))
+
+        self.ctx = self.app.app_context()
+        await self.ctx.push()
+
+        async def clean_ctx():
+            if self.ctx:
+                try:
+                    await self.ctx.pop()
+                except Exception:
+                    pass
+
+        self.addAsyncCleanup(clean_ctx)
 
 
 class TestClient(QuartClient):
