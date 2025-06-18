@@ -1,0 +1,20 @@
+[
+    {
+        "user": "5d385f31fe985ec67a0ca583",
+        "date": "2023-05-15",
+        "name": "published_articles",
+        "value": 5
+    },
+    {
+        "user": "5d385f31fe985ec67a0ca583",
+        "date": "2023-05-16",
+        "name": "published_events",
+        "value": 2
+    },
+    {
+        "user": "5d385f31fe985ec67a0ca583",
+        "date": "2023-05-18",
+        "name": "published_articles",
+        "value": 3
+    }
+]

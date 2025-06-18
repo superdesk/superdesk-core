@@ -990,10 +990,14 @@ async def step_impl_when_post_url_with_success(context, url):
 async def step_impl_when_put_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = await get_res(url, context)
-        headers = if_match(context, res.get("_etag"))
+        try:
+            res = await get_res(url, context)
+            headers = if_match(context, res.get("_etag"))
+        except AssertionError:
+            headers = {"content-type": "application/json"}
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, url)
+
         context.response = await context.client.put(href, data=data, headers=headers)
         context.outbox = outbox
 
@@ -2018,7 +2022,15 @@ async def when_we_switch_user(context):
 @when("we setup test user")
 @async_run_until_complete
 async def when_we_setup_test_user(context):
-    await tests.setup_auth_user(context, tests.test_user)
+    if context.text:
+        user_data = json.loads(apply_placeholders(context, context.text))
+        user_data.setdefault("username", "test-user-123")
+        user_data.setdefault("password", "pwd")
+        user_data.setdefault("email", "test123@example.com")
+    else:
+        user_data = deepcopy(tests.test_user)
+
+    await tests.setup_auth_user(context, user_data)
 
 
 @when('we get my "{url}"')
@@ -3150,3 +3162,14 @@ async def check_resource_db_item(context, resource: str, item_id: str):
 
     context_data = json.loads(apply_placeholders(context, context.text))
     assert json_match(context_data, item, None), str(context_data) + "\n != \n" + str(item)
+
+
+@when('we add privilege "{privilege}" to user "{username}"')
+@async_run_until_complete
+async def step_impl(context, privilege: str, username: str) -> None:
+    async with context.app.app_context():
+        user = await get_resource_service("users").find_one_async(req=None, username=username)
+        assert user is not None, "User {} not found".format(username)
+        privileges = user.get("privileges") or {}
+        privileges[privilege] = 1
+        await get_resource_service("users").system_update_async(user["_id"], {"privileges": privileges}, user)

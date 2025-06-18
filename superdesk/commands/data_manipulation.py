@@ -151,7 +151,20 @@ async def cli_data_storage_restore(dump_path, keep_existing, no_flush):
     multiple=True,
     help="collections to record (DEFAULT: record all collections)",
 )
-async def cli_data_storage_record(name, dest_dir, description, base_dump, force_db_reset, full_document, collections):
+@click.option(
+    "--continue-from",
+    help="continue a previous recording (useful if the process was killed)",
+)
+async def cli_data_storage_record(
+    name,
+    dest_dir,
+    description,
+    base_dump,
+    force_db_reset,
+    full_document,
+    collections,
+    continue_from,
+):
     """Record changes made in database until the command is stopped
 
     This command is intended for developers to help producing specific state (e.g. for tests), or to create a specific
@@ -178,7 +191,7 @@ async def cli_data_storage_record(name, dest_dir, description, base_dump, force_
     """
 
     await StorageStartRecording().run(
-        name, dest_dir, description, base_dump, force_db_reset, full_document, collections
+        name, dest_dir, description, base_dump, force_db_reset, full_document, collections, continue_from
     )
 
 
@@ -633,6 +646,7 @@ class StorageStartRecording:
         full_document: bool = False,
         collections: Optional[List[str]] = None,
         lock: Optional[multiprocessing.synchronize.Lock] = None,
+        continue_from: Optional[str] = None,
     ) -> None:
         now = time.time()
         if name is None:
@@ -646,7 +660,7 @@ class StorageStartRecording:
         version = tuple(int(v) for v in pymongo.cx.server_info()["version"].split("."))
         if version < (4, 0):
             raise NotImplementedError("You need to use MongoDB version 4.0 or above to use the record feature")
-        metadata = {"started": now, "applied_updates": applied_updates}
+        metadata: dict = {"started": now, "applied_updates": applied_updates}
         if base_dump is not None:
             # base dump may be the direct path of the dump to load…
             base_dump_p = get_dest_path(base_dump)
@@ -657,6 +671,9 @@ class StorageStartRecording:
                     sys.exit(1)
             await StorageRestore().run(keep_existing=False, dump_path=base_dump_p)
             metadata["base_dump"] = str(base_dump_p)
+        elif continue_from:
+            await StorageRestoreRecord().run(continue_from, force_db_reset=True)
+            metadata["continue_from"] = continue_from
         if description:
             metadata["description"] = description
         print(f"📼🔴 recording started\nRecording at {dest_path}\nPress Ctrl-C to stop it\n\n")
@@ -673,12 +690,16 @@ class StorageStartRecording:
                     try:
                         first = True
                         for change in stream:
-                            collection = change["ns"]["coll"]
+                            try:
+                                collection = change["ns"]["coll"]
+                            except KeyError:
+                                print("Ignore", change["operationType"])
+                                continue
                             if collection == "mongolock.lock":
                                 continue
                             elif collections and collection not in collections:
                                 continue
-                            print(f"change in {change['ns']['coll']!r} collection")
+                            print(f"change in {change['ns']['coll']!r} collection", change["operationType"])
                             if first:
                                 first = False
                             else:
@@ -724,6 +745,12 @@ class StorageRestoreRecord:
                             sys.exit(1)
                     print("RESTORE")
                     await StorageRestore().run(keep_existing=False, no_flush=True, dump_path=base_dump_p)
+            if metadata.get("continue_from"):
+                print(f"{INFO} continuing from {metadata['continue_from']}")
+                await self.run(
+                    record_file=metadata["continue_from"], force_db_reset=force_db_reset, skip_base_dump=skip_base_dump
+                )
+
             print(f"{INFO} restoring record from {datetime.fromtimestamp(metadata['started']).isoformat()}")
             description = metadata.get("description")
             if description:

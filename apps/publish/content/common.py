@@ -18,6 +18,7 @@ from quart_babel import gettext as _
 from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel, PublishOperation
 from superdesk.publish_async.commands import publish_item
 from superdesk.publish_async.utils import get_utc_publish_schedule, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE, get_residrefs
+import superdesk.users.user_metrics as user_metrics
 
 from apps.archive.resource import ArchiveResource
 from apps.archive.common import (
@@ -235,6 +236,9 @@ class BasePublishService(AsyncBaseService):
         await CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
         await signals.item_published_async.send(original, False)
+
+        if original.get("original_creator"):
+            user_metrics.incr("published_articles", original["original_creator"])
 
         packages = await self.package_service.get_packages_async(original[ID_FIELD])
         if packages and (await packages.count()) > 0:

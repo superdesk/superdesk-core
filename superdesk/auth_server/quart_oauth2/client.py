@@ -52,3 +52,6 @@ class OAuth2Client(ClientMixin):
         if endpoint == "token":
             return method in self.auth_methods
         return True
+
+    def check_token_endpoint_auth_method(self, method):
+        return method in self.auth_methods

@@ -8,22 +8,72 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from copy import deepcopy
 
+from quart_babel import gettext as _
+from eve.utils import ParsedRequest
+
+from superdesk.core import json
 from superdesk.resource_fields import ID_FIELD
 from superdesk.notification import push_notification
 from superdesk.errors import SuperdeskApiError
 from superdesk import get_resource_service
 from superdesk.eve_async import AsyncBaseService
-from eve.utils import ParsedRequest
-from quart_babel import gettext as _
-from copy import deepcopy
 
 
 class ContactsService(AsyncBaseService):
     async def get_async(self, req, lookup):
-        # by default the response will have the inactive entries filtered out
-        if "all" not in req.args:
-            lookup["is_active"] = True
+        if req and not req.args.get("source") and req.args.get("q"):
+            query = {
+                "bool": {
+                    "must": [
+                        {
+                            "query_string": {
+                                "query": req.args.get("q") + ("*" if ":" not in req.args.get("q") else ""),
+                                "fields": [
+                                    "first_name",
+                                    "last_name",
+                                    "organisation",
+                                    "contact_email",
+                                ],
+                                "default_operator": "AND",
+                            }
+                        },
+                    ],
+                    "should": [],
+                    "filter": [],
+                }
+            }
+
+            if "all" not in req.args:
+                query["bool"]["should"].extend(
+                    [
+                        {"term": {"is_active": True}},
+                        {"term": {"public": True}},
+                    ]
+                )
+
+            if req.args.get("contact_type"):
+                query["bool"]["filter"].append({"term": {"contact_type": req.args.get("contact_type")}})
+
+            args = req.args.copy()
+            args.pop("q")
+            args["source"] = json.dumps(
+                {
+                    "query": query,
+                    "sort": [
+                        {
+                            "first_name.keyword": {"order": "asc"},
+                            "last_name.keyword": {"order": "asc"},
+                            "organisation.keyword": {"order": "asc"},
+                        }
+                    ],
+                }
+            )
+            req.args = args
+
+        elif "all" not in req.args:
+            lookup["is_active"] = True  # by default the response will have the inactive entries filtered out
 
         return await super().get_async(req, lookup)
 

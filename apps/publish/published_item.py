@@ -22,7 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import not_analyzed, ITEM_STATE, PUBLISH_STATES, CONTENT_STATE
 from superdesk.metadata.utils import aggregations, get_elastic_highlight_query
 from superdesk.resource import Resource
-from superdesk.eve_async import AsyncBaseService
+from superdesk.eve_async import AsyncBaseService, AsyncListCursor
 from superdesk.utc import utcnow
 
 from bson.objectid import ObjectId
@@ -274,10 +274,13 @@ class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
             )
 
     async def get_other_published_items(self, item_id):
+        """Get all published items with the same `item_id`."""
+
         try:
-            return await super().get_from_mongo_async(req=None, lookup={"item_id": item_id})
-        except Exception:
-            return []
+            return super().get_from_mongo_async(req=None, lookup={"item_id": item_id})
+        except Exception as e:
+            logger.exception(f"Error getting other published items for `{item_id}`: {str(e)}. Returning empty list.")
+            return AsyncListCursor([])
 
     async def get_last_published_version(self, _id):
         """Returns the last published entry for the passed item id

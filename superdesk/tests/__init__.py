@@ -107,11 +107,11 @@ def update_config(conf, auto_add_apps: bool = True, include_planning: bool = Tru
     conf["DEFAULT_TIMEZONE"] = "Europe/Prague"
     conf["LEGAL_ARCHIVE"] = True
     if auto_add_apps:
-        if not include_planning:
-            conf["INSTALLED_APPS"].extend(["superdesk.macros.imperial", "apps.rundowns"])
-        else:
-            conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns"])
-            conf["MODULES"].extend(["planning"])
+        conf["INSTALLED_APPS"].extend(["superdesk.macros.imperial", "apps.rundowns", "apps.user_availability"])
+
+        if include_planning:
+            conf["INSTALLED_APPS"].append("planning")
+            conf["MODULES"].append("planning")
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
@@ -532,6 +532,8 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
     async with app.app_context():
         await clean_dbs(app, init_indexes=True)
 
+    return app
+
 
 async def setup_auth_user(context, user=None):
     await setup_db_user(context, user)
@@ -565,6 +567,7 @@ def add_user_info_to_context(context: Any, token: str, user: User, auth_id=None)
 
     set_placeholder(context, "CONTEXT_USER_ID", str(user.get("_id")))
     set_placeholder(context, "AUTH_ID", str(auth_id))
+    set_placeholder(context, f"{user.get('username').upper()}_USER_ID", str(user.get("_id")))
 
 
 def set_placeholder(context, name, value):

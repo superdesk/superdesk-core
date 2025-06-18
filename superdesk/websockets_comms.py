@@ -360,11 +360,7 @@ class SocketCommunication:
                 self.sentry_dsn,
                 integrations=[AsyncioIntegration()],
                 traces_sample_rate=self.sentry_traces_sample_rate,
-                debug=self.debug,
             )
-            print("CONFIGURED", self.sentry_traces_sample_rate)
-        else:
-            print("NOT CONFIGURED", self.sentry_dsn, self.sentry_traces_sample_rate)
         try:
             consumer = None
             async with serve(self._connection_handler, self.host, self.port) as server:

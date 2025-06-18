@@ -13,10 +13,11 @@ from typing import Dict, Any, Literal
 from inspect import isawaitable
 import eve.io.base
 import json as std_json
+import pymongo.collection
 
 from pymongo.cursor import Cursor as MongoCursor
 from pymongo.collation import Collation
-from motor.motor_asyncio import AsyncIOMotorCursor
+from motor.motor_asyncio import AsyncIOMotorCursor, AsyncIOMotorCollection
 from eve.utils import document_etag, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
 from superdesk.utc import utcnow
@@ -289,6 +290,16 @@ class EveBackend:
         result = await backend.driver.db[endpoint_name].find_one_and_update(**kwargs)
         cache.clean([endpoint_name])
         return result
+
+    def get_mongo_collection(self, endpoint_name) -> pymongo.collection.Collection:
+        backend = self._backend(endpoint_name)
+        datasource = self._datasource(endpoint_name)
+        return backend.pymongo(endpoint_name).db[datasource]
+
+    def get_mongo_collection_async(self, endpoint_name) -> AsyncIOMotorCollection:
+        backend = self._backend(endpoint_name, use_async=True)
+        datasource = self._datasource(endpoint_name)
+        return backend.pymongo(endpoint_name).db[datasource]
 
     def create(self, endpoint_name, docs, **kwargs):
         """Insert documents into given collection.
@@ -568,6 +579,15 @@ class EveBackend:
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
         cache.clean([endpoint_name])
+
+        # with soft delete enabled eve uses replace to update the document
+        if document.get("_deleted") and not original.get("_deleted"):
+            self._push_resource_notification("deleted", endpoint_name, _id=str(id))
+        else:
+            self._push_resource_notification(
+                "updated", endpoint_name, _id=str(id), fields=get_diff_keys(document, original)
+            )
+
         return res
 
     async def replace_async(self, endpoint_name, id, document, original):
@@ -581,6 +601,15 @@ class EveBackend:
         res = await self.replace_in_mongo_async(endpoint_name, id, document, original)
         await self.replace_in_search_async(endpoint_name, id, document, original)
         cache.clean([endpoint_name])
+
+        # with soft delete enabled eve uses replace to update the document
+        if document.get("_deleted") and not original.get("_deleted"):
+            self._push_resource_notification("deleted", endpoint_name, _id=str(id))
+        else:
+            self._push_resource_notification(
+                "updated", endpoint_name, _id=str(id), fields=get_diff_keys(document, original)
+            )
+
         return res
 
     def update_in_mongo(self, endpoint_name, id, updates, original):

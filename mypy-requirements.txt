@@ -1,5 +1,5 @@
-mypy
-mypy-extensions
+mypy==1.15.0
+mypy-extensions==1.1.0
 toml
 types-aioboto3
 types-chardet

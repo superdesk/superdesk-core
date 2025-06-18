@@ -1,7 +1,8 @@
-from typing import Any, Dict, List, TypedDict, Callable, Awaitable
+from typing import Any, Dict, List, TypedDict, Callable, Awaitable, TypeAlias
 from enum import Enum, unique
 
 from quart_babel import LazyString
+import bson
 
 from .enums import (
     DeskTypeEnum,
@@ -45,6 +46,7 @@ from .archive import ArchiveResourceModel
 from .base import ItemOperation, ContentTypes, FORMATS
 
 __all__ = [
+    "Id",
     "DeskTypeEnum",
     "MonitoringTypeEnum",
     "MonitoringViewEnum",
@@ -99,6 +101,9 @@ __all__ = [
     "ContentTypes",
     "FORMATS",
 ]
+
+
+Id: TypeAlias = str | bson.ObjectId
 
 
 class WebsocketMessageFilterConditions(TypedDict, total=False):

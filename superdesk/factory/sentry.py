@@ -22,7 +22,6 @@ class SuperdeskSentry:
                 dsn=dsn,
                 send_default_pii=True,
                 server_name=app.config.get("SERVER_DOMAIN"),
-                debug=app.debug,
                 traces_sample_rate=app.config.get("SENTRY_TRACES_SAMPLE_RATE"),
                 profiles_sample_rate=app.config.get("SENTRY_PROFILES_SAMPLE_RATE"),
                 integrations=[
