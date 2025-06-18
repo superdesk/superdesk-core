@@ -277,7 +277,7 @@ class PublishedItemService(AsyncBaseService, HighlightsSearchMixin):
         """Get all published items with the same `item_id`."""
 
         try:
-            return super().get_from_mongo_async(req=None, lookup={"item_id": item_id})
+            return await super().get_from_mongo_async(req=None, lookup={"item_id": item_id})
         except Exception as e:
             logger.exception(f"Error getting other published items for `{item_id}`: {str(e)}. Returning empty list.")
             return AsyncListCursor([])
