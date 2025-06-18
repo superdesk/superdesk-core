@@ -76,13 +76,15 @@ class SuperdeskValidator(Validator):
         self.types_mapping.pop("date", None)
 
     def _validate_data_relation(self, data_relation, field, value):
-        """{'type': 'dict',
+        """
+        {'type': 'dict',
         'schema': {
            'resource': {'type': 'string', 'required': True},
            'field': {'type': 'string', 'required': True},
            'embeddable': {'type': 'boolean', 'default': False},
            'version': {'type': 'boolean', 'default': False}
-        }}"""
+        }}
+        """
 
         if not value and self.schema[field].get("nullable"):
             return

@@ -91,7 +91,7 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
 
     async def _validate_disable(self, updates: dict[str, Any], original: ContentTypesResourceModel) -> None:
         """
-        checks the templates and desks that are referencing the given
+        Checks the templates and desks that are referencing the given
         content profile if the profile is being disabled
         """
         if (enabled := updates.get("enabled")) is not None and not enabled and original.enabled:

@@ -37,9 +37,8 @@ class AsyncioPublishRouter(PublishExchangeRouter):
         self, request: PublishRequest, response: PublishRequestResponse, tasks: list[PublishQueueResource]
     ) -> None:
         """
-        Async route_tasks_to_consumers(request: PublishRequest, response: PublishRequestResponse, tasks: list[PublishQueueResource]) -> None
+        Route the tasks to the appropriate consumers.
 
-        Summary:
         Asynchronously routes a list of publish tasks to corresponding subscribers via their
         respective PublishConsumer(s). This function first initializes the PublishCache,
         groups tasks by their subscriber, and sends them to the appropriate consumer.

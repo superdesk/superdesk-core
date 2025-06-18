@@ -808,7 +808,7 @@ class AsyncFlaskTestCase(AsyncTestCase):
 
     @classmethod
     async def asyncSetUpClass(cls):
-        "Hook method for setting up class fixture before running tests in the class."
+        """Hook method for setting up class fixture before running tests in the class."""
         config = deepcopy(cls.app_config)
 
         if cls.use_default_apps:

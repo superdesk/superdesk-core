@@ -24,22 +24,22 @@ def call_async(func, /, *args, **kwargs):
 class IsolatedAsyncioTestCase(AsyncTestCase):
     @classmethod
     def setUpClass(cls):
-        "Hook method for setting up class fixture before running tests in the class."
+        """Hook method for setting up class fixture before running tests in the class."""
         call_async(cls.asyncSetUpClass)
 
     @classmethod
     def tearDownClass(cls):
-        "Hook method for deconstructing the class fixture after running all tests in the class."
+        """Hook method for deconstructing the class fixture after running all tests in the class."""
         call_async(cls.asyncTearDownClass)
 
     @classmethod
     async def asyncSetUpClass(cls):
-        "Hook method for setting up class fixture before running tests in the class."
+        """Hook method for setting up class fixture before running tests in the class."""
         pass
 
     @classmethod
     async def asyncTearDownClass(cls):
-        "Hook method for setting up class fixture before running tests in the class."
+        """Hook method for setting up class fixture before running tests in the class."""
         pass
 
     def _setupAsyncioLoop(self):

@@ -134,7 +134,7 @@ def generate_tag_from_url(url, prefix="tag"):
 
 def is_normal_package(doc):
     """
-    returns true if the passed doc is a package. otherwise, returns false.
+    Returns true if the passed doc is a package. otherwise, returns false.
 
     :return: true if it's a package, false otherwise.
     """
@@ -144,7 +144,7 @@ def is_normal_package(doc):
 
 def is_normal_package_async(doc: ResourceModel) -> bool:
     """
-    returns true if the passed doc is a package. otherwise, returns false.
+    Returns true if the passed doc is a package. otherwise, returns false.
 
     This method is to be used with ResourceModel, in async context.
 
