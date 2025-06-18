@@ -565,9 +565,9 @@ def add_user_info_to_context(context: Any, token: str, user: User, auth_id=None)
         context.previous_user = context.user
     context.user = user
 
-    set_placeholder(context, "CONTEXT_USER_ID", str(user.get("_id")))
+    set_placeholder(context, "CONTEXT_USER_ID", str(user.get("_id", "")))
     set_placeholder(context, "AUTH_ID", str(auth_id))
-    set_placeholder(context, f"{user.get('username').upper()}_USER_ID", str(user.get("_id")))
+    set_placeholder(context, f"{user.get('username', '').upper()}_USER_ID", str(user.get("_id")))
 
 
 def set_placeholder(context, name, value):
