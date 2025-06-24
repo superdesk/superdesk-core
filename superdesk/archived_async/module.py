@@ -19,6 +19,7 @@ archived_resource_config = ResourceConfig(
     data_class=ArchivedResourceModel,
     service=ArchivedService,
     mongo=MongoResourceConfig(
+        prefix="ARCHIVED",
         indexes=[
             MongoIndexOptions(
                 name="item_id_1",
