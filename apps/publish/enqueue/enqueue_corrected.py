@@ -39,7 +39,6 @@ class EnqueueCorrectedService(EnqueueService):
         :return: (list, dict, dict) List of filtered subscribers, product codes per subscriber,
                 associations per subscriber
         """
-        subscribers, subscribers_yet_to_receive = [], []
 
         # step 1
         query = {
@@ -49,25 +48,25 @@ class EnqueueCorrectedService(EnqueueService):
 
         subscribers, subscriber_codes, previous_associations = self._get_subscribers_for_previously_sent_items(query)
 
-        if subscribers:
-            # Step 2
-            active_subscribers = list(get_resource_service("subscribers").get_active())
-            subscribers_yet_to_receive = [
-                a for a in active_subscribers if not any(a[config.ID_FIELD] == s[config.ID_FIELD] for s in subscribers)
-            ]
-
-            if len(subscribers_yet_to_receive) > 0:
-                # Step 3
-                if doc.get("target_regions"):
-                    subscribers_yet_to_receive = filter_non_digital(subscribers_yet_to_receive)
-                # Step 4
-                subscribers_yet_to_receive, codes = self.filter_subscribers(
-                    doc, subscribers_yet_to_receive, target_media_type
-                )
-                if codes:
-                    subscriber_codes.update(codes)
-        else:
+        if not subscribers:
             logger.info("No previous subscribers found for item %s", doc["item_id"])
+
+        # Step 2
+        active_subscribers = list(get_resource_service("subscribers").get_active())
+        subscribers_yet_to_receive = [
+            a for a in active_subscribers if not any(a[config.ID_FIELD] == s[config.ID_FIELD] for s in subscribers)
+        ]
+
+        if len(subscribers_yet_to_receive) > 0:
+            # Step 3
+            if doc.get("target_regions"):
+                subscribers_yet_to_receive = filter_non_digital(subscribers_yet_to_receive)
+            # Step 4
+            subscribers_yet_to_receive, codes = self.filter_subscribers(
+                doc, subscribers_yet_to_receive, target_media_type
+            )
+            if codes:
+                subscriber_codes.update(codes)
 
         subscribers = subscribers + subscribers_yet_to_receive
         associations = self._filter_subscribers_for_associations(
