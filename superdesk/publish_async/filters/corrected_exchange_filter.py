@@ -64,40 +64,40 @@ class CorrectedPublishExchangeFilter(ContentPublishExchangeFilter):
         ) = await get_subscribers_for_previously_sent_items(response, query)
         subscribers_yet_to_receive: list[SubscribersResource] = []
 
-        if subscribers:
-            # Step 2
-            cache = PublishCache.get()
-            active_subscribers = list(cache.subscribers.values())
-            subscribers_yet_to_receive = [
-                active_subscriber
-                for active_subscriber in active_subscribers
-                if not any(active_subscriber.id == previous_subscriber.id for previous_subscriber in subscribers)
-            ]
-
-            if len(subscribers_yet_to_receive) > 0:
-                # Step 3
-                if request.item.get("target_regions"):
-                    subscribers_yet_to_receive = SubscribersResource.filter_non_digital(subscribers_yet_to_receive)
-
-                # Step 4
-                subscribers_request = PublishRequest(
-                    item=request.item,
-                    item_id=request.item_id,
-                    operation=request.operation,
-                    published_state=request.published_state,
-                    item_type=request.item_type,
-                    target_media_type=request.target_media_type,
-                    sender_type=request.sender_type,
-                    subscribers=subscribers_yet_to_receive,
-                )
-                subscribers_response = PublishRequestResponse()
-                await super().filter_subscribers(subscribers_request, subscribers_response)
-
-                subscribers_yet_to_receive = subscribers_response.subscribers
-                if subscribers_response.subscriber_codes:
-                    subscriber_codes.update(subscribers_response.subscriber_codes)
-        else:
+        if not subscribers:
             logger.info(f"No previous subscribers found for item {request.item_id}")
+
+        # Step 2
+        cache = PublishCache.get()
+        active_subscribers = list(cache.subscribers.values())
+        subscribers_yet_to_receive = [
+            active_subscriber
+            for active_subscriber in active_subscribers
+            if not any(active_subscriber.id == previous_subscriber.id for previous_subscriber in subscribers)
+        ]
+
+        if len(subscribers_yet_to_receive) > 0:
+            # Step 3
+            if request.item.get("target_regions"):
+                subscribers_yet_to_receive = SubscribersResource.filter_non_digital(subscribers_yet_to_receive)
+
+            # Step 4
+            subscribers_request = PublishRequest(
+                item=request.item,
+                item_id=request.item_id,
+                operation=request.operation,
+                published_state=request.published_state,
+                item_type=request.item_type,
+                target_media_type=request.target_media_type,
+                sender_type=request.sender_type,
+                subscribers=subscribers_yet_to_receive,
+            )
+            subscribers_response = PublishRequestResponse()
+            await super().filter_subscribers(subscribers_request, subscribers_response)
+
+            subscribers_yet_to_receive = subscribers_response.subscribers
+            if subscribers_response.subscriber_codes:
+                subscriber_codes.update(subscribers_response.subscriber_codes)
 
         response.subscribers = subscribers
         subscriber_ids = set([subscriber.id for subscriber in subscribers])
