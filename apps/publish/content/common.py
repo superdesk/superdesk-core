@@ -1032,7 +1032,16 @@ def sync_associated_item_changes(associated_item, updates):
 superdesk.workflow_state("published")
 superdesk.workflow_action(
     name="publish",
-    include_states=["fetched", "routed", "submitted", "in_progress", "scheduled", "unpublished", "correction"],
+    include_states=[
+        "fetched",
+        "routed",
+        "submitted",
+        "in_progress",
+        "scheduled",
+        "unpublished",
+        "correction",
+        "corrected",
+    ],
     privileges=["publish"],
 )
 
