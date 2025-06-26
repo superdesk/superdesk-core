@@ -30,7 +30,7 @@ class OAuth2Server(Endpoint):
     server: QuartAuthorizationServer
 
     def __init__(self, url: str):
-        super().__init__(url, self.issue_token_endpoint, methods=["POST"], auth=False)
+        super().__init__(url, self.issue_token_endpoint, methods=["POST"], auth=False, name="auth_server.issue_token")
         self.server = self.server_class(query_client=self.query_client, save_token=self.save_token)
 
     @property

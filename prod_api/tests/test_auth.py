@@ -58,13 +58,13 @@ async def test_authenticated(superdesk_app, superdesk_client, auth_server_regist
     async with superdesk_app.test_request_context("/"):
         resp = await superdesk_client.post(
             url_for("auth_server.issue_token"),
-            data={"grant_type": "client_credentials"},
+            form={"grant_type": "client_credentials"},
             headers={"Authorization": _basic_auth_str(client_id, password)},
         )
 
     # we get an access token
     resp_data = json.loads((await resp.get_data()).decode("utf-8"))
-    assert resp.status_code == 200
+    assert resp.status_code == 200, resp_data
     assert resp_data["token_type"] == "Bearer"
     assert "access_token" in resp_data
 
@@ -74,7 +74,7 @@ async def test_authenticated(superdesk_app, superdesk_client, auth_server_regist
 
     # we send a request with an auth token
     token = resp_data["access_token"]
-    with prodapi_app.test_request_context("/"):
+    async with prodapi_app.test_request_context("/"):
         for resource in ("archive",):
             # we send a request with a token
             resp = await prodapi_client.get(
@@ -107,7 +107,7 @@ async def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_regis
     async with superdesk_app.test_request_context("/"):
         resp = await superdesk_client.post(
             url_for("auth_server.issue_token"),
-            data={"grant_type": "client_credentials"},
+            form={"grant_type": "client_credentials"},
             headers={"Authorization": _basic_auth_str(client_id, password)},
         )
 
@@ -243,7 +243,7 @@ async def test_token_expired(superdesk_app, superdesk_client, auth_server_regist
     async with superdesk_app.test_request_context("/"):
         resp = await superdesk_client.post(
             url_for("auth_server.issue_token"),
-            data={"grant_type": "client_credentials"},
+            form={"grant_type": "client_credentials"},
             headers={"Authorization": _basic_auth_str(client_id, password)},
         )
 

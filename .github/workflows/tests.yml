@@ -124,7 +124,7 @@ jobs:
     - run: pip install -U pip wheel setuptools
     - run: pip install -Ur dev-requirements.txt
 
-    - run: pytest prod_api
+    - run: pytest --disable-warnings prod_api
 
   macos-install:
     strategy:

@@ -10,6 +10,7 @@ wooper==0.4.4
 requests-mock==1.12.1
 responses==0.25.7
 pytest==8.3.4
+pytest-asyncio==1.0.0
 pytest-env==1.1.5
 pytest-timeout==2.4.0
 python3-saml==1.16.0

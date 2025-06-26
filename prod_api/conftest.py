@@ -125,10 +125,9 @@ async def get_test_prodapi_app(extra_config=None):
     # as the index/types should already be created
     EventsResource.schema = {"dates": events_schema["dates"]}
 
-    await clean_dbs(prodapi_app)
-
     # put elastic mapping
     async with prodapi_app.app_context():
+        await clean_dbs(prodapi_app)
         prodapi_app.data.elastic.init_index()
 
     return prodapi_app
@@ -311,12 +310,12 @@ async def issued_tokens(request, superdesk_app, superdesk_client):
     # retrieve tokens
     async with superdesk_app.test_request_context("/"):
         for client_data in clients_data:
-            resp = superdesk_client.post(
+            resp = await superdesk_client.post(
                 url_for("auth_server.issue_token"),
-                data={"grant_type": "client_credentials"},
+                form={"grant_type": "client_credentials"},
                 headers={"Authorization": _basic_auth_str(client_data["client_id"], client_data["password"])},
             )
-            tokens.append(json.loads(resp.data.decode("utf-8")))
+            tokens.append(json.loads((await resp.get_data()).decode("utf-8")))
 
     teardown_app(superdesk_app)
     del superdesk_client
