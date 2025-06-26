@@ -972,10 +972,14 @@ class BasePublishService(BaseService):
                 if not media_id:
                     continue
 
-                picture = app.media.get(media_id)
-                binary = picture.read()
+                original_metadata = get_metadata_from_item(original, mapping)
                 metadata = get_metadata_from_item(updated, mapping)
 
+                if original_metadata == metadata:
+                    continue
+
+                picture = app.media.get(media_id)
+                binary = picture.read()
                 updated_binary = write_metadata(binary, metadata)
                 if updated_binary != binary:
                     updated_media_id = app.media.put(
