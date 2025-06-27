@@ -13,6 +13,9 @@ import superdesk
 import superdesk.signals as signals
 import superdesk.users.user_metrics as user_metrics
 
+from bson import ObjectId
+from datetime import datetime
+
 from copy import copy
 from copy import deepcopy
 from flask import current_app as app
@@ -911,21 +914,36 @@ class BasePublishService(BaseService):
             insert_into_versions(doc=associated_item)
         self._refresh_associated_items(original)
 
+    def _normalize(self, val):
+        """Normalize values for comparison, handling ObjectId, datetime, etc."""
+        if isinstance(val, ObjectId):
+            return str(val)
+        if isinstance(val, datetime):
+            return val.isoformat().replace("+00:00", "Z")
+        if isinstance(val, str):
+            return val.replace("+0000", "Z") if val.endswith("+0000") else val
+        if isinstance(val, dict):
+            return {k: self._normalize(v) for k, v in val.items()}
+        if isinstance(val, list):
+            return [self._normalize(i) for i in val]
+        return val
+
     def is_changed(self, old: dict, new: dict) -> bool:
         """
-        Compare all top-level fields except those starting with an underscore (_).
-        Return True if any such field has changed.
+        Check if content was meaningfully changed.
+        Normalizes values before comparison to handle ObjectId/datetime differences.
         """
-
         if old is None or len(old) != len(new):
             return True
 
         fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
 
         for field in fields_to_check:
-            if old.get(field) != new.get(field):
-                return True
+            old_val = self._normalize(old.get(field))
+            new_val = self._normalize(new.get(field))
 
+            if old_val != new_val:
+                return True
         return False
 
     def _mark_media_item_as_used(self, updates, original):
@@ -1036,7 +1054,15 @@ def sync_associated_item_changes(associated_item, updates):
 superdesk.workflow_state("published")
 superdesk.workflow_action(
     name="publish",
-    include_states=["fetched", "routed", "submitted", "in_progress", "scheduled", "unpublished", "correction"],
+    include_states=[
+        "fetched",
+        "routed",
+        "submitted",
+        "in_progress",
+        "scheduled",
+        "unpublished",
+        "correction",
+    ],
     privileges=["publish"],
 )
 
