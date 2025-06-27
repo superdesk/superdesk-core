@@ -15,5 +15,5 @@ moto[sqs]==5.0.28
 pyexiv2==2.15.3; sys_platform == 'linux'
 
 -e .
--e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
+-e git+https://github.com/superdesk/superdesk-planning.git@release/2.9#egg=superdesk-planning
 -e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
