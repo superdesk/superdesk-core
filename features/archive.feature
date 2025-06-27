@@ -1551,3 +1551,75 @@ Feature: News Items Archive
         """
         {"profile": "picture"}
         """
+
+    @auth
+    Scenario: Update picture metadata
+        Given "archive"
+        """
+        [
+            {
+                "_id": "picture",
+                "type": "picture",
+                "slugline": "foo",
+                "headline": "head",
+                "description_text": "caption",
+                "fields_meta": {
+                    "slugline": {
+                        "draftjsState": [
+                            {"blocks": [
+                                {"key": "1", "text": "foo", "type": "unstyled"}
+                            ]}
+                        ]
+                    },
+                    "description_text": {
+                        "draftjsState": [
+                            {"blocks": [
+                                {"key": "1", "text": "caption", "type": "unstyled"}
+                            ]}
+                        ]
+                    },
+                    "headline": {
+                        "draftjsState": [
+                            {"blocks": [
+                                {"key": "1", "text": "head", "type": "unstyled"}
+                            ]}
+                        ]
+                    }
+                }
+            }
+        ]
+        """
+        When we patch "/archive/#archive._id#"
+        """
+        {
+            "slugline": "test",
+            "headline": "head2",
+            "fields_meta": {
+                "slugline": {
+                    "draftjsState": [
+                        {"blocks": [
+                            {"key": "1", "text": "foo", "type": "unstyled"}
+                        ]}
+                    ]
+                },
+                "description_text": {
+                    "draftjsState": [
+                        {"blocks": [
+                            {"key": "1", "text": "caption", "type": "unstyled"}
+                        ]}
+                    ]
+                },
+                "headline": {
+                    "draftjsState": [null]
+                }
+            }
+        }
+        """
+        Then we get existing resource
+        """
+        {
+            "slugline": "test",
+            "headline": "head2",
+            "description_text": "caption"
+        }
+        """
