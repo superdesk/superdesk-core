@@ -556,3 +556,57 @@ class ArchiveTestCase(TestCase):
             {"utc_publish_schedule": NOW + timedelta(minutes=100), "time_zone": None},
         )
         self.assertEqual(corrected_associate_item["state"], CONTENT_STATE.SCHEDULED)
+
+    def test_reschedule_sets_same_time_for_images(self):
+        archive_service = superdesk.get_resource_service("archive")
+        publish_service = superdesk.get_resource_service("archive_publish")
+
+        article_id = "article1"
+        image_id = "image1"
+        schedule_time = NOW + timedelta(minutes=30)
+
+        article = {
+            "_id": article_id,
+            "guid": article_id,
+            "unique_name": article_id,
+            "type": "text",
+            "state": CONTENT_STATE.PROGRESS,
+            "headline": "Test Article",
+            "body_html": "<p>Test content</p>",
+            "_current_version": 1,
+            "associations": {
+                "featuremedia": {
+                    "_id": image_id,
+                    "guid": image_id,
+                    "unique_name": image_id,
+                    "type": "picture",
+                    "state": CONTENT_STATE.PROGRESS,
+                }
+            },
+        }
+
+        image = {
+            "_id": image_id,
+            "guid": image_id,
+            "unique_name": image_id,
+            "type": "picture",
+            "state": CONTENT_STATE.PROGRESS,
+            "headline": "Test Image",
+            "_current_version": 1,
+        }
+
+        archive_service.create([article])
+        archive_service.create([image])
+
+        publish_service.patch(
+            article_id,
+            {
+                "publish_schedule": schedule_time,
+                "headline": "Test Article",
+                "body_html": "<p>Test content</p>",
+            },
+        )
+
+        updated_image = archive_service.find_one(req=None, _id=image_id)
+        assert updated_image[PUBLISH_SCHEDULE].replace(microsecond=0) == schedule_time.replace(microsecond=0)
+        assert updated_image.get(SCHEDULE_SETTINGS, {}).get("utc_publish_schedule") is not None

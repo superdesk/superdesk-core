@@ -852,16 +852,31 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             get_resource_service("archive_history").post(new_history_items)
 
     def update(self, id, updates, original):
-        if updates.get(ASSOCIATIONS):
-            for key, association in updates[ASSOCIATIONS].items():
-                if association is None:
-                    continue
-                # don't set time stamp for related items
-                if not is_related_content(key):
-                    self._set_association_timestamps(association, updates, new=False)
-                    remove_unwanted(association)
+        if PUBLISH_SCHEDULE in updates and updates.get(PUBLISH_SCHEDULE):
+            associations = updates.get(ASSOCIATIONS) or original.get(ASSOCIATIONS, {})
+            archive_service = get_resource_service("archive")
 
-        # this needs to here as resolve_nested_documents (in eve) will add the schedule_settings
+            for key, assoc in associations.items():
+                if not assoc or is_related_content(key):
+                    continue
+
+                if not assoc.get("_embedded"):
+                    self._set_association_timestamps(assoc, updates, new=False)
+
+                    assoc_id = assoc.get("_id")
+                    if assoc_id:
+                        assoc_updates = {
+                            PUBLISH_SCHEDULE: updates[PUBLISH_SCHEDULE],
+                            SCHEDULE_SETTINGS: updates.get(SCHEDULE_SETTINGS),
+                            config.LAST_UPDATED: updates.get(config.LAST_UPDATED, datetime.datetime.utcnow()),
+                        }
+                        archive_service.patch(id=assoc_id, updates=assoc_updates)
+
+                        updated_assoc = archive_service.find_one(req=None, _id=assoc_id)
+                        updates.setdefault(ASSOCIATIONS, {})[key] = updated_assoc
+
+                remove_unwanted(assoc)
+
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
 
