@@ -877,6 +877,11 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
                 remove_unwanted(assoc)
 
+        if ASSOCIATIONS in updates:
+            for assoc in updates[ASSOCIATIONS].values():
+                if isinstance(assoc, dict):
+                    assoc.pop("_type", None)
+
         if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
             self.deschedule_item(updates, original)  # this is an deschedule action
 
