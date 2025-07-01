@@ -10,11 +10,13 @@
 
 import operator
 from functools import reduce
-import superdesk
+from inspect import isawaitable
+
 from superdesk.core import get_current_app
+from superdesk.eve_async import AsyncBaseService
 
 
-class ProdApiService(superdesk.Service):
+class ProdApiService(AsyncBaseService):
     """
     Base service for production api services
     """
@@ -31,7 +33,7 @@ class ProdApiService(superdesk.Service):
         "fields_meta",
     }
 
-    def on_fetched(self, result):
+    async def on_fetched_async(self, result):
         """
         Event handler when a collection of items is retrieved from database.
         Post-process a fetched items.
@@ -39,15 +41,19 @@ class ProdApiService(superdesk.Service):
          some metadata, e.g. pagination info.
         """
         for doc in result["_items"]:
-            self._process_fetched_object(doc)
+            response = self._process_fetched_object(doc)
+            if isawaitable(response):
+                await response
 
-    def on_fetched_item(self, doc):
+    async def on_fetched_item_async(self, doc):
         """
         Event handler when a single item is retrieved from a database.
         Post-process a fetched item.
         :param dict docs: fetched items from a database.
         """
-        self._process_fetched_object(doc)
+        response = self._process_fetched_object(doc)
+        if isawaitable(response):
+            await response
 
     def _process_fetched_object(self, doc):
         """

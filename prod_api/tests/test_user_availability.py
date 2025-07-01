@@ -3,12 +3,12 @@ import bson
 from flask import url_for
 
 
-def test_service_get(superdesk_app, prodapi_app_with_data):
+async def test_service_get(superdesk_app, prodapi_app_with_data):
     """
     Test fetching items using `user_availability` service
     :param prodapi_app_with_data: prod api app with filled data
     """
-    with superdesk_app.app_context():
+    async with superdesk_app.app_context():
         user = superdesk_app.data.find_one("users", req=None, username="admin")
         assert user
         superdesk_app.data.insert(
@@ -17,10 +17,10 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
                 {"_id": user["_id"], "enabled": True},
             ],
         )
-    with prodapi_app_with_data.test_client() as client:
-        resp = client.get("/prodapi/v1/user_availability?month=2023-05")
+    async with prodapi_app_with_data.test_client() as client:
+        resp = await client.get("/prodapi/v1/user_availability?month=2023-05")
         assert resp.status_code == 200
-        items = resp.json["_items"]
+        items = (await resp.get_json())["_items"]
 
         assert len(items) == 1
         assert items[0]["_id"]
@@ -55,30 +55,32 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
             0
         ]["availability"]
 
-        resp = client.get("/prodapi/v1/user_availability/{}?month=2023-05".format(items[0]["_id"]))
+        resp = await client.get("/prodapi/v1/user_availability/{}?month=2023-05".format(items[0]["_id"]))
         assert resp.status_code == 200
+        resp_json = await resp.get_json()
         for key in items[0].keys():
             if key == "_links":
                 continue
-            assert resp.json[key] == items[0][key]
+            assert resp_json[key] == items[0][key]
 
-        resp = client.get("/prodapi/v1/user_availability")
-        assert resp.json["_items"]
-        assert resp.json["_items"][0]["availability"] == []
+        resp = await client.get("/prodapi/v1/user_availability")
+        resp_json = await resp.get_json()
+        assert resp_json["_items"]
+        assert resp_json["_items"][0]["availability"] == []
 
-        resp = client.get("/prodapi/v1/user_availability/{}?month=2023-05".format(bson.ObjectId()))
+        resp = await client.get("/prodapi/v1/user_availability/{}?month=2023-05".format(bson.ObjectId()))
         assert resp.status_code == 404
 
 
-def test_readonly(prodapi_app_with_data, prodapi_app_with_data_client):
+async def test_readonly(prodapi_app_with_data, prodapi_app_with_data_client):
     """
     Ensure that `user_availability` endpoint is readonly
     :param prodapi_app_with_data: prod api app with filled data
     :param prodapi_app_with_data_client: client for prod api app with filled data
     """
-    with prodapi_app_with_data.test_request_context():
+    async with prodapi_app_with_data.test_request_context("/"):
         for method, status in (("get", 200), ("post", 405), ("patch", 405), ("put", 405), ("delete", 405)):
             # we send a request
-            resp = getattr(prodapi_app_with_data_client, method)(url_for("user_availability|resource"))
+            resp = await getattr(prodapi_app_with_data_client, method)(url_for("user_availability|resource"))
             # we get a response
             assert resp.status_code == status

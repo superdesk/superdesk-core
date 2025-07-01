@@ -11,7 +11,7 @@
 from datetime import date, timedelta
 from typing import Tuple
 from superdesk import get_resource_service
-from superdesk.utils import ListCursor
+from superdesk.eve_async import AsyncListCursor
 from ..service import ProdApiService
 
 
@@ -22,7 +22,7 @@ class UserAvailabilityService(ProdApiService):
         "_generated",
     } | ProdApiService.excluded_fields
 
-    def get(self, req, lookup):
+    async def get_async(self, req, lookup):
         start_date, end_date = self.get_start_end_dates(req)
         availability_enabled = [
             default_availability["_id"]
@@ -30,13 +30,13 @@ class UserAvailabilityService(ProdApiService):
                 req=None, lookup={"enabled": True}, projection={"_id": 1}
             )
         ]
-        users = get_resource_service("users").find(where={"_id": {"$in": availability_enabled}})
-        user_data = [self._get_user_availability(user, start_date, end_date) for user in users]
-        return ListCursor(user_data)
+        users = await get_resource_service("users").find_async(where={"_id": {"$in": availability_enabled}})
+        user_data = [self._get_user_availability(user, start_date, end_date) async for user in users]
+        return AsyncListCursor(user_data)
 
-    def find_one(self, req, **lookup):
+    async def find_one_async(self, req, **lookup):
         start_date, end_date = self.get_start_end_dates(req)
-        user = get_resource_service("users").find_one(req=None, **lookup)
+        user = await get_resource_service("users").find_one_async(req=None, **lookup)
         if not user:
             return user
         user_data = self._get_user_availability(user, start_date, end_date)

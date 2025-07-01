@@ -1,10 +1,11 @@
 from time import time
 from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError, ExpiredTokenError, DecodeError
+from quart import Response
 from eve.auth import TokenAuth
 
-from superdesk.core import get_app_config
-from superdesk.flask import abort, make_response, jsonify
+from superdesk.core import get_app_config, json
+from superdesk.flask import abort
 from superdesk import get_resource_privileges
 
 
@@ -37,6 +38,11 @@ class JWTAuth(TokenAuth):
         # authorization
         resource_privileges = get_resource_privileges(resource).get(method, None)
         if resource_privileges not in decoded_jwt.get("scope", []):
-            abort(make_response(jsonify({"_status": "ERR", "_error": {"code": 403, "message": "Invalid scope"}}), 403))
+            abort(
+                Response(
+                    json.dumps({"_status": "ERR", "_error": {"code": 403, "message": "Invalid scope"}}),
+                    status=403,
+                )
+            )
 
         return True
