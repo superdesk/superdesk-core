@@ -852,37 +852,25 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
             get_resource_service("archive_history").post(new_history_items)
 
     def update(self, id, updates, original):
-        if PUBLISH_SCHEDULE in updates and updates.get(PUBLISH_SCHEDULE):
-            associations = updates.get(ASSOCIATIONS) or original.get(ASSOCIATIONS, {})
-            archive_service = get_resource_service("archive")
-
-            for key, assoc in associations.items():
-                if not assoc or is_related_content(key):
+        if updates.get(ASSOCIATIONS):
+            for key, association in updates[ASSOCIATIONS].items():
+                if association is None:
                     continue
+                # don't set time stamp for related items
+                if not is_related_content(key):
+                    self._set_association_timestamps(association, updates, new=False)
+                    remove_unwanted(association)
 
-                if not assoc.get("_embedded"):
-                    self._set_association_timestamps(assoc, updates, new=False)
+        # Handle schedule updates (add only when new schedule is set)
+        if PUBLISH_SCHEDULE in updates and updates[PUBLISH_SCHEDULE]:
+            self._handle_schedule_update(updates, original)
 
-                    assoc_id = assoc.get("_id")
-                    if assoc_id:
-                        assoc_updates = {
-                            PUBLISH_SCHEDULE: updates[PUBLISH_SCHEDULE],
-                            SCHEDULE_SETTINGS: updates.get(SCHEDULE_SETTINGS),
-                            config.LAST_UPDATED: updates.get(config.LAST_UPDATED, datetime.datetime.utcnow()),
-                        }
-                        archive_service.patch(id=assoc_id, updates=assoc_updates)
-
-                        updated_assoc = archive_service.find_one(req=None, _id=assoc_id)
-                        updates.setdefault(ASSOCIATIONS, {})[key] = updated_assoc
-
-                remove_unwanted(assoc)
-
-        if ASSOCIATIONS in updates:
-            for assoc in updates[ASSOCIATIONS].values():
-                if isinstance(assoc, dict):
-                    assoc.pop("_type", None)
-
-        if PUBLISH_SCHEDULE in updates and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED:
+        # Handle deschedule
+        if (
+            PUBLISH_SCHEDULE in updates
+            and original[ITEM_STATE] == CONTENT_STATE.SCHEDULED
+            and not updates[PUBLISH_SCHEDULE]
+        ):
             self.deschedule_item(updates, original)  # this is an deschedule action
 
         # send signal
@@ -896,6 +884,39 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
         if "marked_for_user" in updates:
             self.handle_mark_user_notifications(updates, original)
+
+    def _handle_schedule_update(self, updates, original):
+        """Handle updates to the publish schedule for associated items."""
+        associations = updates.get(ASSOCIATIONS) or original.get(ASSOCIATIONS, {})
+        archive_service = get_resource_service("archive")
+
+        for key, assoc in associations.items():
+            if not assoc or is_related_content(key):
+                continue
+
+            # Only update if this is actually a schedule change
+            current_schedule = assoc.get(PUBLISH_SCHEDULE)
+            new_schedule = updates[PUBLISH_SCHEDULE]
+
+            if current_schedule != new_schedule:
+                assoc_id = assoc.get("_id")
+                if assoc_id:
+                    # Preserve existing timestamps and only update schedule fields
+                    assoc_updates = {
+                        PUBLISH_SCHEDULE: new_schedule,
+                        SCHEDULE_SETTINGS: updates.get(SCHEDULE_SETTINGS),
+                        config.LAST_UPDATED: datetime.datetime.utcnow(),
+                    }
+
+                    current_assoc = archive_service.find_one(req=None, _id=assoc_id)
+                    if current_assoc and config.DATE_CREATED in current_assoc:
+                        assoc_updates[config.DATE_CREATED] = current_assoc[config.DATE_CREATED]
+
+                    archive_service.patch(id=assoc_id, updates=assoc_updates)
+                    updated_assoc = archive_service.find_one(req=None, _id=assoc_id)
+                    updates.setdefault(ASSOCIATIONS, {})[key] = updated_assoc
+
+            remove_unwanted(assoc)
 
     def deschedule_item(self, updates, original):
         """Deschedule an item.
