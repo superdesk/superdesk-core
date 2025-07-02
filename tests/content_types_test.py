@@ -117,3 +117,12 @@ class ContentTypesTestCase(TestCase):
 
         content_types.prepare_for_edit_content_type(doc)
         self.assertGreaterEqual(doc["_updated"], utcnow() - timedelta(seconds=2))
+
+    def test_get_output_name_for_text_profile(self):
+        service = content_types.ContentTypesService()
+
+        with mock.patch("apps.content_types.content_types.get_profile") as mock_get_profile:
+            mock_get_profile.return_value = {"label": "Article"}
+
+            result = service.get_output_name("text")
+            self.assertEqual(result, "Article")
