@@ -5219,3 +5219,149 @@ Feature: Content Publishing
             }
         }
       """
+
+    @auth
+    Scenario: Associated image inherits correct schedule during publish, deschedule, and republish
+      Given empty "subscribers"
+      Given config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true }
+      """
+      And "desks"
+      """
+      [{"name": "News", "content_expiry": 60}]
+      """
+      And the "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And "archive"
+      """
+      [
+          {
+              "_id": "img-1",
+              "guid": "img-1",
+              "_current_version": 1,
+              "type": "picture",
+              "slugline": "Associated image",
+              "headline": "Associated image",
+              "state": "in_progress",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "renditions": {}
+          },
+          {
+              "_id": "art-1",
+              "guid": "art-1",
+              "_current_version": 1,
+              "headline": "Main Article",
+              "slugline": "Main Article",
+              "body_html": "Article body",
+              "state": "in_progress",
+              "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+              },
+              "associations": {
+                  "media--1": {
+                      "_id": "img-1",
+                      "_current_version": 1,
+                      "guid": "img-1",
+                      "type": "picture",
+                      "slugline": "Associated image",
+                      "headline": "Associated image",
+                      "state": "in_progress",
+                      "renditions": {},
+                      "task": {
+                          "desk": "#desks._id#",
+                          "stage": "#desks.incoming_stage#",
+                          "user": "#CONTEXT_USER_ID#"
+                      }
+                  }
+              }
+          }
+      ]
+      """
+      When we publish "art-1" with "publish" type and "published" state
+      """
+      {
+          "publish_schedule": "2035-04-01T10:00:00+0000",
+          "schedule_settings": {"time_zone": "UTC"}
+      }
+      """
+      Then we get OK response
+
+      # Validate both article and image are scheduled
+      When we get "/archive/art-1"
+      Then we get existing resource
+      """
+      {
+          "_id": "art-1",
+          "guid": "art-1",
+          "state": "scheduled",
+          "operation": "publish",
+          "associations": {
+              "media--1": {
+                  "guid": "img-1",
+                  "type": "picture",
+                  "state": "scheduled",
+                  "operation": "publish"
+              }
+          }
+      }
+      """
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "guid": "img-1",
+          "type": "picture",
+          "publish_schedule": "2035-04-01T10:00:00+0000",
+          "state": "scheduled",
+          "operation": "publish"
+      }
+      """
+
+      # Deschedule article (image will also be descheduled)
+      When we patch "/archive/art-1"
+      """
+      { "publish_schedule": null }
+      """
+      Then we get OK response
+
+      # Validate image also descheduled
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "guid": "img-1",
+          "type": "picture",
+          "state": "in_progress",
+          "operation": "deschedule"
+      }
+      """
+
+      # Republish article with NEW time
+      When we publish "art-1" with "publish" type and "published" state
+      """
+      {
+          "publish_schedule": "2035-04-01T12:00:00+0000",
+          "schedule_settings": {"time_zone": "UTC"}
+      }
+      """
+      Then we get OK response
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "guid": "img-1",
+          "type": "picture",
+          "publish_schedule": "2035-04-01T12:00:00+0000",
+          "state": "scheduled",
+          "operation": "publish"
+      }
+      """

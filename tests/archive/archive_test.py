@@ -11,8 +11,8 @@
 import time
 
 from bson import ObjectId
-from datetime import datetime, timedelta, timezone
-from pytz import timezone as pytz_timezone
+from pytz import timezone
+from datetime import timedelta, datetime
 from copy import deepcopy
 from unittest import mock
 
@@ -76,7 +76,7 @@ class ArchiveTestCase(TestCase):
             "country": "Australia",
         }
 
-        current_timestamp = datetime.fromtimestamp(current_ts.timestamp(), tz=pytz_timezone(located["tz"]))
+        current_timestamp = datetime.fromtimestamp(current_ts.timestamp(), tz=timezone(located["tz"]))
         if current_timestamp.month == 9:
             formatted_date = "Sept {}".format(current_timestamp.strftime("%-d"))
         elif 3 <= current_timestamp.month <= 7:
@@ -556,85 +556,3 @@ class ArchiveTestCase(TestCase):
             {"utc_publish_schedule": NOW + timedelta(minutes=100), "time_zone": None},
         )
         self.assertEqual(corrected_associate_item["state"], CONTENT_STATE.SCHEDULED)
-
-    def test_reschedule_sets_same_time_for_images(self):
-        archive_service = superdesk.get_resource_service("archive")
-        now_utc = utcnow().replace(tzinfo=timezone.utc)
-        schedule_time_initial = now_utc + timedelta(minutes=30)
-        schedule_time_rescheduled = now_utc + timedelta(minutes=90)
-
-        article_id = "article1"
-        image_id = "image1"
-
-        article = {
-            "_id": article_id,
-            "guid": article_id,
-            "unique_name": article_id,
-            "type": "text",
-            "state": CONTENT_STATE.PROGRESS,
-            "headline": "Test Article",
-            "body_html": "<p>Test content</p>",
-            "_current_version": 1,
-            "associations": {
-                "featuremedia": {
-                    "_id": image_id,
-                    "guid": image_id,
-                    "unique_name": image_id,
-                    "type": "picture",
-                    "state": CONTENT_STATE.PROGRESS,
-                }
-            },
-        }
-
-        image = {
-            "_id": image_id,
-            "guid": image_id,
-            "unique_name": image_id,
-            "type": "picture",
-            "state": CONTENT_STATE.PROGRESS,
-            "headline": "Test Image",
-            "_current_version": 1,
-        }
-
-        archive_service.create([article])
-        archive_service.create([image])
-
-        # Initial schedule
-        original = archive_service.find_one(req=None, _id=article_id)
-        archive_service.update(
-            article_id,
-            {
-                "publish_schedule": schedule_time_initial,
-                "headline": "Test Article",
-                "body_html": "<p>Test content</p>",
-                SCHEDULE_SETTINGS: {"utc_publish_schedule": schedule_time_initial, "time_zone": None},
-            },
-            original,
-        )
-
-        # Deschedule
-        original = archive_service.find_one(req=None, _id=article_id)
-        archive_service.update(article_id, {"publish_schedule": None}, original)
-
-        # Reschedule
-        original = archive_service.find_one(req=None, _id=article_id)
-        archive_service.update(
-            article_id,
-            {
-                "publish_schedule": schedule_time_rescheduled,
-                "headline": "Test Article - Rescheduled",
-                "body_html": "<p>Updated content</p>",
-                SCHEDULE_SETTINGS: {"utc_publish_schedule": schedule_time_rescheduled, "time_zone": None},
-            },
-            original,
-        )
-
-        # Verify that the image was rescheduled to match the article's publish time
-        rescheduled_image = archive_service.find_one(req=None, _id=image_id)
-
-        actual_ts = int(rescheduled_image[PUBLISH_SCHEDULE].astimezone(timezone.utc).timestamp())
-        expected_ts = int(schedule_time_rescheduled.astimezone(timezone.utc).timestamp())
-        assert abs(actual_ts - expected_ts) < 5
-
-        actual_utc = int(rescheduled_image.get(SCHEDULE_SETTINGS, {}).get("utc_publish_schedule").timestamp())
-        assert abs(actual_utc - expected_ts) < 5
