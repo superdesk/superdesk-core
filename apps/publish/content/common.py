@@ -967,7 +967,7 @@ class BasePublishService(BaseService):
         if self.publish_type == "publish" and (updates.get(PUBLISH_SCHEDULE) or original.get(PUBLISH_SCHEDULE)):
             schedule_settings = updates.get(SCHEDULE_SETTINGS, original.get(SCHEDULE_SETTINGS, {}))
             publish_schedule = updates.get(PUBLISH_SCHEDULE, original.get(PUBLISH_SCHEDULE))
-            if publish_schedule:
+            if publish_schedule and not associated_item.get(PUBLISH_SCHEDULE):
                 # Always overwrite to ensure consistency
                 associated_item[PUBLISH_SCHEDULE] = publish_schedule
                 associated_item[SCHEDULE_SETTINGS] = schedule_settings
