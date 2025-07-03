@@ -242,9 +242,10 @@ class ContentTypesService(CacheableService):
         try:
             _id = bson.ObjectId(profile)
             item = self.find_one(req=None, _id=_id) or {}
-            return format_content_type_name(item, str(_id))
         except bson.errors.InvalidId:
-            return profile
+            item = get_profile(profile) or {}
+
+        return format_content_type_name(item, str(profile))
 
     def get_schema(self, item):
         profile_id = item.get("profile") or item.get("type")
