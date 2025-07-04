@@ -5204,3 +5204,168 @@ Feature: Content Publishing
             }
         }
       """
+
+    @auth
+    Scenario: Associated image maintains correct schedule and timezone across publish, deschedule, and reschedule
+      Given empty "subscribers"
+      And config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true }
+      """
+      And "desks"
+      """
+      [{ "name": "News", "content_expiry": 60 }]
+      """
+      And "validators"
+      """
+      [{ "_id": "publish_text", "act": "publish", "type": "text", "schema": {} }]
+      """
+      And "archive"
+      """
+      [
+        {
+          "_id": "img-1",
+          "guid": "img-1",
+          "_current_version": 1,
+          "type": "picture",
+          "slugline": "Associated image",
+          "headline": "Associated image",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "renditions": {}
+        },
+        {
+          "_id": "art-1",
+          "guid": "art-1",
+          "_current_version": 1,
+          "headline": "Main Article",
+          "slugline": "Main Article",
+          "body_html": "Article body",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "associations": {
+            "media--1": {
+              "_id": "img-1",
+              "_current_version": 1,
+              "guid": "img-1",
+              "type": "picture",
+              "slugline": "Associated image",
+              "headline": "Associated image",
+              "state": "in_progress",
+              "renditions": {},
+              "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+              }
+            }
+          }
+        }
+      ]
+      """
+
+      # Schedule article & image in Europe/Prague
+      When we publish "art-1" with "publish" type and "published" state
+      """
+      {
+          "publish_schedule": "2035-04-01T10:00:00+0200",
+          "schedule_settings": { "time_zone": "Europe/Prague" }
+      }
+      """
+      Then we get OK response
+
+    # Validate both article and image are scheduled
+      When we get "/archive/art-1"
+      Then we get existing resource
+      """
+      {
+          "_id": "art-1",
+          "guid": "art-1",
+          "state": "scheduled",
+          "operation": "publish",
+          "publish_schedule": "2035-04-01T08:00:00+0000",
+          "schedule_settings": {
+            "time_zone": "Europe/Prague",
+            "utc_publish_schedule": "2035-04-01T08:00:00+0000"
+          },
+          "associations": {
+            "media--1": {
+              "guid": "img-1",
+              "type": "picture",
+              "state": "scheduled",
+              "operation": "publish"
+          }
+        }
+      }
+      """
+
+      # Validate image scheduled
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "_id": "img-1",
+          "guid": "img-1",
+          "state": "scheduled",
+          "operation": "publish",
+          "publish_schedule": "2035-04-01T08:00:00+0000",
+          "schedule_settings": {
+            "time_zone": "Europe/Prague",
+            "utc_publish_schedule": "2035-04-01T08:00:00+0000"
+        }
+      }
+      """
+
+      # Deschedule article (and image should also be descheduled)
+      When we patch "/archive/art-1"
+      """
+      { "publish_schedule": null }
+      """
+      Then we get OK response
+
+    # Validate image also descheduled
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "_id": "img-1",
+          "guid": "img-1",
+          "state": "in_progress",
+          "operation": "deschedule"
+      }
+      """
+
+      # Reschedule article & image in America/New_York
+      When we publish "art-1" with "publish" type and "published" state
+      """
+      {
+          "publish_schedule": "2035-04-01T08:00:00-0400",
+          "schedule_settings": { "time_zone": "America/New_York" }
+      }
+      """
+      Then we get OK response
+
+      # Validate image scheduled in New York timezone
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "_id": "img-1",
+          "guid": "img-1",
+          "state": "scheduled",
+          "operation": "publish",
+          "publish_schedule": "2035-04-01T12:00:00+0000",
+          "schedule_settings": {
+            "time_zone": "America/New_York",
+            "utc_publish_schedule": "2035-04-01T12:00:00+0000"
+        }
+      }
+      """

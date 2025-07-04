@@ -508,6 +508,14 @@ class ArchiveService(BaseService, HighlightsSearchMixin):
 
             self._set_association_timestamps(item_obj, updates, new=False)
 
+            # Clear schedule if parent or associated item is being descheduled
+            if ITEM_DESCHEDULE in (
+                updates.get(ITEM_OPERATION),
+                original.get(ITEM_OPERATION),
+                item_obj.get("operation"),
+            ):
+                item_obj[PUBLISH_SCHEDULE] = None
+                item_obj[SCHEDULE_SETTINGS] = {}
             stored_item.update(item_obj)
 
             updates[ASSOCIATIONS][item_name] = stored_item
