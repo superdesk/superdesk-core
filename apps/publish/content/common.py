@@ -809,6 +809,9 @@ class BasePublishService(BaseService):
         archive_service = get_resource_service("archive")
 
         for associations_key, associated_item in associations.items():
+            if not associated_item or associated_item.get("state") == CONTENT_STATE.CORRECTED:
+                # Skip already corrected associated items; they don't need re-publishing
+                continue
             if associated_item is None:
                 continue
             if isinstance(associated_item, dict) and associated_item.get(config.ID_FIELD):
