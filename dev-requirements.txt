@@ -18,5 +18,5 @@ pyexiv2==2.15.4; sys_platform == 'linux'
 snowballstemmer==3.0.1
 
 -e .
--e git+https://github.com/superdesk/superdesk-planning.git@release/2.10#egg=superdesk-planning
+-e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning
 -e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
