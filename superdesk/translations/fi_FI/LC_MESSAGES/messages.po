@@ -5,8 +5,8 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
 # 
 # Translators:
-# Salla Salmela, 2024
-# Maija Paikkala, 2024
+# Maija Paikkala, 2025
+# Salla Salmela, 2025
 # 
 #, fuzzy
 msgid ""
@@ -15,7 +15,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2023-09-13 14:50+0200\n"
 "PO-Revision-Date: 2019-04-04 09:17+0000\n"
-"Last-Translator: Maija Paikkala, 2024\n"
+"Last-Translator: Salla Salmela, 2025\n"
 "Language-Team: Finnish (Finland) (https://app.transifex.com/sourcefabric/teams/6584/fi_FI/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -111,7 +111,7 @@ msgstr ""
 
 #: superdesk/macros/validate_for_publish.py:29
 msgid "Validate for Publish"
-msgstr ""
+msgstr "Tarkista lähettämistä varten"
 
 #: superdesk/macros/imperial/area_acre_to_metric.py:47
 msgid "Area acres to metric"
@@ -220,7 +220,7 @@ msgstr "Roolien hallinta"
 
 #: superdesk/roles/__init__.py:23
 msgid "User can manage roles."
-msgstr ""
+msgstr "Käyttäjä voi hallita rooleja."
 
 #: superdesk/sams/__init__.py:50
 msgid "Sams"
@@ -260,7 +260,7 @@ msgstr "Käyttäjähallinta"
 
 #: apps/ldap/__init__.py:26 superdesk/users/__init__.py:25
 msgid "User can manage users."
-msgstr ""
+msgstr "Käyttäjä voi hallita käyttäjiä."
 
 #: superdesk/vocabularies/__init__.py:30
 msgid "Prefered CV items"
@@ -276,7 +276,7 @@ msgstr "Sanastojen hallinta"
 
 #: superdesk/vocabularies/vocabularies.py:40
 msgid "User can manage vocabularies' contents."
-msgstr ""
+msgstr "Käyttäjä voi hallita sanastojen sisältöjä."
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:79
 #: apps/validate/validate.py:64 superdesk/vocabularies/vocabularies.py:440
@@ -364,7 +364,7 @@ msgstr ""
 
 #: apps/preferences.py:139
 msgid "rows"
-msgstr ""
+msgstr "riviä"
 
 #: apps/preferences.py:168
 msgid "Located"
@@ -380,7 +380,7 @@ msgstr ""
 
 #: apps/preferences.py:179
 msgid "categories"
-msgstr ""
+msgstr "kategoriat"
 
 #: apps/preferences.py:188
 msgid "Preferred Desks"
@@ -439,7 +439,7 @@ msgstr ""
 
 #: apps/tasks.py:103
 msgid "User is not member of desk: {desk_id}"
-msgstr ""
+msgstr "Käyttäjä ei ole jäsen ryhmässä: {desk_id}"
 
 #: apps/archive/common.py:587 apps/tasks.py:113
 msgid "Invalid stage identifier {stage_id}"
@@ -459,11 +459,11 @@ msgstr ""
 
 #: apps/archive/__init__.py:114
 msgid "Create content"
-msgstr ""
+msgstr "Luo sisältö"
 
 #: apps/archive/__init__.py:114
 msgid "Create and save content"
-msgstr ""
+msgstr "Luo ja tallenna sisältö"
 
 #: apps/archive/__init__.py:117
 msgid "Ingest"
@@ -487,7 +487,7 @@ msgstr ""
 
 #: apps/archive/__init__.py:121
 msgid "View spiked content"
-msgstr ""
+msgstr "Näytä poistettu sisältö"
 
 #: apps/archive/__init__.py:124
 msgid "Unspike"
@@ -503,7 +503,7 @@ msgstr "Muokkaa uniikkia nimeä"
 
 #: apps/archive/__init__.py:127
 msgid "Edit unique name"
-msgstr ""
+msgstr "Muokkaa uniikkia nimeä"
 
 #: apps/archive/__init__.py:129
 msgid "Hold"
@@ -519,7 +519,7 @@ msgstr "Palauta"
 
 #: apps/archive/__init__.py:130
 msgid "Restore content"
-msgstr ""
+msgstr "Palauta sisältö"
 
 #: apps/archive/__init__.py:131
 msgid "Update"
@@ -527,15 +527,15 @@ msgstr "Päivitä"
 
 #: apps/archive/__init__.py:131
 msgid "Create an update"
-msgstr ""
+msgstr "Luo päivitys"
 
 #: apps/archive/__init__.py:134
 msgid "Unlock content"
-msgstr ""
+msgstr "Poista lukitus"
 
 #: apps/archive/__init__.py:135
 msgid "Unlock locked content by another user"
-msgstr ""
+msgstr "Poista toisen käyttäjän asettama lukitus"
 
 #: apps/archive/__init__.py:139
 msgid "Mark items for users"
@@ -553,15 +553,15 @@ msgstr ""
 #: apps/duplication/archive_duplication.py:141
 #: apps/item_autosave/components/item_autosave.py:36
 msgid "The item was locked by another user"
-msgstr ""
+msgstr "Tämä kohde on lukittuna toisella käyttäjällä"
 
 #: apps/archive/archive.py:619 apps/archived/archived.py:201
 msgid "User does not have permissions to read the item."
-msgstr ""
+msgstr "Käyttäjällä ei ole oikeuksia lukea sisältöä."
 
 #: apps/archive/archive.py:635
 msgid "Invalid version {old_version}"
-msgstr ""
+msgstr "Virheellinen versio {old_version}"
 
 #: apps/archive/archive.py:639
 msgid "Invalid item id {item_id}"
@@ -573,11 +573,11 @@ msgstr ""
 
 #: apps/archive/archive.py:977
 msgid "An item can't have both Publish Schedule and Embargo"
-msgstr ""
+msgstr "Kohteella ei voi olla sekä embargoa että uloslähetysaikaa"
 
 #: apps/archive/archive.py:983
 msgid "Embargo cannot be earlier than now"
-msgstr ""
+msgstr "Embargo ei voi olla menneisyydessä"
 
 #: apps/archive/archive.py:986
 msgid "Rewrites doesn't support Embargo"
@@ -585,7 +585,7 @@ msgstr ""
 
 #: apps/archive/archive.py:989
 msgid "Invalid Embargo"
-msgstr ""
+msgstr "Virheellinen embargo"
 
 #: apps/archive/archive.py:993
 msgid "A Package doesn't support Embargo"
@@ -631,7 +631,7 @@ msgstr ""
 
 #: apps/archive/archive_correction.py:130 apps/archive/archive_rewrite.py:141
 msgid "Cannot find the article"
-msgstr ""
+msgstr "Artikkelia ei löydetty"
 
 #: apps/archive/archive_link.py:57 apps/archive/archive_rewrite.py:376
 msgid "Only updates can be unlinked!"
@@ -643,7 +643,7 @@ msgstr ""
 
 #: apps/archive/archive_rewrite.py:148
 msgid "Event id does not exist"
-msgstr ""
+msgstr "Tapahtuma-ID:ä ei ole olemassa "
 
 #: apps/archive/archive_rewrite.py:151
 msgid "Article has been rewritten before !"
@@ -696,7 +696,7 @@ msgstr ""
 
 #: apps/archive/common.py:674
 msgid "Schedule cannot be earlier than now"
-msgstr ""
+msgstr "Uloslähetys ei voi olla menneisyydessä"
 
 #: apps/archive/common.py:690
 msgid "{} date is not recognized"
@@ -773,11 +773,11 @@ msgstr ""
 
 #: apps/archived/archived.py:414
 msgid "Archive Management"
-msgstr ""
+msgstr "Arkiston hallinta"
 
 #: apps/archived/archived.py:415
 msgid "User can remove items from the archived"
-msgstr ""
+msgstr "Käyttäjä voi poistaa kohteita arkistoiduista"
 
 #: apps/auth/__init__.py:64
 msgid "Invalid user."
@@ -789,7 +789,7 @@ msgstr ""
 
 #: apps/auth/service.py:79
 msgid "Not found."
-msgstr ""
+msgstr "Ei löytynyt."
 
 #: apps/auth/db/db.py:31
 msgid ""
@@ -811,11 +811,11 @@ msgstr ""
 
 #: apps/auth/db/reset_password.py:103 apps/auth/db/reset_password.py:120
 msgid "User not active"
-msgstr ""
+msgstr "Käyttäjä ei ole aktiivinen"
 
 #: apps/auth/oidc/auth.py:69
 msgid "Please update your account email address"
-msgstr ""
+msgstr "Päivitä tilisi sähköpostiosoite, ole hyvä"
 
 #: apps/comments/comments.py:80
 msgid "Commenting on behalf of someone else is prohibited."
@@ -884,7 +884,7 @@ msgstr ""
 #: apps/content_filters/content_filter/content_filter_test.py:59
 #: apps/products/product_test.py:52 apps/publish/formatters/service.py:65
 msgid "Article not found!"
-msgstr ""
+msgstr "Artikkelia ei löytynyt!"
 
 #: apps/content_filters/content_filter/content_filter_test.py:64
 msgid "Error in testing article: {error}"
@@ -915,7 +915,7 @@ msgstr ""
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:67
 #: apps/validate/validate.py:78
 msgid "Subject"
-msgstr ""
+msgstr "IPTC"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:74
 #: apps/validate/validate.py:69
@@ -925,7 +925,7 @@ msgstr "Prioriteetti"
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:82
 #: apps/validate/validate.py:73
 msgid "Slugline"
-msgstr ""
+msgstr "Aiheen nimi"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:87
 #: apps/validate/validate.py:79
@@ -944,7 +944,7 @@ msgstr "Otsikko"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:104
 msgid "Ednote"
-msgstr ""
+msgstr "Lisätiedot toimituksille"
 
 #: apps/content_filters/filter_condition/filter_condition_parameters.py:109
 #: apps/validate/validate.py:46
@@ -1002,15 +1002,15 @@ msgstr ""
 
 #: apps/content_types/__init__.py:13
 msgid "Content Profile"
-msgstr ""
+msgstr "Sisältöprofiili"
 
 #: apps/content_types/__init__.py:14
 msgid "Manage content profiles"
-msgstr ""
+msgstr "Hallitse sisältöprofiileja"
 
 #: apps/content_types/content_types.py:148
 msgid "Vocabulary {vocabulary} is used in {count} content type(s)"
-msgstr ""
+msgstr "Sanasto {vocabulary} on käytössä {count} sisältötyypissä"
 
 #: apps/content_types/content_types.py:170
 msgid ""
@@ -1025,11 +1025,11 @@ msgstr ""
 
 #: apps/dictionaries/__init__.py:24
 msgid "Dictionaries List Management"
-msgstr ""
+msgstr "Kirjastolistojen hallinta"
 
 #: apps/dictionaries/__init__.py:25
 msgid "User can manage dictionaries lists."
-msgstr ""
+msgstr "Käyttäjä voi hallita kirjastojen listoja."
 
 #: apps/dictionaries/service.py:142
 msgid "A text dictionary file is required"
@@ -1038,7 +1038,7 @@ msgstr ""
 #: apps/dictionaries/service.py:161 apps/dictionaries/service.py:281
 #: apps/dictionaries/service.py:285
 msgid "The dictionary already exists"
-msgstr ""
+msgstr "Tämä sanakirja on jo olemassa"
 
 #: apps/dictionaries/service.py:189
 msgid "User is required for the abbreviations dictionary."
@@ -1085,7 +1085,7 @@ msgstr ""
 
 #: apps/duplication/archive_duplication.py:54
 msgid "Duplicate to Personal space is not allowed."
-msgstr ""
+msgstr "Kopiointi henkilökohtaiseen tilaan ei ole sallittu."
 
 #: apps/duplication/archive_fetch.py:75
 msgid "Failed to find ingest item with _id: {id}"
@@ -1106,6 +1106,7 @@ msgstr ""
 #: apps/export/service.py:67
 msgid "Error creating export zip file. Try again please."
 msgstr ""
+"Ilmeni virhe zip-tiedoston luomisessa vientiin. Yritä uudestaan, ole hyvä."
 
 #: apps/export/service.py:80
 msgid "No items to export."
@@ -1149,7 +1150,7 @@ msgstr ""
 
 #: apps/io/feeding_services/reuters.py:148
 msgid "Not found {payload}"
-msgstr ""
+msgstr "Ei löytynyt {payload}"
 
 #: apps/item_autosave/components/item_autosave.py:32
 msgid "Invalid item identifier"
@@ -1157,11 +1158,11 @@ msgstr ""
 
 #: apps/item_lock/components/item_lock.py:85
 msgid "Item is locked by another user."
-msgstr ""
+msgstr "Kohde on lukittuna toisella käyttäjällä."
 
 #: apps/item_lock/components/item_lock.py:133
 msgid "Item is not locked."
-msgstr ""
+msgstr "Kohdetta ei ole lukittu."
 
 #: apps/keywords/alchemy.py:27
 msgid "AlchemyAPI key is not set"
@@ -1194,7 +1195,7 @@ msgstr ""
 
 #: apps/ldap/ldap.py:213
 msgid "User already exists in the system."
-msgstr ""
+msgstr "Tämä käyttäjä on jo luotuna järjestelmään."
 
 #: apps/legal_archive/__init__.py:62
 msgid "Legal Archive"
@@ -1270,7 +1271,7 @@ msgstr ""
 
 #: apps/packages/package_service.py:451
 msgid "Package can't have item which has embargo. "
-msgstr ""
+msgstr "Paketissa ei voi olla kohteita, joilla on embargo."
 
 #: apps/packages/package_service.py:452
 msgid "Slugline/Unique Name of the item having embargo: {slugline}/{unique}"
@@ -1286,7 +1287,7 @@ msgstr ""
 
 #: apps/products/product_test.py:46
 msgid "Article id cannot be empty!"
-msgstr ""
+msgstr "Artikkeli-ID ei voi olla tyhjä!"
 
 #: apps/products/product_test.py:59
 msgid "Error in testing article: {exception}"
@@ -1299,12 +1300,13 @@ msgstr ""
 #: apps/products/service.py:48
 msgid ""
 "Product is used for API publishing for the subscriber(s): {subscribers}"
-msgstr ""
+msgstr "Tuotetta käytetään rajapintalähetyksissä asiakkaille: {subscribers}"
 
 #: apps/products/service.py:58
 msgid ""
 "Product is used for direct publishing for the subscriber(s): {subscribers}"
 msgstr ""
+"Tuotetta käytetään jakeluissa asiakkaille (ei rajapinta): {subscribers}"
 
 #: apps/publish/__init__.py:74
 msgid "Subscribers"
@@ -1312,7 +1314,7 @@ msgstr "Tilaajat"
 
 #: apps/publish/__init__.py:74
 msgid "User can manage subscribers"
-msgstr ""
+msgstr "Käyttäjä voi hallita asiakkaita"
 
 #: apps/publish/__init__.py:76
 msgid "Publish"
@@ -1320,7 +1322,7 @@ msgstr "Julkaise"
 
 #: apps/publish/__init__.py:76
 msgid "Publish a content"
-msgstr ""
+msgstr "Lähetä versio"
 
 #: apps/publish/__init__.py:77
 msgid "Kill"
@@ -1336,15 +1338,15 @@ msgstr "Korjaus"
 
 #: apps/publish/__init__.py:79
 msgid "Correction to a published content"
-msgstr ""
+msgstr "Korjaus jo lähetettyyn versioon"
 
 #: apps/publish/__init__.py:83
 msgid "Publish Queue"
-msgstr ""
+msgstr "Lähetysjono"
 
 #: apps/publish/__init__.py:84
 msgid "User can update publish queue"
-msgstr ""
+msgstr "Käyttäjä voi päivittää lähetysjonoa"
 
 #: apps/publish/__init__.py:88
 msgid "Resending Stories"
@@ -1356,7 +1358,7 @@ msgstr ""
 
 #: apps/publish/__init__.py:92
 msgid "User can set embargo date"
-msgstr ""
+msgstr "Käyttäjä voi asettaa embargon"
 
 #: apps/publish/__init__.py:95
 msgid "Take down"
@@ -1392,15 +1394,15 @@ msgstr ""
 
 #: apps/publish/content/common.py:266
 msgid "Failed to publish the item: {id}"
-msgstr ""
+msgstr "Version {id} lähetys epäonnistui"
 
 #: apps/publish/content/common.py:318
 msgid "Embargo can't be set after publishing"
-msgstr ""
+msgstr "Embargoa ei voi lisätä lähettämisen jälkeen"
 
 #: apps/publish/content/common.py:322
 msgid "Dateline can't be modified on kill or take down"
-msgstr ""
+msgstr "Perutun version päiväyspaikkaa ei voi muuttaa"
 
 #: apps/publish/content/common.py:327
 msgid "Cannot publish the story after Update is published."
@@ -1408,7 +1410,7 @@ msgstr ""
 
 #: apps/publish/content/common.py:339
 msgid "Can't publish update until original story is published."
-msgstr ""
+msgstr "Päivitystä ei voi tehdä ennen kuin alkuperäinen versio on lähetetty."
 
 #: apps/publish/content/common.py:381
 msgid ""
@@ -1431,7 +1433,7 @@ msgstr ""
 
 #: apps/publish/content/common.py:408
 msgid "Cannot publish an item which is marked as Not for Publication"
-msgstr ""
+msgstr "Versiota ei voi julkaista, koska siinä on merkintä \"ei asiakkaille\""
 
 #: apps/publish/content/common.py:413
 msgid "Can't {operation} as item state is {state}"
@@ -1515,7 +1517,7 @@ msgstr ""
 
 #: apps/publish/content/resend.py:84
 msgid "Story couldn't be found!"
-msgstr ""
+msgstr "Juttua ei löytynyt!"
 
 #: apps/publish/content/resend.py:87
 msgid "Only text stories can be resent!"
@@ -1527,11 +1529,11 @@ msgstr ""
 
 #: apps/publish/content/resend.py:101
 msgid "Please use the newest version {version} to resend!"
-msgstr ""
+msgstr "Ole hyvä ja käytä uusinta versiota {version} uudelleenlähettääksesi!"
 
 #: apps/publish/content/resend.py:105
 msgid "Updated story cannot be resent!"
-msgstr ""
+msgstr "Päivitettyä juttua ei voi uudelleenlähettää!"
 
 #: apps/publish/content/unpublish.py:19
 msgid ""
@@ -1545,7 +1547,7 @@ msgstr ""
 
 #: apps/publish/enqueue/enqueue_service.py:201
 msgid "Failed to publish the item: {exception}"
-msgstr ""
+msgstr "Version {exception} lähetys epäonnistui"
 
 #: apps/publish/enqueue/enqueue_service.py:604
 msgid "Can not find package {package} published item {item}"
@@ -1609,7 +1611,7 @@ msgstr "Epäkelpo arvo viikonpäivänä"
 
 #: apps/rules/routing_rules.py:331
 msgid "Invalid value for from time."
-msgstr ""
+msgstr "Virheellinen arvo alkuajalle."
 
 #: apps/rules/routing_rules.py:339
 msgid "Invalid value for hour_of_day_to (expected %H:%M:%S)."
@@ -1617,11 +1619,11 @@ msgstr ""
 
 #: apps/rules/routing_rules.py:343
 msgid "From time should be less than To Time."
-msgstr ""
+msgstr "Alkuajan tulee olla aikaisempi kuin päättymisajan."
 
 #: apps/rules/routing_rules.py:348
 msgid "Unknown time zone {time_zone}"
-msgstr ""
+msgstr "Tuntematon aikavyöhyke {time_zone}"
 
 #: apps/rules/routing_rules.py:361
 msgid "Rule Names must be unique within a scheme"
@@ -1645,31 +1647,31 @@ msgstr ""
 
 #: apps/saved_searches/__init__.py:55
 msgid "Global searches"
-msgstr ""
+msgstr "Jaetut haut"
 
 #: apps/saved_searches/__init__.py:56
 msgid "Use global saved searches."
-msgstr ""
+msgstr "Käytä jaettuja hakuja."
 
 #: apps/saved_searches/__init__.py:60
 msgid "Manage Global Saved Searches"
-msgstr ""
+msgstr "Hallinnoi jaettuja hakuja"
 
 #: apps/saved_searches/__init__.py:61
 msgid "User can manage other users' global saved searches"
-msgstr ""
+msgstr "Käyttäjä voi hallinnoida muiden käyttäjien luomia jaettuja hakuja"
 
 #: apps/saved_searches/__init__.py:65
 msgid "Manage Saved Searches"
-msgstr ""
+msgstr "Hallinnoi jaettuja hakuja"
 
 #: apps/saved_searches/__init__.py:66
 msgid "User can manage saved searches"
-msgstr ""
+msgstr "Käyttäjä voi hallinnoida jaettuja hakuja"
 
 #: apps/saved_searches/__init__.py:70
 msgid "Manage Saved Searches Subscriptions"
-msgstr ""
+msgstr "Hallinnoi tallennettujen hakujen tilauksia"
 
 #: apps/saved_searches/__init__.py:71
 msgid "User can (un)subscribe to saved searches"
@@ -1677,7 +1679,7 @@ msgstr ""
 
 #: apps/saved_searches/__init__.py:75
 msgid "Manage Saved Searches Subscriptions For Other Users"
-msgstr ""
+msgstr "Hallinnoi muiden käyttäjien tallennettujen hakujen tilauksia"
 
 #: apps/saved_searches/__init__.py:76
 msgid "User manage other users saved searches subscriptions"
@@ -1697,7 +1699,7 @@ msgstr ""
 
 #: apps/saved_searches/saved_searches.py:244
 msgid "Search cannot be saved without a filter!"
-msgstr ""
+msgstr "Hakua ei voida tallentaa ilman suodatinta!"
 
 #: apps/saved_searches/saved_searches.py:266
 msgid "Fail to validate the filter against {index}."
@@ -1705,15 +1707,15 @@ msgstr ""
 
 #: apps/saved_searches/saved_searches.py:286
 msgid "Unauthorized to modify other user's local search."
-msgstr ""
+msgstr "Sinulla ei ole oikeuksia muokata toisen käyttäjän lokaalia hakua."
 
 #: apps/saved_searches/saved_searches.py:288
 msgid "Unauthorized to modify global search."
-msgstr ""
+msgstr "Sinulla ei ole oikeuksia muokata globaalia hakua."
 
 #: apps/saved_searches/saved_searches.py:313
 msgid "Invalid Saved Search"
-msgstr ""
+msgstr "Viallinen tallennettu haku"
 
 #: apps/search_providers/__init__.py:29
 msgid "Manage Search Providers"
@@ -1755,7 +1757,7 @@ msgstr ""
 
 #: apps/system_message/__init__.py:28
 msgid "System Message"
-msgstr ""
+msgstr "Järjestelmäviesti"
 
 #: apps/system_message/__init__.py:29
 msgid "User can manage system messages."
@@ -1767,7 +1769,7 @@ msgstr "Templatet"
 
 #: apps/templates/__init__.py:28
 msgid "Create templates"
-msgstr ""
+msgstr "Luo malleja"
 
 #: apps/templates/__init__.py:33 apps/templates/__init__.py:34
 msgid "Manage other user personal template"
@@ -1792,10 +1794,12 @@ msgstr ""
 #: apps/templates/content_templates.py:437
 msgid "You dont have the privilege to {action} another user personal template"
 msgstr ""
+"Sinulla ei ole oikeuksia toimintoon: {action} toisen käyttäjän "
+"henkilökohtaisessa mallissa"
 
 #: apps/templates/content_templates.py:441
 msgid "You dont have the privilege to {action} the public template"
-msgstr ""
+msgstr "Sinulla ei ole oikeuksia toimintoon: {action} julkisessa mallissa"
 
 #: apps/validate/validate.py:39
 msgid "Abstract"
@@ -1827,7 +1831,7 @@ msgstr ""
 
 #: apps/validate/validate.py:47
 msgid "Byline"
-msgstr ""
+msgstr "Kirjoittaja"
 
 #: apps/validate/validate.py:48
 msgid "Categories"
@@ -1835,15 +1839,15 @@ msgstr "Kategoriat"
 
 #: apps/validate/validate.py:49
 msgid "Company Codes"
-msgstr ""
+msgstr "Yrityskoodit"
 
 #: apps/validate/validate.py:50
 msgid "Copyright holder"
-msgstr ""
+msgstr "Tekijänoikeuksien haltija"
 
 #: apps/validate/validate.py:51
 msgid "Copyright notice"
-msgstr ""
+msgstr "Tekijänoikeushuomautus"
 
 #: apps/validate/validate.py:52
 msgid "Dateline"
@@ -1855,7 +1859,7 @@ msgstr "Kuvaus"
 
 #: apps/validate/validate.py:55
 msgid "Ed. Note"
-msgstr ""
+msgstr "Lisätiedot toimituksille"
 
 #: apps/validate/validate.py:57
 msgid "Feature Image"
@@ -1887,11 +1891,11 @@ msgstr ""
 
 #: apps/validate/validate.py:70
 msgid "Scheduled Time"
-msgstr ""
+msgstr "Ajastuksen aika"
 
 #: apps/validate/validate.py:71
 msgid "Related Items"
-msgstr ""
+msgstr "liittyvät kohteet"
 
 #: apps/validate/validate.py:72
 msgid "Sign Off"
@@ -1899,7 +1903,7 @@ msgstr "Kirjaudu ulos"
 
 #: apps/validate/validate.py:75
 msgid "SMS Message"
-msgstr ""
+msgstr "Tekstiviesti"
 
 #: apps/validate/validate.py:81
 msgid "Usage Terms"
@@ -1907,11 +1911,11 @@ msgstr ""
 
 #: apps/validate/validate.py:85
 msgid "is a required field"
-msgstr ""
+msgstr "on pakollinen kenttä"
 
 #: apps/validate/validate.py:86
 msgid "max length is {length}"
-msgstr ""
+msgstr "enimmäispituus on {length}"
 
 #: apps/validate/validate.py:87
 msgid "require a string value"
@@ -1923,23 +1927,23 @@ msgstr ""
 
 #: apps/validate/validate.py:89
 msgid "{} is a required field"
-msgstr ""
+msgstr "{} on pakollinen kenttä"
 
 #: apps/validate/validate.py:90
 msgid "contains invalid characters"
-msgstr ""
+msgstr "sisältää virheellisiä merkkejä"
 
 #: apps/validate/validate.py:91
 msgid "{} is too long"
-msgstr ""
+msgstr "{} on liian pitkä"
 
 #: apps/validate/validate.py:92
 msgid "{} is too short"
-msgstr ""
+msgstr "{} on liian lyhyt"
 
 #: apps/validate/validate.py:93
 msgid "empty values not allowed"
-msgstr ""
+msgstr "tyhjiä arvoja ei sallita"
 
 #: apps/video_edit/__init__.py:29
 msgid "\"video_editor_id\" is required"
@@ -1955,4 +1959,4 @@ msgstr "Aloitussivu"
 
 #: apps/workspace/__init__.py:24
 msgid "Can access dashboard."
-msgstr ""
+msgstr "Pääsee aloitussivulle"
