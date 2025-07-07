@@ -67,3 +67,138 @@ Feature: Content Correction
         """
         {"_items": [{"item_id": "123", "subscriber_id": "#sub1#", "publishing_action": "corrected"}]}
         """
+
+    @auth
+    Scenario: Publish new article with both published and corrected associated items
+
+        # Step 1: Setup publishing product and subscriber
+        When we post to "/products" with success
+        """
+        {"name": "mix-test", "codes": "abc,xyz", "product_type": "both"}
+        """
+        When we post to "/subscribers" with "sub-mixed" and success
+        """
+        {
+            "name": "Mixed Channel", "media_type": "media", "subscriber_type": "wire",
+            "sequence_num_settings": {"min": 1, "max": 10}, "email": "mix@test.com",
+            "products": ["#products._id#"], "is_active": true,
+            "destinations": [
+                {
+                    "name": "MixDest", "format": "nitf", "delivery_type": "email",
+                    "config": {"recipients": "mix@test.com"}
+                }
+            ]
+        }
+        """
+
+        # Step 2: Setup desks and content items
+        Given "desks"
+        """
+        [{"name": "MixedDesk", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+        And "archive"
+        """
+        [
+            {
+                "_id": "tag:example.com,2025:newsml_PUBLISHED_ARTICLE",
+                "guid": "tag:example.com,2025:newsml_PUBLISHED_ARTICLE",
+                "type": "text",
+                "headline": "Published Article",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            },
+            {
+                "_id": "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE",
+                "guid": "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE",
+                "type": "text",
+                "headline": "Correctable Article",
+                "state": "in_progress",
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            }
+        ]
+        """
+
+        # Step 3: Publish both articles
+        When we publish "tag:example.com,2025:newsml_PUBLISHED_ARTICLE" with "publish" type and "published" state
+        Then we get OK response
+
+        When we publish "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE" with "publish" type and "published" state
+        Then we get OK response
+
+        # Step 4: Send a correction to the second article
+        When we publish "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE" with "correct" type and "corrected" state
+        """
+        {"headline": "Corrected Article"}
+        """
+        Then we get OK response
+
+        # Step 5: Create a new article with both published and corrected items as associations
+        When we post to "/archive" with "tag:example.com,2025:newsml_MAIN_ARTICLE" and success
+        """
+        {
+            "_id": "tag:example.com,2025:newsml_MAIN_ARTICLE",
+            "guid": "tag:example.com,2025:newsml_MAIN_ARTICLE",
+            "type": "text",
+            "headline": "Main Article with Mixed Associations",
+            "state": "in_progress",
+            "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+            },
+            "associations": {
+                "related-published": {
+                    "_id": "tag:example.com,2025:newsml_PUBLISHED_ARTICLE",
+                    "guid": "tag:example.com,2025:newsml_PUBLISHED_ARTICLE",
+                    "type": "text"
+                },
+                "related-corrected": {
+                    "_id": "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE",
+                    "guid": "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE",
+                    "type": "text"
+                }
+            }
+        }
+        """
+
+        # Step 6: Publish the new article with both associated items
+        When we publish "tag:example.com,2025:newsml_MAIN_ARTICLE" with "publish" type and "published" state
+        Then we get OK response
+
+        # Step 7: Verify that all items are in published/corrected state
+        When we get "/published"
+        Then we get list with 4 items
+        """
+        {
+            "_items": [
+                {
+                    "guid": "tag:example.com,2025:newsml_PUBLISHED_ARTICLE",
+                    "headline": "Published Article",
+                    "state": "published"
+                },
+                {
+                    "guid": "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE",
+                    "headline": "Correctable Article",
+                    "state": "published"
+                },
+                {
+                    "guid": "tag:example.com,2025:newsml_CORRECTABLE_ARTICLE",
+                    "headline": "Corrected Article",
+                    "state": "corrected"
+                },
+                {
+                    "guid": "tag:example.com,2025:newsml_MAIN_ARTICLE",
+                    "headline": "Main Article with Mixed Associations",
+                    "state": "published"
+                }
+            ]
+        }
+        """

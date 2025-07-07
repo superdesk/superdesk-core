@@ -921,7 +921,12 @@ class BasePublishService(AsyncBaseService):
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
+
             if isinstance(associated_item, dict) and associated_item.get(ID_FIELD):
+                if associated_item.get("state") == CONTENT_STATE.CORRECTED:
+                    # Skip already corrected associated items; they don't need re-publishing
+                    continue
+
                 if not get_config(bool, "PUBLISH_ASSOCIATED_ITEMS") or not publish_service:
                     if original.get(ASSOCIATIONS, {}).get(associations_key):
                         # Not allowed to publish
