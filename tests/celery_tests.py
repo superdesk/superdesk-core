@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from bson import ObjectId
 from eve.utils import date_to_str
@@ -24,7 +24,7 @@ class CeleryTestCase(TestCase):
         self.assertEqual(try_cast(str(self._id)), self._id)
 
     def test_cast_datetime(self):
-        date = datetime(2012, 12, 12, 12, 12, 12, 0)
+        date = datetime(2012, 12, 12, 12, 12, 12, 0, tzinfo=timezone.utc)
         with self.app.app_context():
             s = date_to_str(date)
             self.assertEqual(try_cast(s).day, date.day)
