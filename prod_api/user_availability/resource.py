@@ -24,6 +24,7 @@ class UserAvailabilityResource(Resource):
         "date": {"type": "string"},
         "user": {"type": "objectid"},
         "status": {"type": "string"},
+        "working_hours": {"type": "list"},
     }
     datasource = {"source": "user_availability", "default_sort": [("date", 1)]}
     privileges = {"GET": Scope.USERS_READ.name}
