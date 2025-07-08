@@ -9,10 +9,27 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from datetime import date, timedelta
-from typing import Tuple
+from typing import Dict, Tuple, TypedDict
 from superdesk import get_resource_service
 from superdesk.utils import ListCursor
 from ..service import ProdApiService
+
+
+class AvailabilityData(TypedDict):
+    status: str
+    published_articles: int
+    published_events: int
+    working_hours: list[dict[str, str]]
+
+
+AvailabilityMap = Dict[str, AvailabilityData]
+
+
+def format_hours(availability_day):
+    if availability_day.get("working_hours"):
+        sorted_hours = sorted(availability_day["working_hours"], key=lambda wh: wh["start_time"])
+        return [{"start": wh["start_time"], "end": wh["end_time"]} for wh in sorted_hours]
+    return []
 
 
 class UserAvailabilityService(ProdApiService):
@@ -59,7 +76,7 @@ class UserAvailabilityService(ProdApiService):
 
     def _get_user_availability(self, user, start_date, end_date):
         user_data = {"_id": user["_id"], "username": user["username"], "availability": []}
-        availability_map = {}
+        availability_map: AvailabilityMap = {}
 
         availability_days = self.find(
             where={
@@ -77,6 +94,7 @@ class UserAvailabilityService(ProdApiService):
                     "status": availability_day["status"],
                     "published_articles": 0,
                     "published_events": 0,
+                    "working_hours": format_hours(availability_day),
                 }
 
         metrics = get_resource_service("user_metrics").find(
@@ -90,9 +108,9 @@ class UserAvailabilityService(ProdApiService):
         )
 
         for metric in metrics:
-            availability_map.setdefault(metric["date"], {"status": "", "published_articles": 0, "published_events": 0})[
-                metric["name"]
-            ] = metric["value"]
+            availability_map.setdefault(
+                metric["date"], {"status": "", "published_articles": 0, "published_events": 0, "working_hours": []}
+            )[metric["name"]] = metric["value"]
 
         user_data["availability"] = [
             {
@@ -100,6 +118,7 @@ class UserAvailabilityService(ProdApiService):
                 "status": availability_map[date]["status"],
                 "published_articles": availability_map[date]["published_articles"],
                 "published_events": availability_map[date]["published_events"],
+                "working_hours": availability_map[date]["working_hours"],
             }
             for date in sorted(availability_map.keys())
         ]

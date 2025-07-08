@@ -33,27 +33,28 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
             "status": "available",
             "published_articles": 5,
             "published_events": 0,
-        } in items[
-            0
-        ]["availability"]
+            "working_hours": [
+                {"start": "09:00:00", "end": "17:00:00"},
+            ],
+        } in items[0]["availability"]
 
         assert {
             "date": "2023-05-16",
             "status": "partial",
             "published_articles": 0,
             "published_events": 2,
-        } in items[
-            0
-        ]["availability"]
+            "working_hours": [
+                {"start": "12:00:00", "end": "17:00:00"},
+            ],
+        } in items[0]["availability"]
 
         assert {
             "date": "2023-05-18",
             "status": "",
             "published_articles": 3,
             "published_events": 0,
-        } in items[
-            0
-        ]["availability"]
+            "working_hours": [],
+        } in items[0]["availability"]
 
         resp = client.get("/prodapi/v1/user_availability/{}?month=2023-05".format(items[0]["_id"]))
         assert resp.status_code == 200
