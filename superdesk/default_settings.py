@@ -84,7 +84,7 @@ BEHAVE_TESTS_FIXTURES_PATH = ABS_PATH + "/features/steps/fixtures"
 
 IF_MATCH = True
 BANDWIDTH_SAVER = False
-DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
+DATE_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
 ELASTIC_DATE_FORMAT = "%Y-%m-%d"
 ELASTIC_DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S"
 #: default size of elastic queries generated on server
