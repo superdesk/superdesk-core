@@ -376,6 +376,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.saved_searches.report",
         "schedule": crontab(minute=0),
     },
+    "subscribers:schedule_update": {
+        "task": "superdesk.publish.subscribers_schedule.update_subscriber_activation_states",
+        "schedule": crontab(minute="*"),
+    }
 }
 
 #: Sentry DSN - will report exceptions there

@@ -70,6 +70,13 @@ class SubscribersResource(Resource):
                 },
             },
         },
+        "schedule": {
+            "type": "dict",
+            "schema": {
+                "startDate": {"type": "datetime", "nullable": True},
+                "endDate": {"type": "datetime", "nullable": True},
+            },
+        },
         "products": {"type": "list", "schema": Resource.rel("products", True)},
         "codes": {"type": "string"},
         "global_filters": {"type": "dict", "valueschema": {"type": "boolean"}},

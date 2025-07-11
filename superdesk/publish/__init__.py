@@ -22,6 +22,7 @@ from bson import ObjectId
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
 from superdesk import get_backend
+from .subscribers_schedule import update_subscriber_activation_states
 
 logger = logging.getLogger(__name__)
 
