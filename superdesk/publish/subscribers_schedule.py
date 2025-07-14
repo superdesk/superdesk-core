@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 
 @celery.task(soft_time_limit=30)
 def update_subscriber_activation_states():
-    """Celery task to check scheduled subscribers and activate/deactivate them.
+    """Task to check scheduled subscribers and activate/deactivate them.
 
     Runs every minute. If a subscriber has a `schedule` field defined,
     this will check if the current time is within the start and end range
@@ -27,7 +27,7 @@ def update_subscriber_activation_states():
             ]
         }
         subscribers = list(service.get(req=None, lookup=lookup))
-        logger.info("Processing %d subscribers for schedule activation/deactivation", len(subscribers))
+        logger.info("[Subscribers Schedule]: Processing %d subscribers for schedule activation/deactivation", len(subscribers))
 
         for subscriber in subscribers:
             updated = False
@@ -36,12 +36,10 @@ def update_subscriber_activation_states():
             end = schedule.get("endDate")
             active = subscriber.get("is_active", False)
 
-
             # Determine desired state
-            should_be_active = (
-                (not start or now >= start) and
-                (not end or now <= end)
-            )
+            is_after_start = not start or now >= start
+            is_before_end = not end or now <= end
+            should_be_active = is_after_start and is_before_end
 
             if should_be_active != active:
                 service.system_update(
@@ -53,12 +51,11 @@ def update_subscriber_activation_states():
 
             if updated:
                 message = (
-                    f"Subscriber '{subscriber.get('name', subscriber['_id'])}' "
+                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' "
                     f"{'activated' if should_be_active else 'deactivated'} "
                     f"due to schedule. Start: {start}, End: {end}"
                 )
                 logger.info(message)
 
-    except Exception as e:
-        print(f"[subscribers_schedule] Error occurred: {e}")
-        logger.exception("Failed to update subscriber activation states based on schedule.")
+    except Exception:
+        logger.exception("[Subscribers Schedule]: Failed to update subscriber activation states based on schedule.")
