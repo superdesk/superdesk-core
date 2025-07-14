@@ -22,17 +22,20 @@ class SubscriberScheduleTestCase(TestCase):
         start = self.now + timedelta(days=start_offset_days)
         end = self.now + timedelta(days=end_offset_days)
 
-        return self.app.data.insert("subscribers", [
-            {
-                "_id": ObjectId(),
-                "name": name,
-                "is_active": is_active,
-                "schedule": {
-                    "startDate": start,
-                    "endDate": end,
+        return self.app.data.insert(
+            "subscribers",
+            [
+                {
+                    "_id": ObjectId(),
+                    "name": name,
+                    "is_active": is_active,
+                    "schedule": {
+                        "startDate": start,
+                        "endDate": end,
+                    },
                 }
-            }
-        ])[0]
+            ],
+        )[0]
 
     def test_activation_and_deactivation_logic(self):
         # Subscriber to activate (inactive but in schedule)

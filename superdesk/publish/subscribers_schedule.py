@@ -27,7 +27,9 @@ def update_subscriber_activation_states():
             ]
         }
         subscribers = list(service.get(req=None, lookup=lookup))
-        logger.info("[Subscribers Schedule]: Processing %d subscribers for schedule activation/deactivation", len(subscribers))
+        logger.info(
+            "[Subscribers Schedule]: Processing %d subscribers for schedule activation/deactivation", len(subscribers)
+        )
 
         for subscriber in subscribers:
             updated = False
@@ -42,11 +44,7 @@ def update_subscriber_activation_states():
             should_be_active = is_after_start and is_before_end
 
             if should_be_active != active:
-                service.system_update(
-                    subscriber["_id"],
-                    {"is_active": should_be_active},
-                    subscriber
-                )
+                service.system_update(subscriber["_id"], {"is_active": should_be_active}, subscriber)
                 updated = True
 
             if updated:
