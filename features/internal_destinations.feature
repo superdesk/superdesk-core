@@ -72,9 +72,10 @@ Feature: Internal Destinations
             "subject":[{"qcode": "17004000", "name": "Statistics"}],
             "anpa_category": [{"qcode": "A", "name": "Sport"}],
             "anpa_take_key": "Take",
-            "publish_schedule": "2035-05-19T10:15:00+0100",
+            "publish_schedule": "2099-05-19T10:15:00",
             "schedule_settings": {
-                "time_zone": "Europe/London"
+                "time_zone": "Europe/London",
+                "utc_publish_schedule": "2099-05-19T10:15:00+0000"
             }
         }]
         """
@@ -84,7 +85,7 @@ Feature: Internal Destinations
         """
         When we publish "#archive._id#" with "publish" type and "published" state
         """
-        {"publish_schedule": "2035-05-19T10:15:00+0100",
+        {"publish_schedule": "2099-05-19T10:15:00",
         "schedule_settings": {"time_zone": "Europe/London"}}
         """
         Then we get OK response
@@ -98,10 +99,10 @@ Feature: Internal Destinations
             "state": "scheduled",
             "task": {"desk": "#origin_desk#", "stage": "#origin_stage#"},
             "body_html": "Body $10",
-            "publish_schedule": "2035-05-19T10:15:00+0100",
+            "publish_schedule": "2099-05-19T10:15:00+0000",
             "schedule_settings": {
                 "time_zone": "Europe/London",
-                "utc_publish_schedule": "2035-05-19T09:15:00+0000"
+                "utc_publish_schedule": "2099-05-19T10:15:00+0000"
             }
         }]}
         """
