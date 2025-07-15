@@ -31,7 +31,7 @@ def update_subscriber_activation_states():
             start = schedule.get("startDate")
             end = schedule.get("endDate")
             active = subscriber.get("is_active", False)
-            
+
             if start == today and not active:
                 service.system_update(subscriber["_id"], {"is_active": True}, subscriber)
                 logger.info(

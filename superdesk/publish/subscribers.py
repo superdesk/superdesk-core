@@ -141,7 +141,7 @@ class SubscribersService(CacheableService):
         self._validate_seq_num_settings(updates)
         subscriber = deepcopy(original)
         subscriber.update(updates)
-        
+
         self._apply_schedule_status(subscriber)
 
         # Apply the calculated status back to `updates`
@@ -320,7 +320,7 @@ class SubscribersService(CacheableService):
         now = utcnow().date()
         start_str = schedule.get("startDate")
         end_str = schedule.get("endDate")
-        
+
         start = datetime.fromisoformat(start_str).date() if start_str else None
         end = datetime.fromisoformat(end_str).date() if end_str else None
 
