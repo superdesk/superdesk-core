@@ -2,28 +2,23 @@ import logging
 
 from superdesk import get_resource_service
 from superdesk.celery_app import celery
-from superdesk.utc import utcnow
+from superdesk.dates import get_local_today
 
 logger = logging.getLogger(__name__)
 
 
 @celery.task(soft_time_limit=30)
 def update_subscriber_activation_states():
-    """Task to check scheduled subscribers and activate/deactivate them.
-
-    Runs every minute. If a subscriber has a `schedule` field defined,
-    this will check if the current time is within the start and end range
-    and update `is_active` accordingly.
-    """
-    now = utcnow()
+    """Task to activate/deactivate subscribers whose startDate or endDate matches current today"""
+    today = get_local_today().date().isoformat()
     service = get_resource_service("subscribers")
 
     try:
-        # Query for subscribers that have a schedule defined
+        # Query for subscribers that have a schedule defined for current date
         lookup = {
-            "$and": [
-                {"schedule.startDate": {"$ne": None}},
-                {"schedule.endDate": {"$ne": None}},
+            "$or": [
+                {"schedule.startDate": today},
+                {"schedule.endDate": today},
             ]
         }
         subscribers = list(service.get(req=None, lookup=lookup))
@@ -32,28 +27,21 @@ def update_subscriber_activation_states():
         )
 
         for subscriber in subscribers:
-            updated = False
             schedule = subscriber.get("schedule") or {}
             start = schedule.get("startDate")
             end = schedule.get("endDate")
             active = subscriber.get("is_active", False)
-
-            # Determine desired state
-            is_after_start = not start or now >= start
-            is_before_end = not end or now <= end
-            should_be_active = is_after_start and is_before_end
-
-            if should_be_active != active:
-                service.system_update(subscriber["_id"], {"is_active": should_be_active}, subscriber)
-                updated = True
-
-            if updated:
-                message = (
-                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' "
-                    f"{'activated' if should_be_active else 'deactivated'} "
-                    f"due to schedule. Start: {start}, End: {end}"
+            
+            if start == today and not active:
+                service.system_update(subscriber["_id"], {"is_active": True}, subscriber)
+                logger.info(
+                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' activated (startDate: {start})"
                 )
-                logger.info(message)
+            elif end == today and active:
+                service.system_update(subscriber["_id"], {"is_active": False}, subscriber)
+                logger.info(
+                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' deactivated (endDate: {end})"
+                )
 
     except Exception:
         logger.exception("[Subscribers Schedule]: Failed to update subscriber activation states based on schedule.")

@@ -378,7 +378,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "subscribers:schedule_update": {
         "task": "superdesk.publish.subscribers_schedule.update_subscriber_activation_states",
-        "schedule": crontab(minute="*"),
+        "schedule": crontab(minute=0, hour=local_to_utc_hour(0)),
     },
 }
 

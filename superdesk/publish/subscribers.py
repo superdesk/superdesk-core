@@ -12,6 +12,7 @@ import json
 import logging
 
 from copy import deepcopy
+from datetime import datetime
 
 from flask import current_app as app
 from superdesk import get_resource_service
@@ -23,6 +24,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.publish import SUBSCRIBER_TYPES  # NOQA
 from superdesk.metadata.utils import ProductTypes
 from superdesk.notification import push_notification
+from superdesk.utc import utcnow
 
 
 logger = logging.getLogger(__name__)
@@ -73,8 +75,8 @@ class SubscribersResource(Resource):
         "schedule": {
             "type": "dict",
             "schema": {
-                "startDate": {"type": "datetime", "nullable": True},
-                "endDate": {"type": "datetime", "nullable": True},
+                "startDate": {"type": "string", "nullable": True},
+                "endDate": {"type": "string", "nullable": True},
             },
         },
         "products": {"type": "list", "schema": Resource.rel("products", True)},
@@ -128,6 +130,7 @@ class SubscribersService(CacheableService):
 
     def on_create(self, docs):
         for doc in docs:
+            self._apply_schedule_status(doc)
             self._validate_seq_num_settings(doc)
             self._validate_products_destinations(doc)
 
@@ -138,6 +141,13 @@ class SubscribersService(CacheableService):
         self._validate_seq_num_settings(updates)
         subscriber = deepcopy(original)
         subscriber.update(updates)
+        
+        self._apply_schedule_status(subscriber)
+
+        # Apply the calculated status back to `updates`
+        if "is_active" in subscriber:
+            updates["is_active"] = subscriber["is_active"]
+
         self._validate_products_destinations(subscriber)
         self.keep_destinations_secrets(updates, original)
 
@@ -300,6 +310,34 @@ class SubscribersService(CacheableService):
             subscriber["sequence_num_settings"] = {"min": min, "max": max}
 
         return True
+
+    def _apply_schedule_status(self, subscriber):
+        """Set is_active flag based on current time and schedule.startDate/endDate if it exists."""
+        schedule = subscriber.get("schedule")
+        if not schedule:
+            return
+
+        now = utcnow().date()
+        start_str = schedule.get("startDate")
+        end_str = schedule.get("endDate")
+        
+        start = datetime.fromisoformat(start_str).date() if start_str else None
+        end = datetime.fromisoformat(end_str).date() if end_str else None
+
+        # If schedule starts in the future but is_active=True, let it remain active
+        if start and now < start and subscriber.get("is_active") is True:
+            return
+
+        # If schedule is in the past, don't enforce any changes to status
+        if end and now > end:
+            return
+
+        if start and end and start <= now <= end:
+            subscriber["is_active"] = True
+        elif start and now < start:
+            subscriber["is_active"] = False
+        elif end and now > end:
+            subscriber["is_active"] = False
 
     def generate_sequence_number(self, subscriber):
         """
