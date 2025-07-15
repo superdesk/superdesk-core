@@ -75,8 +75,8 @@ class SubscribersResource(Resource):
         "schedule": {
             "type": "dict",
             "schema": {
-                "startDate": {"type": "string", "nullable": True},
-                "endDate": {"type": "string", "nullable": True},
+                "start_date": {"type": "string", "nullable": True},
+                "end_date": {"type": "string", "nullable": True},
             },
         },
         "products": {"type": "list", "schema": Resource.rel("products", True)},
@@ -318,8 +318,8 @@ class SubscribersService(CacheableService):
             return
 
         now = utcnow().date()
-        start_str = schedule.get("startDate")
-        end_str = schedule.get("endDate")
+        start_str = schedule.get("start_date")
+        end_str = schedule.get("end_date")
 
         start = datetime.fromisoformat(start_str).date() if start_str else None
         end = datetime.fromisoformat(end_str).date() if end_str else None

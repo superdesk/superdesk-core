@@ -17,8 +17,8 @@ def update_subscriber_activation_states():
         # Query for subscribers that have a schedule defined for current date
         lookup = {
             "$or": [
-                {"schedule.startDate": today},
-                {"schedule.endDate": today},
+                {"schedule.start_date": today},
+                {"schedule.end_date": today},
             ]
         }
         subscribers = list(service.get(req=None, lookup=lookup))
@@ -28,19 +28,19 @@ def update_subscriber_activation_states():
 
         for subscriber in subscribers:
             schedule = subscriber.get("schedule") or {}
-            start = schedule.get("startDate")
-            end = schedule.get("endDate")
+            start = schedule.get("start_date")
+            end = schedule.get("end_date")
             active = subscriber.get("is_active", False)
 
             if start == today and not active:
                 service.system_update(subscriber["_id"], {"is_active": True}, subscriber)
                 logger.info(
-                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' activated (startDate: {start})"
+                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' activated (start_date: {start})"
                 )
             elif end == today and active:
                 service.system_update(subscriber["_id"], {"is_active": False}, subscriber)
                 logger.info(
-                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' deactivated (endDate: {end})"
+                    f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' deactivated (end_date: {end})"
                 )
 
     except Exception:

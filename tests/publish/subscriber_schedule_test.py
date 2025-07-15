@@ -26,8 +26,8 @@ class SubscriberScheduleTestCase(TestCase):
                     "name": name,
                     "is_active": is_active,
                     "schedule": {
-                        "startDate": start_date,
-                        "endDate": end_date,
+                        "start_date": start_date,
+                        "end_date": end_date,
                     },
                 }
             ],
