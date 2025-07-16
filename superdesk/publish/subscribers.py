@@ -324,8 +324,9 @@ class SubscribersService(CacheableService):
         start = datetime.fromisoformat(start_str).date() if start_str else None
         end = datetime.fromisoformat(end_str).date() if end_str else None
 
-        # If schedule starts in the future but is_active=True, let it remain active
+        # If schedule is in future, and is_active is True - match start date with current date
         if start and now < start and subscriber.get("is_active") is True:
+            schedule["start_date"] = now.strftime("%Y-%m-%d")
             return
 
         # If schedule is in the past, don't enforce any changes to status
