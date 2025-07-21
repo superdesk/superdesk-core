@@ -39,13 +39,17 @@ def update_subscriber_activation_states():
                 )
             elif end == today and active:
                 # Schedule is reset after deactivation since it is now entirely in the past
-                service.system_update(subscriber["_id"], {
-                    "is_active": False,
-                    "schedule": {
-                        "start_date": None,
-                        "end_date": None,
-                    }
-                }, subscriber)
+                service.system_update(
+                    subscriber["_id"],
+                    {
+                        "is_active": False,
+                        "schedule": {
+                            "start_date": None,
+                            "end_date": None,
+                        },
+                    },
+                    subscriber,
+                )
                 logger.info(
                     f"[Subscribers Schedule]: Subscriber '{subscriber.get('name', subscriber['_id'])}' deactivated (end_date: {end})"
                 )
