@@ -73,13 +73,14 @@ sphinxcontrib-qthelp==1.0.7
     # via sphinx
 sphinxcontrib-serializinghtml==1.1.10
     # via sphinx
-starlette==0.40.0
+starlette==0.47.2
     # via sphinx-autobuild
 tomli==2.2.1
     # via sphinx
 typing-extensions==4.12.2
     # via
     #   anyio
+    #   starlette
     #   uvicorn
 urllib3==2.5.0
     # via requests
