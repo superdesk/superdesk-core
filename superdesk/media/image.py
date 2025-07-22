@@ -13,7 +13,7 @@
 import io
 import logging
 
-from typing import BinaryIO, Dict, List, Literal, Mapping, TypedDict, Union
+from typing import BinaryIO, Dict, List, Literal, TypedDict, Union
 
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
@@ -22,7 +22,7 @@ from PIL.TiffImagePlugin import IFDRational
 from flask import json
 
 from superdesk.types import Item
-from .iim_codes import TAG, iim_codes
+from .iim_codes import iim_codes
 
 logger = logging.getLogger(__name__)
 

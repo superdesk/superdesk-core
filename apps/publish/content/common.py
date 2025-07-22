@@ -44,7 +44,16 @@ from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
-from superdesk.media.image import get_metadata_from_item, write_metadata
+from superdesk.media.image import (
+    read_metadata as image_read_metadata,
+    get_metadata_from_item,
+    write_metadata as image_write_metadata,
+)
+from superdesk.media.video import (
+    read_metadata as video_read_metadata,
+    get_video_from_photo,
+    write_metadata as video_write_metadata,
+)
 
 
 from eve.utils import config
@@ -236,8 +245,8 @@ class BasePublishService(BaseService):
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
 
-                if updated[ITEM_TYPE] == "picture":
-                    self._update_picture_metadata(updates, original, updated)
+                if updated[ITEM_TYPE] == "picture" or updated[ITEM_TYPE] == "video":
+                    self._update_media_metadata(updates, updated)
 
                 signals.item_publish.send(self, item=updated, updates=updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
@@ -975,7 +984,7 @@ class BasePublishService(BaseService):
                 associated_item[PUBLISH_SCHEDULE] = publish_schedule
                 associated_item[SCHEDULE_SETTINGS] = schedule_settings
 
-    def _update_picture_metadata(self, updates, original, updated):
+    def _update_media_metadata(self, updates, updated):
         renditions = updated.get("renditions") or {}
         mapping = app.config.get("PICTURE_METADATA_MAPPING")
 
@@ -994,15 +1003,28 @@ class BasePublishService(BaseService):
                 if not media_id:
                     continue
 
-                original_metadata = get_metadata_from_item(original, mapping)
-                metadata = get_metadata_from_item(updated, mapping)
-
-                if original_metadata == metadata:
-                    continue
-
                 picture = app.media.get(media_id)
                 binary = picture.read()
-                updated_binary = write_metadata(binary, metadata)
+
+                file_metadata = (
+                    video_read_metadata(binary) if updated[ITEM_TYPE] == "video" else image_read_metadata(binary)
+                )
+                metadata = (
+                    get_video_from_photo(get_metadata_from_item(updated, mapping))
+                    if updated[ITEM_TYPE] == "video"
+                    else get_metadata_from_item(updated, mapping)
+                )
+                should_update = any(metadata[k] != file_metadata.get(k) for k in metadata)
+
+                if not should_update:
+                    continue
+
+                updated_binary = (
+                    video_write_metadata(binary, metadata)
+                    if updated[ITEM_TYPE] == "video"
+                    else image_write_metadata(binary, metadata)
+                )
+
                 if updated_binary != binary:
                     updated_media_id = app.media.put(
                         updated_binary, content_type=picture.content_type, filename=picture.filename
