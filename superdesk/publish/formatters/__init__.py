@@ -49,9 +49,9 @@ class Formatter:
         """Formats the article and returns the output string for export"""
         raise NotImplementedError()
 
-    def can_format(self, format_type, article) -> bool:
+    def can_format(self, format_type: str, article) -> bool:
         """Test if formatter can format for given article."""
-        raise NotImplementedError()
+        return self.type == format_type
 
     def append_body_footer(self, article):
         """

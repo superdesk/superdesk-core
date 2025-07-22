@@ -17,6 +17,8 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FeedParser
 from superdesk.utc import utc
 from superdesk.metadata.utils import generate_tag_from_url
+from typing import Optional, Dict, List, Any
+from superdesk import get_resource_service
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +63,9 @@ class NINJSFeedParser(FeedParser):
                 ninjs = json.load(f)
                 if ninjs.get("uri") or ninjs.get("guid"):
                     return True
-        except Exception:
+        except Exception as err:
+            logger.exception(err)
+            logger.error("Failed to ingest json file")
             pass
         return False
 
@@ -95,7 +99,7 @@ class NINJSFeedParser(FeedParser):
             item["genre"] = self._format_qcodes(ninjs["genre"])
 
         if ninjs.get("service"):
-            item["anpa_category"] = self._format_qcodes(ninjs["service"])
+            item["anpa_category"] = self._format_qcodes(ninjs["service"], "categories")
 
         if ninjs.get("subject"):
             item["subject"] = self._format_qcodes(ninjs["subject"])
@@ -118,8 +122,8 @@ class NINJSFeedParser(FeedParser):
                     associated_item["versioncreated"] = self.datetime(associated_item["versioncreated"])
                 item["associations"][key] = deepcopy(associated_item)
 
-        if ninjs.get("renditions", {}).get("baseImage"):
-            item["renditions"] = {"baseImage": {"href": ninjs.get("renditions", {}).get("original", {}).get("href")}}
+        if ninjs.get("renditions"):
+            item["renditions"] = self.parse_renditions(ninjs["renditions"])
 
         if ninjs.get("located"):
             item["dateline"] = {"located": {"city": ninjs.get("located")}}
@@ -144,12 +148,59 @@ class NINJSFeedParser(FeedParser):
 
         return item
 
-    def _format_qcodes(self, items):
+    def parse_renditions(self, renditions):
+        rend = {}
+        for rendition_name, rendition_data in renditions.items():
+            parsed_rendition = {}
+
+            # Parse href
+            href = rendition_data.get("href", "")
+            if isinstance(href, str) and href:
+                parsed_rendition["href"] = href
+
+            # Parse width and height
+            width = rendition_data.get("width", None)
+            height = rendition_data.get("height", None)
+            if isinstance(width, int) and isinstance(height, int):
+                parsed_rendition["width"] = width
+                parsed_rendition["height"] = height
+
+            # Parse mimetype
+            mimetype = rendition_data.get("mimetype", "")
+            if isinstance(mimetype, str) and mimetype:
+                parsed_rendition["mimetype"] = mimetype
+
+            # Parse poi
+            poi = rendition_data.get("poi", {})
+            if isinstance(poi, dict) and "x" in poi and "y" in poi:
+                parsed_rendition["poi"] = {"x": poi["x"], "y": poi["y"]}
+
+            # Parse media
+            media = rendition_data.get("media", "")
+            if isinstance(media, str) and media:
+                parsed_rendition["media"] = media
+
+            if parsed_rendition:
+                rend[rendition_name] = parsed_rendition
+        return rend
+
+    def _format_qcodes(self, items: List[Dict[str, Any]], cv_name: Optional[str] = None) -> List[Dict[str, Any]]:
         subjects = []
+        cv = get_resource_service("vocabularies").find_one(req=None, _id=cv_name) or {}
+        cv_items = {item["qcode"]: item for item in cv.get("items") or []}
+
         for item in items:
-            subject = {"name": item.get("name"), "qcode": item.get("code")}
-            if item.get("scheme"):
-                subject["scheme"] = item.get("scheme")
+            if cv_items.get(item.get("code")):
+                subject = cv_items[item["code"]]
+            else:
+                subject = {
+                    "name": item.get("name"),
+                    "qcode": item.get("code"),
+                }
+            if not subject.get("translations") and item.get("translations"):
+                subject["translations"] = item["translations"]
+            if not subject.get("scheme") and item.get("scheme"):
+                subject["scheme"] = item["scheme"]
             subjects.append(subject)
 
         return subjects

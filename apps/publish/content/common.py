@@ -11,10 +11,13 @@
 import logging
 import superdesk
 import superdesk.signals as signals
+import superdesk.users.user_metrics as user_metrics
+
+from bson import ObjectId
+from datetime import datetime
 
 from copy import copy
 from copy import deepcopy
-from functools import partial
 from flask import current_app as app
 
 from superdesk import get_resource_service
@@ -37,11 +40,12 @@ from superdesk.metadata.item import (
 from superdesk.metadata.packages import LINKED_IN_PACKAGES, PACKAGE, PACKAGE_TYPE
 from superdesk.metadata.utils import item_url
 from superdesk.notification import push_notification
-from superdesk.publish import SUBSCRIBER_TYPES
 from superdesk.services import BaseService
-from superdesk.utc import utcnow, get_date
+from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
+from superdesk.media.image import get_metadata_from_item, write_metadata
+
 
 from eve.utils import config
 from eve.versioning import resolve_document_version
@@ -130,6 +134,10 @@ class BasePublishResource(ArchiveResource):
 
         self.privileges = {"PATCH": publish_type}
 
+        # ignore fields_meta when posting to avoid recursion error
+        # https://sentry.sourcefabric.org/share/issue/03b8d78f8eaf40219f65df015ddb17d6/
+        self.etag_ignore_fields = ["broadcast", "fields_meta"]
+
         super().__init__(endpoint_name, app=app, service=service)
 
 
@@ -139,11 +147,6 @@ class BasePublishService(BaseService):
     publish_type = "publish"
     published_state = "published"
     item_operation = ITEM_PUBLISH
-
-    non_digital = partial(filter, lambda s: s.get("subscriber_type", "") == SUBSCRIBER_TYPES.WIRE)
-    digital = partial(
-        filter, lambda s: (s.get("subscriber_type", "") in {SUBSCRIBER_TYPES.DIGITAL, SUBSCRIBER_TYPES.ALL})
-    )
     package_service = PackageService()
 
     def on_update(self, updates, original):
@@ -176,10 +179,10 @@ class BasePublishService(BaseService):
         push_content_notification([updates])
         self._import_into_legal_archive(updates)
         CropService().update_media_references(updates, original, True)
+        signals.item_published.send(self, item=original, after_scheduled=False)
 
-        # Do not send item if it is scheduled, on real publishing send item to internal destination
-        if not updates.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED:
-            signals.item_published.send(self, item=original)
+        if original.get("original_creator"):
+            user_metrics.incr("published_articles", original["original_creator"])
 
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
@@ -232,6 +235,9 @@ class BasePublishService(BaseService):
 
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
+
+                if updated[ITEM_TYPE] == "picture":
+                    self._update_picture_metadata(updates, original, updated)
 
                 signals.item_publish.send(self, item=updated, updates=updates)
                 self._update_archive(original, updates, should_insert_into_versions=auto_publish)
@@ -643,7 +649,7 @@ class BasePublishService(BaseService):
 
         for item in items:
             orig = None
-            if type(item) == dict and item.get(config.ID_FIELD):
+            if isinstance(item, dict) and item.get(config.ID_FIELD):
                 orig = super().find_one(req=None, _id=item[config.ID_FIELD]) or {}
                 doc = copy(orig)
                 doc.update(item)
@@ -685,7 +691,7 @@ class BasePublishService(BaseService):
             # don't validate items that already have published
             if doc_item_state not in [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]:
                 validate_item = {"act": self.publish_type, "type": doc[ITEM_TYPE], "validate": doc}
-                if type(item) == dict:
+                if isinstance(item, dict):
                     validate_item["embedded"] = True
                 errors = get_resource_service("validate").post([validate_item], headline=True, fields=True)[0]
                 if errors[0]:
@@ -733,7 +739,14 @@ class BasePublishService(BaseService):
 
         for key in DEFAULT_SCHEMA.keys():
             if doc.get(key):
-                updates[key] = doc[key]
+                if (
+                    doc.get("_current_version")
+                    and updates.get("_current_version")
+                    and doc["_current_version"] <= updates["_current_version"]
+                ):  # media item was not changed outside, only populate missing data
+                    updates.setdefault(key, doc[key])
+                else:  # media item could be updated outside, so update all fields
+                    updates[key] = doc[key]
 
     def _refresh_associated_items(self, original, skip_related=False):
         """Refreshes associated items with the latest version. Any further updates made to basic metadata done after
@@ -741,7 +754,7 @@ class BasePublishService(BaseService):
         """
         associations = original.get(ASSOCIATIONS) or {}
         for name, item in associations.items():
-            if type(item) == dict and item.get(config.ID_FIELD) and (not skip_related or len(item.keys()) > 2):
+            if isinstance(item, dict) and item.get(config.ID_FIELD) and (not skip_related or len(item.keys()) > 2):
                 keys = [key for key in DEFAULT_SCHEMA.keys() if key not in PRESERVED_FIELDS]
 
                 if app.settings.get("COPY_METADATA_FROM_PARENT") and item.get(ITEM_TYPE) in MEDIA_TYPES:
@@ -798,7 +811,10 @@ class BasePublishService(BaseService):
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
-            if type(associated_item) == dict and associated_item.get(config.ID_FIELD):
+            if associated_item.get("state") == CONTENT_STATE.CORRECTED:
+                # Skip already corrected associated items; they don't need re-publishing
+                continue
+            if isinstance(associated_item, dict) and associated_item.get(config.ID_FIELD):
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
                     if original.get(ASSOCIATIONS, {}).get(associations_key):
                         # Not allowed to publish
@@ -890,14 +906,48 @@ class BasePublishService(BaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    if association_updates.get("state") not in PUBLISH_STATES:
-                        # There's an update to the published associated item
+                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
+                    if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
+                        orig_associated_item, associated_item
+                    ):
                         remove_unwanted(association_updates)
                         publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
         self._refresh_associated_items(original)
+
+    def _normalize(self, val):
+        """Normalize values for comparison, handling ObjectId, datetime, etc."""
+        if isinstance(val, ObjectId):
+            return str(val)
+        if isinstance(val, datetime):
+            return val.isoformat().replace("+00:00", "Z")
+        if isinstance(val, str):
+            return val.replace("+0000", "Z") if val.endswith("+0000") else val
+        if isinstance(val, dict):
+            return {k: self._normalize(v) for k, v in val.items()}
+        if isinstance(val, list):
+            return [self._normalize(i) for i in val]
+        return val
+
+    def is_changed(self, old: dict, new: dict) -> bool:
+        """
+        Check if content was meaningfully changed.
+        Normalizes values before comparison to handle ObjectId/datetime differences.
+        """
+        if old is None or len(old) != len(new):
+            return True
+
+        fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
+
+        for field in fields_to_check:
+            old_val = self._normalize(old.get(field))
+            new_val = self._normalize(new.get(field))
+
+            if old_val != new_val:
+                return True
+        return False
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
@@ -921,8 +971,53 @@ class BasePublishService(BaseService):
             schedule_settings = updates.get(SCHEDULE_SETTINGS, original.get(SCHEDULE_SETTINGS, {}))
             publish_schedule = updates.get(PUBLISH_SCHEDULE, original.get(PUBLISH_SCHEDULE))
             if publish_schedule and not associated_item.get(PUBLISH_SCHEDULE):
+                # Always overwrite to ensure consistency
                 associated_item[PUBLISH_SCHEDULE] = publish_schedule
                 associated_item[SCHEDULE_SETTINGS] = schedule_settings
+
+    def _update_picture_metadata(self, updates, original, updated):
+        renditions = updated.get("renditions") or {}
+        mapping = app.config.get("PICTURE_METADATA_MAPPING")
+
+        if not mapping or not renditions:
+            return
+
+        try:
+            updated_renditions = deepcopy(renditions)
+            updates["renditions"] = updated_renditions
+
+            for rendition_key, rendition_data in renditions.items():
+                if not rendition_data or not isinstance(rendition_data, dict):
+                    continue
+
+                media_id = rendition_data.get("media")
+                if not media_id:
+                    continue
+
+                original_metadata = get_metadata_from_item(original, mapping)
+                metadata = get_metadata_from_item(updated, mapping)
+
+                if original_metadata == metadata:
+                    continue
+
+                picture = app.media.get(media_id)
+                binary = picture.read()
+                updated_binary = write_metadata(binary, metadata)
+                if updated_binary != binary:
+                    updated_media_id = app.media.put(
+                        updated_binary, content_type=picture.content_type, filename=picture.filename
+                    )
+                    updated_renditions[rendition_key].update(
+                        {
+                            "media": updated_media_id,
+                            "href": app.media.url_for_media(updated_media_id, picture.content_type),
+                        }
+                    )
+
+            updated["renditions"] = updated_renditions
+
+        except (KeyError, TypeError):
+            return
 
 
 def get_crop(rendition):
@@ -963,7 +1058,15 @@ def sync_associated_item_changes(associated_item, updates):
 superdesk.workflow_state("published")
 superdesk.workflow_action(
     name="publish",
-    include_states=["fetched", "routed", "submitted", "in_progress", "scheduled", "unpublished", "correction"],
+    include_states=[
+        "fetched",
+        "routed",
+        "submitted",
+        "in_progress",
+        "scheduled",
+        "unpublished",
+        "correction",
+    ],
     privileges=["publish"],
 )
 

@@ -11,6 +11,7 @@
 import os
 import re
 import sys
+import jwt
 import time
 import bcrypt
 import hashlib
@@ -18,16 +19,18 @@ import base64
 import tempfile
 import string
 import logging
+import flask
 
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 from enum import Enum
 from importlib import import_module
-from eve.utils import config
-from typing import Any, Dict, Iterator, List
+from eve.utils import config, document_etag
+from typing import Any, Dict, Iterator, Mapping, Optional
 from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
 from superdesk.text_utils import get_text
+from flask import current_app as app
 
 
 logger = logging.getLogger(__name__)
@@ -36,6 +39,7 @@ required_string = {"type": "string", "required": True, "nullable": False, "empty
 
 PWD_ALPHABET = string.ascii_letters + string.digits
 PWD_DEFAULT_LENGHT = 40
+JWT_ALGO = "HS256"
 
 
 if sys.version_info < (3, 6):
@@ -325,3 +329,60 @@ class AllowedContainer:
 
     def __iter__(self) -> Iterator[str]:
         return iter(self.data.keys())
+
+
+def jwt_encode(payload: Dict, expiry=None) -> str:
+    if expiry:
+        payload["exp"] = datetime.now(tz=timezone.utc) + timedelta(days=expiry)
+    payload["iss"] = app.config["APPLICATION_NAME"]
+    token = jwt.encode(payload, app.config["SECRET_KEY"], JWT_ALGO)
+    if isinstance(token, str):
+        return token
+    return token.decode()
+
+
+def jwt_decode(token) -> Optional[Dict]:
+    try:
+        return jwt.decode(token, app.config["SECRET_KEY"], algorithms=[JWT_ALGO])
+    except jwt.InvalidSignatureError:
+        return None
+
+
+def get_cors_headers(methods="*"):
+    return [
+        ("Access-Control-Allow-Origin", app.config["CLIENT_URL"]),
+        ("Access-Control-Allow-Headers", ",".join(app.config["X_HEADERS"])),
+        ("Access-Control-Allow-Credentials", "true"),
+        ("Access-Control-Allow-Methods", methods),
+    ]
+
+
+def abort(status: int, message: str) -> None:
+    """Will return a json response with proper CORS headers."""
+    response = flask.make_response({"message": message}, status)
+    for key, val in get_cors_headers():
+        response.headers[key] = val
+    flask.abort(response)
+
+
+def get_list_chunks(items, chunk_size=100):
+    return [items[i : i + chunk_size] for i in range(0, len(items), chunk_size)]
+
+
+def get_dict_hash(data: Mapping) -> str:
+    return document_etag(data)
+
+
+def format_content_type_name(item: Dict[str, str], default_name: str) -> str:
+    """
+    Extracts and formats the name from the content type item.
+
+    Args:
+        item (Dict[str, str]): The content type item containing details.
+        default_name (str): The default name to use if no valid name is found.
+
+    Returns:
+        str: The formatted and sanitized name.
+    """
+    name = item.get("output_name") or item.get("label", default_name)
+    return re.compile("[^0-9a-zA-Z_]").sub("", name)

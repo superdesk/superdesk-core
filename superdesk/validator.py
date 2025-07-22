@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
+import datetime
 import superdesk
 
 from bson import ObjectId
@@ -70,6 +71,7 @@ class SuperdeskValidator(Validator):
     def __init__(self, *args, **kwargs):
         kwargs["error_handler"] = SuperdeskErrorHandler
         super(SuperdeskValidator, self).__init__(*args, **kwargs)
+        self.types_mapping.pop("date", None)
 
     def _validate_mapping(self, mapping, field, value):
         """
@@ -118,6 +120,20 @@ class SuperdeskValidator(Validator):
         """Enables validation for `file` schema attribute."""
         if isinstance(value, FileStorage):
             return True
+
+    def _validate_type_time(self, value):
+        try:
+            datetime.time.fromisoformat(value)
+            return True
+        except ValueError:
+            pass
+
+    def _validate_type_date(self, value):
+        try:
+            datetime.date.fromisoformat(value)
+            return True
+        except ValueError:
+            pass
 
     def _validate_multiple_emails(self, multiple, field, value):
         """
@@ -283,7 +299,7 @@ class SuperdeskValidator(Validator):
         {'type': 'boolean'}
         """
         if checked and value not in {"text", None}:
-            if app.data.find_one("content_types", req=None, item_type=value) is not None:
+            if app.data.find_one("content_types", req=None, type=value) is not None:
                 self._error(field, _("Only 1 instance is allowed."))
 
     def _validate_scope(self, checked, field, value):

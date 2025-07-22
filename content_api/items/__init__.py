@@ -9,8 +9,8 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from .service import ItemsService
-from .resource import ItemsResource
+from .service import InternalItemsService, ItemsService
+from .resource import InternalItemsResource, ItemsResource
 
 
 def init_app(app) -> None:
@@ -22,3 +22,6 @@ def init_app(app) -> None:
     endpoint_name = "items"
     service = ItemsService(endpoint_name, backend=superdesk.get_backend())
     ItemsResource(endpoint_name, app=app, service=service)
+
+    internal_service = InternalItemsService("capi_items_internal", backend=superdesk.get_backend())
+    InternalItemsResource("capi_items_internal", app=app, service=internal_service)

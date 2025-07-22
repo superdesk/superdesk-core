@@ -788,4 +788,25 @@ Feature: Desks
             "template_desks": ["#desks._id#"]
         }
         """
-        
+
+    @auth
+    Scenario: Desk members resource
+        Given "users"
+        """
+        [
+            {"username": "foo", "email": "foo@example.com", "display_name": "foo"},
+            {"username": "bar", "email": "bar@example.com", "display_name": "bar"}
+        ]
+        """
+        And "desks"
+        """
+        [
+            {"name": "Finance", "members": []},
+            {"name": "Sports", "members": [{"user": "#users._id#"}]}
+        ]
+        """
+        When we get "/desks/#desks._id#/users"
+        Then we get list with 1 items
+        """
+        {"_items": [{"username": "bar", "display_name": "bar"}]}
+        """

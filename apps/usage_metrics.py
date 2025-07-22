@@ -39,15 +39,18 @@ class UsageMetricsResource(superdesk.Resource):
 class UsageMetricsService(superdesk.Service):
     def on_created(self, docs):
         for doc in docs:
-            archive_service = superdesk.get_resource_service("archive")
-            item = archive_service.find_one(req=None, _id=doc["item"])
-            archive_service.system_update(
-                item["_id"],
-                {"$inc": {f"metrics.{doc['action']}": 1}},
-                item,
-                change_request=True,
-                push_notification=False,
-            )
+            for resource in ["archive", "ingest"]:
+                service = superdesk.get_resource_service(resource)
+                item = service.find_one(req=None, _id=doc["item"])
+                if not item:
+                    continue
+                service.system_update(
+                    item["_id"],
+                    {"$inc": {f"metrics.{doc['action']}": 1}},
+                    item,
+                    change_request=True,
+                    push_notification=False,
+                )
         return super().on_created(docs)
 
 

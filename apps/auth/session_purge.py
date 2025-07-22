@@ -40,9 +40,9 @@ class RemoveExpiredSessions(superdesk.Command):
         expiration_time = utcnow() - timedelta(minutes=expiry_minutes)
         logger.info("Deleting session not updated since {}".format(expiration_time))
         query = {"_updated": {"$lte": date_to_str(expiration_time)}}
-        sessions = auth_service.get(req=None, lookup=query)
-        for session in sessions:
-            auth_service.delete({"_id": str(session["_id"])})
+        sessions = list(auth_service.get(req=None, lookup=query))
+        if sessions:
+            auth_service.delete_docs(sessions)
         self._update_online_users()
 
     def _update_online_users(self):

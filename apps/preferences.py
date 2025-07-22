@@ -13,6 +13,7 @@ import superdesk
 
 from flask import request
 from eve.utils import config
+from superdesk.preferences import get_user_notification_preferences
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk import get_backend
@@ -129,6 +130,15 @@ class PreferencesResource(Resource):
     )
 
     superdesk.register_default_user_preference(
+        "application:theme",
+        {
+            "type": "string",
+            "allowed": ["light-ui", "dark-ui"],
+            "theme": "light-ui",
+        },
+    )
+
+    superdesk.register_default_user_preference(
         "singleline:view",
         {
             "type": "bool",
@@ -230,6 +240,10 @@ class PreferencesResource(Resource):
     superdesk.register_default_session_preference("desk:items", [])
     superdesk.register_default_session_preference("stage:items", [])
     superdesk.register_default_session_preference("pinned:items", [])
+
+    # @deprecated, keep to avoid validation error
+    superdesk.register_default_user_preference("mark_for_user:notification", {})
+    superdesk.register_default_user_preference("assignment:notification", {})
 
 
 class PreferencesService(BaseService):
@@ -338,17 +352,21 @@ class PreferencesService(BaseService):
         This function returns preferences for the user.
         """
         doc = get_resource_service("users").find_one(req=None, _id=user_id)
+        if doc is None:
+            return {}
         prefs = doc.get(_user_preferences_key, {})
         return prefs
 
-    def email_notification_is_enabled(self, user_id=None, preferences=None):
+    def email_notification_is_enabled(self, user_id=None) -> bool:
         """
         This function checks if email notification is enabled or not based on the preferences.
         """
         if user_id:
-            preferences = self.get_user_preference(user_id)
-        send_email = preferences.get("email:notification", {}) if isinstance(preferences, dict) else {}
-        return send_email and send_email.get("enabled", False)
+            user = get_resource_service("users").find_one(req=None, _id=user_id)
+            if not user:
+                return False
+            return get_user_notification_preferences(user)["email"]
+        return False
 
     def is_authorized(self, **kwargs):
         """

@@ -60,16 +60,16 @@ class ErrorResponseSession(MagicMock):
 class GetTokenTestCase(TestCase):
     def test_get_null_token(self):
         provider = {}
-        self.assertEquals("", TestFeedingService()._get_auth_token(provider))
+        self.assertEqual("", TestFeedingService()._get_auth_token(provider))
 
     def test_get_existing_token(self):
         provider = setup_provider("abc", 10)
-        self.assertEquals("abc", TestFeedingService()._get_auth_token(provider))
+        self.assertEqual("abc", TestFeedingService()._get_auth_token(provider))
 
     def test_get_expired_token(self):
         """Expired is better than none.."""
         provider = setup_provider("abc", 24)
-        self.assertEquals("", TestFeedingService()._get_auth_token(provider))
+        self.assertEqual("", TestFeedingService()._get_auth_token(provider))
 
     def test_fetch_token(self):
         # TODO: need some rewriting
@@ -88,10 +88,10 @@ class GetTokenTestCase(TestCase):
         if provider["config"]["username"]:
             token = TestFeedingService()._generate_auth_token(provider, update=True)
             self.assertNotEquals("", token)
-            self.assertEquals(token, provider["tokens"]["auth_token"])
+            self.assertEqual(token, provider["tokens"]["auth_token"])
 
             dbprovider = superdesk.get_resource_service("ingest_providers").find_one(name="test http", req=None)
-            self.assertEquals(token, dbprovider["tokens"]["auth_token"])
+            self.assertEqual(token, dbprovider["tokens"]["auth_token"])
 
     def test_generate_auth_token_raise_on_error(self):
         provider = setup_provider("abc", 24)

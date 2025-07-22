@@ -212,7 +212,12 @@ def plain_text_to_html(text: str) -> str:
             # so return the whole match.
             return match_object.group(0)
         else:
-            return '<a href="{0}" target="_blank">{1}</a>'.format(html.unescape(groups[1]), groups[1])
+            url = html.unescape(groups[1])
+            if url.startswith("www."):
+                url = "https://" + url
+            elif not url.startswith(("http://", "https://")):
+                url = "https://" + url
+            return '<a href="{0}" target="_blank">{1}</a>'.format(url, groups[1])
 
     value = EMAIL_REGEX.sub(r'<a href="mailto:\1">\1</a>', text)
     value = re.sub(URL_REGEX, replacement, value)

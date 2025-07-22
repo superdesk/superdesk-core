@@ -105,7 +105,7 @@ def upload_config_file():
             logger.error("Invalid JSON file {0}: {1}".format(file_name, str(ex)))
             raise SuperdeskApiError.internalError("Invalid JSON file: {}.".format(file_name))
 
-        if type(file_data) == dict:
+        if isinstance(file_data, dict):
             file_data = [file_data]
         _items += file_data
 

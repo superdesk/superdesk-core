@@ -1,0 +1,119 @@
+<NewsML>
+<NewsEnvelope>
+<SentFrom>
+<Party FormalName="The Press Association"/>
+</SentFrom>
+<DateAndTime>20250602T114650+0100</DateAndTime>
+<NewsService FormalName="Comprehensive"/>
+<Priority FormalName="4"/>
+</NewsEnvelope>
+<NewsItem>
+<Identification>
+<NewsIdentifier>
+<ProviderId>pa.press.net</ProviderId>
+<DateId>20250602</DateId>
+<NewsItemId>PA-HHH-ARTS-Fringe</NewsItemId>
+<RevisionId PreviousRevision="0" Update="N">11839114654855</RevisionId>
+<PublicIdentifier>urn:newsml:pa.press.net:20250602:PA-HHH-ARTS-Fringe:11839114654855</PublicIdentifier>
+</NewsIdentifier>
+<NameLabel>ARTS Fringe</NameLabel>
+</Identification>
+<NewsManagement>
+<NewsItemType FormalName="News"/>
+<FirstCreated>20250602T114650+0100</FirstCreated>
+<ThisRevisionCreated>20250602T114650+0100</ThisRevisionCreated>
+<Status FormalName="Embargoed"/>
+<Urgency FormalName="4"/>
+</NewsManagement>
+<NewsComponent>
+<Role FormalName="Main"/>
+<NewsLines>
+<HeadLine>EDINBURGH FESTIVAL FRINGE PROGRAMME LAUNCHED</HeadLine>
+<ByLine>By Sarah Ward, PA Scotland</ByLine>
+<CopyrightLine>Press Association 2025</CopyrightLine>
+<SlugLine>ARTS Fringe</SlugLine>
+</NewsLines>
+<AdministrativeMetadata>
+<Provider>
+<Party FormalName="The Press Association"/>
+</Provider>
+</AdministrativeMetadata>
+<RightsMetadata>
+<Copyright>
+<CopyrightHolder>Press Association</CopyrightHolder>
+<CopyrightDate>2025</CopyrightDate>
+</Copyright>
+</RightsMetadata>
+<DescriptiveMetadata>
+<Property FormalName="Category" Value="HHH"/>
+<Property FormalName="Topic" Value="ARTS"/>
+<Property FormalName="Topic" Value="SCOTLAND"/>
+<Property FormalName="Keyword" Value="Fringe"/>
+</DescriptiveMetadata>
+<NewsComponent Duid="d3149ca1-9abb-466a-9432-b82f8d096269HHH-1-1">
+<Comment> Embargoed to 0001 Tuesday June 03 </Comment>
+<ContentItem>
+<MediaType FormalName="Text"/>
+<MimeType FormalName="text/vnd.IPTC.NITF"/>
+<DataContent>
+<nitf>
+<body>
+<body.content>
+<p>The programme for the Edinburgh Festival Fringe has been launched, including more than 3,350 shows across 265 venues.</p>
+<p>
+Comedy, music, dance, children's shows, magic and cabaret will all be part of the arts festival, which runs from
+<chron>August 1 to 25</chron>
+.
+</p>
+<p>Topics include the apocalypse, rave culture, disability and sexuality, and more than half the performers are Scottish.</p>
+<p>
+A total of 3,352 shows are included on the line-up, including at new venues such as
+<org>Hibernian Football Club's</org>
+Easter Road stadium.
+</p>
+<p>Portobello Town Hall will also host acts for the first time, with a mini-festival to celebrate Palestinian art and culture, Welcome to the Fringe, Palestine.</p>
+<p>There are 325 free shows and 529 pay-what-you-can shows, and accommodation has been provided by several universities to make the Fringe more accessible to performers.</p>
+<p>
+Some 923 shows are from
+<location>Scotland</location>
+, predominantly from
+<location>Edinburgh</location>
+with 657 acts represented, compared to 1,392 from the rest of the UK nations, while a total of 54 non-British nationalities are on the line-up.
+</p>
+<p>
+Easter Road stadium will host two shows - Dropped, by former Chelsea FC trainee
+<person>Alfie Cain</person>
+recalling dashed aspirations and "the darkness and pressures" of football, as well as
+<person>Frankie Mack Showman</person>
+- The Next Stage: The Leith San Siro, described as a "high-energy, show-stopping" night of swing, rock'n'roll and modern classics.
+</p>
+<p>
+<person>Alice Hawkins</person>
+- Working Class Suffragette at the Arthur Conan Doyle Centre explores a family connection with the campaign for democracy while VOTE the Musical at Paradise Green takes a "gripping look" at the Suffragettes, exploring activism and personal sacrifice, according to promoters.
+</p>
+<p>
+<person>Jenna Stone's</person>
+play Happy Ending Street, at Leith Arches, tells a story about three Scottish sex workers dreaming of escaping from their way of life.
+</p>
+<p>
+<person>Tony Lankester</person>
+, chief executive of the
+<org>Edinburgh Festival Fringe Society</org>
+, said: "Programme launch is such an exciting moment for everyone involved making the Fringe happen.
+</p>
+<p>
+"Thank you to all the Fringe-makers - the artists, venues, workers, producers, technicians, promoters, support staff and audiences that bring their unmatched, exceptional energy to
+<location>Edinburgh</location>
+in August.
+</p>
+<p>"This year's Fringe programme is filled with every kind of performance, so whether you're excited for theatre or circus, or the best of comedy, music, dance, children's shows, magic or cabaret; get ready to dare to discover this August.</p>
+<p>"Jump right in, book your favourites, shows that intrigue you and take a chance on something new."</p>
+</body.content>
+</body>
+</nitf>
+</DataContent>
+</ContentItem>
+</NewsComponent>
+</NewsComponent>
+</NewsItem>
+</NewsML>

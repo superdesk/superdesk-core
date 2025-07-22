@@ -60,27 +60,16 @@ class FlushElasticIndex(superdesk.Command):
         :param str index_prefix: elastix index
         :raise: SystemExit exception if delete elastic index response status is not 200 or 404.
         """
-
-        indices = list(self._es.indices.get_alias("{}_*".format(index_prefix)).keys())
-        print(f"Configured indices with prefix '{index_prefix}': " + ", ".join(indices))
-
-        for es_resource in app.data.get_elastic_resources():
-            alias = app.data.elastic._resource_index(es_resource)
-            print(f"- Attempting to delete alias {alias}")
-            for index in indices:
-                if index.rsplit("_", 1)[0] == alias or index == alias:
-                    try:
-                        print('- Removing elastic index "{}"'.format(index))
-                        self._es.indices.delete(index=index)
-                    except es_exceptions.NotFoundError:
-                        print('\t- "{}" elastic index was not found. Continue without deleting.'.format(index))
-                    except es_exceptions.TransportError as e:
-                        raise SystemExit(
-                            '\t- "{}" elastic index was not deleted. Exception: "{}"'.format(index, e.error)
-                        )
-                    else:
-                        print('\t- "{}" elastic index was deleted.'.format(index))
-                        break
+        indices = self._es.indices.get(index=f"{index_prefix}_*")
+        for index in indices:
+            try:
+                print("Deleting index", index)
+                self._es.indices.delete(index=index)
+            except es_exceptions.NotFoundError:
+                pass
+            except es_exceptions.RequestError as e:
+                if e.status_code not in [200, 404]:
+                    raise SystemExit(f"Failed to delete elastic index: {e}")
 
     def _index_from_mongo(self, sd_index, capi_index):
         """Index elastic search from mongo.

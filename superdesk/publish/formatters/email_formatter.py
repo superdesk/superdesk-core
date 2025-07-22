@@ -17,6 +17,7 @@ from flask import render_template
 from copy import deepcopy
 from superdesk.errors import FormatterError
 from superdesk import etree as sd_etree
+from superdesk.editor_utils import remove_all_embeds
 
 
 class EmailFormatter(Formatter):
@@ -55,6 +56,7 @@ class EmailFormatter(Formatter):
 
     def format(self, article, subscriber, codes=None):
         formatted_article = deepcopy(article)
+        remove_all_embeds(formatted_article)
         pub_seq_num = superdesk.get_resource_service("subscribers").generate_sequence_number(subscriber)
         doc = {}
         try:

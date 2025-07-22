@@ -93,3 +93,6 @@ class IngestService(BaseService):
         user = get_user(required=True)
         if docs:
             push_notification("item:deleted", item=str(docs[0].get(config.ID_FIELD)), user=str(user))
+
+    def should_update(self, old_item, new_item, provider):
+        return True

@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<newsItem guid="urn:newsml:stt.fi::105868846" version="7" standardversion="2.12" conformance="power" xml:lang="fi-FI" xmlns:stt="http://www.stt-lehtikuva.fi/NewsML" standard="NewsML-G2" xsi:schemaLocation="http://iptc.org/std/nar/2006-10-01/ http://www.iptc.org/std/NewsML-G2/2.12/specification/NewsML-G2_2.12-spec-All-Power.xsd http://www.stt-lehtikuva.fi/NewsML http://www.stt-lehtikuva.fi/newsml/schema/STT-Lehtikuva_NewsML_G2.xsd" xmlns="http://iptc.org/std/nar/2006-10-01/" stt:formatversion="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" ><catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_19.xml"/>
+<catalogRef href="http://www.iptc.org/std/catalog/catalog.IPTC-G2-Standards_18.xml"/>
+<catalogRef href="http://www.stt-lehtikuva.fi/newsml/doc/stt-NewsCodesCatalog_1.xml"/>
+
+<itemMeta>
+
+<itemClass qcode="ninat:text"/>
+<provider literal="STT"/>
+<versionCreated>2023-10-18T14:28:25</versionCreated>
+<firstCreated>2023-10-18T01:02:34</firstCreated>
+<pubStatus qcode="stat:usable"/>
+<edNote role="sttnote:private">Kolmas ja viimeinen osio uutta</edNote>
+<signal qcode="sig:update"/>
+<signal qcode="update:append-major-content"/>
+<link guidref="urn:newsml:stt.fi:20231018:105868846" version="6"/>
+</itemMeta>
+<contentMeta>
+<urgency>2</urgency>
+<contentCreated>2023-10-18T01:02:34</contentCreated>
+<contentModified>2023-10-18T14:28:25</contentModified>
+<altId type="sttidtype:textid">121086686</altId>
+<located type="loctyp:City">
+<name>Helsinki</name>
+</located>
+<infoSource qcode="sttsource:1">
+<name>STT</name>
+</infoSource>
+<creator qcode="stteditorid:1893">
+<name>Rosvall Maria</name>
+</creator>
+<altId type="sttidtype:runningnumber" environment="sttcounter:daily">stt 127</altId>
+<rating value="6" scalemin="1" scalemax="9" scaleunit="rscaleunit:number" ratingtype="sttrating:webprio"/>
+<subject type="cpnat:abstract" literal="Related topic id" qcode="stt-topics:613647"/>
+<subject type="cpnat:abstract" literal="Event id related to topic" qcode="stt-events:286944"/>
+<subject type="cpnat:abstract" qcode="sttdone1:1"/>
+<subject type="cpnat:abstract" qcode="sttdepartment:3">
+<name>Kotimaa</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02000000">
+<name>Laki Oikeus Rikokset</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02001000">
+<name>Rikokset</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02001002">
+<name>Verkkorikokset Hakkerointi</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:07000000">
+<name>Terveys</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:07012000">
+<name>Yksityinen terveydenhuolto</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02000000">
+<name>Laki Oikeus Rikokset</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02008000">
+<name>Oikeudenkäynti Oikeusprosessit</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02008998">
+<name>Syyteharkinta</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02000000">
+<name>Laki Oikeus Rikokset</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02006000">
+<name>Lait</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:02006001">
+<name>Rikoslait</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:04000000">
+<name>Talous</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:04003000">
+<name>Tietotekniikka</name>
+</subject>
+<subject type="cpnat:abstract" qcode="sttsubj:04003002">
+<name>Tietoverkot Internet </name>
+</subject>
+<slugline/>
+<dateline>Helsinki</dateline>
+<by>Maria Rosvall, Jecaterina Mantsinen</by>
+<description role="drol:summary">Tedotustilaisuudessa klo 10 Vastaamo-tietomurron syyteharkinnan pääsyyttäjistä Pasi Vainio ja Harri Mäkelä kertovat syyteharkinnan ratkaisun ja tietoa asian käsittelystä Syyttäjälaitoksessa.
+
+Paikalla on myös Rikosuhripäivystyksen toiminnanjohtaja Leena-Kaisa Åberg. </description>
+<headline>Vastaamoon kohdistunut tietomurto oli syyttäjien mukaan erityisen suunnitelmallinen &#8211; syytetylle vaaditaan seitsemän vuoden vankeutta</headline><creditline>STT&#8211;</creditline>
+
+<genre qcode="sttgenre:1">
+<name>Pääjuttu</name>
+</genre>
+<genre qcode="sttversion:4">
+<name>Pika+</name>
+<related qcode="sttrel:actuallength" value="9862"/>
+</genre>
+<genre qcode="sttdescription:imagetype" literal="Imagetype ID">
+<name>20</name>
+</genre>
+<genre qcode="sttdescription:imagetypename" literal="Imagetype NAME">
+<name>Kuvaaja paikalla</name>
+</genre>
+</contentMeta>
+<assert qcode="sttlocmeta:rich:17591">
+<name>Suomi</name>
+<definition/>
+<geoAreaDetails/>
+<POIDetails>
+<address>
+<line> </line>
+<postalCode/>
+</address>
+</POIDetails>
+<broader type="cpnat:geoArea" qcode="sttstate:44">
+<name>N/A</name>
+</broader>
+<broader type="cpnat:geoArea" qcode="sttcountry:1">
+<name>Suomi</name>
+</broader>
+<broader type="cpnat:geoArea" qcode="wldreg:150">
+<name>Eurooppa</name>
+</broader>
+</assert>
+<contentSet>
+<inlineXML contenttype="xhtml/xml">
+<html>
+<body>
+<h2>Tietomurto tapahtui syksyllä 2018. Kahden vuoden päästä Vastaamo sai sähköpostiviestin, jossa vaadittiin 366 000:ta euroa potilastietojen levittämisen uhalla.</h2>
+<p>Syyttäjät vaativat <Company>Psykoterapiakeskus Vastaamon </Company>tietomurrosta epäillylle Aleksanteri Kivimäelle, 26, seitsemän vuoden vankeusrangaistusta.</p>
+<p>Syyttäjien mukaan Kivimäki murtautui marraskuussa 2018 yksin tai tuntemattomaksi jääneiden henkilöiden kanssa Vastaamon tietojärjestelmään.</p>
+<p>Ennen tietomurtoa Kivimäki selvitti syyttäjien mukaan internetissä olevia palvelimia, joissa oli ollut haavoittuvuuksia. Haavoittuvuudet olivat esimerkiksi avoimia tietoliikenneportteja, tavanomaisia ja helposti arvattavia salasanoja sekä salasanojen ja käyttäjätunnusten puuttumista.</p>
+<p>&#8211;&#8201; Kun vastaajalle on selvinnyt, että Vastaamon palvelimessa on ollut tekoaikaan edellä kuvattuja haavoittuvuuksia, on vastaaja tunkeutunut oikeudettomasti Vastaamon potilastietokannan sisältäneeseen palvelimeen. Tunkeutuminen on suoritettu siten, että vastaaja on luonut yhteyden Vastaamon MySQL-palvelimeen, käyttänyt hänelle kuulumatonta käyttäjätunnusta ja salasanaa ja ladannut Vastaamon potilastietokannan käyttöönsä, sanotaan tänään julki tulleessa haastehakemuksessa.</p>
+<p>Potilastietokanta sisälsi noin 33&#8201; 000 ihmisen erittäin arkaluonteisia henkilö- ja potilastietoja sekä potilaiden käyntimerkintöjä.</p>
+<p>Syyttäjän mukaan teko oli erityisen suunnitelmallinen. Siinä käytettiin useissa maissa sijainneita palvelimia, salattuja VPN-yhteyksiä ja salausavaimia.</p>
+<p>&#8211;&#8201; Käytetyissä palvelimissa on ollut käytössä voimakkaita salausmenetelmiä. Tietomurtoon ja sen valmisteluun on käytetty haavoittuvuuksien selvittämiseen ja tietomurtoihin suunniteltuja ohjelmistoja, joita ei ole julkisesti saatavilla, haastehakemuksessa sanotaan.</p>
+<p></p><p>
+<h3>Vastaamolta kiristettiin 366 000:ta euroa</h3>
+</p>
+<p></p>
+<p>Arkaluonteisten potilastietojen levittämisen ja niillä kiristämisen epäillään alkaneen syksyllä 2020.</p>
+<p>Syyttäjien mukaan Kivimäki lähetti tällöin Vastaamolle sähköpostitse kiristysviestin, jossa hän vaati yritystä maksamaan hänelle 40 bitcoinia, mikä on vastannut 366&#8201; 000:ta euroa. Rahasummaa vaadittiin vastineeksi siitä, ettei potilaiden tietoja julkaista.</p>
+<p>Kun vaatimuksiin ei suostuttu, Kivimäki julkaisi syyttäjien mukaan lokakuun lopulla 2020 ensin sata ja seuraavana päivänä toiset sata potilastietoa. Syyttäjien mukaan Kivimäen oli tarkoitus kolmantena päivänä ja sen jälkeen julkaista sata potilastietoa päivässä, mutta hän tulikin julkaisseeksi kaikki potilastiedot kerralla. Tietoja julkaistiin pääosin Tor-verkossa.</p>
+<p>&#8211;&#8201; Vastaaja on tällä tavoin julkaissut yhteensä noin 33&#8201; 000 henkilön erittäin arkaluonteiset henkilö- ja potilastiedot sekä potilaiden käyntimerkinnät, haastehakemuksessa sanotaan.</p>
+<p>Tämän jälkeen Kivimäki lähetti syyttäjien mukaan kiristysviestin Vastaamon potilastietokannassa olleille ihmisille. Viestissä ihmisiltä vaadittiin 200:n tai 500 euron maksua kryptovaluuttana. Osa uhreista maksoi vaaditun summan.</p>
+<p>Kivimäkeä syytetään törkeästä tietomurrosta, liki 9&#8201; 600 törkeästä yksityiselämää loukkaavasta tiedon levittämisestä, yli 21&#8201; 300:sta törkeän kiristyksen yrityksestä sekä 20 törkeästä kiristyksestä.</p>
+<p>Kivimäki on kiistänyt epäillyt rikokset.</p>
+<p></p><p>
+<h3>Otettiin kiinni Ranskassa</h3>
+</p>
+<p></p>
+<p>Poliisi alkoi tutkia Vastaamon tapausta syksyllä 2020. Kivimäki otettiin kiinni tämän vuoden helmikuussa Ranskassa Pariisin lähellä sijaitsevassa Courbevoien kunnassa. Ranskalaismedian mukaan paikallinen poliisi meni asuntoon kotihälytystehtävälle. Asunnossa ollut mies näytti poliisille romanialaisia henkilöllisyyspapereita. Poliisin tarkastaessa miehen tietoja kävikin ilmi, että hän oli Vastaamo-tietomurrosta epäilty suomalaismies.</p>
+<p>Romaniassa on oma tutkintansa väärennettyjen henkilöpapereiden osalta, mistä syystä syyttäjä vaatii oikeudenkäynnissä niitä pois Kivimäeltä.</p>
+<p>Haastehakemuksen perusteella Kivimäki on oleskellut Ranskan lisäksi Espanjassa ja Britanniassa. Oikeudenkäynnissä todistajana on hänen ystävänsä, jonka on määrä kertoa Kivimäen asumisjärjestelyistä. Haastehakemuksen mukaan ystävä on asunut Kivimäen asunnoissa Lontoossa.</p>
+<p></p><p>
+<h3>Uhrien joukossa myös alaikäisiä</h3>
+</p>
+<p></p>
+<p>Syyttäjälaitos piti asiasta aamupäivällä tiedotustilaisuuden. Syyttäjä Harri Mäkelä kuvasi Vastaamon tapausta yhdeksi Suomen rikoshistorian laajimmista jutuista. Tuleva oikeudenkäynti on rikosten uhrien määrällä mitattuna suurin Suomessa koskaan järjestetty.</p>
+<p>&#8211;&#8201; Kyseessä on ollut yksi Suomen rikoshistorian laajimmista jutuista, joka on ollut hyvin poikkeuksellinen niin asianomistajamäärän kuin maantieteellisen laajuuden myötä, Mäkelä sanoi.</p>
+<p>Asianomistajia on eri puolilta Suomea, ja heidän joukossaan on ihmisiä, jotka ovat epäiltyjen rikosten aikaan olleet alaikäisiä.</p>
+<p>&#8211;&#8201; Tämä on koskenut kaikkia Suomen kuntia lähes tulkoon. Asianomistajia on Lapista Helsinkiin. Uhreissa on alaikäisiä, perheitä ja pariterapiaa käyneitä.</p>
+<p>Oikeudenkäynti alkaa valmisteluistunnolla ensi viikon torstaina. Pääkäsittely Länsi-Uudenmaan käräjäoikeudessa Espoon Otaniemessä alkaa 13. marraskuuta. Sille on varattu päiviä helmikuun lopulle asti.</p>
+<p></p><p>
+<h3>Uhreihin liittyvä tieto salataan</h3>
+</p>
+<p></p>
+<p>Rikosten uhrit voivat seurata oikeudenkäyntiä videoyhteydellä kahdesta erillisestä tilasta pääkaupunkiseudulla. Asianomistajien suojaamiseksi näihin tiloihin ei päästetä mediaa tai yleisöä. Paikkojen sijainti ja saapumisohjeet ilmoitetaan asianomistajille henkilökohtaisesti lähetettävissä kirjeissä. Tilojen sijaintia ei kerrota julkisuuteen asianomistajien yksityisyyden suojaamiseksi.</p>
+<p>Syyttäjä Pasi Vainio sanoi tiedotustilaisuudessa, että uhrien yksityisyys on salattu myös oikeudenkäyntiasiakirjoista.</p>
+<p>&#8211;&#8201; Asianomistajien tietoja, nimiä tai muuta heihin liittyvää ei tule ilmenemään näistä julkisista materiaaleista.</p>
+<p>Käräjäoikeus ilmoittaa käsittelystä asianomistajille henkilökohtaisesti tämän viikon aikana lähetettävillä kirjeillä. Samalla oikeus varaa asianomistajille mahdollisuuden esittää rikokseen perustuvat vaatimuksensa syytettyä kohtaan kirjallisesti.</p>
+<p>Vainio muistutti, että korvauksia vaativan asianomistajan tulee ilmoittaa vaatimuksensa vielä käräjäoikeudelle, vaikka ne olisi jo aiemmin ilmoitettu poliisille.</p>
+<p>Asianomistajia koskeva ohjeistus julkaistaan pääosin myös käräjäoikeuden Vastaamo-sivuilla.</p>
+<p></p><p>
+<h3>Korvauksia vaaditaan ensisijaisesti tuomitulta</h3>
+</p>
+<p></p>
+<p>Tiedotustilaisuudessa paikalla ollut Rikosuhripäivystyksen toiminnanjohtaja Leena-Kaisa Åberg sanoi, että uhrien vaatimat ja mahdollisesti saamat korvaukset voivat vaihdella uhrien tilanteen mukaan. Hän sanoi, että uhriksi joutunut on voinut sairastua masennukseen tai kärsiä posttraumaattisesta stressistä.</p>
+<p>&#8211;&#8201; Jos on osoittaa lääketieteellinen selvitys, esimerkiksi lääkärinlausunto, siitä voi hakea korvauksia. Summat voivat vaihdella sen mukaan, miten ne arvioidaan. Tässä voi tulla kyseeseen myös ansionmenetyksiä ja sairaanhoitokuluja.</p>
+<p>Åberg sanoi, että korvauksia vaaditaan ensisijaisesti rikoksesta tuomitulta.</p>
+<p>&#8211;&#8201; Se riippuu, millaista varallisuutta hänellä on niitä korvauksia maksaa tuomioistuimen päätöksen mukaisesti. Jos ei ole, silloin voi hakea korvauksia Valtiokonttorista.</p>
+<p>Valtiokonttori on Åbergin mukaan laskenut, että esimerkiksi törkeän kiristyksen yrityksestä voitaisiin myöntää korvauksia henkilövahinkoasiain neuvottelukunnan suosituksen alarajan mukaisesti, jolloin summa olisi noin 500 miinus perusvähennys.</p>
+<p>Åberg sanoi, että osalle uhreista tapaus on ollut hyvin traumaattinen ja raskas.</p>
+<p>&#8211;&#8201; Se pelko, että omat hyvin henkilökohtaiset asiat tulevat julkisuuteen. Sen lisäksi identiteettivarkauden riski, kun siellä on ollut se henkilötunnus mukana, niin niiden käyttö voi johtaa erilaisiin petoksiin ja näitä jälkirikoksia on tapahtunutkin.</p>
+<p>Prosessin kuormittavuutta on lisännyt Åbergin mukaan myös sen kesto. Siitä, kun tietojen levittäminen ja uhrien kiristäminen alkoi, on nyt kolme vuotta. Oikeudenkäynti on vasta alkamassa, ja lainvoimaiseen tuomioon voi mennä jopa vuosia.</p>
+<p></p><p>
+<h3>Tuomittu American Airlines -jutussa</h3>
+</p>
+<p></p>
+<p>Kivimäkeä epäillään Vastaamoon liittyvän tapauksen lisäksi yli 14&#8201; 000 törkeästä tietomurrosta. Syyttäjä Vainio kertoi syyskuussa, että uudet rikosepäilyt tulivat ilmi Vastaamo-tutkinnassa. Lisäksi Kivimäkeä epäillään tietomurrosta ja muista rikoksista myös Turussa.</p>
+<p>Kivimäki on aiemmin tuomittu muun muassa <Company>American Airlines</Company> -lentoyhtiöön ja yhdysvaltalaisviranomaisiin kohdistuneista huijauksista. Hän soitteli perättömiä hätäpuheluita, joiden perusteella yhdysvaltalaispoliisilaitokset lähettivät erikoisjoukkoja ihmisten koteihin ja lentoyhtiö keskeytti lennon.</p>
+<p>Helsingin hovioikeus katsoi Länsi-Uudenmaan käräjäoikeuden tavoin, että puheluissa oli kyse petoksista. Hovi sen sijaan lievensi tuomiota siten, että sen mukaan tietomurto ei ollut törkeä. Perusmuotoisen tietomurron syyteoikeus oli vanhentunut, ja näin syyte asiassa hylättiin. Kivimäen ehdollinen vankeusrangaistus aleni kymmeneksi kuukaudeksi ja päiväsakkojen määrä tippui sadasta 80:een.</p>
+<p>Rikokset tapahtuivat vuonna 2014 Espoossa, ja Kivimäki oli ne tehdessään 16&#8211;17-vuotias.</p>
+<p></p><p>
+<h3>Toimitusjohtaja tuomittu tietosuojarikoksesta</h3>
+</p>
+<p></p>
+<p>Vastaamon jutussa on selvitetty myös yhtiön johdon rikosvastuuta. Helsingin käräjäoikeus tuomitsi huhtikuussa Vastaamon entisen toimitusjohtajan Ville Tapion ehdolliseen vankeuteen tietosuojarikoksesta.</p>
+<p>Oikeuden mukaan Vastaamon potilastietokantaan oli tallennettu asiakkaiden henkilötietoja ja käyntimerkintöjä selkokielisinä ilman riittävää salausta. Tiedot olivat myös sellaisessa muodossa, että ne olivat yhdistettävissä toisiinsa, oikeus sanoi.</p>
+<p>Käräjäoikeus katsoi Tapion syyllistyneen tietosuojarikokseen, koska hän ei ollut toteuttanut Vastaamossa yleisen tietosuoja-asetuksen vaatimusta käsiteltävien henkilötietojen pseudonymisoinnista ja salauksesta.</p>
+<p>Sekä Tapio että syyttäjät ovat valittaneet käräjäoikeuden tuomiosta.</p></body>
+</html>
+</inlineXML>
+</contentSet></newsItem>

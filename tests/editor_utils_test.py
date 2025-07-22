@@ -14,9 +14,10 @@ import uuid
 import unittest
 import flask
 import lxml.etree
+import pathlib
 import superdesk.editor_utils as editor_utils
 
-from superdesk.editor_utils import DraftJSHTMLExporter, Editor3Content
+from superdesk.editor_utils import Editor3Content
 
 
 class Editor3TestCase(unittest.TestCase):
@@ -24,7 +25,10 @@ class Editor3TestCase(unittest.TestCase):
 
     def setUp(self):
         self.app = flask.Flask(__name__)
-        self.app.app_context().push()
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+        self.addCleanup(self.ctx.pop)
+
         super().setUp()
         if "EMBED_PRE_PROCESS" in self.app.config:
             del self.app.config["EMBED_PRE_PROCESS"]
@@ -2076,3 +2080,81 @@ class Editor3TestCase(unittest.TestCase):
         body_editor = Editor3Content(item_editor3)
         item = body_editor.html_exporter.render_table(data)
         self.assertEqual(expected, lxml.etree.tostring(item, encoding="unicode"))
+
+    def test_export_image(self):
+        draftjs_data = {
+            "blocks": [
+                {
+                    "entityRanges": [
+                        {"key": 1, "offset": 7, "length": 1},
+                    ],
+                    "text": "image: 📷",
+                    "type": "atomic",
+                    "key": "crs2m",
+                    "depth": 0,
+                },
+            ],
+            "entityMap": {
+                "1": {
+                    "type": "IMAGE",
+                    "data": {
+                        "src": "https://example.com/picture.jpg",
+                        "alt": "test",
+                        "width": "800",
+                        "height": "600",
+                    },
+                    "mutability": "MUTABLE",
+                },
+            },
+        }
+
+        expected = """
+            image:\n<img src="https://example.com/picture.jpg" alt="test" width="800" height="600">
+        """.strip()
+
+        item = self.build_item(draftjs_data)
+        editor = Editor3Content(item)
+        html = editor.html
+        self.assertEqual(html, expected)
+
+    def test_field_data_none(self):
+        item = {
+            "headline": "foo",
+            "fields_meta": {
+                "headline": None,
+            },
+        }
+
+        editor_utils.generate_fields(item, fields=["headline"])
+
+    def test_export_embedded_article(self):
+        with open(pathlib.Path(__file__).parent / "fixtures" / "article_with_embedded_article.json") as fixture:
+            item = json.load(fixture)
+            body_html = item.pop("body_html", "")
+        editor_utils.generate_fields(item, fields=["body_html"])
+        assert (
+            """
+        <p> test it</p>\n<div class="article-embed-block"><p>some embed body here</p></div>
+        """.strip()
+            == item["body_html"]
+        )
+
+    def test_unicode_error_in_export(self):
+        body_html = {
+            "blocks": [
+                {
+                    "data": {},
+                    "depth": 0,
+                    "entityRanges": [],
+                    "inlineStyleRanges": [],
+                    "key": "9brbn",
+                    "text": "qualité",
+                    "type": "unstyled",
+                },
+            ],
+        }
+
+        item = self.build_item(body_html, field="body_html")
+        editor = Editor3Content(item, field="body_html", is_html=True)
+        editor.update_item()
+        assert item["body_html"] == "<p>qualité</p>"

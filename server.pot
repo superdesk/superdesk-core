@@ -1,15 +1,15 @@
 # Translations template for Superdesk-Core.
-# Copyright (C) 2022 ORGANIZATION
+# Copyright (C) 2023 ORGANIZATION
 # This file is distributed under the same license as the Superdesk-Core
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2022.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2023.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Superdesk-Core 2.5.dev0\n"
+"Project-Id-Version: Superdesk-Core 2.7.0.dev0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2022-09-05 14:47+0200\n"
+"POT-Creation-Date: 2023-09-13 14:50+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,28 +18,33 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.10.3\n"
 
-#: superdesk/activity.py:81
+#: superdesk/activity.py:80
 msgid "Send notifications via email"
 msgstr ""
 
-#: superdesk/activity.py:82 superdesk/activity.py:92
+#: superdesk/activity.py:81 superdesk/activity.py:91
 msgid "notifications"
 msgstr ""
 
-#: superdesk/activity.py:91
+#: superdesk/activity.py:90
 msgid "Allow Desktop Notifications"
 msgstr ""
 
-#: superdesk/internal_destinations.py:107
+#: superdesk/internal_destinations.py:108
 msgid "Internal Destinations"
 msgstr ""
 
-#: superdesk/internal_destinations.py:108
+#: superdesk/internal_destinations.py:109
 msgid "User can manage internal destinations."
 msgstr ""
 
 #: superdesk/validator.py:287
 msgid "Only 1 instance is allowed."
+msgstr ""
+
+#: superdesk/validator.py:295
+#, python-format
+msgid "Unknown scope %(name)s"
 msgstr ""
 
 #: superdesk/io/__init__.py:57
@@ -90,7 +95,7 @@ msgstr ""
 msgid "Internal Destination Auto Publish"
 msgstr ""
 
-#: superdesk/macros/set_default_template_metadata.py:87
+#: superdesk/macros/set_default_template_metadata.py:86
 msgid "Set Default Template Metadata"
 msgstr ""
 
@@ -239,7 +244,7 @@ msgstr ""
 msgid "SAMS Image Asset not found"
 msgstr ""
 
-#: superdesk/sams/assets.py:143
+#: superdesk/sams/assets.py:142
 msgid "Asset is attached to a news item, cannot delete"
 msgstr ""
 
@@ -259,16 +264,16 @@ msgstr ""
 msgid "cvs"
 msgstr ""
 
-#: superdesk/vocabularies/vocabularies.py:38
+#: superdesk/vocabularies/vocabularies.py:39
 msgid "Vocabularies Management"
 msgstr ""
 
-#: superdesk/vocabularies/vocabularies.py:39
+#: superdesk/vocabularies/vocabularies.py:40
 msgid "User can manage vocabularies' contents."
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:78
-#: apps/validate/validate.py:64 superdesk/vocabularies/vocabularies.py:431
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:79
+#: apps/validate/validate.py:64 superdesk/vocabularies/vocabularies.py:440
 msgid "Keywords"
 msgstr ""
 
@@ -280,35 +285,35 @@ msgstr ""
 msgid "User can configure desk routing"
 msgstr ""
 
-#: apps/desks.py:107
+#: apps/desks.py:108
 msgid "Desk Management"
 msgstr ""
 
-#: apps/desks.py:107
+#: apps/desks.py:108
 msgid "User can manage desks."
 msgstr ""
 
-#: apps/desks.py:110
+#: apps/desks.py:111
 msgid "Master Desk"
 msgstr ""
 
-#: apps/desks.py:110
+#: apps/desks.py:111
 msgid "User can access master desk."
 msgstr ""
 
-#: apps/desks.py:190
+#: apps/desks.py:191
 msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
 
-#: apps/desks.py:214
+#: apps/desks.py:215
 msgid "Cannot delete desk as it is assigned as default desk to user(s)."
 msgstr ""
 
-#: apps/desks.py:226
+#: apps/desks.py:227
 msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
 msgstr ""
 
-#: apps/desks.py:240
+#: apps/desks.py:241
 msgid ""
 "Cannot delete desk as it has article(s) or referenced by versions of the "
 "article(s)."
@@ -322,7 +327,7 @@ msgstr ""
 msgid "Let user toggle Feature Preview on/off."
 msgstr ""
 
-#: apps/archive/__init__.py:111 apps/monitoring.py:14
+#: apps/archive/__init__.py:110 apps/monitoring.py:14
 msgid "Monitoring view"
 msgstr ""
 
@@ -378,7 +383,7 @@ msgstr ""
 msgid "desks"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:134
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:135
 #: apps/preferences.py:195 apps/validate/validate.py:68
 msgid "Place"
 msgstr ""
@@ -391,7 +396,7 @@ msgstr ""
 msgid "contacts"
 msgstr ""
 
-#: apps/preferences.py:295 apps/preferences.py:307
+#: apps/preferences.py:299 apps/preferences.py:311
 msgid "Invalid preference: {preference}"
 msgstr ""
 
@@ -421,7 +426,7 @@ msgstr ""
 msgid "Must have one incoming stage in a desk"
 msgstr ""
 
-#: apps/archive/common.py:575 apps/tasks.py:98
+#: apps/archive/common.py:581 apps/tasks.py:98
 msgid "Invalid desk identifier {desk_id}"
 msgstr ""
 
@@ -429,7 +434,7 @@ msgstr ""
 msgid "User is not member of desk: {desk_id}"
 msgstr ""
 
-#: apps/archive/common.py:581 apps/tasks.py:113
+#: apps/archive/common.py:587 apps/tasks.py:113
 msgid "Invalid stage identifier {stage_id}"
 msgstr ""
 
@@ -441,175 +446,175 @@ msgstr ""
 msgid "Tasks Management"
 msgstr ""
 
-#: apps/archive/__init__.py:112
+#: apps/archive/__init__.py:111
 msgid "Access to Monitoring view in left toolbar"
 msgstr ""
 
-#: apps/archive/__init__.py:115
+#: apps/archive/__init__.py:114
 msgid "Create content"
 msgstr ""
 
-#: apps/archive/__init__.py:115
+#: apps/archive/__init__.py:114
 msgid "Create and save content"
 msgstr ""
 
-#: apps/archive/__init__.py:118
+#: apps/archive/__init__.py:117
 msgid "Ingest"
 msgstr ""
 
-#: apps/archive/__init__.py:118
+#: apps/archive/__init__.py:117
 msgid "Access to ingest sources management"
 msgstr ""
 
-#: apps/archive/__init__.py:120
+#: apps/archive/__init__.py:119
 msgid "Spike"
 msgstr ""
 
-#: apps/archive/__init__.py:120
+#: apps/archive/__init__.py:119
 msgid "Spike/delete items"
 msgstr ""
 
-#: apps/archive/__init__.py:122
+#: apps/archive/__init__.py:121
 msgid "Spike view"
 msgstr ""
 
-#: apps/archive/__init__.py:122
+#: apps/archive/__init__.py:121
 msgid "View spiked content"
 msgstr ""
 
-#: apps/archive/__init__.py:125
+#: apps/archive/__init__.py:124
 msgid "Unspike"
 msgstr ""
 
-#: apps/archive/__init__.py:125
+#: apps/archive/__init__.py:124
 msgid "Unspike/undelete content"
 msgstr ""
 
-#: apps/archive/__init__.py:128
+#: apps/archive/__init__.py:127
 msgid "Edit Unique Name"
 msgstr ""
 
-#: apps/archive/__init__.py:128
+#: apps/archive/__init__.py:127
 msgid "Edit unique name"
 msgstr ""
 
-#: apps/archive/__init__.py:130
+#: apps/archive/__init__.py:129
 msgid "Hold"
 msgstr ""
 
-#: apps/archive/__init__.py:130
+#: apps/archive/__init__.py:129
 msgid "Hold content"
 msgstr ""
 
-#: apps/archive/__init__.py:131
+#: apps/archive/__init__.py:130
 msgid "Restore"
 msgstr ""
 
-#: apps/archive/__init__.py:131
+#: apps/archive/__init__.py:130
 msgid "Restore content"
 msgstr ""
 
-#: apps/archive/__init__.py:132
+#: apps/archive/__init__.py:131
 msgid "Update"
 msgstr ""
 
-#: apps/archive/__init__.py:132
+#: apps/archive/__init__.py:131
 msgid "Create an update"
 msgstr ""
 
-#: apps/archive/__init__.py:135
+#: apps/archive/__init__.py:134
 msgid "Unlock content"
 msgstr ""
 
-#: apps/archive/__init__.py:136
+#: apps/archive/__init__.py:135
 msgid "Unlock locked content by another user"
 msgstr ""
 
-#: apps/archive/__init__.py:140
+#: apps/archive/__init__.py:139
 msgid "Mark items for users"
 msgstr ""
 
-#: apps/archive/__init__.py:141
+#: apps/archive/__init__.py:140
 msgid "User can mark or unmark items for other users"
 msgstr ""
 
-#: apps/archive/archive.py:340 apps/archive/archive.py:1066
+#: apps/archive/archive.py:351 apps/archive/archive.py:1060
 msgid "Package doesn't support Public Service Announcements"
 msgstr ""
 
-#: apps/archive/archive.py:553 apps/archive/archive.py:1060
+#: apps/archive/archive.py:566 apps/archive/archive.py:1054
 #: apps/duplication/archive_duplication.py:141
 #: apps/item_autosave/components/item_autosave.py:36
 msgid "The item was locked by another user"
 msgstr ""
 
-#: apps/archive/archive.py:632 apps/archived/archived.py:201
+#: apps/archive/archive.py:619 apps/archived/archived.py:201
 msgid "User does not have permissions to read the item."
 msgstr ""
 
-#: apps/archive/archive.py:648
+#: apps/archive/archive.py:635
 msgid "Invalid version {old_version}"
 msgstr ""
 
-#: apps/archive/archive.py:652
+#: apps/archive/archive.py:639
 msgid "Invalid item id {item_id}"
 msgstr ""
 
-#: apps/archive/archive.py:656
+#: apps/archive/archive.py:643
 msgid "Invalid last version {last_version}"
 msgstr ""
 
-#: apps/archive/archive.py:983
+#: apps/archive/archive.py:977
 msgid "An item can't have both Publish Schedule and Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:989
+#: apps/archive/archive.py:983
 msgid "Embargo cannot be earlier than now"
 msgstr ""
 
-#: apps/archive/archive.py:992
+#: apps/archive/archive.py:986
 msgid "Rewrites doesn't support Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:995
+#: apps/archive/archive.py:989
 msgid "Invalid Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:999
+#: apps/archive/archive.py:993
 msgid "A Package doesn't support Embargo"
 msgstr ""
 
-#: apps/archive/archive.py:1063
+#: apps/archive/archive.py:1057
 msgid "Item isn't in a valid state to be updated."
 msgstr ""
 
-#: apps/archive/archive.py:1074
+#: apps/archive/archive.py:1068
 msgid "Unauthorized to modify Unique Name"
 msgstr ""
 
-#: apps/archive/archive.py:1082
+#: apps/archive/archive.py:1076
 msgid "Cannot change the genre for broadcast content."
 msgstr ""
 
-#: apps/archive/archive.py:1096
+#: apps/archive/archive.py:1090
 msgid ""
 "This item is in a package and it needs to be removed before the item can "
 "be scheduled!"
 msgstr ""
 
-#: apps/archive/archive.py:1123
+#: apps/archive/archive.py:1117
 msgid "Duplicate category codes are not allowed"
 msgstr ""
 
-#: apps/archive/archive.py:1128
+#: apps/archive/archive.py:1122
 msgid "Duplicate subjects are not allowed"
 msgstr ""
 
-#: apps/archive/archive.py:1413
+#: apps/archive/archive.py:1407
 msgid "Client and server etags don't match"
 msgstr ""
 
-#: apps/archive/archive.py:1415
+#: apps/archive/archive.py:1409
 msgid "Request for Auto-save must have _id"
 msgstr ""
 
@@ -665,52 +670,52 @@ msgstr ""
 msgid " it needs to be removed before the item can be spiked"
 msgstr ""
 
-#: apps/archive/autocomplete.py:38
+#: apps/archive/autocomplete.py:37
 msgid "Archive autocomplete is not enabled"
 msgstr ""
 
-#: apps/archive/autocomplete.py:41
+#: apps/archive/autocomplete.py:40
 #, python-format
 msgid "Field %(field)s is not allowed"
 msgstr ""
 
-#: apps/archive/common.py:421
+#: apps/archive/common.py:425
 msgid "Document not found in archive collection"
 msgstr ""
 
-#: apps/archive/common.py:662 apps/archive/common.py:664
+#: apps/archive/common.py:668 apps/archive/common.py:670
 msgid "Schedule date is not recognized"
 msgstr ""
 
-#: apps/archive/common.py:668
+#: apps/archive/common.py:674
 msgid "Schedule cannot be earlier than now"
 msgstr ""
 
-#: apps/archive/common.py:684
+#: apps/archive/common.py:690
 msgid "{} date is not recognized"
 msgstr ""
 
-#: apps/archive_broadcast/__init__.py:28
+#: apps/archive_broadcast/__init__.py:27
 msgid "Broadcast"
 msgstr ""
 
-#: apps/archive_broadcast/__init__.py:29
+#: apps/archive_broadcast/__init__.py:28
 msgid "Allows user to create broadcast content."
 msgstr ""
 
-#: apps/archive_broadcast/broadcast.py:92
+#: apps/archive_broadcast/broadcast.py:91
 msgid "Cannot find the {genre} genre."
 msgstr ""
 
-#: apps/archive_broadcast/broadcast.py:118
+#: apps/archive_broadcast/broadcast.py:117
 msgid "Cannot find the requested item id."
 msgstr ""
 
-#: apps/archive_broadcast/broadcast.py:121
+#: apps/archive_broadcast/broadcast.py:120
 msgid "Invalid content type."
 msgstr ""
 
-#: apps/archive_broadcast/broadcast.py:124
+#: apps/archive_broadcast/broadcast.py:123
 msgid "Invalid content state."
 msgstr ""
 
@@ -780,6 +785,12 @@ msgstr ""
 msgid "Not found."
 msgstr ""
 
+#: apps/auth/db/db.py:31
+msgid ""
+"Oops!This account has been changed to External. External accounts have no"
+" login capability."
+msgstr ""
+
 #: apps/auth/db/reset_password.py:77
 msgid "Either key:password or email must be provided"
 msgstr ""
@@ -828,7 +839,7 @@ msgstr ""
 msgid "View Contacts"
 msgstr ""
 
-#: apps/contacts/service.py:85
+#: apps/contacts/service.py:84
 msgid "Contacts of type \"{contact_type}\" must have an email address"
 msgstr ""
 
@@ -840,130 +851,130 @@ msgstr ""
 msgid "User can manage content filters"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_service.py:40
+#: apps/content_filters/content_filter/content_filter_service.py:46
 msgid "Content filter has been referenced by subscriber(s) {references}"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_service.py:48
+#: apps/content_filters/content_filter/content_filter_service.py:54
 msgid "Content filter has been referenced by routing scheme(s) {references}"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_service.py:56
+#: apps/content_filters/content_filter/content_filter_service.py:62
 msgid "Content filter has been referenced in {references})"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_service.py:122
+#: apps/content_filters/content_filter/content_filter_service.py:130
 msgid "Circular dependency error in content filters:{filter}"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_service.py:196
+#: apps/content_filters/content_filter/content_filter_service.py:204
 msgid "Filter statement {index} does not have a filter condition"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_test.py:48
+#: apps/content_filters/content_filter/content_filter_test.py:49
 msgid "Content filter not found"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_test.py:58
-#: apps/products/product_test.py:51 apps/publish/formatters/service.py:65
+#: apps/content_filters/content_filter/content_filter_test.py:59
+#: apps/products/product_test.py:52 apps/publish/formatters/service.py:65
 msgid "Article not found!"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_test.py:63
+#: apps/content_filters/content_filter/content_filter_test.py:64
 msgid "Error in testing article: {error}"
 msgstr ""
 
-#: apps/content_filters/content_filter/content_filter_test.py:78
+#: apps/content_filters/content_filter/content_filter_test.py:79
 msgid "Error in testing archive: {error}"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_field.py:53
+#: apps/content_filters/filter_condition/filter_condition_field.py:71
 msgid "Invalid filter conditions field {field}"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:45
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:46
 msgid "ANPA Category"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:52
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:53
 #: apps/validate/validate.py:80
 msgid "Urgency"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:59
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:60
 #: apps/validate/validate.py:61
 msgid "Genre"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:66
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:67
 #: apps/validate/validate.py:78
 msgid "Subject"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:73
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:74
 #: apps/validate/validate.py:69
 msgid "Priority"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:81
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:82
 #: apps/validate/validate.py:73
 msgid "Slugline"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:86
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:87
 #: apps/validate/validate.py:79
 msgid "Type"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:93
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:94
 #: apps/validate/validate.py:76
 msgid "Source"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:98
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:99
 #: apps/validate/validate.py:62
 msgid "Headline"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:103
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:104
 msgid "Ednote"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:108
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:109
 #: apps/validate/validate.py:46
 msgid "Body HTML"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:113
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:114
 #: apps/validate/validate.py:54
 msgid "Desk"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:120
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:121
 #: apps/validate/validate.py:77
 msgid "Stage"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:127
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:128
 #: apps/validate/validate.py:74
 msgid "SMS"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:141
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:142
 msgid "Ingest provider"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:148
-#: apps/publish/__init__.py:93 apps/validate/validate.py:56
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:149
+#: apps/publish/__init__.py:92 apps/validate/validate.py:56
 msgid "Embargo"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:155
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:156
 #: apps/validate/validate.py:58
 msgid "Feature Media"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_parameters.py:170
+#: apps/content_filters/filter_condition/filter_condition_parameters.py:171
 msgid "Agendas"
 msgstr ""
 
@@ -991,17 +1002,17 @@ msgstr ""
 msgid "Manage content profiles"
 msgstr ""
 
-#: apps/content_types/content_types.py:147
+#: apps/content_types/content_types.py:148
 msgid "Vocabulary {vocabulary} is used in {count} content type(s)"
 msgstr ""
 
-#: apps/content_types/content_types.py:169
+#: apps/content_types/content_types.py:170
 msgid ""
 "Cannot disable content profile as following templates are referencing: "
 "{templates}"
 msgstr ""
 
-#: apps/content_types/content_types.py:183
+#: apps/content_types/content_types.py:184
 msgid "Cannot disable content profile as following desks are referencing: {desks}"
 msgstr ""
 
@@ -1129,7 +1140,7 @@ msgstr ""
 msgid "provider not found source={source}"
 msgstr ""
 
-#: apps/io/feeding_services/reuters.py:150
+#: apps/io/feeding_services/reuters.py:148
 msgid "Not found {payload}"
 msgstr ""
 
@@ -1165,15 +1176,15 @@ msgstr ""
 msgid "User does not belong to security Group or could not find the user profile."
 msgstr ""
 
-#: apps/ldap/ldap.py:163
+#: apps/ldap/ldap.py:162
 msgid "No user has been found in AD"
 msgstr ""
 
-#: apps/ldap/ldap.py:204 apps/ldap/ldap.py:211
+#: apps/ldap/ldap.py:202 apps/ldap/ldap.py:209
 msgid "Invalid Credentials."
 msgstr ""
 
-#: apps/ldap/ldap.py:215
+#: apps/ldap/ldap.py:213
 msgid "User already exists in the system."
 msgstr ""
 
@@ -1265,11 +1276,11 @@ msgstr ""
 msgid "User can manage product lists."
 msgstr ""
 
-#: apps/products/product_test.py:45
+#: apps/products/product_test.py:46
 msgid "Article id cannot be empty!"
 msgstr ""
 
-#: apps/products/product_test.py:58
+#: apps/products/product_test.py:59
 msgid "Error in testing article: {exception}"
 msgstr ""
 
@@ -1285,91 +1296,91 @@ msgstr ""
 msgid "Product is used for direct publishing for the subscriber(s): {subscribers}"
 msgstr ""
 
-#: apps/publish/__init__.py:75
+#: apps/publish/__init__.py:74
 msgid "Subscribers"
 msgstr ""
 
-#: apps/publish/__init__.py:75
+#: apps/publish/__init__.py:74
 msgid "User can manage subscribers"
 msgstr ""
 
-#: apps/publish/__init__.py:77
+#: apps/publish/__init__.py:76
 msgid "Publish"
 msgstr ""
 
-#: apps/publish/__init__.py:77
+#: apps/publish/__init__.py:76
 msgid "Publish a content"
 msgstr ""
 
-#: apps/publish/__init__.py:78
+#: apps/publish/__init__.py:77
 msgid "Kill"
 msgstr ""
 
-#: apps/publish/__init__.py:78
+#: apps/publish/__init__.py:77
 msgid "Kill a published content"
 msgstr ""
 
-#: apps/publish/__init__.py:80
+#: apps/publish/__init__.py:79
 msgid "Correction"
 msgstr ""
 
-#: apps/publish/__init__.py:80
+#: apps/publish/__init__.py:79
 msgid "Correction to a published content"
 msgstr ""
 
-#: apps/publish/__init__.py:84
+#: apps/publish/__init__.py:83
 msgid "Publish Queue"
 msgstr ""
 
-#: apps/publish/__init__.py:85
+#: apps/publish/__init__.py:84
 msgid "User can update publish queue"
 msgstr ""
 
-#: apps/publish/__init__.py:89
+#: apps/publish/__init__.py:88
 msgid "Resending Stories"
 msgstr ""
 
-#: apps/publish/__init__.py:90
+#: apps/publish/__init__.py:89
 msgid "User can resend published stories"
 msgstr ""
 
-#: apps/publish/__init__.py:93
+#: apps/publish/__init__.py:92
 msgid "User can set embargo date"
 msgstr ""
 
-#: apps/publish/__init__.py:96
+#: apps/publish/__init__.py:95
 msgid "Take down"
 msgstr ""
 
-#: apps/publish/__init__.py:96
+#: apps/publish/__init__.py:95
 msgid "Take down a published content"
 msgstr ""
 
-#: apps/publish/__init__.py:99
+#: apps/publish/__init__.py:98
 msgid "Unpublish"
 msgstr ""
 
-#: apps/publish/__init__.py:99
+#: apps/publish/__init__.py:98
 msgid "Unpublish a published content"
 msgstr ""
 
-#: apps/publish/published_item.py:173
+#: apps/publish/published_item.py:174
 msgid "Invalid state ({state}) for the Published item."
 msgstr ""
 
-#: apps/publish/published_item.py:234 apps/publish/published_item.py:247
-#: apps/publish/published_item.py:260
+#: apps/publish/published_item.py:235 apps/publish/published_item.py:248
+#: apps/publish/published_item.py:261
 msgid ""
 "Deleting a published item has a workflow which is implemented in "
 "remove_expired()."
 msgstr ""
 
-#: apps/publish/content/common.py:257
-#: apps/publish/enqueue/enqueue_service.py:221
+#: apps/publish/content/common.py:261
+#: apps/publish/enqueue/enqueue_service.py:196
 msgid "Key is missing on article to be published: {exception}"
 msgstr ""
 
-#: apps/publish/content/common.py:262
+#: apps/publish/content/common.py:266
 msgid "Failed to publish the item: {id}"
 msgstr ""
 
@@ -1385,76 +1396,76 @@ msgstr ""
 msgid "Cannot publish the story after Update is published."
 msgstr ""
 
-#: apps/publish/content/common.py:332
+#: apps/publish/content/common.py:339
 msgid "Can't publish update until original story is published."
 msgstr ""
 
-#: apps/publish/content/common.py:374
+#: apps/publish/content/common.py:381
 msgid ""
 "There are unpublished related items that won't be sent out as related "
 "items. Do you want to publish the article anyway?"
 msgstr ""
 
-#: apps/publish/content/common.py:387
+#: apps/publish/content/common.py:394
 msgid "Package cannot be {state}"
 msgstr ""
 
-#: apps/publish/content/common.py:390
+#: apps/publish/content/common.py:397
 msgid "Package cannot have Embargo"
 msgstr ""
 
-#: apps/publish/content/common.py:397 apps/publish/content/common.py:463
-#: apps/publish/enqueue/enqueue_service.py:138
+#: apps/publish/content/common.py:404 apps/publish/content/common.py:472
+#: apps/publish/enqueue/enqueue_service.py:113
 msgid "Corrected package cannot be empty!"
 msgstr ""
 
-#: apps/publish/content/common.py:401
+#: apps/publish/content/common.py:408
 msgid "Cannot publish an item which is marked as Not for Publication"
 msgstr ""
 
-#: apps/publish/content/common.py:406
+#: apps/publish/content/common.py:413
 msgid "Can't {operation} as item state is {state}"
 msgstr ""
 
-#: apps/publish/content/common.py:408
+#: apps/publish/content/common.py:415
 msgid ""
 "Can't {operation} as either package state or one of the items state is "
 "{state}"
 msgstr ""
 
-#: apps/publish/content/common.py:455 apps/publish/content/publish.py:51
+#: apps/publish/content/common.py:464 apps/publish/content/publish.py:51
 msgid "Empty package cannot be published!"
 msgstr ""
 
-#: apps/publish/content/common.py:476
+#: apps/publish/content/common.py:485
 msgid "Package item with id: {guid} does not exist."
 msgstr ""
 
-#: apps/publish/content/common.py:667
+#: apps/publish/content/common.py:676
 msgid "Item cannot contain associated {state} item."
 msgstr ""
 
-#: apps/publish/content/common.py:671
+#: apps/publish/content/common.py:680
 msgid "Associated item is scheduled later than current item."
 msgstr ""
 
-#: apps/publish/content/common.py:674
+#: apps/publish/content/common.py:683
 msgid "Item cannot have associated items with Embargo"
 msgstr ""
 
-#: apps/publish/content/common.py:684
+#: apps/publish/content/common.py:693
 msgid "Associated item {name} {error}"
 msgstr ""
 
-#: apps/publish/content/common.py:696
+#: apps/publish/content/common.py:705
 msgid "packaged item is locked by another user"
 msgstr ""
 
-#: apps/publish/content/common.py:705
+#: apps/publish/content/common.py:714
 msgid "packaged item is locked by you. Unlock it and try again"
 msgstr ""
 
-#: apps/publish/content/common.py:833
+#: apps/publish/content/common.py:842
 msgid "Associated item \"{}\" does not exist in the system"
 msgstr ""
 
@@ -1480,35 +1491,35 @@ msgstr ""
 msgid "Circular reference in item {item_id}"
 msgstr ""
 
-#: apps/publish/content/resend.py:60
+#: apps/publish/content/resend.py:61
 msgid "No subscribers selected!"
 msgstr ""
 
-#: apps/publish/content/resend.py:66
+#: apps/publish/content/resend.py:67
 msgid "No active subscribers found!"
 msgstr ""
 
-#: apps/publish/content/resend.py:71
+#: apps/publish/content/resend.py:72
 msgid "Only wire subscribers can receive broadcast stories!"
 msgstr ""
 
-#: apps/publish/content/resend.py:83
+#: apps/publish/content/resend.py:84
 msgid "Story couldn't be found!"
 msgstr ""
 
-#: apps/publish/content/resend.py:86
+#: apps/publish/content/resend.py:87
 msgid "Only text stories can be resent!"
 msgstr ""
 
-#: apps/publish/content/resend.py:95
+#: apps/publish/content/resend.py:96
 msgid "Only published, corrected or killed stories can be resent!"
 msgstr ""
 
-#: apps/publish/content/resend.py:100
+#: apps/publish/content/resend.py:101
 msgid "Please use the newest version {version} to resend!"
 msgstr ""
 
-#: apps/publish/content/resend.py:104
+#: apps/publish/content/resend.py:105
 msgid "Updated story cannot be resent!"
 msgstr ""
 
@@ -1518,15 +1529,15 @@ msgid ""
 "unpublished."
 msgstr ""
 
-#: apps/publish/enqueue/enqueue_service.py:148
+#: apps/publish/enqueue/enqueue_service.py:123
 msgid "Package item with id: {guid} has not been published."
 msgstr ""
 
-#: apps/publish/enqueue/enqueue_service.py:226
+#: apps/publish/enqueue/enqueue_service.py:201
 msgid "Failed to publish the item: {exception}"
 msgstr ""
 
-#: apps/publish/enqueue/enqueue_service.py:622
+#: apps/publish/enqueue/enqueue_service.py:604
 msgid "Can not find package {package} published item {item}"
 msgstr ""
 
@@ -1542,23 +1553,23 @@ msgstr ""
 msgid "Error in formatting article: {exception}"
 msgstr ""
 
-#: apps/rules/__init__.py:35
+#: apps/rules/__init__.py:40
 msgid "Transformation Rules Management"
 msgstr ""
 
-#: apps/rules/__init__.py:36
+#: apps/rules/__init__.py:41
 msgid "User can setup transformation rules for ingest content."
 msgstr ""
 
-#: apps/rules/__init__.py:41
+#: apps/rules/__init__.py:46
 msgid "Routing Rules Management"
 msgstr ""
 
-#: apps/rules/__init__.py:42
+#: apps/rules/__init__.py:47
 msgid "User can manage routing rules which are executed on ingested articles."
 msgstr ""
 
-#: apps/rules/routing_rules.py:180
+#: apps/rules/routing_rules.py:187
 msgid "Routing scheme is applied to channel(s). It cannot be deleted."
 msgstr ""
 
@@ -1566,48 +1577,60 @@ msgstr ""
 msgid "A Routing Scheme must have at least one Rule"
 msgstr ""
 
-#: apps/rules/routing_rules.py:289
+#: apps/rules/routing_rules.py:291
 msgid "A routing rule has invalid fields {fields}"
 msgstr ""
 
-#: apps/rules/routing_rules.py:296
+#: apps/rules/routing_rules.py:298
 msgid "A routing rule must have a name"
 msgstr ""
 
-#: apps/rules/routing_rules.py:302
+#: apps/rules/routing_rules.py:304
 msgid "A routing rule must have actions"
 msgstr ""
 
-#: apps/rules/routing_rules.py:319
+#: apps/rules/routing_rules.py:321
 msgid "Schedule when defined can't be empty."
 msgstr ""
 
-#: apps/rules/routing_rules.py:323
+#: apps/rules/routing_rules.py:325
 msgid "Invalid values for day of week."
 msgstr ""
 
-#: apps/rules/routing_rules.py:329
+#: apps/rules/routing_rules.py:331
 msgid "Invalid value for from time."
 msgstr ""
 
-#: apps/rules/routing_rules.py:337
+#: apps/rules/routing_rules.py:339
 msgid "Invalid value for hour_of_day_to (expected %H:%M:%S)."
 msgstr ""
 
-#: apps/rules/routing_rules.py:341
+#: apps/rules/routing_rules.py:343
 msgid "From time should be less than To Time."
 msgstr ""
 
-#: apps/rules/routing_rules.py:346
+#: apps/rules/routing_rules.py:348
 msgid "Unknown time zone {time_zone}"
 msgstr ""
 
-#: apps/rules/routing_rules.py:359
+#: apps/rules/routing_rules.py:361
 msgid "Rule Names must be unique within a scheme"
+msgstr ""
+
+#: apps/rules/rule_handlers.py:99
+msgid "Desk Fetch/Publish"
 msgstr ""
 
 #: apps/rules/rule_sets.py:55
 msgid "Cannot delete Rule set as it's associated with channel(s)."
+msgstr ""
+
+#: apps/rundowns/__init__.py:15
+msgid "Rundowns"
+msgstr ""
+
+#: apps/rundowns/__init__.py:16
+msgid "Rundowns management"
 msgstr ""
 
 #: apps/saved_searches/__init__.py:55

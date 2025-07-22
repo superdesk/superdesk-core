@@ -10,6 +10,7 @@
 
 import datetime
 import logging
+from typing import List
 
 from bson.objectid import ObjectId
 from flask import g
@@ -20,8 +21,10 @@ from superdesk import get_resource_service
 from superdesk.emails import send_activity_emails
 from superdesk.errors import SuperdeskApiError, add_notifier
 from superdesk.notification import push_notification
+from superdesk.preferences import get_user_notification_preferences
 from superdesk.resource import Resource
 from superdesk.services import BaseService
+from superdesk.types import User
 from superdesk.utc import utcnow
 from eve.utils import ParsedRequest
 from superdesk.metadata.item import PUBLISH_STATES
@@ -66,6 +69,7 @@ class ActivityResource(Resource):
         "resource": {"type": "string"},
     }
     exclude = {endpoint_name, "notification"}
+    notifications = False
     datasource = {
         "default_sort": [("_created", -1)],
         "filter": {"_created": {"$gte": utcnow() - datetime.timedelta(days=1)}},
@@ -79,6 +83,13 @@ class ActivityResource(Resource):
         },
         label=lazy_gettext("Send notifications via email"),
         category=lazy_gettext("notifications"),
+    )
+    superdesk.register_default_user_preference(
+        "notifications",
+        {
+            "type": "dict",
+            "schema": {},
+        },
     )
     superdesk.register_default_user_preference(
         "desktop:notification",
@@ -228,22 +239,38 @@ def add_activity(
     return activity
 
 
-def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_list=None, **data):
+def notify_and_add_activity(
+    activity_name, msg, resource=None, item=None, user_list=None, notification_name=None, **data
+):
     """
     Adds the activity and notify enabled and active users via email.
     """
+    if user_list is None:
+        user_list = []
+
+    if notification_name is None:
+        notification_name = activity_name
+
+    notify_users = [
+        str(user.get("_id"))
+        for user in user_list
+        if get_user_notification_preferences(user, notification_name)["desktop"]
+    ]
 
     add_activity(
         activity_name,
         msg=msg,
         resource=resource,
         item=item,
-        notify=[str(user.get("_id")) for user in user_list] if user_list else None,
+        notify=notify_users,
         **data,
     )
 
     if activity_name == ACTIVITY_ERROR or user_list:
-        recipients = get_recipients(user_list, activity_name)
+        if not user_list:
+            user_list = get_resource_service("users").get_users_by_user_type("administrator")
+
+        recipients = get_recipients(user_list, notification_name)
 
         if activity_name != ACTIVITY_ERROR:
             current_user = getattr(g, "user", None)
@@ -260,19 +287,14 @@ def notify_and_add_activity(activity_name, msg, resource=None, item=None, user_l
             send_activity_emails(activity=activity, recipients=recipients)
 
 
-def get_recipients(user_list, activity_name):
-    if not user_list and activity_name == ACTIVITY_ERROR:
-        user_list = get_resource_service("users").get_users_by_user_type("administrator")
-
+def get_recipients(user_list: List[User], notification_name=None) -> List[str]:
     recipients = [
-        user.get("email")
+        user["email"]
         for user in user_list
         if not user.get("needs_activation", True)
         and user.get("is_enabled", False)
         and user.get("is_active", False)
-        and get_resource_service("preferences").email_notification_is_enabled(
-            preferences=user.get("user_preferences", {})
-        )
+        and get_user_notification_preferences(user, notification_name)["email"]
     ]
 
     return recipients

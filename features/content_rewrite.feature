@@ -186,8 +186,7 @@ Feature: Rewrite content
       {"desk_id": "#desks._id#"}
       """
       When we get "/archive/#REWRITE_ID#"
-      Then there is no "body_html" in response
-      And we get existing resource
+      Then we get existing resource
       """
       {
         "_id": "#REWRITE_ID#",
@@ -1740,8 +1739,7 @@ Feature: Rewrite content
       {"desk_id": "#desks._id#"}
       """
       When we get "/archive/#REWRITE_ID#"
-      Then there is no "body_html" in response
-      And we get existing resource
+      Then we get existing resource
       """
       {
         "_id": "#REWRITE_ID#",
@@ -1773,8 +1771,8 @@ Feature: Rewrite content
       And "ingest_providers"
       """
       [
-        { "_id": "1", "name": "agency", "source": "YYY"},
-        { "_id": "2", "name": "agency", "source": "XXX"}
+        { "_id": "1", "name": "agency1", "source": "YYY"},
+        { "_id": "2", "name": "agency2", "source": "XXX"}
       ]
       """
       And the "validators"

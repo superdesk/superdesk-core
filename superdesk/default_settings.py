@@ -138,6 +138,11 @@ server_url = urlparse(SERVER_URL)
 SERVER_DOMAIN = server_url.netloc or "localhost"
 URL_PREFIX = env("URL_PREFIX", server_url.path.lstrip("/")) or ""
 
+#: Used when generating GUIDs or URNs to fill in the domain portion
+#:
+#: .. versionadded: 2.4.6
+URN_DOMAIN = env("URN_DOMAIN", SERVER_DOMAIN)
+
 # map package name => github repo name, to be filled when a custom version of a package is used
 REPO_OVERRIDE = {}
 
@@ -178,8 +183,10 @@ MONGO_DBNAME = env("MONGO_DBNAME", "superdesk")
 #: full mongodb connection uri, overrides ``MONGO_DBNAME`` if set
 MONGO_URI = env("MONGO_URI", "mongodb://localhost/%s" % MONGO_DBNAME)
 
-#: allow all mongo queries
-MONGO_QUERY_BLACKLIST = []
+#: don't allow js mongo queries which can be used to leak sensitive info
+#:
+#: More info in `SDESK-7092<https://sofab.atlassian.net/browse/SDESK-7092>`_.
+MONGO_QUERY_BLACKLIST = ["$where", "$expr"]
 
 MONGO_LOCALE = "en_US"
 
@@ -263,6 +270,9 @@ REDIS_URL = env("REDIS_URL", "redis://localhost:6379")
 
 #: cache url - superdesk will try to figure out if it's redis or memcached
 CACHE_URL = env("SUPERDESK_CACHE_URL", REDIS_URL)
+
+#: cache type - set explicit cache type if it wouldn't get it right from url
+CACHE_TYPE = env("SUPERDESK_CACHE_TYPE")
 
 #: celery broker
 BROKER_URL = env("CELERY_BROKER_URL", REDIS_URL)
@@ -366,11 +376,19 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.saved_searches.report",
         "schedule": crontab(minute=0),
     },
+    "subscribers:schedule_update": {
+        "task": "superdesk.publish.subscribers_schedule.update_subscriber_activation_states",
+        "schedule": crontab(minute=0, hour=local_to_utc_hour(0)),
+    },
 }
 
 #: Sentry DSN - will report exceptions there
 SENTRY_DSN = env("SENTRY_DSN")
 SENTRY_INCLUDE_PATHS = ["superdesk", "apps"]
+
+#: Set to number between 0.0 to 1.0 to enable sentry Enable Sentry traces
+SENTRY_TRACES_SAMPLE_RATE = float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")) or None
+SENTRY_PROFILES_SAMPLE_RATE = float(os.environ.get("SENTRY_PROFILES_SAMPLE_RATE", "0")) or None
 
 CORE_APPS = [
     "apps.auth",
@@ -398,6 +416,7 @@ CORE_APPS = [
     "superdesk.locales",
     "apps.usage_metrics",
     "superdesk.system.health",
+    "apps.languages",
 ]
 
 #: Specify what modules should be enabled
@@ -516,7 +535,7 @@ CORE_APPS.extend(
         "superdesk.places",
         "apps.desk_routing",
         "apps.system_message",
-        "apps.rundowns",
+        "apps.user_availability",
     ]
 )
 
@@ -534,7 +553,9 @@ MEDIA_STORAGE_PROVIDER = env("MEDIA_STORAGE_PROVIDER")
 #: it should only check during migration, otherwise this generates unnecessary load on the s3
 #:
 #: .. versionadded:: 2.5
-PROXY_MEDIA_STORAGE_CHECK_EXISTS = strtobool(env("PROXY_MEDIA_STORAGE_CHECK_EXISTS", "false"))
+#: .. versionchanged:: 2.8.4
+#:    Default value changed to ``True``
+PROXY_MEDIA_STORAGE_CHECK_EXISTS = strtobool(env("PROXY_MEDIA_STORAGE_CHECK_EXISTS", "true"))
 
 #: uses for generation of media url ``(<media_prefix>/<media_id>)``::
 MEDIA_PREFIX = env("MEDIA_PREFIX", "%s/upload-raw" % SERVER_URL.rstrip("/"))
@@ -571,6 +592,7 @@ RENDITIONS = {
     },
 }
 
+NINJS_COMMON_RENDITIONS = list(RENDITIONS["picture"].keys())
 
 #: BCRYPT work factor
 BCRYPT_GENSALT_WORK_FACTOR = 12
@@ -638,14 +660,20 @@ PUBLISHED_CONTENT_EXPIRY_MINUTES = int(env("PUBLISHED_CONTENT_EXPIRY_MINUTES", 0
 AUDIT_EXPIRY_MINUTES = int(env("AUDIT_EXPIRY_MINUTES", 60 * 24 * 14))
 
 #: The number records to be fetched for expiry.
-MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 100))
+#:
+#: .. versionchanged:: 2.9.0
+#:    Changed default to 1000 from 100.
+MAX_EXPIRY_QUERY_LIMIT = int(env("MAX_EXPIRY_QUERY_LIMIT", 1000))
 
 #: Number of loops to do on each run
 #:
 #: .. versionchanged:: 2.7.0
 #:    Changed default to 100 from 50.
 #:
-MAX_EXPIRY_LOOPS = 100
+#: .. versionchanged:: 2.9.0
+#:    Changed default to 10 from 100.
+#:
+MAX_EXPIRY_LOOPS = 10
 
 #: The number of minutes before Publish Queue is purged
 #:
@@ -736,6 +764,12 @@ FTP_TIMEOUT = 300
 #: default timeout when publishing using the `http_push` transmitter
 HTTP_PUSH_TIMEOUT = (5, 30)
 
+#: Default timeout when proxying requests through the HTTPProxy endpoint(s)
+#:
+#: ..versionadded: 1.7.0
+#:
+HTTP_PROXY_TIMEOUT = (5, 30)
+
 #: default amount of files which can processed during one iteration of ftp ingest
 FTP_INGEST_FILES_LIST_LIMIT = 100
 
@@ -774,6 +808,9 @@ TEMP_FILE_EXPIRY_HOURS = int(env("TEMP_FILE_EXPIRY_HOURS", 24))
 #: The number of days before content api items are removed. Defaults to 0 which means no purging occurs
 CONTENT_API_EXPIRY_DAYS = int(env("CONTENT_API_EXPIRY_DAYS", 0))
 
+#: The number of items to check for expiry once per day
+CONTENT_API_EXPIRY_QUERY_LIMIT = int(env("CONTENT_API_EXPIRY_QUERY_LIMIT", 1000))
+
 # Google OAuth settings
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
@@ -781,7 +818,7 @@ GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 GOOGLE_LOGIN = True
 GOOGLE_GMAIL = True
 
-PREFERRED_URL_SCHEME = env("PREFERRED_URL_SCHEME", "https")
+PREFERRED_URL_SCHEME = env("PREFERRED_URL_SCHEME")
 
 # SAML Auth settings
 SAML_PATH = env("SAML_PATH")
@@ -1075,16 +1112,52 @@ APM_SECRET_TOKEN = env("APM_SECRET_TOKEN")
 #:
 APM_SERVICE_NAME = env("APM_SERVICE_NAME")
 
-
 #: Default Timezone for Rundowns Shows/Templates
 #:
 #: .. versionadded:: 2.6
 #:
 RUNDOWNS_TIMEZONE = DEFAULT_TIMEZONE
 
+#: How many hours in advance we should create scheduled rundowns
+#:
+#: .. versionadded:: 2.6
+#:
+RUNDOWNS_SCHEDULE_HOURS = 12
 
 #: Rebuild elastic indexes on a mapping error when running app:initialize_data command
 #:
 #: .. versionadded:: 2.6
 #:
 REBUILD_ELASTIC_ON_INIT_DATA_ERROR = strtobool(env("REBUILD_ELASTIC_ON_INIT_DATA_ERROR", "false"))
+
+#: Apply product filtering to embedded media items
+#:
+#: .. versionadded:: 2.5.4
+#:
+EMBED_PRODUCT_FILTERING = strtobool(env("EMBED_PRODUCT_FILTERING", "false"))
+
+#: When enabled it will unpublish article to matching subscribers
+#: if there are no records in publish queue for it.
+#:
+#: .. versionadded:: 2.7
+#:
+UNPUBLISH_TO_MATCHING_SUBSCRIBERS = True
+
+
+#: If disabled, it will disable SSL verification for AP Media ingest feeds
+#:
+#: .. versionadded:: 2.7
+#:
+AP_MEDIA_API_VERIFY_SSL = strtobool(env("AP_MEDIA_API_VERIFY_SSL", "true"))
+
+#: Map picture item data to photo metadata. When set picture binary will be updated on publish.
+#:
+#: .. versionadded:: 2.8
+#:
+PICTURE_METADATA_MAPPING = {}
+
+#: Enable broadcast feature
+#:
+#: .. versionadded:: 2.8
+#:
+BROADCAST_ENABLED = strtobool(env("BROADCAST_ENABLED", "true"))

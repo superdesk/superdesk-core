@@ -60,7 +60,7 @@ terminal, in the directory where your ``docker-compose.yml`` is located.
 
 ::
 
-   > docker-compose exec mongodb /bin/bash
+   > docker compose exec mongodb /bin/bash
    > mongo
    > rs.initiate()
 

@@ -31,7 +31,7 @@ from pymongo.errors import DuplicateKeyError
 
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
-from superdesk.errors import SuperdeskError, SuperdeskApiError
+from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
 from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
 from superdesk.storage import ProxyMediaStorage
@@ -70,6 +70,10 @@ def set_error_handlers(app):
     def assert_error_handler(error):
         return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
 
+    @app.errorhandler(DocumentError)
+    def document_error_handler(error):
+        return send_response(None, ({"code": 400, "error": str(error) if str(error) else "assert"}, None, None, 400))
+
     @app.errorhandler(500)
     def server_error_handler(error):
         """Log server errors."""
@@ -78,23 +82,11 @@ def set_error_handlers(app):
 
 
 class SuperdeskEve(eve.Eve):
-    def __init__(self, **kwargs):
-        # set attributes to avoid event slots being created
-        # when getattr is called on those, thx to eve
-        self.apm = None
-        self.babel_tzinfo = None
-        self.babel_locale = None
-        self.babel_translations = None
-        self.notification_client = None
-        self._superdesk_cache = None
-
-        super().__init__(**kwargs)
-
     def __getattr__(self, name):
-        """Workaround for https://github.com/pyeve/eve/issues/1087"""
-        if name in {"im_self", "im_func"}:
-            raise AttributeError("type object '%s' has no attribute '%s'" % (self.__class__.__name__, name))
-        return super(SuperdeskEve, self).__getattr__(name)
+        """Only use events for on_* methods."""
+        if name.startswith("on_"):
+            return super(SuperdeskEve, self).__getattr__(name)
+        raise AttributeError("type object '%s' has no attribute '%s'" % (self.__class__.__name__, name))
 
     def init_indexes(self, ignore_duplicate_keys=False):
         for resource, resource_config in self.config["DOMAIN"].items():
@@ -279,3 +271,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     configure_logging(app.config["LOG_CONFIG_FILE"])
 
     return app
+
+
+SuperdeskApp = SuperdeskEve

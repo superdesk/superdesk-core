@@ -33,4 +33,6 @@ So far, Superdesk supports the following spellcheckers:
 
 .. autoclass:: superdesk.text_checkers.spellcheckers.leuven_dutch.LeuvenDutch
 
+.. autoclass:: superdesk.text_checkers.spellcheckers.languagetool.Languagetool
+
 .. autoclass:: superdesk.text_checkers.spellcheckers.default.Default

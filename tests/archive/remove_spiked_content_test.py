@@ -178,8 +178,8 @@ class RemoveSpikedContentTestCase(TestCase):
         now = utcnow()
         for expired_items in get_resource_service(ARCHIVE).get_expired_items(now):
             if expired_items:
-                self.assertEquals(1, len(expired_items))
-                self.assertEquals(100, expired_items[0]["unique_id"])
+                self.assertEqual(1, len(expired_items))
+                self.assertEqual(100, expired_items[0]["unique_id"])
                 break
         else:
             assert False, "break was not called"

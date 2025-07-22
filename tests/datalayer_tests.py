@@ -10,6 +10,7 @@
 
 
 import superdesk
+
 from bson import ObjectId
 from superdesk.tests import TestCase
 from superdesk.datalayer import SuperdeskJSONEncoder
@@ -65,3 +66,12 @@ class DatalayerTestCase(TestCase):
             assert item["_id"] == "test-{:04d}".format(counter)
             counter += 1
         assert counter == SIZE
+
+    def test_delete_chunks(self):
+        items = []
+        for i in range(5000):  # must be larger than 1k
+            items.append({"_id": ObjectId()})
+        service = superdesk.get_resource_service("audit")
+        service.create(items)
+        service.delete({})
+        assert 0 == service.find({}).count()

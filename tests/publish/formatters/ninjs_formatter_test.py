@@ -175,7 +175,6 @@ class NinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "source": "AAP",
             "description": "The most amazing picture you will ever see",
-            "guid": "20150723001158606583",
             "body_footer": "<p>call helpline 999 if you are planning to quit smoking</p>",
             "embargoed": embargoed,
         }
@@ -186,6 +185,12 @@ class NinjsFormatterTest(TestCase):
                 "original": {
                     "href": "https://one-api.aap.com.au/api/v3/Assets/20150723001158606583/Original/download",
                     "mimetype": "image/jpeg",
+                },
+                "viewImage": {
+                    "height": 401,
+                    "href": "http://localhost:5000/api/upload/55b032041d41c8d278d21b6f/raw?_schema=http",
+                    "mimetype": "image/jpeg",
+                    "width": 640,
                 },
             },
             "headline": "AMAZING PICTURE",
@@ -203,7 +208,7 @@ class NinjsFormatterTest(TestCase):
             "embargoed": embargoed.isoformat(),
         }
         self.assertEqual(expected, json.loads(doc))
-        self.assertNotIn("viewImage", json.loads(doc).get("renditions"))
+        self.assertIn("viewImage", json.loads(doc).get("renditions"))
 
     def test_composite_formatter(self):
         article = {
@@ -290,7 +295,6 @@ class NinjsFormatterTest(TestCase):
             "pubstatus": "usable",
             "version_creator": "558379451d41c83ff598a3af",
             "language": "en",
-            "guid": "urn:newsml:localhost:2015-07-24T15:05:00.116047:435c93c2-492c-4668-ab47-ae6e2b9b1c2c",
             "unique_name": "#145",
             "headline": "WA:Navy steps in with WA asylum-seeker boat",
             "original_creator": "558379451d41c83ff598a3af",
@@ -621,6 +625,7 @@ class NinjsFormatterTest(TestCase):
                 "code": "test_id",
                 "name": "author 1",
                 "role": "writer",
+                "uri": "urn:localhost:5000:user:test_id",
                 "jobtitle": {"qcode": "writer_code", "name": "Writer"},
                 "biography": "bio 1",
                 "facebook": "johnsmith",
@@ -632,6 +637,7 @@ class NinjsFormatterTest(TestCase):
                 "code": "test_id_2",
                 "name": "author 2",
                 "role": "photographer",
+                "uri": "urn:localhost:5000:user:test_id_2",
                 "jobtitle": {"qcode": "reporter_code", "name": "Reporter"},
                 "biography": "bio 2",
             },
@@ -769,7 +775,11 @@ class NinjsFormatterTest(TestCase):
                     "parent": "subject:01000000",
                     "qcode": "subject:01000002",
                     "translations": {
-                        "name": {"de": "Ergebnisorientiert", "it": "Orientato ai risultati ", "ja": "アウトカム・オリエンティッド"}
+                        "name": {
+                            "de": "Ergebnisorientiert",
+                            "it": "Orientato ai risultati ",
+                            "ja": "アウトカム・オリエンティッド",
+                        }
                     },
                     "scheme": "subject_custom",
                 },
@@ -1203,6 +1213,7 @@ class NinjsFormatterTest(TestCase):
                     "guid": "guid1",
                     "version": "1",
                     "type": "text",
+                    "profile": "text",
                     "language": "en",
                     "priority": 5,
                     "order": 1,
@@ -1211,6 +1222,7 @@ class NinjsFormatterTest(TestCase):
                     "guid": "guid2",
                     "version": "1",
                     "type": "picture",
+                    "profile": "picture",
                     "priority": 5,
                     "order": 2,
                 },
@@ -1223,6 +1235,7 @@ class NinjsFormatterTest(TestCase):
                             "guid": "guid1",
                             "version": "1",
                             "type": "text",
+                            "profile": "text",
                             "language": "en",
                             "priority": 5,
                             "order": 1,
@@ -1231,6 +1244,7 @@ class NinjsFormatterTest(TestCase):
                             "guid": "guid2",
                             "version": "1",
                             "type": "picture",
+                            "profile": "picture",
                             "priority": 5,
                             "order": 2,
                         },
@@ -1369,7 +1383,7 @@ class NinjsFormatterTest(TestCase):
                     "order": 2,
                     "version": "1",
                 },
-                "custom_media_field_multi_1--3": {
+                "custom_media_field_multi_1--0": {
                     "guid": "tag:localhost:5000:2018:3710ef88-9567-4dbb-a96b-cb53df15b66e",
                     "priority": 5,
                     "renditions": {
@@ -1774,8 +1788,8 @@ class Ninjs2FormatterTest(TestCase):
     def setUp(self):
         self.formatter = NINJS2Formatter()
 
-    def test_format_type(self):
-        self.assertEqual("ninjs2", self.formatter.format_type)
+    def test_can_format(self):
+        self.assertTrue(self.formatter.can_format("ninjs2", {}))
 
     def test_correction_sequence_number(self):
         article = {

@@ -1,5 +1,7 @@
 import superdesk.schema as schema
 
+from copy import deepcopy
+
 
 class DefaultSchema(schema.Schema):
     """Default schema."""
@@ -36,7 +38,7 @@ class DefaultSchema(schema.Schema):
 
     #: subject
     subject = schema.ListField(
-        required=True,
+        required=False,
         mandatory_in_list={"scheme": {}},
         schema={
             "type": "dict",
@@ -69,7 +71,7 @@ class DefaultSchema(schema.Schema):
     )
 
     #: headline
-    headline = schema.StringField(maxlength=64)
+    headline = schema.StringField(maxlength=64, required=True)
 
     #: sms version of an item
     sms = schema.StringField()
@@ -105,8 +107,16 @@ class DefaultSchema(schema.Schema):
     #: .. versionadded:: 1.29
     attachments = schema.ListField()
 
+    relatedItems = {}
+
 
 DEFAULT_SCHEMA = dict(DefaultSchema)
+
+DEFAULT_MEDIA_SCHEMA = deepcopy(DEFAULT_SCHEMA)
+DEFAULT_MEDIA_SCHEMA.pop("body_html")
+DEFAULT_MEDIA_SCHEMA.pop("body_footer")
+DEFAULT_MEDIA_SCHEMA["subject"]["required"] = False
+DEFAULT_MEDIA_SCHEMA["headline"]["required"] = False
 
 
 DEFAULT_EDITOR = {
@@ -124,27 +134,51 @@ DEFAULT_EDITOR = {
     "company_codes": {"order": 12, "sdWidth": "full", "enabled": False},
     "ednote": {"order": 13, "sdWidth": "full", "enabled": True},
     "authors": {"order": 14, "sdWidth": "full", "enabled": True},
-    "headline": {"order": 15, "formatOptions": [], "enabled": True},
+    "headline": {"order": 15, "sdWidth": "full", "formatOptions": [], "enabled": True},
     "sms": {"order": 16, "enabled": False},
     "abstract": {
         "order": 17,
         "formatOptions": ["bold", "italic", "underline", "link"],
         "editor3": True,
         "enabled": True,
+        "sdWidth": "full",
     },
-    "byline": {"order": 18, "enabled": True},
-    "dateline": {"order": 19, "enabled": True},
+    "byline": {"order": 18, "enabled": True, "sdWidth": "full"},
+    "dateline": {"order": 19, "enabled": True, "sdWidth": "full"},
     "body_html": {
         "order": 20,
         "formatOptions": ["h2", "bold", "italic", "underline", "quote", "link", "embed", "media"],
         "cleanPastedHTML": False,
         "editor3": True,
         "enabled": True,
+        "sdWidth": "full",
     },
     "footer": {"order": 21, "enabled": False},
     "body_footer": {"order": 22, "enabled": False},
-    "sign_off": {"order": 23, "enabled": True},
-    "feature_media": {"enabled": True},
-    "media_description": {"enabled": True},
+    "sign_off": {"order": 23, "enabled": True, "sdWidth": "full"},
+    "feature_media": {"enabled": True, "sdWidth": "full"},
+    "media_description": {"enabled": True, "sdWidth": "full"},
     "attachments": {"enabled": False},
+}
+
+DEFAULT_MEDIA_EDITOR = deepcopy(DEFAULT_EDITOR)
+DEFAULT_MEDIA_EDITOR.pop("body_html")
+DEFAULT_MEDIA_EDITOR.pop("body_footer")
+
+DEFAULT_SCHEMA_MAP = {
+    "text": DEFAULT_SCHEMA,
+    "audio": DEFAULT_MEDIA_SCHEMA,
+    "video": DEFAULT_MEDIA_SCHEMA,
+    "picture": DEFAULT_MEDIA_SCHEMA,
+    "graphic": DEFAULT_MEDIA_SCHEMA,
+    "composite": DEFAULT_MEDIA_SCHEMA,
+}
+
+DEFAULT_EDITOR_MAP = {
+    "text": DEFAULT_EDITOR,
+    "audio": DEFAULT_MEDIA_EDITOR,
+    "video": DEFAULT_MEDIA_EDITOR,
+    "picture": DEFAULT_MEDIA_EDITOR,
+    "graphic": DEFAULT_MEDIA_EDITOR,
+    "composite": DEFAULT_MEDIA_EDITOR,
 }

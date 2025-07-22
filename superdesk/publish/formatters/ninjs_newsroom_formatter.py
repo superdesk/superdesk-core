@@ -9,9 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from .ninjs_formatter import NINJSFormatter
+import flask
 import superdesk
 import elasticapm
+
+from .ninjs_formatter import NINJSFormatter
 
 
 class NewsroomNinjsFormatter(NINJSFormatter):
@@ -19,7 +21,6 @@ class NewsroomNinjsFormatter(NINJSFormatter):
     type = "newsroom ninjs"
 
     def __init__(self):
-        self.format_type = "newsroom ninjs"
         self.can_preview = False
         self.can_export = False
         self.internal_renditions = ["original", "viewImage", "baseImage"]
@@ -32,14 +33,23 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         :param article:
         :return:
         """
-        result = superdesk.get_resource_service("product_tests").test_products(article)
-        return [{"code": p["product_id"], "name": p.get("name")} for p in result if p.get("matched", False)]
+        cache_id = "article-products-{_id}".format(_id=article.get("_id") or article.get("guid"))
+        if not hasattr(flask.g, cache_id):
+            matches = superdesk.get_resource_service("product_tests").test_products(article)
+            setattr(
+                flask.g,
+                cache_id,
+                [{"code": p["product_id"], "name": p.get("name")} for p in matches if p.get("matched", False)],
+            )
+        return getattr(flask.g, cache_id)
 
     @elasticapm.capture_span()
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)
 
-        if article.get("ingest_id") and article.get("auto_publish"):
+        if article.get("ingest_id") and (
+            article.get("auto_publish") or (article.get("extra") or {}).get("publish_ingest_id_as_guid")
+        ):
             ninjs["guid"] = article.get("ingest_id")
             if article.get("ingest_version"):
                 ninjs["version"] = article["ingest_version"]

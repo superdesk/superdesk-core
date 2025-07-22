@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import bson
+
 from datetime import timedelta
 from unittest.mock import patch, ANY
 from superdesk.tests import TestCase
@@ -127,3 +129,27 @@ class BackendTestCase(TestCase):
             backend.update("ingest", ids[0], updates, original)
             items = backend.search("ingest", {"query": {"match_all": {}}})
             self.assertEqual(1, items.count())
+
+    def test_delete_item_missing_in_mongo(self):
+        backend = get_backend()
+        item = {"_id": bson.ObjectId(), "name": "bar"}
+        with self.app.app_context():
+            backend.create_in_search("ingest", [item])
+            items = backend.search("ingest", {"query": {"match_all": {}}})
+            self.assertEqual(1, items.count())
+            backend.delete("ingest", lookup={"_id": item["_id"]})
+
+            items = backend.search("ingest", {"query": {"match_all": {}}})
+            self.assertEqual(0, items.count())
+
+    def test_delete_docs_missing_in_mongo(self):
+        backend = get_backend()
+        item = {"_id": bson.ObjectId(), "name": "bar"}
+        with self.app.app_context():
+            backend.create_in_search("ingest", [item])
+            items = backend.search("ingest", {"query": {"match_all": {}}})
+            self.assertEqual(1, items.count())
+            backend.delete_docs("ingest", [item])
+
+            items = backend.search("ingest", {"query": {"match_all": {}}})
+            self.assertEqual(0, items.count())

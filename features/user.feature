@@ -526,7 +526,7 @@ Feature: User Resource
         [{"username": "foo", "email": "foo@bar.com", "is_active": true}]
         """
 
-        When we get "users/?where={"$or":[{"username":{"$regex":"fo","$options":"-i"}}]}"
+        When we get "users/?where={"$or":[{"username":{"$regex":"fo","$options":"i"}}]}"
         Then we get list with 1 items
 
     @auth
@@ -568,3 +568,16 @@ Feature: User Resource
         """
         {}
         """
+
+    @auth
+    Scenario: Restrict queries using $where
+    Given "users"
+    """
+    [
+        {"username": "test", "password": "test"}
+    ]
+    """
+
+    When we get "users?where={"username": "test", "$where": "this.password[0] == '$'"}"
+    Then we get error 400
+ 

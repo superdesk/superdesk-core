@@ -7,7 +7,6 @@ Use `superdesk.macro_register.macros.register` for registration.
 
 import os
 import sys
-import imp
 import logging
 import importlib
 import logging
@@ -36,7 +35,7 @@ def load_macros(path, package_prefix="superdesk.macros"):
         try:
             if module in sys.modules.keys():
                 m = sys.modules[module]
-                imp.reload(m)
+                importlib.reload(m)
             else:
                 importlib.import_module(module)
         except Exception as e:

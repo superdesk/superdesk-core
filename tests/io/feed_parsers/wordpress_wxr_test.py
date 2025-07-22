@@ -83,9 +83,13 @@ def fake_update_renditions(item, url, _):
 
 
 class WPWXRTestBase(TestCase):
+    filename = None
+
     @mock.patch.object(wordpress_wxr, "update_renditions", fake_update_renditions)
     def __init__(self, methodname):
         super().__init__(methodname)
+        if self.filename is None:
+            return
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", self.filename))
         provider = {"name": "Test"}

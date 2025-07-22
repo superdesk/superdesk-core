@@ -47,10 +47,7 @@ class OnFetchedItemMethodTestCase(PackagesServiceTestCase):
 
         self.app_context = self.app.app_context()
         self.app_context.push()
-
-    def tearDown(self):
-        self.app_context.pop()
-        super().tearDown()
+        self.addCleanup(self.app_context.pop)
 
     def test_invokes_superclass_method_with_correct_args(self, super_fetched):
         document = {"_id": "item:XYZ"}
@@ -92,10 +89,7 @@ class OnFetchedMethodTestCase(PackagesServiceTestCase):
 
         self.app_context = self.app.app_context()
         self.app_context.push()
-
-    def tearDown(self):
-        self.app_context.pop()
-        super().tearDown()
+        self.addCleanup(self.app_context.pop)
 
     def test_invokes_superclass_method_with_correct_args(self, super_fetched):
         result = {"_items": []}

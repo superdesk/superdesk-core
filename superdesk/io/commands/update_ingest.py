@@ -369,6 +369,11 @@ def process_anpa_category(item, provider):
                     # make the case of the qcode match what we hold in our dictionary
                     item_category["qcode"] = mapped_category[0]["qcode"]
                     item_category["scheme"] = "categories"
+                    if mapped_category[0].get("translations"):
+                        item_category["translations"] = mapped_category[0]["translations"]
+                        if item.get("language"):
+                            set_subject_name_translation(item_category, item["language"])
+
     except Exception as ex:
         raise ProviderError.anpaError(ex, provider)
 
@@ -586,6 +591,9 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 f"updating items is disabled on provider '{provider['name']}'."
             )
             return False, []
+        elif old_item and not ingest_service.should_update(old_item, item, provider):
+            logger.info(f"Resource '{ingest_collection}' " f"item '{item[GUID_FIELD]}' should not be updated")
+            return False, []
 
         item["ingest_provider"] = str(provider[superdesk.config.ID_FIELD])
         item.setdefault("source", provider.get("source", ""))
@@ -601,13 +609,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                 item.pop("profile")
 
         set_default_state(item, CONTENT_STATE.INGESTED)
-        item["expiry"] = (
-            get_expiry_date(
-                provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], item.get("versioncreated")
-            )
-            if not expiry
-            else expiry
-        )  # when fetching associated item set expiry to match parent
+        set_expiry(item, provider, parent_expiry=expiry)
 
         if "anpa_category" in item:
             process_anpa_category(item, provider)
@@ -632,7 +634,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
             baseImageRend = rend.get("baseImage") or next(iter(rend.values()))
             if baseImageRend and not baseImageRend.get("media"):  # if there is media should be processed already
                 href = feeding_service.prepare_href(baseImageRend["href"], rend.get("mimetype"))
-                update_renditions(item, href, old_item)
+                update_renditions(item, href, old_item, feeding_service=feeding_service)
 
         # if the item has associated media
         for key, assoc in item.get("associations", {}).items():
@@ -650,7 +652,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                     if _is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
                         logger.info("new assoc version - re-transfer renditions for %s", assoc_name)
                         try:
-                            transfer_renditions(assoc["renditions"])
+                            transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
                         except SuperdeskApiError:
                             logger.exception(
                                 "failed to update associated item renditions",
@@ -666,7 +668,7 @@ def ingest_item(item, provider, feeding_service, rule_set=None, routing_scheme=N
                     if assoc.get("renditions") and has_system_renditions(assoc):  # all set, just download
                         logger.info("new association with system renditions - transfer %s", assoc_name)
                         try:
-                            transfer_renditions(assoc["renditions"])
+                            transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
                         except SuperdeskApiError:
                             logger.exception(
                                 "failed to download renditions",
@@ -761,6 +763,27 @@ def get_ingest_collection(feeding_service, item):
         ingest_collection = "ingest"
 
     return ingest_collection
+
+
+def set_expiry(item, provider, parent_expiry=None):
+    if parent_expiry:
+        item["expiry"] = parent_expiry
+        return
+
+    expiry_offset = item.get("versioncreated") or utcnow()
+    if item.get("dates") and item["dates"].get("end"):
+        expiry_offset = item["dates"]["end"]
+
+    item.setdefault(
+        "expiry", get_expiry_date(provider.get("content_expiry") or app.config["INGEST_EXPIRY_MINUTES"], expiry_offset)
+    )
+
+
+def set_subject_name_translation(subject, language) -> None:
+    try:
+        subject["name"] = subject["translations"]["name"][language]
+    except (KeyError, TypeError):
+        pass
 
 
 superdesk.command("ingest:update", UpdateIngest())

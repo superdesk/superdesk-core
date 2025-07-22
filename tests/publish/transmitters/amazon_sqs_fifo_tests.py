@@ -8,17 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from unittest import TestCase, mock
-import boto3
-from moto import mock_sqs
-
 import json
+import boto3
+
+from moto import mock_aws
+from unittest import TestCase, mock
 
 from superdesk.publish.transmitters.amazon_sqs_fifo import AmazonSQSFIFOPublishService
 from superdesk.errors import PublishAmazonSQSError
 
 
-@mock_sqs
 class AmazonSQSFIFOPublishServiceTestCase(TestCase):
     def setUp(self):
         self.config = {
@@ -48,6 +47,9 @@ class AmazonSQSFIFOPublishServiceTestCase(TestCase):
             },
         }
 
+        self.mock_aws = mock_aws()
+        self.mock_aws.start()
+
         self.sqs = boto3.resource(
             "sqs",
             aws_access_key_id=self.config["access_key_id"],
@@ -55,6 +57,10 @@ class AmazonSQSFIFOPublishServiceTestCase(TestCase):
             region_name=self.config["region"],
         )
         self.service = AmazonSQSFIFOPublishService()
+
+    def tearDown(self) -> None:
+        self.mock_aws.stop()
+        return super().tearDown()
 
     def _create_queue(self):
         self.sqs.create_queue(
@@ -79,7 +85,7 @@ class AmazonSQSFIFOPublishServiceTestCase(TestCase):
 
     @mock.patch("superdesk.errors.notifications_enabled", return_value=False)
     def test_connection_error(self, _notifications_enabled):
-        self.config["endpoint_url"] = "https://localhost.localdomain"
+        self.config["endpoint_url"] = "http://abcd"
 
         with self.assertRaises(PublishAmazonSQSError) as context:
             self.service._transmit(self.item, {})

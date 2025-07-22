@@ -15,14 +15,14 @@ Items must be inserted to publish queue in order to get transmitted.
 """
 
 import logging
-from typing import Any, NamedTuple, Dict, List, Callable, Union
-from typing_extensions import TypedDict
+from typing import Any, NamedTuple, Dict, List, Callable, Union, TypedDict
 
 from bson import ObjectId
 
 from superdesk.celery_app import celery
 from superdesk.publish.publish_content import PublishContent
 from superdesk import get_backend
+from .subscribers_schedule import update_subscriber_activation_states
 
 logger = logging.getLogger(__name__)
 

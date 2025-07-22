@@ -15,7 +15,19 @@ from superdesk.io.feed_parsers.ninjs import NINJSFeedParser
 
 
 class NINJSTestCase(TestCase):
-    vocab = [{"_id": "genre", "items": [{"name": "Current"}]}]
+    vocab = [
+        {"_id": "genre", "items": [{"name": "Current"}]},
+        {
+            "_id": "categories",
+            "items": [
+                {
+                    "name": "Advisory",
+                    "qcode": "m",
+                    "translations": {"name": {"en": "Advisory", "fr": "Avis"}},
+                },
+            ],
+        },
+    ]
 
     def setUp(self):
         with self.app.app_context():
@@ -45,6 +57,13 @@ class SimpleTestCase(NINJSTestCase):
         self.assertNotIn("source", self.items[0])
         self.assertEqual(self.items[0]["original_source"], "AAP")
         self.assertEqual("2017-08-24T04:38:34+00:00", self.items[0]["versioncreated"].isoformat())
+
+    def test_translated_value(self):
+        self.assertEqual(self.items[0].get("headline"), "headline")
+        self.assertEqual(
+            self.items[0].get("anpa_category"),
+            [{"name": "Advisory", "qcode": "m", "translations": {"name": {"en": "Advisory", "fr": "Avis"}}}],
+        )
 
 
 class AssociatedTestCase(NINJSTestCase):

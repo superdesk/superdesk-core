@@ -27,7 +27,6 @@ from superdesk.notification import push_notification
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
 from superdesk.metadata.item import FAMILY_ID, ITEM_STATE, CONTENT_STATE
 from eve.utils import ParsedRequest
-from superdesk.utils import ListCursor
 from flask_babel import _, lazy_gettext
 
 
@@ -86,6 +85,7 @@ desks_schema = {
     "preserve_published_content": {"type": "boolean", "required": False, "default": False},
     # Store SAMS's Desk settings on the Desk items
     "sams_settings": {"type": "dict", "allow_unknown": True, "schema": {"allowed_sets": {"type": "list"}}},
+    "email": {"type": "string", "nullable": True},
 }
 
 
@@ -102,6 +102,9 @@ def init_app(app) -> None:
     endpoint_name = "desk_overview"
     service = OverviewService(endpoint_name, backend=superdesk.get_backend())
     OverviewResource(endpoint_name, app=app, service=service)
+    endpoint_name = "desk_users"
+    service = DeskUsersService(endpoint_name, backend=superdesk.get_backend())
+    DeskUsersResource(endpoint_name, app=app, service=service)
 
 
 superdesk.privilege(
@@ -274,6 +277,7 @@ class DesksService(BaseService):
 
     def __send_notification(self, updates, desk):
         desk_id = desk[config.ID_FIELD]
+        users_service = superdesk.get_resource_service("users")
 
         if "members" in updates:
             added, removed = self.__compare_members(desk.get("members", {}), updates["members"])
@@ -283,7 +287,7 @@ class DesksService(BaseService):
                 )
 
             for added_user in added:
-                user = superdesk.get_resource_service("users").find_one(req=None, _id=added_user)
+                user = users_service.find_one(req=None, _id=added_user)
                 activity = add_activity(
                     ACTIVITY_UPDATE,
                     "user {{user}} has been added to desk {{desk}}: Please re-login.",
@@ -294,8 +298,12 @@ class DesksService(BaseService):
                     desk=desk.get("name"),
                 )
                 push_notification("activity", _dest=activity["recipients"])
+                users_service.update_stage_visibility_for_user(user)
 
-            get_resource_service("users").update_stage_visibility_for_users()
+            for removed_user in removed:
+                user = users_service.find_one(req=None, _id=removed_user)
+                users_service.update_stage_visibility_for_user(user)
+
         else:
             push_notification(self.notification_key, updated=1, desk_id=str(desk.get(config.ID_FIELD)))
 
@@ -363,6 +371,42 @@ class UserDesksService(BaseService):
 
     def get_by_user(self, user_id):
         return list(self.get(req=None, lookup={"user_id": user_id}))
+
+
+class DeskUsersResource(Resource):
+    url = 'desks/<regex("[a-f0-9]{24}"):desk_id>/users'
+    resource_title = "desk_users"
+    datasource = {
+        "source": "users",
+        "default_sort": [("username", 1)],
+        "projection": {
+            "username": 1,
+            "first_name": 1,
+            "last_name": 1,
+            "display_name": 1,
+            "email": 1,
+            "picture_url": 1,
+            "avatar": 1,
+            "avatar_renditions": 1,
+            "role": 1,
+            "last_activity_at": 1,
+            "sign_off": 1,
+        },
+    }
+    resource_methods = ["GET"]
+
+
+class DeskUsersService(BaseService):
+    def get(self, req, lookup):
+        desk_id = lookup.pop("desk_id", None)
+        desks_service = superdesk.get_resource_service("desks")
+        if desk_id:
+            desk = desks_service.find_one(req=None, _id=ObjectId(desk_id))
+            if desk and desk.get("members"):
+                lookup["_id"] = {"$in": [member["user"] for member in desk.get("members", [])]}
+            else:
+                lookup["_id"] = ""  # return empty result
+        return super().get(req, lookup)
 
 
 class SluglineDesksResource(Resource):

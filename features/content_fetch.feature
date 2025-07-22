@@ -610,7 +610,7 @@ Feature: Fetch Items from Ingest
         When we get "/ingest/ingest1"
         Then we get existing resource
         """
-        {"profile": "__none__"}
+        {"profile": "bar"}
         """
 
         When we post to "/desks"
@@ -634,7 +634,7 @@ Feature: Fetch Items from Ingest
         """
         Then we get new resource
         """
-        {"profile": "__none__"}
+        {"profile": "picture"}
         """
 
         When we post to "/desks"

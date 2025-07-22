@@ -113,7 +113,7 @@ class HTTPPushService(PublishService):
 
         assets_url = self._get_assets_url(destination)
 
-        if not (type(assets_url) == str and assets_url.strip()):
+        if not (isinstance(assets_url, str) and assets_url.strip()):
             return
 
         media = {}

@@ -10,14 +10,15 @@
 """This module contains tools to manage content for Superdesk editor"""
 
 import re
-from typing import Dict
 import uuid
 import logging
+import unicodedata
 import lxml.etree as etree
 import lxml.html as lxml_html
 
 import superdesk
 
+from typing import Dict
 from textwrap import dedent
 from collections.abc import MutableSequence
 
@@ -37,6 +38,9 @@ ANNOTATION = "ANNOTATION"
 MEDIA = "MEDIA"
 TABLE = "TABLE"
 MULTI_LINE_QUOTE = "MULTI-LINE_QUOTE"
+CUSTOM_BLOCK = "CUSTOM_BLOCK"
+IMAGE = "IMAGE"
+ARTICLE_EMBED = "ARTICLE_EMBED"
 
 EDITOR_STATE = "draftjsState"
 ENTITY_MAP = "entityMap"
@@ -63,13 +67,13 @@ CHECK_GENERATE_CONSISTENCY = True
 # FIXME: those fields are currently hardcoded because they were hardcoded in client too
 #   (see https://github.com/superdesk/superdesk-core/pull/1865#issuecomment-632103773).
 #   A cleaner way to get field content type should be done (cf. https://dev.sourcefabric.org/browse/SDESK-5316)
-TEXT_FIELDS = ["headline", "slugline"]
+TEXT_FIELDS = ["headline", "slugline", "description_text"]
 
 
 def get_field_content_state(item, field):
     try:
         return item["fields_meta"][field][EDITOR_STATE][0]
-    except (KeyError, AttributeError):
+    except (KeyError, AttributeError, TypeError):
         return None
 
 
@@ -166,6 +170,10 @@ class EntitySequence(MutableSequence):
             raise TypeError("an Entity instance is expected")
         self._ranges.insert(index, value.ranges)
         self._mapping[value.key] = value.data
+
+    def clear(self):
+        for idx, _range in enumerate(self._ranges):
+            del self[idx]
 
 
 class Block:
@@ -308,6 +316,9 @@ class DraftJSHTMLExporter:
                     ANNOTATION: self.render_annotation,
                     TABLE: self.render_table,
                     MULTI_LINE_QUOTE: self.render_table,
+                    CUSTOM_BLOCK: self.render_table,
+                    IMAGE: self.render_image,
+                    ARTICLE_EMBED: self.render_article_embed,
                 },
             }
         )
@@ -337,6 +348,8 @@ class DraftJSHTMLExporter:
                 block.setdefault("depth", 0)
                 block.setdefault("entityRanges", [])
                 block.setdefault("inlineStyleRanges", [])
+                if block.get("text"):
+                    block["text"] = "".join(ch for ch in block["text"] if unicodedata.category(ch) != "Cc")
             html = self.exporter.render(content_state)
         except KeyError as e:
             if e.args == ("text",):
@@ -367,14 +380,14 @@ class DraftJSHTMLExporter:
             embed_type = "Video"
             elt = DOM.create_element(
                 "video",
-                {"control": "control", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
+                {"controls": "", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
                 props["children"],
             )
         elif media_type == "audio":
             embed_type = "Audio"
             elt = DOM.create_element(
                 "audio",
-                {"control": "control", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
+                {"controls": "", "src": rendition["href"], "alt": alt_text, "width": "100%", "height": "100%"},
                 props["children"],
             )
         else:
@@ -436,6 +449,13 @@ class DraftJSHTMLExporter:
 
         return div
 
+    def render_article_embed(self, props):
+        if props.get("html"):
+            div = parse_html(props["html"], content="html")
+            div.set("class", "article-embed-block")
+            return div
+        return DOM.create_element("p")
+
     def render_table(self, props):
         num_cols = props["data"]["numCols"]
         num_rows = props["data"]["numRows"]
@@ -491,6 +511,10 @@ class DraftJSHTMLExporter:
                     DOM.append_child(td, content)
 
         return table
+
+    def render_image(self, props):
+        elem_props = {key: val for key, val in props.items() if key in ("src", "alt", "width", "height") and val}
+        return DOM.create_element("img", elem_props)
 
     def style_fallback(self, props):
         type_ = props["inline_style_range"]["style"]
@@ -800,7 +824,11 @@ def generate_fields(item, fields=None, force=False, reload=False, original=None)
 
     for field in fields:
         client_value = get_field_value(item, field)
-        editor = Editor3Content(item, field, is_html=is_html(field), reload=reload)
+        content_state = get_field_content_state(item, field)
+        reload_field = reload
+        if content_state is None and client_value:
+            reload_field = True  # when content state is set to null regenerate it from client value
+        editor = Editor3Content(item, field, is_html=is_html(field), reload=reload_field)
         editor.update_item()
         if CHECK_GENERATE_CONSISTENCY and not force and client_value is not None:
             server_value = get_field_value(item, field) or ""
@@ -826,6 +854,8 @@ def is_html(field) -> bool:
 
 
 def render_fragment(elem) -> str:
+    if isinstance(elem, str):
+        return elem
     if elem.tag == "p" and not elem.text and not len(elem):
         # client renders empty paragraph as `<p><br></p>`
         etree.SubElement(elem, "br", nsmap=None, attrib=None)
@@ -849,3 +879,34 @@ def copy_fields(source: Dict, dest: Dict, ignore_empty: bool = False):
         for field in source["fields_meta"]:
             if ignore_empty is False or not is_empty_content_state(source, field):
                 dest.setdefault("fields_meta", {})[field] = source["fields_meta"][field].copy()
+
+
+def remove_all_embeds(article):
+    """
+    Removes any embeds from the draftjs state and regenerates the html, can be used by text only
+    formatters to remove embeds from the article
+    :param article:
+    :return:
+    """
+
+    # List of keys of the removed entities
+    keys = []
+
+    def not_embed(block):
+        if block.type.lower() == "atomic":
+            keys.extend([e.key for e in block.entities])
+            block.entities.clear()
+            return False
+        return True
+
+    fields = get_content_state_fields(article)
+    for field in fields:
+        filter_blocks(article, field, not_embed)
+
+    # Remove the corresponding items from the associations and refs
+    for key_suffix in keys:
+        key = "editor_{}".format(key_suffix)
+        if article.get("associations", {}).get(key):
+            article.get("associations").pop(key)
+        if "refs" in article:
+            article["refs"] = [r for r in article.get("refs", []) if r["key"] != key]

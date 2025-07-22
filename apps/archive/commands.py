@@ -125,10 +125,12 @@ class RemoveExpiredContent(superdesk.Command):
         config_service = get_resource_service("config")
         archive_service = get_resource_service(ARCHIVE)
         published_service = get_resource_service("published")
-        preserve_published_desks = {
-            desk.get(config.ID_FIELD): 1
-            for desk in get_resource_service("desks").find(where={"preserve_published_content": True})
-        }
+        preserve_published_desks = set(
+            [
+                str(desk.get(config.ID_FIELD))
+                for desk in get_resource_service("desks").find(where={"preserve_published_content": True})
+            ]
+        )
 
         last_id = config_service.get(LAST_ID_CONFIG)
         if last_id:
@@ -310,12 +312,15 @@ class RemoveExpiredContent(superdesk.Command):
             # Get the item references for is package
             item_refs = package_service.get_residrefs(item)
 
-        if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
+        if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED] and app.config.get(
+            "BROADCAST_ENABLED", True
+        ):
             broadcast_items = get_resource_service("archive_broadcast").get_broadcast_items_from_master_story(item)
             # If master story expires then check if broadcast item is included in a package.
             # If included in a package then check the package expiry.
             item_refs.extend([broadcast_item.get(config.ID_FIELD) for broadcast_item in broadcast_items])
 
+        if item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             if item.get("rewrite_of"):
                 item_refs.append(item.get("rewrite_of"))
 
@@ -323,7 +328,7 @@ class RemoveExpiredContent(superdesk.Command):
                 item_refs.append(item.get("rewritten_by"))
 
         # get the list of associated item ids
-        if item.get(ITEM_TYPE) in MEDIA_TYPES:
+        elif item.get(ITEM_TYPE) in MEDIA_TYPES:
             item_refs.extend(self._get_associated_items(item))
 
         # get item reference where this referred
@@ -337,7 +342,7 @@ class RemoveExpiredContent(superdesk.Command):
         if (
             preserve_published_desks
             and item.get(ITEM_STATE) in {CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED}
-            and item.get("task").get("desk") in preserve_published_desks
+            and str(item.get("task").get("desk")) in preserve_published_desks
         ):
             is_expired = False
             reason = "Desk config"

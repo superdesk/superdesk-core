@@ -34,3 +34,14 @@ class UtilsTestCase(unittest.TestCase):
         self.assertNotIn("bar", container)
         allowed = [x for x in container]
         self.assertEqual(["foo"], allowed)
+
+    def test_list_chunks(self):
+        items = [1, 2, 3, 4, 5]
+        chunks = utils.get_list_chunks(items, 1)
+        assert [[1], [2], [3], [4], [5]] == chunks
+        chunks = utils.get_list_chunks(items, 2)
+        assert [[1, 2], [3, 4], [5]] == chunks
+        chunks = utils.get_list_chunks(items, 5)
+        assert [[1, 2, 3, 4, 5]] == chunks
+        chunks = utils.get_list_chunks(items, 10)
+        assert [[1, 2, 3, 4, 5]] == chunks

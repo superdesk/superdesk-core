@@ -70,7 +70,7 @@ def get_feeding_service(service_name):
     return registered_feeding_services[service_name]()
 
 
-def register_feed_parser(parser_name, parser_class):
+def register_feed_parser(parser_name, parser_class, override=False):
     """
     Registers the Feed Parser with the application.
 
@@ -78,10 +78,11 @@ def register_feed_parser(parser_name, parser_class):
 
     :param parser_name: unique name to identify the Feed Parser class
     :param parser_class: Feed Parser class
+    :param override: if True, allows to override the existing parser with the same name
     :raises: AlreadyExistsError if a feed parser with same name already been registered
     """
 
-    if parser_name in registered_feed_parsers:
+    if parser_name in registered_feed_parsers and not override:
         raise AlreadyExistsError(
             "Feed Parser: {} already registered by {}".format(parser_name, type(registered_feed_parsers[parser_name]))
         )

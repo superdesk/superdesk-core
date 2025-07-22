@@ -109,7 +109,7 @@ def parse_html(html, content="xml", lf_on_block=False, space_on_elements=False, 
     if content == "xml":
         # to preserve 'carriage return' otherwise it gets stripped.
         html = html.replace("\r", "&#13;")
-        parser = etree.XMLParser(recover=True, remove_blank_text=True)
+        parser = etree.XMLParser(recover=True, remove_blank_text=True, resolve_entities=False)
         root = etree.fromstring("<div>" + html + "</div>", parser)
     elif content == "html":
         parser = etree.HTMLParser(recover=True, remove_blank_text=True)
@@ -170,7 +170,7 @@ def clean_html(elem):
     :return html.HtmlElement: cleaned element
     """
     if not isinstance(elem, html.HtmlElement):
-        elem = html.fromstring(etree.tostring(elem))
+        elem = html.fromstring(etree.tostring(elem, encoding="unicode"))
     safe_attrs = set(html.defs.safe_attrs)
     safe_attrs.remove("class")
     cleaner = html.clean.Cleaner(

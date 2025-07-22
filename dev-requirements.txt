@@ -1,20 +1,21 @@
-flake8
-flake8-bugbear
-flake8-docstrings
-nose
-pep8
-pyflakes
-pydocstyle<4.0
+black==23.12.1
+flake8==7.1.2
+flake8-bugbear==24.12.12
+flake8-docstrings==1.7.0
+pep8==1.7.1
+pyflakes==3.2.0
+pydocstyle==6.3.0
 httmock==1.4.0
-watchdog==0.9.0
 wooper==0.4.4
-requests-mock==1.8.0
-responses
-pytest
-pytest-env
-python3-saml>=1.9,<1.10
-typing_extensions>=3.7.4
-moto[sqs]
+requests-mock==1.12.1
+responses==0.25.7
+pytest==8.3.4
+pytest-env==1.1.5
+pytest-timeout==2.4.0
+python3-saml==1.16.0
+moto[sqs]==5.1.6
+pyexiv2==2.15.4; sys_platform == 'linux'
+snowballstemmer==3.0.1
 
 -e .
 -e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk-planning

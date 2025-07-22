@@ -14,26 +14,34 @@ import arrow
 import logging
 import asyncio
 import signal
-import websockets
+import sentry_sdk
 
-from uuid import UUID
+from uuid import UUID, uuid1
 from urllib.parse import urlparse, parse_qs
-from websockets.server import WebSocketServerProtocol
+from websockets.asyncio.server import ServerConnection, broadcast, serve
 from typing import Dict, Set, Optional, Union
 from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditions
+from sentry_sdk.consts import SPANSTATUS
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
 
 from flask import json
 from datetime import timedelta, datetime
-from threading import Thread
 from kombu import Queue, Exchange, Connection
 from kombu.mixins import ConsumerMixin
 from kombu.pools import producers
+from kombu.common import Broadcast
+from kombu.utils.debug import setup_logging
 from superdesk.utc import utcnow
-from superdesk.utils import get_random_string, json_serialize_datetime_objectId
+from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.default_settings import WS_HEART_BEAT
 
 
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+logging.getLogger("websockets").setLevel(logging.WARNING)
+setup_logging(logging.WARNING)
 
 
 class SocketBrokerClient:
@@ -80,18 +88,38 @@ class SocketBrokerClient:
 class SocketMessageProducer(SocketBrokerClient):
     """Used by backeend processes to send messages."""
 
-    def send(self, message):
+    def send(self, message: str, name: str):
         """
         Publishes the message to an exchange
 
         :param string message: message to publish
         """
-        try:
-            with producers[self.connection].acquire(block=True) as producer:
-                producer.publish(message, exchange=self.socket_exchange, declare=[self.socket_exchange], retry=True)
-                logger.debug("message %s published to broker=%s exchange=%s.", message, self.url, self.socket_exchange)
-        except Exception:
-            logger.exception("Failed to publish message {} to broker.".format(message))
+        with sentry_sdk.start_span(op="queue.publish", name=name) as span:
+            _id = uuid1().hex
+            span.set_data("messaging.message.id", _id)
+            span.set_data("messaging.destination.name", self.exchange_name)
+            span.set_data("messaging.message.body.size", len(message))
+
+            try:
+                with producers[self.connection].acquire(block=True) as producer:
+                    producer.publish(
+                        message,
+                        exchange=self.socket_exchange,
+                        declare=[self.socket_exchange],
+                        retry=True,
+                        headers={
+                            "sentry-trace": sentry_sdk.get_traceparent(),
+                            "baggage": sentry_sdk.get_baggage(),
+                            "message-id": _id,
+                        },
+                    )
+                    logger.debug(
+                        "message %s published to broker=%s exchange=%s.", message, self.url, self.socket_exchange
+                    )
+                    span.set_status(SPANSTATUS.OK)
+            except Exception:
+                logger.exception("Failed to publish message {} to broker.".format(message))
+                span.set_status(SPANSTATUS.INTERNAL_ERROR)
 
 
 class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
@@ -110,17 +138,8 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         """
         super().__init__(url, exchange_name)
         self.callback = callback
-        self.queue_name = "websocket_queue_{}".format(get_random_string())
-        self.queue = Queue(
-            self.queue_name,
-            exchange=self.socket_exchange,
-            message_ttl=10,
-            expires=60,
-            channel=self.connection.channel(),
-            exclusive=True,
-        )
-
-        logger.info("Websocket queue created %s", self.queue_name)
+        self.queue = Broadcast(exchange=self.socket_exchange)
+        logger.info("Websocket queue created %s", self.queue.name)
 
     def get_consumers(self, Consumer, channel):
         return [Consumer(queues=[self.queue], callbacks=[self.on_message])]
@@ -132,20 +151,26 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         :param str body:
         :param kombu.Message message: Message object
         """
-        try:
-            try:
-                loop = asyncio.get_event_loop()
-            except Exception:
-                loop = asyncio.new_event_loop()
-
-            logger.info("Queue: {}. Broadcasting message {}".format(self.queue_name, body))
-            loop.run_until_complete(self.callback(body))
-        except Exception:
-            logger.exception("Dropping event. Failed to send message {}.".format(body))
-        try:
-            message.ack()
-        except Exception:
-            logger.exception("Failed to ack message {} on queue {}.".format(body, self.queue_name))
+        transaction = sentry_sdk.continue_trace(
+            message.headers,
+            op="function",
+            name="queue_consumer_transaction",
+        )
+        with sentry_sdk.start_transaction(transaction):
+            logger.debug("Queue: {}. Broadcasting message {}".format(self.queue.name, body))
+            with sentry_sdk.start_span(op="queue.process", name="queue_consumer") as span:
+                span.set_data("messaging.message.id", message.headers.get("message-id", ""))
+                span.set_data("messaging.destination.name", self.exchange_name)
+                span.set_data("messaging.message.body.size", len(body))
+                try:
+                    self.callback(body)
+                    message.ack()
+                    span.set_status(SPANSTATUS.OK)
+                    transaction.set_status(SPANSTATUS.OK)
+                except Exception:
+                    logger.exception("Error when receiving message.")
+                    span.set_status(SPANSTATUS.INTERNAL_ERROR)
+                    transaction.set_status(SPANSTATUS.INTERNAL_ERROR)
 
     def close(self):
         """
@@ -164,7 +189,7 @@ class SocketCommunication:
     Responsible for websocket comms.
     """
 
-    clients: Set[WebSocketServerProtocol] = set()
+    clients: Set[ServerConnection]
 
     def __init__(
         self,
@@ -173,56 +198,54 @@ class SocketCommunication:
         broker_url: str,
         exchange_name: Optional[str] = None,
         subscribe_prefix: str = "/subscribe?",
+        *,
+        sentry_dsn: Optional[str] = None,
+        sentry_traces_sample_rate: Optional[float] = None,
+        debug: bool = False,
     ):
         self.host = host
-        self.port = port
+        self.port = int(port)
         self.broker_url = broker_url
         self.exchange_name = exchange_name
         self.subscribe_prefix = subscribe_prefix
         self.client_url_args: Dict[UUID, Dict[str, str]] = {}
         self.messages: Dict[str, datetime] = {}
+        self.clients = set()
         self.event_interval = {
             "ingest:update": 5,
             "ingest:cleaned": 5,
             "content:expired": 5,
             "publish_queue:update": 5,
         }
+        self.sentry_dsn = sentry_dsn
+        self.sentry_traces_sample_rate = sentry_traces_sample_rate
+        self.debug = debug
 
-    def _add_client(self, websocket: WebSocketServerProtocol):
+    def _add_client(self, websocket: ServerConnection):
         self.clients.add(websocket)
 
+        path = websocket.request.path if websocket.request else ""
+
         # Store client URL args for use with message filters
-        if self.subscribe_prefix not in websocket.path:
+        if self.subscribe_prefix not in path:
             self.client_url_args[websocket.id] = {}
         else:
-            parsed_url = urlparse(websocket.path)
+            parsed_url = urlparse(path)
             url_params = parse_qs(parsed_url.query)
             self.client_url_args[websocket.id] = {key: val[0] for key, val in url_params.items()}
 
-    def _remove_client(self, websocket: WebSocketServerProtocol):
+    def _remove_client(self, websocket: ServerConnection):
         self.clients.remove(websocket)
         self.client_url_args.pop(websocket.id, None)
 
-    @asyncio.coroutine
-    def _client_loop(self, websocket):
-        """Client loop - send it ping every `beat_delay` seconds to keep it alive.
-
-        Nginx would close the connection after 2 minutes of inactivity, that's why.
-
-        Also it does the health check - if socket was closed by client it will
-        break the loop and let server deregister the client.
+    async def _client_loop(self, websocket: ServerConnection):
+        """Client loop - noop.
 
         :param websocket: websocket protocol instance
         """
-        pings = 0
-        while True:
-            yield from asyncio.sleep(5)
-            if not websocket.open:
-                break
-            pings += 1
-            yield from websocket.send(json.dumps({"ping": pings, "clients": len(websocket.ws_server.websockets)}))
+        await websocket.wait_closed()
 
-    def get_message_recipients(self, message_data: WebsocketMessageData) -> Set[WebSocketServerProtocol]:
+    def get_message_recipients(self, message_data: WebsocketMessageData) -> Set[ServerConnection]:
         """Filter consumers by message filter attributes
 
         When client's connect, they can provide a set of URL arguments as to what they need to subscribe to
@@ -243,9 +266,9 @@ class SocketCommunication:
         if not filters["include"] and not filters["exclude"]:
             return clients
 
-        def _filter(websocket: WebSocketServerProtocol) -> bool:
+        def _filter(websocket: ServerConnection) -> bool:
             url_args = self.client_url_args.get(websocket.id) or {}
-            if filters["include"] and not url_args:
+            if filters.get("include") and not url_args:
                 # If ``filter.include`` is defined, client must provide url args in websocket path
                 # as we're explicitly including only clients that have args in this list
                 return False
@@ -265,7 +288,6 @@ class SocketCommunication:
 
         return set(filter(_filter, clients))
 
-    @asyncio.coroutine
     def broadcast(self, message):
         """Broadcast message to all clients.
 
@@ -287,26 +309,10 @@ class SocketCommunication:
             self.messages[message_id] = message_created
 
         logger.debug("broadcast %s" % message)
-        for websocket in self.get_message_recipients(message_data):
-            try:
-                if websocket.open:
-                    # Reconstruct the message string
-                    # as not to send the ``message.filter`` dictionary to clients
-                    yield from websocket.send(json.dumps(message_data, default=json_serialize_datetime_objectId))
-            except Exception:
-                yield
+        clients = self.get_message_recipients(message_data)
+        broadcast(clients, json.dumps(message_data, default=json_serialize_datetime_objectId))
 
-    @asyncio.coroutine
-    def _server_loop(self, websocket):
-        """Server loop - wait for message and broadcast it.
-
-        :param websocket: websocket protocol instance
-        """
-        while True:
-            message = yield from websocket.recv()
-            yield from self.broadcast(message)
-
-    def _log(self, message, websocket):
+    def _log(self, message: str, websocket: ServerConnection):
         """Log message with some websocket data like address.
 
         :param message: message string
@@ -315,8 +321,7 @@ class SocketCommunication:
         host, port = websocket.remote_address
         logger.info("%s address=%s:%s" % (message, host, port))
 
-    @asyncio.coroutine
-    def _connection_handler(self, websocket, path):
+    async def _connection_handler(self, websocket: ServerConnection):
         """Handle incomming connections.
 
         When this function returns the session is over and it closes the socket,
@@ -325,41 +330,39 @@ class SocketCommunication:
         :param websocket: websocket protocol instance
         :param path: url path used by client - used to identify client/server connections
         """
-        if "server" in path:
-            self._log("server open", websocket)
-            yield from self._server_loop(websocket)
-            self._log("server done", websocket)
-        else:
-            self._log("client open", websocket)
-            self._add_client(websocket)
-            yield from self._client_loop(websocket)
+        self._log("client open", websocket)
+        self._add_client(websocket)
+        try:
+            await self._client_loop(websocket)
+        finally:
             self._remove_client(websocket)
             self._log("client done", websocket)
 
     def run_server(self):
-        """Create websocket server and run it until it gets Ctrl+C or SIGTERM.
+        """Run websocket server."""
+        asyncio.run(self.main())
 
-        :param config: config dictionary
-        """
+    async def main(self):
+        """Create websocket server and run it until it gets Ctrl+C or SIGTERM."""
+        if self.sentry_dsn:
+            sentry_sdk.init(
+                self.sentry_dsn,
+                integrations=[AsyncioIntegration()],
+                traces_sample_rate=self.sentry_traces_sample_rate,
+            )
         try:
-            loop = asyncio.get_event_loop()
-            server = loop.run_until_complete(websockets.serve(self._connection_handler, self.host, self.port))
-            loop.add_signal_handler(signal.SIGTERM, loop.stop)
-            logger.info("listening on %s:%s" % (self.host, self.port))
             consumer = None
-            # create socket message consumer
-            consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
-            consumer_thread = Thread(target=consumer.run)
-            consumer_thread.start()
-            loop.run_forever()
+            async with serve(self._connection_handler, self.host, self.port) as server:
+                loop = asyncio.get_event_loop()
+                loop.add_signal_handler(signal.SIGTERM, server.close)
+                # create socket message consumer
+                consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
+                # kombu is blocking so needs to run in executor
+                loop.run_in_executor(None, consumer.run)
+                await server.wait_closed()
         except KeyboardInterrupt:
             pass
         finally:
             logger.info("closing server")
-            server.close()
-            loop.run_until_complete(server.wait_closed())
-            loop.stop()
-            loop.run_forever()
-            loop.close()
             if consumer:
                 consumer.close()

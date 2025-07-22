@@ -45,11 +45,11 @@ class APTestCase(TestCase):
     @mock.patch.object(ap.APFeedingService, "get_feed_parser")
     def test_feeding(self, get_feed_parser, requests):
         get_feed_parser.return_value = newsml_2_0.NewsMLTwoFeedParser()
-        mock_get = requests.get.return_value
-        mock_get.content = self.feed_raw
         provider = deepcopy(PROVIDER)
         service = ap.APFeedingService()
         service.provider = provider
+        mock_get = service.session.get.return_value
+        mock_get.content = self.feed_raw
         items = service._update(provider, {})[0]
         self.assertEqual(len(items), 3)
 
@@ -65,11 +65,11 @@ class APTestCase(TestCase):
         """
         feed_parser = newsml_2_0.NewsMLTwoFeedParser()
         get_feed_parser.return_value = feed_parser
-        mock_get = requests.get.return_value
-        mock_get.content = self.feed_raw
         provider = deepcopy(PROVIDER)
         service = ap.APFeedingService()
         service.provider = provider
+        mock_get = service.session.get.return_value
+        mock_get.content = self.feed_raw
 
         self.assertNotIn("private", provider)
         with mock.patch.object(feed_parser, "parse"):

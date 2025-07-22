@@ -16,7 +16,6 @@ from unittest.mock import patch
 
 from bson import ObjectId
 from eve.utils import ParsedRequest
-from nose.tools import assert_raises
 
 from superdesk import get_resource_service, etree
 from superdesk.utc import utcnow
@@ -36,7 +35,7 @@ from superdesk.io.commands.update_ingest import (
     get_is_idle,
     ingest_item,
 )
-
+import flask
 
 reuters_guid = "tag_reuters.com_2014_newsml_KBN0FL0NM:10"
 
@@ -115,7 +114,7 @@ class UpdateIngestTest(TestCase):
             "config": {"path": "/"},
         }
 
-        with assert_raises(SuperdeskApiError) as error_context:
+        with self.assertRaises(SuperdeskApiError) as error_context:
             aap = self._get_provider_service(provider)
             aap.update(provider, {})
         ex = error_context.exception
@@ -141,7 +140,7 @@ class UpdateIngestTest(TestCase):
         provider_service = self._get_provider_service(provider)
         provider_service.provider = provider
         provider_service._update = mock_update
-        with assert_raises(ProviderError):
+        with self.assertRaises(ProviderError):
             provider_service.update(provider, {})
         provider = self._get_provider(provider_name)
         self.assertTrue(provider.get("is_closed"))
@@ -259,8 +258,9 @@ class UpdateIngestTest(TestCase):
         current_files = self.app.media.storage().fs("upload").find()
         self.assertEqual(4, current_files.count())
 
-        remove = RemoveExpiredContent()
-        remove.run(provider.get("type"))
+        with patch("superdesk.io.commands.remove_expired_content.utcnow", return_value=now + timedelta(hours=20)):
+            remove = RemoveExpiredContent()
+            remove.run(provider.get("type"))
 
         # all gone
         current_files = self.app.media.storage().fs("upload").find()
@@ -379,7 +379,12 @@ class UpdateIngestTest(TestCase):
                 "_id": "categories",
                 "items": [
                     {"is_active": True, "name": "Australian Weather", "qcode": "b", "subject": "17000000"},
-                    {"is_active": True, "name": "Finance", "qcode": "f"},
+                    {
+                        "is_active": True,
+                        "name": "Finance",
+                        "qcode": "f",
+                        "translations": {"name": {"fr": "Finance FR"}},
+                    },
                 ],
             },
             {"_id": "genre", "items": [{"qcode": "feature", "name": "feature"}]},
@@ -398,10 +403,12 @@ class UpdateIngestTest(TestCase):
             for item in items:
                 item["ingest_provider"] = provider["_id"]
                 item["expiry"] = utcnow() + timedelta(hours=11)
+                item["language"] = "fr"
 
             # ingest the items and check the subject code has been derived
             self.ingest_items(items, provider, provider_service)
             self.assertEqual(items[0]["anpa_category"][0]["qcode"], "f")
+            self.assertEqual(items[0]["anpa_category"][0]["name"], "Finance FR")
 
     def test_subject_to_anpa_category_derived_ingest_ignores_inactive_map_entries(self):
         vocab = [
@@ -651,12 +658,131 @@ class UpdateIngestTest(TestCase):
     def test_ingest_profile_if_exists(self):
         provider, provider_service = self.setup_reuters_provider()
         items = provider_service.fetch_ingest(reuters_guid)
-        items[0]["profile"] = "nonexisting"
         ingest_item(items[0], provider, provider_service)
-        self.assertIsNone(items[0].get("profile"))
+        self.assertEqual("composite", items[0].get("profile"))
 
         content_types = [{"_id": "story", "name": "story"}]
         self.app.data.insert("content_types", content_types)
-        items[0]["profile"] = "story"
-        ingest_item(items[0], provider, provider_service)
-        self.assertEqual("story", items[0].get("profile"))
+        items[1]["profile"] = "story"
+        ingest_item(items[1], provider, provider_service)
+        self.assertEqual("story", items[1].get("profile"))
+
+    def test_edited_planning_item_is_not_update(self):
+        item = {
+            "guid": "urn:onclusive:4112034",
+            "type": "event",
+            "state": "ingested",
+            "occur_status": {
+                "qcode": "eocstat:eos5",
+                "name": "Planned, occurs certainly",
+                "label": "Planned, occurs certainly",
+            },
+            "pubstatus": "usable",
+            "versioncreated": datetime(2022, 5, 10, 11, 14, 34),
+            "firstcreated": datetime(2022, 5, 10, 11, 14, 34),
+            "name": "Annual Forum on Anti-Money Laundering and Financial Crime",
+            "definition_short": "",
+            "dates": {
+                "start": datetime(2022, 5, 10, 11, 14, 34),
+                "end": datetime(2022, 5, 10, 11, 14, 34),
+                "all_day": True,
+            },
+        }
+        flask.g.user = {"_id": "current_user_id"}
+
+        provider = {
+            "_id": "asdnjsandkajsdnjkasnd",
+            "source": "sf",
+            "name": "Onclusive",
+            "content_expiry": 525700,
+        }
+        event_service = get_resource_service("events")
+        events_post_service = get_resource_service("events_post")
+
+        # ingest first version
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertTrue(ingested)
+        self.assertIn(item["guid"], ids)
+
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest["name"], "Annual Forum on Anti-Money Laundering and Financial Crime")
+        self.assertEqual(dest["state"], "ingested")
+        self.assertEqual(dest.get("version_creator"), None)
+
+        # edit event
+        event_service.patch(dest["_id"], {"name": "Edit event Name", "update_method": "single"})
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest.get("version_creator"), "current_user_id")
+
+        # update event
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertTrue(ingested)
+        self.assertIn(item["guid"], ids)
+
+    def test_unpublished_event_is_not_update(self):
+        item = {
+            "guid": "urn:onclusive:411202222",
+            "type": "event",
+            "state": "ingested",
+            "occur_status": {
+                "qcode": "eocstat:eos5",
+                "name": "Planned, occurs certainly",
+                "label": "Planned, occurs certainly",
+            },
+            "pubstatus": "usable",
+            "versioncreated": datetime(2022, 5, 10, 11, 14, 34),
+            "firstcreated": datetime(2022, 5, 10, 11, 14, 34),
+            "name": "Annual Forum on Anti-Money Laundering and Financial Crime",
+            "definition_short": "",
+            "dates": {
+                "start": datetime(2022, 5, 10, 11, 14, 34),
+                "end": datetime(2022, 5, 10, 11, 14, 34),
+                "all_day": True,
+            },
+        }
+        flask.g.user = {"_id": "current_user_id"}
+
+        provider = {
+            "_id": "asdnjsandkajsdnjkasnd",
+            "source": "sf",
+            "name": "Onclusive",
+            "content_expiry": 525700,
+        }
+        event_service = get_resource_service("events")
+        events_post_service = get_resource_service("events_post")
+
+        # ingest first version
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertTrue(ingested)
+        self.assertIn(item["guid"], ids)
+
+        # post an event
+        events_post_service.post(
+            [
+                {
+                    "event": item["_id"],
+                    "pubstatus": "usable",
+                    "update_method": "single",
+                }
+            ]
+        )
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest.get("state"), "scheduled")
+
+        # Un-post an event
+        events_post_service.post(
+            [
+                {
+                    "event": item["_id"],
+                    "pubstatus": "cancelled",
+                    "update_method": "single",
+                }
+            ]
+        )
+        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
+        self.assertEqual(dest.get("state"), "killed")
+
+        # update an event
+        ingested, ids = ingest_item(item, provider=provider, feeding_service={})
+        self.assertFalse(ingested)
+        self.assertEqual([], ids)

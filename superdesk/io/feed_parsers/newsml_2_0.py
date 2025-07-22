@@ -365,9 +365,9 @@ class NewsMLTwoFeedParser(XMLFeedParser):
             return datetime.datetime.strptime(string, "%Y-%m-%dT%H:%M:%S.000Z")
         except (ValueError, TypeError):
             try:
-                return arrow.get(string).datetime
+                return arrow.get(string.strip()).datetime
             except arrow.parser.ParserError:
-                raise ValueError(string)
+                raise ValueError(string.strip())
 
     def get_literal_name(self, item):
         """Get name for item with fallback to literal attribute if name is not provided."""

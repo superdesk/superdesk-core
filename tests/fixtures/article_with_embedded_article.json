@@ -1,0 +1,164 @@
+{
+  "_id": "4ef6bddc-a708-42d9-88cf-5b0da492641e",
+  "headline": "add embed article",
+  "body_html": "<p>&nbsp;test it</p>\n<p>some embed body here</p>",
+  "urgency": 3,
+  "priority": 6,
+  "genre": [
+    {
+      "qcode": "Article",
+      "name": "Article (news)"
+    }
+  ],
+  "place": [],
+  "language": "en",
+  "unique_name": "#2831",
+  "sign_off": "ADM",
+  "flags": {
+    "marked_for_not_publication": false,
+    "marked_for_legal": false,
+    "marked_archived_only": false,
+    "marked_for_sms": false
+  },
+  "pubstatus": "usable",
+  "schedule_settings": {
+    "utc_embargo": null,
+    "time_zone": null
+  },
+  "profile": "65a7d5895ffa06c7d22c1625",
+  "format": "HTML",
+  "annotations": [],
+  "fields_meta": {
+    "headline": {
+      "draftjsState": [
+        {
+          "blocks": [
+            {
+              "key": "p86b",
+              "text": "add embed article",
+              "type": "unstyled",
+              "depth": 0,
+              "inlineStyleRanges": [],
+              "entityRanges": [],
+              "data": {
+                "MULTIPLE_HIGHLIGHTS": {}
+              }
+            }
+          ],
+          "entityMap": {}
+        }
+      ]
+    },
+    "body_html": {
+      "draftjsState": [
+        {
+          "blocks": [
+            {
+              "key": "78veo",
+              "text": " test it",
+              "type": "unstyled",
+              "depth": 0,
+              "inlineStyleRanges": [],
+              "entityRanges": [],
+              "data": {
+                "MULTIPLE_HIGHLIGHTS": {}
+              }
+            },
+            {
+              "key": "dh69f",
+              "text": " ",
+              "type": "atomic",
+              "depth": 0,
+              "inlineStyleRanges": [],
+              "entityRanges": [
+                {
+                  "offset": 0,
+                  "length": 1,
+                  "key": 0
+                }
+              ],
+              "data": {}
+            },
+            {
+              "key": "1gusb",
+              "text": "",
+              "type": "unstyled",
+              "depth": 0,
+              "inlineStyleRanges": [],
+              "entityRanges": [],
+              "data": {}
+            }
+          ],
+          "entityMap": {
+            "0": {
+              "type": "ARTICLE_EMBED",
+              "mutability": "MUTABLE",
+              "data": {
+                "id": "b92bd700-5ceb-4427-9a0d-e62d9bef2656",
+                "name": "test embed article",
+                "html": "<p>some embed body here</p>"
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "task": {
+    "desk": "5fae5485c89661d65540a096",
+    "stage": "5fae5485c89661d65540a094",
+    "user": "5fae4c6dd3a14ec91b89ed8f"
+  },
+  "type": "text",
+  "_updated": "2024-01-17T13:28:41+0000",
+  "_created": "2024-01-17T13:28:41+0000",
+  "_etag": "d0ab12a91a171604fba05a526bad4aab337dce59",
+  "_type": "archive",
+  "version": 0,
+  "template": "65a7d5895ffa06c7d22c1627",
+  "_current_version": 0,
+  "firstcreated": "2024-01-17T13:28:22+0000",
+  "versioncreated": "2024-01-17T13:28:22+0000",
+  "original_creator": "5fae4c6dd3a14ec91b89ed8f",
+  "guid": "4ef6bddc-a708-42d9-88cf-5b0da492641e",
+  "unique_id": 2831,
+  "family_id": "4ef6bddc-a708-42d9-88cf-5b0da492641e",
+  "event_id": "decb04d5-1dd1-44bd-9c29-6a2907fd2de0",
+  "state": "draft",
+  "source": "test",
+  "operation": "create",
+  "version_creator": "5fae4c6dd3a14ec91b89ed8f",
+  "expiry": null,
+  "lock_action": "edit",
+  "lock_session": "65a7d5105ffa06c7d22c1620",
+  "lock_time": "2024-01-17T13:28:22+0000",
+  "lock_user": "5fae4c6dd3a14ec91b89ed8f",
+  "_links": {
+    "self": {
+      "title": "archive_autosave",
+      "href": "archive_autosave/4ef6bddc-a708-42d9-88cf-5b0da492641e"
+    },
+    "related": {
+      "original_creator": {
+        "title": "User",
+        "href": "users/5fae4c6dd3a14ec91b89ed8f"
+      },
+      "version_creator": {
+        "title": "User",
+        "href": "users/5fae4c6dd3a14ec91b89ed8f"
+      },
+      "lock_user": {
+        "title": "User",
+        "href": "users/5fae4c6dd3a14ec91b89ed8f"
+      },
+      "lock_session": {
+        "title": "Auth",
+        "href": "auth/65a7d5105ffa06c7d22c1620"
+      },
+      "template": {
+        "title": "Content_template",
+        "href": "content_templates/65a7d5895ffa06c7d22c1627"
+      }
+    }
+  }
+}

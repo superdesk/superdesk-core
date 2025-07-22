@@ -12,20 +12,28 @@ import json
 import logging
 
 from copy import deepcopy
+from datetime import datetime
 
 from flask import current_app as app
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest, config
-from superdesk.utils import ListCursor
+from superdesk.utils import ListCursor, get_dict_hash
 from superdesk.resource import Resource, build_custom_hateoas
 from superdesk.services import CacheableService
 from superdesk.errors import SuperdeskApiError
 from superdesk.publish import SUBSCRIBER_TYPES  # NOQA
 from superdesk.metadata.utils import ProductTypes
 from superdesk.notification import push_notification
+from superdesk.utc import utcnow
 
 
 logger = logging.getLogger(__name__)
+
+
+def get_destination_id(destination) -> str:
+    if destination.get("_id"):
+        return destination["_id"]
+    return get_dict_hash(destination)
 
 
 class SubscribersResource(Resource):
@@ -60,7 +68,15 @@ class SubscribersResource(Resource):
                     "preview_endpoint_url": {"type": "string"},
                     "delivery_type": {"type": "string", "required": True},
                     "config": {"type": "dict"},
+                    "_id": {"type": "string"},
                 },
+            },
+        },
+        "schedule": {
+            "type": "dict",
+            "schema": {
+                "start_date": {"type": "string", "nullable": True},
+                "end_date": {"type": "string", "nullable": True},
             },
         },
         "products": {"type": "list", "schema": Resource.rel("products", True)},
@@ -101,17 +117,20 @@ class SubscribersResource(Resource):
 
 class SubscribersService(CacheableService):
     cache_lookup = {"is_active": True}
+    hide_fields = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
 
     def get(self, req, lookup):
         if req is None:
             req = ParsedRequest()
         if req.args and req.args.get("filter_condition"):
             filter_condition = json.loads(req.args.get("filter_condition"))
-            return ListCursor(self._get_subscribers_by_filter_condition(filter_condition))
-        return super().get_from_mongo(req=req, lookup=lookup)
+            return self.hideConfigField(self._get_subscribers_by_filter_condition(filter_condition), self.hide_fields)
+
+        return self.hideConfigField(list(super().get_from_mongo(req=req, lookup=lookup)), self.hide_fields)
 
     def on_create(self, docs):
         for doc in docs:
+            self._apply_schedule_status(doc)
             self._validate_seq_num_settings(doc)
             self._validate_products_destinations(doc)
 
@@ -122,7 +141,28 @@ class SubscribersService(CacheableService):
         self._validate_seq_num_settings(updates)
         subscriber = deepcopy(original)
         subscriber.update(updates)
+
+        self._apply_schedule_status(subscriber)
+
+        # Apply the calculated status back to `updates`
+        if "is_active" in subscriber:
+            updates["is_active"] = subscriber["is_active"]
+
         self._validate_products_destinations(subscriber)
+        self.keep_destinations_secrets(updates, original)
+
+    def keep_destinations_secrets(self, updates, original):
+        """Populate the secrets removed on fetch so those won't be overriden on save."""
+        original_destinations = original.get("destinations") or []
+        updates_destinations = updates.get("destinations") or []
+        for destination in original_destinations:
+            if not destination.get("config"):
+                continue
+            dest_id = get_destination_id(destination)
+            for update_destination in updates_destinations:
+                if dest_id == update_destination.get("_id"):
+                    for field, value in destination["config"].items():
+                        update_destination["config"].setdefault(field, value)
 
     def on_updated(self, updates, original):
         push_notification("subscriber:update", _id=[original.get(config.ID_FIELD)])
@@ -271,6 +311,35 @@ class SubscribersService(CacheableService):
 
         return True
 
+    def _apply_schedule_status(self, subscriber):
+        """Set is_active flag based on current time and schedule.startDate/endDate if it exists."""
+        schedule = subscriber.get("schedule")
+        if not schedule:
+            return
+
+        now = utcnow().date()
+        start_str = schedule.get("start_date")
+        end_str = schedule.get("end_date")
+
+        start = datetime.fromisoformat(start_str).date() if start_str else None
+        end = datetime.fromisoformat(end_str).date() if end_str else None
+
+        # If schedule is in future, and is_active is True - match start date with current date
+        if start and now < start and subscriber.get("is_active") is True:
+            schedule["start_date"] = now.strftime("%Y-%m-%d")
+            return
+
+        # If schedule is in the past, don't enforce any changes to status
+        if end and now > end:
+            return
+
+        if start and end and start <= now <= end:
+            subscriber["is_active"] = True
+        elif start and now < start:
+            subscriber["is_active"] = False
+        elif end and now > end:
+            subscriber["is_active"] = False
+
     def generate_sequence_number(self, subscriber):
         """
         Generates Published Sequence Number for the passed subscriber
@@ -291,3 +360,21 @@ class SubscribersService(CacheableService):
 
     def get_active(self):
         return self.get_cached()
+
+    def hideConfigField(self, docs, fields):
+        return ListCursor(
+            [
+                {
+                    **doc,
+                    "destinations": [
+                        {
+                            **destination,
+                            "config": {key: value for key, value in destination["config"].items() if key not in fields},
+                            "_id": get_destination_id(destination),
+                        }
+                        for destination in doc.get("destinations", [])
+                    ],
+                }
+                for doc in docs
+            ]
+        )

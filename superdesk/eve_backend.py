@@ -9,11 +9,11 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from typing import Dict, Any
+from typing import Dict, Any, Literal
 import eve.io.base
 import json as std_json
+import pymongo.collection
 
-from typing_extensions import Literal
 from pymongo.cursor import Cursor as MongoCursor
 from pymongo.collation import Collation
 from flask import current_app as app, json
@@ -26,6 +26,7 @@ from elasticsearch.exceptions import RequestError, NotFoundError
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification as _push_notification
 from superdesk.cache import cache
+from superdesk.utils import get_list_chunks
 
 
 SYSTEM_KEYS = set(
@@ -69,7 +70,7 @@ class EveBackend:
         backend = self._backend(endpoint_name)
         item = backend.find_one(endpoint_name, req=req, **lookup)
         search_backend = self._lookup_backend(endpoint_name, fallback=True)
-        if search_backend:
+        if search_backend and app.config.get("BACKEND_FIND_ONE_SEARCH_TEST", False):
             # set the parent for the parent child in elastic search
             self._set_parent(endpoint_name, item, lookup)
             item_search = search_backend.find_one(endpoint_name, req=req, **lookup)
@@ -125,12 +126,12 @@ class EveBackend:
         backend = self._lookup_backend(endpoint_name, fallback=True)
         is_mongo = self._backend(endpoint_name) == backend
 
-        cursor, count = backend.find(endpoint_name, req, lookup)
+        cursor, count = backend.find(endpoint_name, req, lookup, perform_count=req.if_modified_since)
 
         if req.if_modified_since and count:
             # fetch all items, not just updated
             req.if_modified_since = None
-            cursor, count = backend.find(endpoint_name, req, lookup)
+            cursor, count = backend.find(endpoint_name, req, lookup, perform_count=False)
 
         source_config = app.config["DOMAIN"][endpoint_name]
         if is_mongo and source_config.get("collation"):
@@ -168,6 +169,11 @@ class EveBackend:
         result = backend.driver.db[endpoint_name].find_and_modify(**kwargs)
         cache.clean([endpoint_name])
         return result
+
+    def get_mongo_collection(self, endpoint_name) -> pymongo.collection.Collection:
+        backend = self._backend(endpoint_name)
+        datasource = self._datasource(endpoint_name)
+        return backend.pymongo(endpoint_name).db[datasource]
 
     def create(self, endpoint_name, docs, **kwargs):
         """Insert documents into given collection.
@@ -259,9 +265,9 @@ class EveBackend:
             else:
                 backend.update(endpoint_name, id, updates, original)
             if push_notification:
-                self._push_resource_notification(
-                    "updated", endpoint_name, _id=str(id), fields=get_diff_keys(updates, original)
-                )
+                updated_fields = get_diff_keys(updates, original)
+                if updated_fields:
+                    self._push_resource_notification("updated", endpoint_name, _id=str(id), fields=updated_fields)
         except eve.io.base.DataLayer.OriginalChangedError:
             if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
@@ -311,6 +317,15 @@ class EveBackend:
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
         cache.clean([endpoint_name])
+
+        # with soft delete enabled eve uses replace to update the document
+        if document.get("_deleted") and not original.get("_deleted"):
+            self._push_resource_notification("deleted", endpoint_name, _id=str(id))
+        else:
+            self._push_resource_notification(
+                "updated", endpoint_name, _id=str(id), fields=get_diff_keys(document, original)
+            )
+
         return res
 
     def update_in_mongo(self, endpoint_name, id, updates, original):
@@ -364,10 +379,20 @@ class EveBackend:
         :param lookup: User mongo query syntax. example 1. ``{'_id':123}``, 2. ``{'item_id': {'$in': [123, 234]}}``
         :returns: Returns list of ids which were removed.
         """
+        search_backend = self._lookup_backend(endpoint_name)
         docs = list(self.get_from_mongo(endpoint_name, lookup=lookup, req=ParsedRequest()).sort("_id", 1))
-        removed_ids = self.delete_docs(endpoint_name, docs)
-        if len(docs) and not len(removed_ids):
-            logger.warn("No documents for %s resource were deleted using lookup %s", endpoint_name, lookup)
+        removed_ids = []
+        if docs:
+            removed_ids = self.delete_docs(endpoint_name, docs)
+            if not removed_ids:
+                logger.warning("No documents for %s resource were deleted using lookup %s", endpoint_name, lookup)
+        elif "_id" in lookup and search_backend:
+            logger.warning("Item missing in mongo, deleting from elastic resource=%s lookup=%s", endpoint_name, lookup)
+            try:
+                search_backend.remove(endpoint_name, lookup)
+                removed_ids = [lookup["_id"]]
+            except NotFoundError:
+                pass  # not found in elastic and not in mongo
         cache.clean([endpoint_name])
         return removed_ids
 
@@ -391,7 +416,8 @@ class EveBackend:
                 except Exception:
                     logger.exception("item can not be removed from elastic _id=%s" % (doc[config.ID_FIELD],))
         if len(removed_ids):
-            backend.remove(endpoint_name, {config.ID_FIELD: {"$in": removed_ids}})
+            for chunk in get_list_chunks(removed_ids):
+                backend.remove(endpoint_name, {config.ID_FIELD: {"$in": chunk}})
             logger.info("Removed %d documents from %s.", len(removed_ids), endpoint_name)
             for doc in docs:
                 self._push_resource_notification("deleted", endpoint_name, _id=str(doc["_id"]))

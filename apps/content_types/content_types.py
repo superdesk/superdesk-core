@@ -2,17 +2,18 @@ import re
 import bson
 import superdesk
 
-from eve.utils import config
 from copy import deepcopy
+from eve.utils import config
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
+from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR, DEFAULT_SCHEMA_MAP
 from apps.auth import get_user_id
 from apps.desks import remove_profile_from_desks
 from eve.utils import ParsedRequest
-from superdesk.resource import build_custom_hateoas
+from superdesk.resource import build_custom_hateoas, not_analyzed
 from flask_babel import _
 from superdesk.utc import utcnow
+from superdesk.utils import format_content_type_name
 from superdesk.services import CacheableService
 
 
@@ -43,6 +44,7 @@ EDITOR_ATTRIBUTES = (
     "preview",
     "enabled",
     "field_name",
+    "allow_toggling",
 )
 
 # cvs hardcoded in the app wich special use
@@ -56,7 +58,7 @@ class ContentTypesResource(superdesk.Resource):
             "type": "string",
             "iunique": True,
         },
-        "item_type": {
+        "type": {
             "type": "string",
             "nullable": True,
             "content_type_single_item_type": True,
@@ -64,6 +66,9 @@ class ContentTypesResource(superdesk.Resource):
         "label": {
             "type": "string",
             "iunique": True,
+        },
+        "icon": {
+            "type": "string",
         },
         "description": {
             "type": "string",
@@ -97,9 +102,14 @@ class ContentTypesResource(superdesk.Resource):
             "type": "boolean",
             "default": False,
         },
+        "embeddable": {
+            "type": "boolean",
+            "default": False,
+        },
         "created_by": superdesk.Resource.rel("users", nullable=True),
         "updated_by": superdesk.Resource.rel("users", nullable=True),
         "init_version": {"type": "integer"},
+        "output_name": {"type": "string", "nullable": True},
     }
 
     item_url = r'regex("[\w,.:-]+")'
@@ -211,8 +221,9 @@ class ContentTypesService(CacheableService):
                 superdesk.get_resource_service("content_templates").patch(template.get("_id"), {"data": data})
 
     def find_one(self, req, **lookup):
+        is_edit = req and "edit" in req.args
         doc = super().find_one(req, **lookup)
-        if doc and req and "edit" in req.args:
+        if doc and is_edit:
             prepare_for_edit_content_type(doc)
         if doc:
             clean_doc(doc)
@@ -231,15 +242,26 @@ class ContentTypesService(CacheableService):
         try:
             _id = bson.ObjectId(profile)
             item = self.find_one(req=None, _id=_id) or {}
-            return re.compile("[^0-9a-zA-Z_]").sub("", item.get("label", str(_id)))
         except bson.errors.InvalidId:
-            return profile
+            item = get_profile(profile) or {}
+
+        return format_content_type_name(item, str(profile))
+
+    def get_schema(self, item):
+        profile_id = item.get("profile") or item.get("type")
+        profile = self.find_one(req=None, _id=profile_id)
+        if profile:
+            return profile["schema"]
+        return DEFAULT_SCHEMA_MAP.get(profile_id)
 
 
 def clean_doc(doc):
     schema = doc.get("schema", {})
     editor = doc.get("editor", {})
-    vocabularies = get_resource_service("vocabularies").get_forbiden_custom_vocabularies()
+    vocabularies = list(get_resource_service("vocabularies").get_forbiden_custom_vocabularies())
+
+    for cv in HARDCODED_CVS:
+        vocabularies.append({"_id": cv})
 
     for vocabulary in vocabularies:
         field = vocabulary.get("schema_field", vocabulary["_id"])
@@ -248,19 +270,15 @@ def clean_doc(doc):
         if editor.get(field):
             del editor[field]
 
-    clean_json(schema)
-    clean_json(editor)
 
-
-def clean_json(json):
-    if not isinstance(json, dict):
-        return
-    for key in list(json.keys()):
-        value = json[key]
-        if value is None:
-            del json[key]
-        else:
-            clean_json(value)
+def clean_null(doc):
+    for field in ("editor", "schema"):
+        clean = {}
+        for key, val in doc[field].items():
+            if val is not None:
+                clean[key] = val
+        if clean != doc[field]:
+            doc[field] = clean
 
 
 def prepare_for_edit_content_type(doc):
@@ -273,6 +291,7 @@ def prepare_for_edit_content_type(doc):
     expand_subject(editor, schema, fields_map)
     set_field_name(editor, field_names)
     init_extra_fields(editor, schema)
+    clean_null(doc)
     doc["_updated"] = utcnow()
 
 
@@ -280,9 +299,10 @@ def init_extra_fields(editor, schema):
     fields = get_resource_service("vocabularies").get_extra_fields()
     for field in fields:
         field_type = field.get("field_type")
-        schema.setdefault(field["_id"], {"type": field_type, "required": False})
-        if field["_id"] in editor:
-            editor[field["_id"]]["enabled"] = True
+        if schema.get(field["_id"]) is None:
+            schema[field["_id"]] = {"type": field_type, "required": False}
+        if editor.get(field["_id"]):
+            editor[field["_id"]].setdefault("enabled", True)
         else:
             editor[field["_id"]] = {"enabled": False}
         editor[field["_id"]]["field_name"] = field["display_name"]
@@ -328,10 +348,10 @@ def init_default(doc):
             if editor.get(field, None) is None:
                 editor[field] = deepcopy(DEFAULT_EDITOR[field])
                 editor[field]["enabled"] = False
-                if schema.get(field, None) is None:
-                    schema[field] = deepcopy(DEFAULT_SCHEMA[field])
             else:  # it's there, so why change it?
                 editor[field].setdefault("enabled", True)
+            if schema.get(field, None) is None:
+                schema[field] = deepcopy(DEFAULT_SCHEMA[field])
     else:
         doc["editor"] = deepcopy(DEFAULT_EDITOR)
         doc["schema"] = deepcopy(DEFAULT_SCHEMA)
@@ -383,12 +403,15 @@ def expand_subject(editor, schema, fields_map):
 
 def set_enabled_for_custom(editor, allowed, fields_map):
     for field in allowed:
-        editor[fields_map.get(field, field)]["enabled"] = True
+        try:
+            editor[fields_map.get(field, field)]["enabled"] = True
+        except KeyError:
+            pass
 
 
 def set_required_for_custom(editor, schema, mandatory, fields_map):
     # old notation where `value` is string
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == str):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, str)):
         if field == value or field == "subject":
             try:
                 editor[fields_map.get(field, field)]["required"] = value is not None
@@ -396,7 +419,7 @@ def set_required_for_custom(editor, schema, mandatory, fields_map):
             except KeyError:
                 continue
     # new notation where `value` is dict
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == dict):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, dict)):
         if (field is not None and value.get("required", False)) or field == "subject":
             try:
                 editor[fields_map.get(field, field)]["required"] = value.get("required", False)
@@ -407,14 +430,14 @@ def set_required_for_custom(editor, schema, mandatory, fields_map):
 
 def set_readonly_for_custom(editor, schema, mandatory, fields_map):
     # old notation where `value` is string
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == str):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, str)):
         try:
             editor[fields_map.get(field, field)]["readonly"] = False
             schema[fields_map.get(field, field)]["readonly"] = False
         except KeyError:
             continue
     # new notation where `value` is dict
-    for field, value in tuple((k, v) for k, v in mandatory.items() if type(v) == dict):
+    for field, value in tuple((k, v) for k, v in mandatory.items() if isinstance(v, dict)):
         if (field is not None and value.get("readonly", False)) or field == "subject":
             try:
                 editor[fields_map.get(field, field)]["readonly"] = value.get("readonly", False)
@@ -439,7 +462,10 @@ def get_subject_name(fields_map):
 
 def set_field_name(editor, field_names):
     for field, name in field_names.items():
-        editor.setdefault(field, {})["field_name"] = name
+        try:
+            editor.setdefault(field, {})["field_name"] = name
+        except TypeError:
+            pass
 
 
 def prepare_for_save_content_type(original, updates):
@@ -575,7 +601,7 @@ def apply_schema(item):
     :param item: item to apply schema to
     """
     # fields that can be added to article without being added to CP eg: using widgets
-    allowed_keys = ["attachments", "refs", "place", "organisation", "person"]
+    allowed_keys = ["attachments", "refs", "place", "organisation", "person", "authors"]
 
     if item.get("type") == "event":
         return item.copy()

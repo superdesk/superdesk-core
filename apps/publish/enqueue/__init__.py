@@ -158,7 +158,12 @@ class EnqueueContent(superdesk.Command):
                 )
                 #  apply internal destinations
                 signals.item_published.send(
-                    self, item=archive_service.find_one(req=None, _id=published_item["item_id"])
+                    self,
+                    item=archive_service.find_one(
+                        req=None,
+                        _id=published_item["item_id"],
+                    ),
+                    after_scheduled=True,
                 )
 
             published_service.patch(published_item_id, published_update)
@@ -229,7 +234,7 @@ class EnqueueContent(superdesk.Command):
 superdesk.command("publish:enqueue", EnqueueContent())
 
 
-@celery.task(soft_time_limit=300)
+@celery.task(soft_time_limit=600)
 def enqueue_published():
     """Pick new items from ``published`` collection and enqueue it."""
     with ProfileManager("publish:enqueue"):

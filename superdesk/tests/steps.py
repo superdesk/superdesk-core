@@ -11,27 +11,28 @@
 
 import os
 import time
+import arrow
+import celery
 import shutil
+import responses
 import operator
 
 from unittest import mock
 from copy import deepcopy
 from base64 import b64encode
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from os.path import basename
 from re import findall
 from unittest.mock import patch
 from urllib.parse import urlparse
 from pathlib import Path
 
-import arrow
-import responses
 from behave import given, when, then  # @UnresolvedImport
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
 from eve.methods.common import parse
 from eve.utils import ParsedRequest, config
-from flask import json
+from flask import json, render_template_string
 from wooper.assertions import assert_in, assert_equal, assertions
 from wooper.general import fail_and_print_body, apply_path, parse_json_response, WooperAssertionError
 from wooper.expect import (
@@ -51,6 +52,7 @@ from superdesk.io.commands import update_ingest
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 from superdesk.io.feeding_services import ftp
 from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser, STTNewsMLFeedParser
+from superdesk.media.image import read_metadata
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.tests import get_prefixed_url, set_placeholder
 from apps.dictionaries.resource import DICTIONARY_FILE
@@ -85,11 +87,7 @@ def test_json(context, json_fields=None):
     except Exception:
         fail_and_print_body(context.response, "response is not valid json")
     context_data = json.loads(apply_placeholders(context, context.text))
-    assert_equal(
-        json_match(context_data, response_data, json_fields),
-        True,
-        msg=str(context_data) + "\n != \n" + str(response_data),
-    )
+    assert json_match(context_data, response_data, json_fields), str(context_data) + "\n != \n" + str(response_data)
     return response_data
 
 
@@ -144,7 +142,7 @@ def assert_is_now(val, key):
     assert val + timedelta(seconds=2) > now, "%s should be %s, it is %s" % (key, now, val)
 
 
-def json_match(context_data, response_data, json_fields=None):
+def json_match(context_data, response_data, json_fields=None, parent=None):
     if json_fields is None:
         json_fields = []
     if isinstance(context_data, dict):
@@ -166,6 +164,12 @@ def json_match(context_data, response_data, json_fields=None):
             if context_data[key] == "__now__":
                 assert_is_now(response_data[key], key)
                 continue
+            if context_data[key] == "__today__":
+                assert response_data[key] == date.today().isoformat(), "{date} should be today ({today})".format(
+                    date=response_data[key],
+                    today=date.today().isoformat(),
+                )
+                continue
             if context_data[key] == "__future__":
                 assert arrow.get(response_data[key]) > arrow.get(), "{} should be in future".format(key)
                 continue
@@ -183,7 +187,8 @@ def json_match(context_data, response_data, json_fields=None):
                     response_field = json.loads(response_data[key])
                 except Exception:
                     fail_and_print_body(response_data, "response does not contain a valid %s field" % key)
-            if not json_match(context_data[key], response_field, json_fields):
+            if not json_match(context_data[key], response_field, json_fields, parent=key):
+                print("key {} does not match in {}".format(key, parent or context_data))
                 return False
         return True
     elif isinstance(context_data, list):
@@ -779,6 +784,8 @@ def store_placeholder(context, url):
         if item["_status"] == "OK" and item.get("_id"):
             try:
                 setattr(context, get_resource_name(url), item)
+                context.placeholders = getattr(context, "placeholders", {})
+                context.placeholders[get_resource_name(url)] = item
             except (IndexError, KeyError):
                 pass
 
@@ -821,10 +828,14 @@ def step_impl_when_post_url_with_success(context, url):
 def step_impl_when_put_url(context, url):
     with context.app.mail.record_messages() as outbox:
         url = apply_placeholders(context, url)
-        res = get_res(url, context)
-        headers = if_match(context, res.get("_etag"))
+        try:
+            res = get_res(url, context)
+            headers = if_match(context, res.get("_etag"))
+        except AssertionError:
+            headers = {"content-type": "application/json"}
         data = apply_placeholders(context, context.text)
         href = get_prefixed_url(context.app, url)
+
         context.response = context.client.put(href, data=data, headers=headers)
         context.outbox = outbox
 
@@ -1006,7 +1017,13 @@ def step_impl_when_upload_with_crop(context):
 
 @when('upload a file "{file_name}" to "{destination}" with "{guid}"')
 def step_impl_when_upload_image_with_guid(context, file_name, destination, guid):
-    upload_file(context, destination, file_name, "media", {"guid": guid})
+    metadata = {
+        "guid": guid,
+        "headline": file_name,
+        "alt_text": file_name,
+        "description_text": file_name,
+    }
+    upload_file(context, destination, file_name, "media", metadata)
     if destination == "archive":
         set_placeholder(context, "original.href", context.archive["renditions"]["original"]["href"])
         set_placeholder(context, "original.media", context.archive["renditions"]["original"]["media"])
@@ -1090,8 +1107,8 @@ def step_impl_then_get_error(context, code):
         test_json(context)
 
 
-@then("we get list with {total_count} items")
-def step_impl_then_get_list(context, total_count):
+@then("we get list with {total_count} {unit}")
+def step_impl_then_get_list(context, total_count, unit=None):
     assert_200(context.response)
     data = get_json_data(context.response)
     int_count = int(total_count.replace("+", "").replace("<", ""))
@@ -1107,6 +1124,8 @@ def step_impl_then_get_list(context, total_count):
         )
     if context.text:
         test_json(context)
+
+    set_placeholder(context, "items", data["_items"])
 
 
 @then("we get list ordered by {field} with {total_count} items")
@@ -1247,6 +1266,8 @@ def step_impl_then_get_existing_saved_search(context):
 @then("we get OK response")
 def step_impl_then_get_ok(context):
     assert_200(context.response)
+    if context.text:
+        test_json(context)
 
 
 @then("we get response code {code}")
@@ -1254,6 +1275,8 @@ def step_impl_then_get_code(context, code):
     assert context.response.status_code == int(code), "we got code={} data={}".format(
         context.response.status_code, get_response_readable(context.response.data)
     )
+    if context.text:
+        test_json(context)
 
 
 @then("we get updated response")
@@ -1707,7 +1730,15 @@ def when_we_switch_user(context):
 
 @when("we setup test user")
 def when_we_setup_test_user(context):
-    tests.setup_auth_user(context, tests.test_user)
+    if context.text:
+        user_data = json.loads(apply_placeholders(context, context.text))
+        user_data.setdefault("username", "test-user-123")
+        user_data.setdefault("password", "pwd")
+        user_data.setdefault("email", "test123@example.com")
+    else:
+        user_data = deepcopy(tests.test_user)
+
+    tests.setup_auth_user(context, user_data)
 
 
 @when('we get my "{url}"')
@@ -2712,3 +2743,41 @@ def step_impl_then_we_dont_get_access_token(context):
 def setp_impl_when_we_init_data(context, entity):
     with context.app.app_context():
         AppInitializeWithDataCommand().run(entity)
+
+
+@when('we run task "{name}"')
+def when_we_run_task(context, name):
+    task = celery.signature(name)
+    assert task is not None
+    task.apply()
+
+
+@when('the lock expires "{url}"')
+def when_lock_expires(context, url):
+    url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
+    resource, _id = url.lstrip("/").rstrip("/").split("/")
+    with context.app.app_context():
+        orig = context.app.data.find_one(resource, req=None, _id=_id)
+        assert orig is not None, "could not find {}/{}".format(resource, _id)
+        context.app.data.update(resource, orig["_id"], {"_lock_time": utcnow() - timedelta(hours=48)}, orig)
+
+
+@then('we get picture metadata "{media}"')
+def then_we_get_picture_metadta(context, media):
+    with context.app.app_context():
+        media = render_template_string(media, **getattr(context, "placeholders", {}))
+        binary = context.app.media.get(media)
+        assert binary, "Binary for media id {} not found".format(media)
+        metadata = read_metadata(binary.read())
+    context_data = json.loads(apply_placeholders(context, context.text))
+    assert json_match(context_data, metadata), str(context_data) + "\n != \n" + str(metadata)
+
+
+@when('we add privilege "{privilege}" to user "{username}"')
+def step_impl(context, privilege: str, username: str) -> None:
+    with context.app.app_context():
+        user = get_resource_service("users").find_one(req=None, username=username)
+        assert user is not None, "User {} not found".format(username)
+        privileges = user.get("privileges") or {}
+        privileges[privilege] = 1
+        get_resource_service("users").system_update(user["_id"], {"privileges": privileges}, user)

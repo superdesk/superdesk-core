@@ -10,10 +10,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+import os
 import logging
-import logging.handlers
+
 from superdesk.websockets_comms import SocketCommunication
 
+
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
@@ -27,12 +30,25 @@ def create_server(config):
         port = int(config["WS_PORT"])
         broker_url = config["BROKER_URL"]
         exchange_name = config.get("WEBSOCKET_EXCHANGE", "superdesk_notification")
-        comms = SocketCommunication(host, port, broker_url, exchange_name)
+        comms = SocketCommunication(
+            host,
+            port,
+            broker_url,
+            exchange_name,
+            sentry_dsn=os.environ.get("SENTRY_DSN"),
+            sentry_traces_sample_rate=float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")) or None,
+        )
         comms.run_server()
     except Exception:
         logger.exception("Failed to start the WebSocket server.")
 
 
 if __name__ == "__main__":
-    config = {"WS_HOST": "0.0.0.0", "WS_PORT": "5100", "BROKER_URL": "redis://localhost:6379"}
+    config = {
+        "WS_HOST": os.environ.get("WS_HOST") or "0.0.0.0",
+        "WS_PORT": int(os.environ.get("WS_PORT") or "5100"),
+        "BROKER_URL": os.environ.get("CELERY_BROKER_URL") or os.environ.get("REDIS_URL") or "redis://localhost:6379",
+        "WEBSOCKET_EXCHANGE": "superdesk_notification",
+    }
+
     create_server(config)

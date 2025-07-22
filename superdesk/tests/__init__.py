@@ -93,7 +93,7 @@ def update_config(conf):
     conf["MACROS_MODULE"] = "superdesk.macros"
     conf["DEFAULT_TIMEZONE"] = "Europe/Prague"
     conf["LEGAL_ARCHIVE"] = True
-    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial"])
+    conf["INSTALLED_APPS"].extend(["planning", "superdesk.macros.imperial", "apps.rundowns", "apps.user_availability"])
 
     # limit mongodb connections
     conf["MONGO_CONNECT"] = False
@@ -107,9 +107,17 @@ def update_config(conf):
     conf["GEONAMES_USERNAME"] = "superdesk_dev"
     conf["PUBLISH_ASSOCIATED_ITEMS"] = True
     conf["PAGINATION_LIMIT"] = conf["PAGINATION_DEFAULT"] = 200
+    conf["RUNDOWNS_SCHEDULE_HOURS"] = 24
+    conf["RUNDOWNS_TIMEZONE"] = "Europe/Prague"
 
     # auth server
     conf["AUTH_SERVER_SHARED_SECRET"] = "some secret"
+
+    # todo: only activate it for specific tests
+    conf["BACKEND_FIND_ONE_SEARCH_TEST"] = True
+
+    conf["PROXY_MEDIA_STORAGE_CHECK_EXISTS"] = True
+
     return conf
 
 
@@ -356,13 +364,18 @@ def setup(context=None, config=None, app_factory=get_app, reset=False):
     if context:
         context.app = app
         context.client = app.test_client()
-        if not hasattr(context, "BEHAVE"):
-            app.test_request_context().push()
+        if not hasattr(context, "BEHAVE") and not hasattr(context, "test_context") and hasattr(context, "addCleanup"):
+            context.test_context = app.test_request_context()
+            context.test_context.push()
+            context.addCleanup(context.test_context.pop)
 
     with app.app_context():
         clean_dbs(app, force=bool(config))
         app.data.elastic.init_index()
+        app.init_indexes()
         cache.clean()
+
+    return app
 
 
 def setup_auth_user(context, user=None):
@@ -376,6 +389,7 @@ def add_to_context(context, token, user, auth_id=None):
     context.user = user
     set_placeholder(context, "CONTEXT_USER_ID", str(user.get("_id")))
     set_placeholder(context, "AUTH_ID", str(auth_id))
+    set_placeholder(context, f"{user.get('username').upper()}_USER_ID", str(user.get("_id")))
 
 
 def set_placeholder(context, name, value):
@@ -476,7 +490,7 @@ class NotificationMock:
         self.client = None
         self.open = True
 
-    def send(self, message):
+    def send(self, message, name):
         self.messages.append(message)
 
     def reset(self):
@@ -530,12 +544,7 @@ class TestCase(unittest.TestCase):
 
         self.ctx = self.app.app_context()
         self.ctx.push()
-
-        def clean_ctx():
-            if self.ctx:
-                self.ctx.pop()
-
-        self.addCleanup(clean_ctx)
+        self.addCleanup(self.ctx.pop)
 
     def tearDownForChildren(self):
         """Run this `tearDown` stuff for each children."""
@@ -543,3 +552,20 @@ class TestCase(unittest.TestCase):
     def get_fixture_path(self, filename):
         rootpath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
         return os.path.join(rootpath, "features", "steps", "fixtures", filename)
+
+
+class AppTestCase(unittest.TestCase):
+    config = {}
+
+    def setUp(self):
+        super().setUp()
+        config = setup_config(self.config)
+        self.app = get_app(config)
+        self.ctx = self.app.app_context()
+        self.ctx.push()
+        self.addCleanup(self.ctx.pop)
+        cache.clean()
+
+    def resetDatabase(self):
+        clean_dbs(self.app)
+        self.app.data.elastic.init_index()

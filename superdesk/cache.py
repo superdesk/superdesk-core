@@ -1,6 +1,7 @@
 import hermes
 import hermes.backend
 import hermes.backend.redis
+import hermes.backend.memcached
 import hermes.backend.inprocess
 
 from urllib.parse import urlparse
@@ -43,9 +44,14 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
 
         if not app.extensions.get("superdesk_cache"):
             cache_url = app.config.get("CACHE_URL", "")
-            if "redis" in cache_url or "unix" in cache_url:
+            cache_type = app.config.get("CACHE_TYPE")
+            if not cache_type and "redis" in cache_url:
+                cache_type = "redis"
+            elif not cache_type and cache_url:
+                cache_type = "memcached"
+            if "redis" == cache_type:
                 parsed_url = urlparse(cache_url)
-                assert parsed_url.hostname
+                assert parsed_url.hostname, "missing hostname in cache url"
                 app.extensions["superdesk_cache"] = hermes.backend.redis.Backend(
                     self.mangler,
                     host=parsed_url.hostname,
@@ -54,6 +60,14 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
                     db=int(parsed_url.path[1:]) if parsed_url.path else 0,
                 )
                 logger.info("using redis cache backend")
+                return
+            elif "memcached" == cache_type:
+                app.extensions["superdesk_cache"] = hermes.backend.memcached.Backend(
+                    self.mangler,
+                    server=cache_url,
+                )
+                logger.info("using memcached cache backend")
+                return
             else:
                 app.extensions["superdesk_cache"] = hermes.backend.inprocess.Backend(self.mangler)
                 logger.info("using dict cache backend")

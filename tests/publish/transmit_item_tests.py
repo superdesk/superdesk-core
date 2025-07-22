@@ -13,16 +13,18 @@ from unittest import mock
 from unittest.mock import MagicMock, ANY
 from datetime import timedelta
 
-from superdesk.tests import TestCase
+from superdesk.tests import AppTestCase
 from superdesk.utc import utcnow
 from superdesk.errors import PublishHTTPPushServerError, PublishHTTPPushClientError
 from superdesk.publish.publish_content import transmit_item
 
 
-class TransmitItemTestCase(TestCase):
+class TransmitItemTestCase(AppTestCase):
     """Tests for the transmit_item() function."""
 
     def setUp(self):
+        super().setUp()
+        super().resetDatabase()
         self.func_under_test = transmit_item
 
     @mock.patch("superdesk.publish.publish_content.get_resource_service")

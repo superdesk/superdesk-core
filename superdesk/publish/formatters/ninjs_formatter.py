@@ -29,18 +29,20 @@
 """
 
 
+import re
 import json
 import superdesk
 import logging
-import re
-from typing import Tuple
 
+from typing import List, Literal, Sequence, Tuple, TypedDict
 from flask import current_app as app
 from eve.utils import config
 from superdesk.publish.formatters import Formatter
 from superdesk.errors import FormatterError
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE, EMBARGO, GUID_FIELD, ASSOCIATIONS
 from superdesk.metadata.packages import RESIDREF, GROUP_ID, GROUPS, ROOT_GROUP, REFS
+from superdesk.metadata.utils import generate_urn
+from superdesk.types import Item
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.media.renditions import get_renditions_spec
 from superdesk.vocabularies import is_related_content
@@ -59,6 +61,31 @@ EXTRA_ITEMS = "extra_items"
 SCHEME_MAP = {
     "sig": "http://cv.iptc.org/newscodes/signal/",
 }
+
+
+class QCode(TypedDict):
+    name: str
+    qcode: str
+
+
+class NinjsAuthorMandatory(TypedDict):
+    code: str
+    name: str
+    role: str
+    biography: str
+
+
+class NinjsAuthor(NinjsAuthorMandatory, total=False):
+    uri: str
+    email: str
+    twitter: str
+    facebook: str
+    instagram: str
+    avatar_url: str
+    jobtitle: QCode
+
+
+AuthorFields = Literal["email", "twitter", "facebook", "instagram"]
 
 
 def filter_empty_vals(data):
@@ -137,11 +164,12 @@ class NINJSFormatter(Formatter):
         }
     )
 
+    author_user_fields: Sequence[AuthorFields] = ("facebook", "twitter", "instagram")
+
     def __init__(self):
-        self.format_type = "ninjs"
         self.can_preview = True
         self.can_export = True
-        self.internal_renditions = ["original"]
+        self.internal_renditions = app.config.get("NINJS_COMMON_RENDITIONS", []) + ["original"]
 
     def format(self, article, subscriber, codes=None):
         try:
@@ -191,12 +219,10 @@ class NINJSFormatter(Formatter):
         extra_items = None
         if recursive:
             if article[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                ninjs[ASSOCIATIONS] = self._get_associations(article, subscriber)
-                if article.get(ASSOCIATIONS):
-                    associations, extra_items = self._format_related(article, subscriber)
-                    ninjs[ASSOCIATIONS].update(associations)
-            elif article.get(ASSOCIATIONS):
-                ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
+                ninjs[ASSOCIATIONS] = self._get_groups(article, subscriber)
+            if article.get(ASSOCIATIONS):
+                associations, extra_items = self._format_related(article, subscriber)
+                ninjs.setdefault(ASSOCIATIONS, {}).update(associations)
         elif article.get(ASSOCIATIONS) and recursive:
             ninjs[ASSOCIATIONS], extra_items = self._format_related(article, subscriber)
         if extra_items:
@@ -293,7 +319,7 @@ class NINJSFormatter(Formatter):
         if article.get("extra"):
             ninjs["extra"] = article["extra"]
             for key, value in ninjs["extra"].items():
-                if type(value) == dict and "embed" in value:
+                if isinstance(value, dict) and "embed" in value:
                     value.setdefault("description", "")
 
         return ninjs
@@ -311,14 +337,14 @@ class NINJSFormatter(Formatter):
         return renditions
 
     def can_format(self, format_type, article):
-        return format_type == self.format_type
+        return format_type == self.type
 
     def _get_type(self, article):
         if article[ITEM_TYPE] == CONTENT_TYPE.PREFORMATTED:
             return CONTENT_TYPE.TEXT
         return article[ITEM_TYPE]
 
-    def _get_associations(self, article, subscriber):
+    def _get_groups(self, article, subscriber):
         """Create associations dict for package groups."""
         associations = dict()
         for group in article.get(GROUPS, []):
@@ -348,8 +374,8 @@ class NINJSFormatter(Formatter):
         associations = OrderedDict()
         extra_items = {}
         media = {}
-        content_profile = None
         archive_service = superdesk.get_resource_service("archive")
+        schema = superdesk.get_resource_service("content_types").get_schema(article) or {}
 
         article_associations = OrderedDict(
             sorted(article.get(ASSOCIATIONS, {}).items(), key=lambda itm: (itm[1] or {}).get("order", 1))
@@ -371,28 +397,21 @@ class NINJSFormatter(Formatter):
                         if rendition != "original" and renditions.get(rendition, {}).get("poi"):
                             renditions[rendition].pop("poi", None)
 
-                associations[key] = item  # all items should stay in associations
                 match = MEDIA_FIELD_RE.match(key)
                 if match:
                     # item id seems to be build from a custom id
                     # we now check content profile to see if it correspond to a custom field
-                    if content_profile is None:
-                        try:
-                            profile = article["profile"]
-                        except KeyError:
-                            logger.warning("missing profile in article (guid: {guid})".format(guid=article.get("guid")))
-                            content_profile = {"schema": {}}
-                        else:
-                            content_profile = superdesk.get_resource_service("content_types").find_one(
-                                _id=profile, req=None
-                            )
                     field_id = match.group("field_id")
-                    schema = content_profile["schema"].get(field_id, {})
-                    if schema.get("type") == "media" or schema.get("type") == "related_content":
+                    field_schema = schema.get(field_id)
+                    if field_schema and field_schema.get("type") in ("media", "related_content"):
                         # we want custom media fields in "extra_items", cf. SDESK-2955
                         version = match.group("version")
                         media.setdefault(field_id, []).append((version, item))
-                        extra_items[field_id] = {"type": schema.get("type")}
+                        extra_items[field_id] = {"type": field_schema.get("type")}
+                    order = item.get("order", match.group("version"))
+                    key = f"{field_id}--{order}"  # set keys according to order value
+
+                associations[key] = item  # all items should stay in associations
 
         if media:
             # we have custom media fields, we now order them
@@ -549,7 +568,7 @@ class NINJSFormatter(Formatter):
                 )
         return output
 
-    def _format_authors(self, article):
+    def _format_authors(self, article: Item) -> List[NinjsAuthor]:
         users_service = superdesk.get_resource_service("users")
         vocabularies_service = superdesk.get_resource_service("vocabularies")
         job_titles_voc = vocabularies_service.find_one(None, _id="job_titles")
@@ -557,51 +576,60 @@ class NINJSFormatter(Formatter):
             job_titles_voc["items"] = vocabularies_service.get_locale_vocabulary(
                 job_titles_voc.get("items"), article.get("language")
             )
+
         job_titles_map = {v["qcode"]: v["name"] for v in job_titles_voc["items"]} if job_titles_voc is not None else {}
 
         authors = []
-        for author in article["authors"]:
+        for author_ref in article["authors"]:
             try:
-                user_id = author["parent"]
+                user_id = author_ref["parent"]
             except KeyError:
                 # XXX: in some older items, parent may be missing, we try to find user with name in this case
                 try:
-                    user = next(users_service.find({"display_name": author["name"]}))
+                    user = next(users_service.find({"display_name": author_ref["name"]}))
                 except (StopIteration, KeyError):
                     logger.warning("unknown user")
-                    user = {}
+                    user = None
             else:
                 try:
                     user = next(users_service.find({"_id": user_id}))
                 except StopIteration:
                     logger.warning("unknown user: {user_id}".format(user_id=user_id))
-                    user = {}
+                    user = None
 
-            avatar_url = user.get("picture_url", author.get("avatar_url"))
-
-            author = {
-                "code": str(user.get("_id", author.get("name", ""))),
-                "name": user.get("display_name", author.get("name", "")),
-                "role": author.get("role", ""),
-                "biography": user.get("biography", author.get("biography", "")),
-            }
-
-            # include socials only if they are non-empty
-            socials = ("facebook", "twitter", "instagram")
-            for social in socials:
-                social_data = user.get(social, author.get(social, ""))
-                if social_data:
-                    author[social] = social_data
-
-            if avatar_url:
-                author["avatar_url"] = avatar_url
-
-            job_title_qcode = user.get("job_title")
-            if job_title_qcode is not None:
-                author["jobtitle"] = {"qcode": job_title_qcode, "name": job_titles_map.get(job_title_qcode, "")}
-
+            author = self._format_author(author_ref, user, job_titles_map=job_titles_map)
             authors.append(author)
         return authors
+
+    def _format_author(self, author_ref, user, *, job_titles_map) -> NinjsAuthor:
+        if user is None:
+            user = {}
+
+        avatar_url = user.get("picture_url", author_ref.get("avatar_url"))
+
+        author: NinjsAuthor = {
+            "code": str(user.get("_id", author_ref.get("name", ""))),
+            "name": user.get("display_name", author_ref.get("name", "")),
+            "role": author_ref.get("role", ""),
+            "biography": user.get("biography", author_ref.get("biography", "")),
+        }
+
+        if user.get("_id"):
+            author["uri"] = generate_urn("user", user["_id"])
+
+        # copy user fields
+        for field in self.author_user_fields:
+            if user.get(field):
+                author[field] = user[field]
+
+        if avatar_url:
+            author["avatar_url"] = avatar_url
+
+        job_title_qcode = user.get("job_title")
+        if job_title_qcode is not None:
+            author["jobtitle"] = {"qcode": job_title_qcode, "name": job_titles_map.get(job_title_qcode, "")}
+
+        return author
 
     def _format_signal(self, signal):
         scheme, code = signal["qcode"].split(":")
@@ -612,7 +640,7 @@ class NINJSFormatter(Formatter):
         )
 
     def export(self, item):
-        if self.can_format(self.format_type, item):
+        if self.can_format(self.type, item):
             sequence, formatted_doc = self.format(item, {"_id": "0"}, None)[0]
             return formatted_doc.replace("''", "'")
         else:
@@ -641,10 +669,6 @@ class NINJS2Formatter(NINJSFormatter):
         "rewrite_sequence",
         "rewrite_of",
     )
-
-    def __init__(self):
-        super().__init__()
-        self.format_type = "ninjs2"
 
     def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = super()._transform_to_ninjs(article, subscriber, recursive)

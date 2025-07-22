@@ -198,7 +198,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
+        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
         """
 
         When we patch "archive/#archive._id#"
@@ -287,7 +287,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": { "validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
+        {"_issues": { "validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
         """
 
         When we patch "archive/#archive._id#"
@@ -406,7 +406,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
+        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
         """
 
         When we patch "archive/#archive._id#"
@@ -533,7 +533,7 @@ Feature: Publish embedded items feature
         When we publish "foo" with "publish" type and "published" state
         Then we get error 400
         """
-        {"_issues": {"validator exception": "[[\"MEDIA'S SLUGLINE is a required field\"]]"}}
+        {"_issues": {"validator exception": "['Associated item  test: SLUGLINE is a required field']"}}
         """
         Then we set copy metadata from parent flag
         When we publish "foo" with "publish" type and "published" state

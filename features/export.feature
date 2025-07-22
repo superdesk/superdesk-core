@@ -104,3 +104,27 @@ Feature: Export
       """
       {"failures": 1, "url": "__none__"}
       """
+
+    @auth
+    Scenario: Inline export
+      Given "desks"
+      """
+      [{"name": "Sports"}]
+      """
+      When we post to "/archive" with success
+      """
+      [{"guid": "123", "type": "text", "headline": "test",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "subject":[{"qcode": "17004000", "name": "Statistics"}],
+        "slugline": "test",
+        "body_html": "Test Document body"}]
+      """
+      Then we get OK response
+      When we post to "/export"
+      """
+      {"item_ids": ["#archive._id#"], "format_type": "NINJSFormatter", "validate": false, "inline": true}
+      """
+      Then we get response code 201
+      """
+      {"export": {"#archive._id#": {"guid": "123", "headline": "test"}}}
+      """

@@ -91,9 +91,9 @@ class SearchProviderProxyService(SearchIngestService):
             return superdesk.get_resource_service(service).create(docs, **kwargs)
         return super().create(docs, **kwargs)
 
-    def fetch(self, guid):
+    def fetch(self, guid, provider_id=None):
         """Fetch single item from provider to archive it."""
-        provider = self.get_provider()
+        provider = self.get_provider(provider_id)
         service = self._get_service(provider)
         if isinstance(service, str):
             return superdesk.get_resource_service(service).fetch(guid)

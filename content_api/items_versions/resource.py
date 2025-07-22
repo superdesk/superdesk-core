@@ -28,3 +28,4 @@ class ItemsVersionsResource(Resource):
     resource_methods = ["GET"]
     internal_resource = True
     mongo_prefix = MONGO_PREFIX
+    notifications = False

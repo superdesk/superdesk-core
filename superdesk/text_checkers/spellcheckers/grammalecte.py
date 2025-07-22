@@ -279,8 +279,8 @@ class Grammalecte(SpellcheckerBase):
         check_url = urljoin(self.base_url, PATH_CHECK)
         try:
             r = requests.post(check_url, data={"text": ""}, timeout=self.CHECK_TIMEOUT)
-        except Exception as e:
-            logger.warning("can't request Grammalecte URL ({check_url}): {e}".format(check_url=check_url, e=e))
+        except Exception:
+            logger.warning("can't request Grammalecte URL ({check_url})".format(check_url=check_url))
             return False
         if r.status_code != 200:
             logger.warning(

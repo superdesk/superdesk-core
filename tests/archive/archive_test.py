@@ -351,6 +351,7 @@ class ArchiveTestCase(TestCase):
             "state": CONTENT_STATE.SUBMITTED,
             "_current_version": 1,
             "rewrite_of": "bar",
+            "headline": "foo",
         }
         archive_service.create([item])
         with mock.patch.object(publish, "utcnow", lambda: NOW):
@@ -458,7 +459,7 @@ class ArchiveTestCase(TestCase):
         for i in range(1000):
             items.append(
                 {
-                    "_id": generate_guid(type=GUID_TAG),
+                    "guid": generate_guid(type=GUID_TAG),
                     "type": "text",
                     "expiry": now - timedelta(days=1),
                     "task": {"desk": "foo"},
@@ -477,7 +478,7 @@ class ArchiveTestCase(TestCase):
         assert 1000 == counter
 
         counter = 0
-        ids = sorted([item["_id"] for item in items])
+        ids = sorted([item["guid"] for item in items])
         last_id = ids[499]
         for _items in service.get_expired_items(now, last_id=last_id):
             for item in _items:
@@ -517,7 +518,9 @@ class ArchiveTestCase(TestCase):
             "_current_version": 1,
         }
         archive_service.create([feature_item])
-        publish_service.patch("foo", {"body_html": "original", "publish_schedule": NOW + timedelta(minutes=60)})
+        publish_service.patch(
+            "foo", {"body_html": "original", "headline": "test", "publish_schedule": NOW + timedelta(minutes=60)}
+        )
         created_item = publish_service.find_one(None, _id="foo")
 
         self.assertEqual(created_item[PUBLISH_SCHEDULE], NOW + timedelta(minutes=60))

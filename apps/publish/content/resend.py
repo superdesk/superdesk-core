@@ -8,10 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, remove_is_queued
-from superdesk.metadata.utils import item_url
 import logging
-from functools import partial
+
+from apps.archive.archive import ArchiveResource, SOURCE as ARCHIVE, remove_is_queued
+from apps.publish.content.utils import filter_digital
+from superdesk.metadata.utils import item_url
 from flask import request, current_app as app
 from superdesk import get_resource_service, Service, config, signals
 from superdesk.errors import SuperdeskApiError
@@ -39,10 +40,6 @@ class ResendResource(ArchiveResource):
 
 
 class ResendService(Service):
-    digital = partial(
-        filter, lambda s: (s.get("subscriber_type", "") in {SUBSCRIBER_TYPES.DIGITAL, SUBSCRIBER_TYPES.ALL})
-    )
-
     def create(self, docs, **kwargs):
         doc = docs[0] if len(docs) > 0 else {}
         article_id = request.view_args["original_id"]
@@ -67,7 +64,7 @@ class ResendService(Service):
             raise SuperdeskApiError.badRequestError(message=_("No active subscribers found!"))
 
         if is_genre(article, BROADCAST_GENRE):
-            digital_subscribers = list(self.digital(subscribers))
+            digital_subscribers = filter_digital(subscribers)
             if len(digital_subscribers) > 0:
                 raise SuperdeskApiError.badRequestError(_("Only wire subscribers can receive broadcast stories!"))
 

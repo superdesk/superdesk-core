@@ -145,6 +145,17 @@ FIELDS_TO_COPY_FOR_ASSOCIATED_ITEM = [
 ]
 
 
+DEFAULT_PROFILES = set(
+    [
+        "text",
+        "picture",
+        "audio",
+        "video",
+        "composite",
+    ]
+)
+
+
 def get_default_source():
     return app.config.get("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES", "")
 
@@ -155,10 +166,13 @@ def update_version(updates, original):
         updates.setdefault("version", updates[config.VERSION])
 
 
-def on_create_item(docs, repo_type=ARCHIVE):
+def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
     """Make sure item has basic fields populated."""
 
     for doc in docs:
+        if doc.get("media") and media_service:
+            media_service.on_create([doc])
+
         editor_utils.generate_fields(doc)
         update_dates_for(doc)
         set_original_creator(doc)
@@ -182,8 +196,15 @@ def on_create_item(docs, repo_type=ARCHIVE):
             # set the source for the article
             set_default_source(doc)
 
-            if "profile" not in doc and app.config.get("DEFAULT_CONTENT_TYPE"):
-                doc["profile"] = app.config.get("DEFAULT_CONTENT_TYPE", None)
+        ignore_profiles = DEFAULT_PROFILES.copy()
+        ignore_profiles.add(None)
+
+        if (
+            doc.get("profile") in ignore_profiles
+            and doc.get("type") == "text"
+            and app.config.get("DEFAULT_CONTENT_TYPE", None)
+        ):
+            doc["profile"] = app.config["DEFAULT_CONTENT_TYPE"]
 
         copy_metadata_from_profile(doc)
         copy_metadata_from_user_preferences(doc, repo_type)
@@ -638,6 +659,9 @@ def handle_existing_data(doc, pub_status_value="usable", doc_type="archive"):
         if doc_type == "archive" and not is_flag_in_item(doc, "marked_for_not_publication"):
             set_flag(doc, "marked_for_not_publication", False)
 
+        if doc.get("type"):
+            doc.setdefault("profile", doc["type"])
+
 
 def set_flag(doc, flag_name, flag_value):
     flags = doc.get("flags", {})
@@ -794,11 +818,12 @@ def transtype_metadata(doc, original=None):
     for key, value in extra.items():
         try:
             value_type = profile["schema"][key]["type"]
-        except KeyError:
+        except (KeyError, TypeError):
+            logger.info("extra field %s is missing in schema", key)
             continue
 
         if value_type == "date":
-            if value and type(value) != datetime:
+            if value and not isinstance(value, datetime):
                 try:
                     extra[key] = date_parse(value)
                 except Exception as e:

@@ -14,10 +14,10 @@ import glob
 import os
 import shutil
 import tempfile
-from unittest import mock
 import datetime
 import pytz
 
+from unittest import mock
 from superdesk.tests import setup
 from superdesk.tests import TestCase as CoreTestCase
 from superdesk.io.feeding_services import ftp
@@ -92,7 +92,8 @@ class FakeFTPRecentFiles(FakeFTP):
     files = [
         ftp_file("old_file.xml", "20170517164756"),
         # we need a file ingested now, before INGEST_OLD_CONTENT_MINUTES is expired
-        ftp_file("recent_file.xml", datetime.datetime.today().strftime("%Y%m%d%H%M%S")),
+        # adding extra time to make sure that the file won't expire before the test runs
+        ftp_file("recent_file.xml", (datetime.datetime.today() + datetime.timedelta(hours=1)).strftime("%Y%m%d%H%M%S")),
     ]
 
 
@@ -118,12 +119,7 @@ class TestCase(CoreTestCase):
 
         self.ctx = self.app.app_context()
         self.ctx.push()
-
-        def clean_ctx():
-            if self.ctx:
-                self.ctx.pop()
-
-        self.addCleanup(clean_ctx)
+        self.addCleanup(self.ctx.pop)
 
 
 class FTPTestCase(TestCase):
@@ -454,3 +450,18 @@ class FTPTestCase(TestCase):
         )
 
         self.assertEqual(mock_ftp.rename.call_count, 16)
+
+    @mock.patch.object(ftp, "ftp_connect", new_callable=FakeFTP)
+    @mock.patch.object(ftp.FTPFeedingService, "get_feed_parser", FakeFeedParser())
+    @mock.patch.object(ftp.FTPFeedingService, "_retrieve_and_parse")
+    def test_allowed_extension_config(self, ftp_connect, *mocks):
+        provider = copy.deepcopy(PROVIDER)
+        service = ftp.FTPFeedingService()
+        with mock.patch.object(service, "_retrieve_and_parse", return_value=True) as mock_retrieve_and_parse:
+            provider["config"]["allowed_extension"] = "json"
+            ingest_items(service.update(provider, {}))
+            mock_retrieve_and_parse.assert_not_called()
+
+            provider["config"]["allowed_extension"] = "json,XML"
+            ingest_items(service.update(provider, {}))
+            mock_retrieve_and_parse.assert_called()

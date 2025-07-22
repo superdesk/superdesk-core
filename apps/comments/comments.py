@@ -71,6 +71,7 @@ def decode_keys(doc, field):
 
 class CommentsService(BaseService):
     notification_key = "comments"
+    notifications = True
 
     def on_create(self, docs):
         for doc in docs:
@@ -93,12 +94,14 @@ class CommentsService(BaseService):
 
     def on_created(self, docs):
         for doc in docs:
-            push_notification(self.notification_key, item=str(doc.get("item")))
+            if self.notifications:
+                push_notification(self.notification_key, item=str(doc.get("item")))
             decode_keys(doc, "mentioned_users")
             decode_keys(doc, "mentioned_desks")
 
-        notify_mentioned_users(docs, app.config.get("CLIENT_URL", "").rstrip("/"))
-        notify_mentioned_desks(docs)
+        if self.notifications:
+            notify_mentioned_users(docs, app.config.get("CLIENT_URL", "").rstrip("/"))
+            notify_mentioned_desks(docs)
 
     def on_updated(self, updates, original):
         push_notification(self.notification_key, updated=1)

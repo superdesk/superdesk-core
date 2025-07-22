@@ -9,19 +9,22 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
+from typing import Dict, Any
 import json
 import requests
-import superdesk
 import logging
+from datetime import timedelta, datetime
 
-from superdesk.io.feed_parsers.ap_media import with_apikey
+from lxml import etree
+from flask import current_app as app
+
+import superdesk
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.errors import IngestApiError
 from superdesk.io.feed_parsers import nitf
-from lxml import etree
 from superdesk.utc import utcnow
-from datetime import timedelta, datetime
+
 
 logger = logging.getLogger(__name__)
 
@@ -82,6 +85,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
     HTTP_TIMEOUT = 40
 
     def config_test(self, provider=None):
+        self.provider = provider
         self._get_products(provider)
         original = superdesk.get_resource_service("ingest_providers").find_one(req=None, _id=provider.get("_id"))
         # If there has been a change in the required products then reset the next link
@@ -98,12 +102,9 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
         :param provider:
         :return:
         """
-        api_key = provider.get("config", {}).get("apikey")
-        r = requests.get(
-            provider.get("config", {}).get("products_url") + "?apikey={}".format(api_key),
-            timeout=self.HTTP_TIMEOUT,
-            verify=False,
-            allow_redirects=True,
+        r = self.session.get(
+            provider.get("config", {}).get("products_url"),
+            **self.get_request_kwargs(),
         )
         r.raise_for_status()
         productList = []
@@ -113,24 +114,16 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
                 productList.append("{}".format(entitlement.get("id")))
         provider["config"]["availableProducts"] = ",".join(productList)
 
-    def prepare_href(self, href, mimetype=None):
-        return with_apikey(href, self.provider)
-
     def _update(self, provider, update):
         self.HTTP_URL = provider.get("config", {}).get("api_url", "")
         self.provider = provider
 
-        # Set the apikey parameter we're going to use it on all calls
-        params = dict()
-        params["apikey"] = provider.get("config", {}).get("apikey")
-
         # Use the next link if one is available in the config
         if provider.get("config", {}).get("next_link"):
-            r = self.get_url(
-                url=provider.get("config", {}).get("next_link"), params=params, verify=False, allow_redirects=True
-            )
+            r = self.get_url(url=provider.get("config", {}).get("next_link"))
             r.raise_for_status()
         else:
+            params = dict()
             id_list = provider.get("config", {}).get("productList", "").strip()
             recovery_time = provider.get("config", {}).get("recoverytime", "1")
             recovery_time = recovery_time.strip() if recovery_time else ""
@@ -149,7 +142,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
             params["versions"] = "all"
 
             logger.info("AP Media Start/Recovery time: {} params {}".format(recovery_time, params))
-            r = self.get_url(params=params, verify=False, allow_redirects=True)
+            r = self.get_url(params=params)
             r.raise_for_status()
         try:
             response = json.loads(r.text)
@@ -172,7 +165,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
                         item.get("item", {}).get("headline"), item.get("item", {}).get("uri")
                     )
                 )
-                r = self.api_get(item.get("item", {}).get("uri"), provider)
+                r = self.api_get(item.get("item", {}).get("uri"))
                 complete_item = json.loads(r.text)
 
                 # Get the nitf rendition of the item
@@ -181,7 +174,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
                 )
                 if nitf_ref:
                     logger.info("Get AP nitf : {}".format(nitf_ref))
-                    r = self.api_get(nitf_ref, provider)
+                    r = self.api_get(nitf_ref)
                     root_elt = etree.fromstring(r.content)
 
                     # If the default namespace definition is the nitf namespace then remove it
@@ -203,7 +196,7 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
                     for key, assoc in associations.items():
                         logger.info('Get AP association "%s"', assoc.get("headline"))
                         try:
-                            related_json = self.api_get(assoc["uri"], provider).json()
+                            related_json = self.api_get(assoc["uri"]).json()
                             complete_item["associations"][key] = related_json
                         except IngestApiError:
                             logger.warning("Could not fetch AP association", extra=assoc)
@@ -222,12 +215,23 @@ class APMediaFeedingService(HTTPFeedingServiceBase):
 
         return [parsed_items]
 
-    def api_get(self, url, provider):
-        resp = self.get_url(
-            url=url, params={"apikey": provider["config"]["apikey"]}, verify=False, allow_redirects=True
-        )
+    def api_get(self, url):
+        resp = self.get_url(url=url)
         resp.raise_for_status()
         return resp
+
+    def get_request_kwargs(self) -> Dict[str, Any]:
+        request_kwargs = dict(
+            timeout=self.HTTP_TIMEOUT,
+            verify=app.config.get("AP_MEDIA_API_VERIFY_SSL", True),
+            allow_redirects=True,
+        )
+        try:
+            request_kwargs["headers"] = {"x-api-key": self.provider["config"]["apikey"]}
+        except (KeyError, TypeError):
+            pass
+
+        return request_kwargs
 
 
 register_feeding_service(APMediaFeedingService)

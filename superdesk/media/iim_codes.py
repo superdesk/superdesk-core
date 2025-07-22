@@ -12,6 +12,9 @@
 # codes extracted from IPTC IIM v4.2 specifications
 
 
+from typing import Dict, Tuple
+
+
 class TAG:
     RECORD_VERSION = "Record Version"
     OBJECT_TYPE_REFERENCE = "Object Type Reference"

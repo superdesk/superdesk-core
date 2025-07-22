@@ -113,7 +113,6 @@ Feature: News Items Archive
         And we get version 3
         And the field "headline" value is "test"
 
-
     @auth
     @vocabulary
     Scenario: Upload image with point of interest into archive
@@ -121,7 +120,7 @@ Feature: News Items Archive
         When we upload a file "bike.jpg" to "archive"
         Then we get new resource
         """
-        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress"}
+        {"guid": "__any_value__", "firstcreated": "__any_value__", "versioncreated": "__any_value__", "state": "in_progress", "profile": "picture", "type": "picture"}
         """
         And we get "bike.jpg" metadata
         And we get "picture" renditions
@@ -1283,5 +1282,344 @@ Feature: News Items Archive
                 "foo": "foo",
                 "bar": "<p>bar</p>"
             }
+        }
+        """
+
+    @auth
+    @vocabulary
+    Scenario: Update feature media with different item and copy metadata flag
+        Given "archive"
+        """
+        [
+            {
+                "guid": "tag:example.com,0000:newsml_BRE9A605",
+                "associations": {
+                    "featuremedia": {
+                        "_id": "urn:newsml:localhost:5000:2018-12-14T11:31:26.088056:5c45850b-2985-42b3-9ae3-a42ad3c3bc28",
+                        "media": "5c13867efe985edfc9223480",
+                        "type": "picture",
+                        "format": "HTML",
+                        "renditions": {
+                            "original": {
+                                "href": "http://localhost:5000/api/upload-raw/orig.jpg",
+                                "media": "orig",
+                                "mimetype": "image/jpeg",
+                                "width": 4032,
+                                "height": 3024,
+                                "poi": {
+                                    "x": 3024,
+                                    "y": 756
+                                }
+                            },
+                            "baseImage": {
+                                "href": "http://localhost:5000/api/upload-raw/baseImage.jpg",
+                                "media": "baseImage",
+                                "mimetype": "image/jpeg",
+                                "width": 1400,
+                                "height": 1050,
+                                "poi": {
+                                    "x": 1050,
+                                    "y": 262
+                                }
+                            },
+                            "thumbnail": {
+                                "href": "http://localhost:5000/api/upload-raw/thumbnail.jpg",
+                                "media": "thumbnail",
+                                "mimetype": "image/jpeg",
+                                "width": 160,
+                                "height": 120,
+                                "poi": {
+                                    "x": 120,
+                                    "y": 30
+                                }
+                            },
+                            "viewImage": {
+                                "href": "http://localhost:5000/api/upload-raw/viewImage.jpg",
+                                "media": "viewImage",
+                                "mimetype": "image/jpeg",
+                                "width": 640,
+                                "height": 480,
+                                "poi": {
+                                    "x": 480,
+                                    "y": 120
+                                }
+                            },
+                            "4-3": {
+                                "poi": {
+                                    "x": 3012,
+                                    "y": 759
+                                },
+                                "CropLeft": 12,
+                                "CropRight": 4032,
+                                "CropTop": -3,
+                                "CropBottom": 3024,
+                                "width": 800,
+                                "height": 600,
+                                "href": "http://localhost:5000/api/upload-raw/600x800.jpg",
+                                "media": "600x800",
+                                "mimetype": "image/jpeg"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "_id": "urn:newsml:localhost:5000:2018-12-14T11:31:26.088056:5c45850b-2985-42b3-9ae3-new",
+                "type": "picture",
+                "format": "HTML",
+                "renditions": {
+                    "original": {
+                        "href": "http://localhost:5000/api/upload-raw/orig_new.jpg",
+                        "media": "orig",
+                        "mimetype": "image/jpeg",
+                        "width": 4032,
+                        "height": 3024,
+                        "poi": {
+                            "x": 3024,
+                            "y": 756
+                        }
+                    },
+                    "baseImage": {
+                        "href": "http://localhost:5000/api/upload-raw/baseImage_new.jpg",
+                        "media": "baseImage",
+                        "mimetype": "image/jpeg",
+                        "width": 1400,
+                        "height": 1050,
+                        "poi": {
+                            "x": 1050,
+                            "y": 262
+                        }
+                    },
+                    "thumbnail": {
+                        "href": "http://localhost:5000/api/upload-raw/thumbnail_new.jpg",
+                        "media": "thumbnail",
+                        "mimetype": "image/jpeg",
+                        "width": 160,
+                        "height": 120,
+                        "poi": {
+                            "x": 120,
+                            "y": 30
+                        }
+                    },
+                    "viewImage": {
+                        "href": "http://localhost:5000/api/upload-raw/viewImage_new.jpg",
+                        "media": "viewImage",
+                        "mimetype": "image/jpeg",
+                        "width": 640,
+                        "height": 480,
+                        "poi": {
+                            "x": 480,
+                            "y": 120
+                        }
+                    }
+                }
+            }
+        ]
+        """
+        Then we set copy metadata from parent flag
+        When we patch given
+        """
+        {
+            "associations": {
+                "featuremedia": {
+                    "_id": "urn:newsml:localhost:5000:2018-12-14T11:31:26.088056:5c45850b-2985-42b3-9ae3-new",
+                    "media": "5c13867efe985edfc9223480",
+                    "type": "picture",
+                    "format": "HTML",
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/orig_new.jpg",
+                            "media": "orig_new",
+                            "mimetype": "image/jpeg",
+                            "width": 4032,
+                            "height": 3024,
+                            "poi": {
+                                "x": 3024,
+                                "y": 756
+                            }
+                        },
+                        "baseImage": {
+                            "href": "http://localhost:5000/api/upload-raw/baseImage_new.jpg",
+                            "media": "baseImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 1400,
+                            "height": 1050,
+                            "poi": {
+                                "x": 1050,
+                                "y": 262
+                            }
+                        },
+                        "thumbnail": {
+                            "href": "http://localhost:5000/api/upload-raw/thumbnail_new.jpg",
+                            "media": "thumbnail_new",
+                            "mimetype": "image/jpeg",
+                            "width": 160,
+                            "height": 120,
+                            "poi": {
+                                "x": 120,
+                                "y": 30
+                            }
+                        },
+                        "viewImage": {
+                            "href": "http://localhost:5000/api/upload-raw/viewImage_new.jpg",
+                            "media": "viewImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 640,
+                            "height": 480,
+                            "poi": {
+                                "x": 480,
+                                "y": 120
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        """
+        When we get "/archive/tag:example.com,0000:newsml_BRE9A605"
+        Then we get existing resource
+        """
+        {
+            "associations": {
+                "featuremedia": {
+                    "_id": "urn:newsml:localhost:5000:2018-12-14T11:31:26.088056:5c45850b-2985-42b3-9ae3-new",
+                    "media": "5c13867efe985edfc9223480",
+                    "type": "picture",
+                    "format": "HTML",
+                    "renditions": {
+                        "original": {
+                            "href": "http://localhost:5000/api/upload-raw/orig_new.jpg",
+                            "media": "orig_new",
+                            "mimetype": "image/jpeg",
+                            "width": 4032,
+                            "height": 3024,
+                            "poi": {
+                                "x": 3024,
+                                "y": 756
+                            }
+                        },
+                        "baseImage": {
+                            "href": "http://localhost:5000/api/upload-raw/baseImage_new.jpg",
+                            "media": "baseImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 1400,
+                            "height": 1050,
+                            "poi": {
+                                "x": 1050,
+                                "y": 262
+                            }
+                        },
+                        "thumbnail": {
+                            "href": "http://localhost:5000/api/upload-raw/thumbnail_new.jpg",
+                            "media": "thumbnail_new",
+                            "mimetype": "image/jpeg",
+                            "width": 160,
+                            "height": 120,
+                            "poi": {
+                                "x": 120,
+                                "y": 30
+                            }
+                        },
+                        "viewImage": {
+                            "href": "http://localhost:5000/api/upload-raw/viewImage_new.jpg",
+                            "media": "viewImage_new",
+                            "mimetype": "image/jpeg",
+                            "width": 640,
+                            "height": 480,
+                            "poi": {
+                                "x": 480,
+                                "y": 120
+                            }
+                        },
+                        "4-3": "__none__"
+                    }
+                }
+            }
+        }
+        """
+
+    @auth
+    @vocabulary
+    Scenario: Uploaded image should not get DEFAULT_CONTENT_TYPE assigned
+        Given config
+        """
+        {"DEFAULT_CONTENT_TYPE": "bar"}
+        """
+        Given empty "archive"
+        When we upload a file "bike.jpg" to "archive"
+        Then we get new resource
+        """
+        {"profile": "picture"}
+        """
+
+    @auth
+    Scenario: Update picture metadata
+        Given "archive"
+        """
+        [
+            {
+                "_id": "picture",
+                "type": "picture",
+                "slugline": "foo",
+                "headline": "head",
+                "description_text": "caption",
+                "fields_meta": {
+                    "slugline": {
+                        "draftjsState": [
+                            {"blocks": [
+                                {"key": "1", "text": "foo", "type": "unstyled"}
+                            ]}
+                        ]
+                    },
+                    "description_text": {
+                        "draftjsState": [
+                            {"blocks": [
+                                {"key": "1", "text": "caption", "type": "unstyled"}
+                            ]}
+                        ]
+                    },
+                    "headline": {
+                        "draftjsState": [
+                            {"blocks": [
+                                {"key": "1", "text": "head", "type": "unstyled"}
+                            ]}
+                        ]
+                    }
+                }
+            }
+        ]
+        """
+        When we patch "/archive/#archive._id#"
+        """
+        {
+            "slugline": "test",
+            "headline": "head2",
+            "fields_meta": {
+                "slugline": {
+                    "draftjsState": [
+                        {"blocks": [
+                            {"key": "1", "text": "foo", "type": "unstyled"}
+                        ]}
+                    ]
+                },
+                "description_text": {
+                    "draftjsState": [
+                        {"blocks": [
+                            {"key": "1", "text": "caption", "type": "unstyled"}
+                        ]}
+                    ]
+                },
+                "headline": {
+                    "draftjsState": [null]
+                }
+            }
+        }
+        """
+        Then we get existing resource
+        """
+        {
+            "slugline": "test",
+            "headline": "head2",
+            "description_text": "caption"
         }
         """

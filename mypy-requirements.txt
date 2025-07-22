@@ -1,5 +1,5 @@
-mypy
-mypy-extensions
+mypy==1.15.0
+mypy-extensions==1.1.0
 toml
 types-chardet
 types-click
@@ -11,8 +11,9 @@ types-python-dateutil
 types-pytz
 types-PyYAML
 types-redis
-types-requests
+types-requests<2.32.4.20250612  # https://github.com/python/typeshed/issues/10825
 types-tzlocal
 types-Werkzeug
+types-jwt
 typing-extensions
 boto3-stubs[s3,sqs]

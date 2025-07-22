@@ -38,10 +38,10 @@ class RitzauTestCase(TestCase):
     @mock.patch.object(ritzau.RitzauFeedingService, "get_feed_parser")
     def test_feeding(self, get_feed_parser, requests):
         get_feed_parser.return_value = ritzau_feed.RitzauFeedParser()
-        mock_get = requests.get.return_value
-        mock_get.text = self.feed_raw
         provider = PROVIDER.copy()
         service = ritzau.RitzauFeedingService()
         service.provider = provider
+        mock_get = service.session.get.return_value
+        mock_get.text = self.feed_raw
         items = service._update(provider, {})[0]
         self.assertEqual(len(items), 2)

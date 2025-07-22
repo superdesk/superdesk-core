@@ -28,7 +28,20 @@ class AuditResource(Resource):
         "extra": {"type": "dict"},
         "user": Resource.rel("users", False),
     }
-    exclude = {endpoint_name, "activity", "dictionaries", "macros", "archive_history", "formatters"}
+    exclude = {
+        endpoint_name,
+        "activity",
+        "dictionaries",
+        "macros",
+        "archive_history",
+        "formatters",
+        "ai",
+        "ai_data_op",
+        "archive_autosave",
+        "archive_lock",
+        "preferences",
+        "usage_metrics",
+    }
 
 
 class AuditService(BaseService):
@@ -105,8 +118,6 @@ class AuditService(BaseService):
             # do not return an id for items that have a dictionary id
             if not isinstance(id, dict):
                 return id
-            else:
-                None
         except Exception:
             return None
         return None

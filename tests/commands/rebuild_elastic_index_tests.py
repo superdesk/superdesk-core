@@ -13,26 +13,65 @@ from superdesk.tests import TestCase
 from eve.utils import ParsedRequest
 from superdesk import get_resource_service
 from superdesk.commands.rebuild_elastic_index import RebuildElasticIndex
-from time import sleep
+
+
+RESOURCE = 'ingest'
 
 
 class RebuildIndexTestCase(TestCase):
 
+    @property
+    def data(self):
+        return [
+            {'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
+             'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(11, 21)
+        ]
+
+    def query_items(self):
+        req = ParsedRequest()
+        req.args = {}
+        req.max_results = 25
+        return get_resource_service('ingest').get(req, {})
+
     def test_retrieve_items_after_index_rebuilt(self):
-        RESOURCE = 'ingest'
         elastic = self.app.data.elastic
         alias = elastic._resource_index(RESOURCE)
         alias_info = elastic.elastic(RESOURCE).indices.get_alias(name=alias)
 
-        data = [{'headline': 'test {}'.format(i), 'slugline': 'rebuild {}'.format(i),
-                 'type': 'text' if (i % 2 == 0) else 'picture'} for i in range(11, 21)]
-        get_resource_service(RESOURCE).post(data)
+        get_resource_service(RESOURCE).post(self.data)
         RebuildElasticIndex().run()
         alias_info_new = elastic.elastic(RESOURCE).indices.get_alias(name=alias)
         self.assertNotEqual(alias_info, alias_info_new)
 
-        req = ParsedRequest()
-        req.args = {}
-        req.max_results = 25
-        items = get_resource_service('ingest').get(req, {})
+        items = self.query_items()
+        self.assertEqual(10, items.count())
+
+    def test_rebuild_with_missing_index_wont_fail(self):
+        elastic = self.app.data.elastic
+        alias = elastic._resource_index(RESOURCE)
+        index = elastic.get_index(RESOURCE)
+        es = elastic.elastic(RESOURCE)
+        es.indices.delete_alias(index, alias)
+        es.indices.delete(index)
+
+        RebuildElasticIndex().run(RESOURCE)
+
+        assert es.indices.exists_alias(alias)
+
+    def test_rebuild_with_index_without_alias(self):
+        elastic = self.app.data.elastic
+        alias = elastic._resource_index(RESOURCE)
+        index = elastic.get_index(RESOURCE)
+        es = elastic.elastic(RESOURCE)
+        es.indices.delete_alias(index, alias)
+        es.indices.delete(index)
+
+        es.indices.create(alias)
+        get_resource_service(RESOURCE).post(self.data)
+
+        RebuildElasticIndex().run(RESOURCE)
+
+        assert es.indices.exists_alias(alias)
+
+        items = self.query_items()
         self.assertEqual(10, items.count())

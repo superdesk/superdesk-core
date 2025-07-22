@@ -111,11 +111,8 @@ class FetchService(BaseService):
             self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
             desk = get_resource_service("desks").find_one(req=None, _id=desk_id)
-            if desk and desk.get("default_content_profile"):
-                dest_doc.setdefault("profile", desk["default_content_profile"])
-
-            if dest_doc.get("type", "text") in MEDIA_TYPES:
-                dest_doc["profile"] = None
+            if desk and desk.get("default_content_profile") and dest_doc.get("type") not in MEDIA_TYPES:
+                dest_doc["profile"] = desk["default_content_profile"]
 
             update_refs(dest_doc, {})
 
@@ -136,11 +133,10 @@ class FetchService(BaseService):
         Checks if guid contains the version for the ingested item and returns the guid without version
         """
         try:
-            if not version:
-                return guid
-
-            if guid.endswith(":{}".format(str(version))):
+            if version and guid.endswith(":{}".format(str(version))):
                 return guid[: -1 * (len(str(version)) + 1)]
+            else:
+                return guid
         except Exception:
             return guid
 

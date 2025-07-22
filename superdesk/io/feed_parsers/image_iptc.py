@@ -63,6 +63,7 @@ class ImageIPTCFeedParser(FileFeedParser):
             item = self.parse_item(image_path)
             return item
         except Exception as ex:
+            logger.exception(ex)
             raise ParserError.parseFileError(exception=ex, provider=provider)
 
     def parse_item(self, image_path):

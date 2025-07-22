@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from unittest import mock
-from nose.tools import assert_raises
 
 from superdesk.tests import TestCase
 from superdesk.media.crop import CropService
@@ -39,13 +38,13 @@ class CropTestCase(TestCase):
     def test_validate_aspect_ratio_fails(self):
         doc = {"CropLeft": 0, "CropRight": 80, "CropTop": 0, "CropBottom": 60}
         crop = {"height": 700, "width": 70}
-        with assert_raises(SuperdeskApiError):
+        with self.assertRaises(SuperdeskApiError):
             self.service._validate_aspect_ratio(crop, doc)
 
     def test_validate_aspect_ratio_fails_with_cropsize_less(self):
         doc = {"CropLeft": 0, "CropRight": 80, "CropTop": 0, "CropBottom": 60}
         crop = {"height": 600, "width": 800}
-        with assert_raises(SuperdeskApiError):
+        with self.assertRaises(SuperdeskApiError):
             self.service._validate_aspect_ratio(crop, doc)
 
     def test_validate_aspect_ratio_succeeds(self):
@@ -172,12 +171,12 @@ class CropTestCase(TestCase):
             self.assertIn(crop["name"], renditions)
 
     def test_can_generate_custom_crop_from_original(self):
-        self.assertEquals(True, can_generate_custom_crop_from_original(800, 600, {"ratio": "16:9"}))
-        self.assertEquals(True, can_generate_custom_crop_from_original(800, 600, {"width": 800, "height": 600}))
-        self.assertEquals(True, can_generate_custom_crop_from_original(810, 600, {"width": 800, "height": 600}))
-        self.assertEquals(True, can_generate_custom_crop_from_original(810, 610, {"width": 800, "height": 600}))
-        self.assertEquals(False, can_generate_custom_crop_from_original(780, 610, {"width": 800, "height": 600}))
-        self.assertEquals(False, can_generate_custom_crop_from_original(780, 590, {"width": 800, "height": 600}))
-        self.assertEquals(True, can_generate_custom_crop_from_original(780, 590, {"width": 800}))
-        self.assertEquals(True, can_generate_custom_crop_from_original(780, 590, {"height": 800}))
-        self.assertEquals(False, can_generate_custom_crop_from_original(780, 590, None))
+        self.assertEqual(True, can_generate_custom_crop_from_original(800, 600, {"ratio": "16:9"}))
+        self.assertEqual(True, can_generate_custom_crop_from_original(800, 600, {"width": 800, "height": 600}))
+        self.assertEqual(True, can_generate_custom_crop_from_original(810, 600, {"width": 800, "height": 600}))
+        self.assertEqual(True, can_generate_custom_crop_from_original(810, 610, {"width": 800, "height": 600}))
+        self.assertEqual(False, can_generate_custom_crop_from_original(780, 610, {"width": 800, "height": 600}))
+        self.assertEqual(False, can_generate_custom_crop_from_original(780, 590, {"width": 800, "height": 600}))
+        self.assertEqual(True, can_generate_custom_crop_from_original(780, 590, {"width": 800}))
+        self.assertEqual(True, can_generate_custom_crop_from_original(780, 590, {"height": 800}))
+        self.assertEqual(False, can_generate_custom_crop_from_original(780, 590, None))

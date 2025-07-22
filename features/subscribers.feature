@@ -448,3 +448,41 @@ Feature: Subscribers
     """
     {"expiry": "__any_value__"}
     """
+
+  @auth
+  Scenario: Adding destination should not remove secret key
+    When we post to "subscribers"
+    """
+    {
+      "name": "Foo",
+      "email": "admin@localhost",
+      "subscriber_type": "all",
+      "sequence_num_settings": {"min": 1, "max": 2},
+      "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"foo", "resource_url": "http://example.com"}}]
+    }
+    """
+    Then we get OK response
+
+    When we get "subscribers"
+    Then we get existing resource
+    """
+    {"_items": [{"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"__no_value__"}, "_id": "8f4ced9c036772413b61fc1ed547cd3cc3a0ffba"}]}]}
+    """
+
+    When we get "subscribers/#subscribers._id#"
+    Then we get existing resource
+    """
+    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"foo"}}]}
+    """
+
+    When we patch "/subscribers/#subscribers._id#"
+    """
+    {"name": "Foo", "is_active": true, "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"resource_url": "example.com"}, "_id": "8f4ced9c036772413b61fc1ed547cd3cc3a0ffba"}]}
+    """
+    Then we get OK response
+
+    When we get "subscribers/#subscribers._id#"
+    Then we get existing resource
+    """
+    {"name": "Foo", "destinations": [{"name":"newsroom","format": "ninjs", "delivery_type":"http_push","config":{"secret_token":"foo"}, "_id": "8f4ced9c036772413b61fc1ed547cd3cc3a0ffba"}]}
+    """

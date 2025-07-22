@@ -280,13 +280,14 @@ class AppInitializeWithDataCommand(superdesk.Command):
         # As we want the rest of this command to still execute
         app.init_indexes(ignore_duplicate_keys=True)
 
+        rebuild_elastic_on_init_data_error = app.config.get("REBUILD_ELASTIC_ON_INIT_DATA_ERROR")
+
         # put mapping to elastic
         try:
-            app.data.init_elastic(app)
+            app.data.init_elastic(app, raise_on_mapping_error=rebuild_elastic_on_init_data_error)
         except elasticsearch.exceptions.TransportError as err:
             logger.error(err)
-
-            if app.config.get("REBUILD_ELASTIC_ON_INIT_DATA_ERROR"):
+            if rebuild_elastic_on_init_data_error:
                 logger.warning("Can't update the mapping, running app:flush_elastic_index command now.")
                 FlushElasticIndex().run(sd_index=True, capi_index=True)
             else:
