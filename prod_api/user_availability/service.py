@@ -27,8 +27,12 @@ AvailabilityMap = Dict[str, AvailabilityData]
 
 def format_hours(availability_day):
     if availability_day.get("working_hours"):
-        sorted_hours = sorted(availability_day["working_hours"], key=lambda wh: wh["start_time"])
-        return [{"start": wh["start_time"], "end": wh["end_time"]} for wh in sorted_hours]
+        hours = [
+            {"start": wh["start_time"], "end": wh["end_time"]}
+            for wh in availability_day["working_hours"]
+            if wh.get("start_time") and wh.get("end_time")
+        ]
+        return sorted(hours, key=lambda wh: wh["start"])
     return []
 
 

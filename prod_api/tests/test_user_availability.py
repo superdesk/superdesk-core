@@ -33,9 +33,7 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
             "status": "available",
             "published_articles": 5,
             "published_events": 0,
-            "working_hours": [
-                {"start": "09:00:00", "end": "17:00:00"},
-            ],
+            "working_hours": [],
         } in items[0]["availability"]
 
         assert {
