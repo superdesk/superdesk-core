@@ -16,9 +16,11 @@ from superdesk.utils import format_content_type_name
 
 class ContentTypesService(superdesk.Service):
     def get_output_name(self, profile):
+        service = superdesk.get_resource_service("content_types")
         try:
             _id = bson.ObjectId(profile)
-            item = superdesk.get_resource_service("content_types").find_one(req=None, _id=_id) or {}
-            return format_content_type_name(item, str(_id))
+            item = service.find_one(req=None, _id=_id) or {}
         except bson.errors.InvalidId:
-            return "None"
+            item = service.find_one(req=None, _id=profile) or {}
+
+        return format_content_type_name(item, str(profile))
