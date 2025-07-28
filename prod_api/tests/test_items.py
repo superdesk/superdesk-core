@@ -141,3 +141,34 @@ def test_filters(prodapi_app_with_data, prodapi_app_with_data_client):
 
         assert len(resp_data["_items"]) == 1
         assert resp_data["_items"][0]["guid"] == "tag:localhost:5000:2019:1dbebe89-e808-43f5-a27c-91545dac896f"
+
+
+def test_profile_label_in_output(prodapi_app_with_data, prodapi_app_with_data_client):
+    """
+    Ensure that content items using 'text' profile ID return proper label instead of 'None'.
+    """
+
+    with prodapi_app_with_data.test_request_context():
+        # Get all items
+        resp = prodapi_app_with_data_client.get(url_for("archive|resource"))
+        resp_data = json.loads(resp.data.decode("utf-8"))
+        items = resp_data["_items"]
+
+        # Find item with profile 'Article' (text ID originally)
+        for item in items:
+            if item.get("type") == "text":
+                # Details call
+                details_resp = prodapi_app_with_data_client.get(
+                    url_for("archive|item_lookup", _id=item["guid"]),
+                )
+                details_data = json.loads(details_resp.data.decode("utf-8"))
+
+                assert "profile" in details_data
+                assert details_data["profile"] != "None"
+                assert isinstance(details_data["profile"], str)
+                # If it's the default 'text' profile, it should return "Article"
+                if item.get("profile") == "text":
+                    assert details_data["profile"] == "Article"
+                break
+        else:
+            raise AssertionError("No item with profile 'text' found for testing")
