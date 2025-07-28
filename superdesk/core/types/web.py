@@ -240,8 +240,22 @@ class Endpoint:
 
     auth: AuthConfig
 
+    parent: Union["EndpointGroup", None]
+
     #: If ``True``, CORS will be enabled for this endpoint (default is in ``ASYNC_ENABLE_CORS`` config setting).
     cors: bool | None
+
+    #: Optional tags (for use with OpenAPI documentation)
+    tags: list[str]
+
+    #: Optional summary (for use with OpenAPI documentation)
+    summary: str | None
+
+    #: Optional description (for use with OpenAPI documentation)
+    description: str | None
+
+    #: Optional responses (for use with OpenAPI documentation)
+    responses: dict[str, dict] | None
 
     def __init__(
         self,
@@ -252,6 +266,10 @@ class Endpoint:
         auth: AuthConfig = None,
         parent: Union["EndpointGroup", None] = None,
         cors: bool | None = None,
+        tags: list[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
+        responses: dict | None = None,
     ):
         self.url = url
         self.func = func
@@ -260,6 +278,10 @@ class Endpoint:
         self.auth = auth
         self.parent = parent
         self.cors = cors
+        self.tags = tags or []
+        self.summary = summary
+        self.description = description or func.__doc__
+        self.responses = responses
 
     async def __call__(self, args: dict[str, Any], params: dict[str, Any], request: Request):
         ...

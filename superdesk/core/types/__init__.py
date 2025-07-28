@@ -1,6 +1,7 @@
 from .common import DefaultNoValue, ItemId
 from .model import BaseModel
 from .search import (
+    DefaultOperator,
     ProjectedFieldArg,
     SortListParam,
     SortParam,
@@ -52,6 +53,7 @@ __all__ = [
     # model
     "BaseModel",
     # search
+    "DefaultOperator",
     "ProjectedFieldArg",
     "SortListParam",
     "SortParam",

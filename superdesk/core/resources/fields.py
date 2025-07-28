@@ -121,6 +121,7 @@ if TYPE_CHECKING:
     TextWithKeyword = Annotated[str, ...]
     HTML = Annotated[str, ...]
     ObjectId = Annotated[BsonObjectId, ...]
+    DateWithOptionalTime = Annotated[str, ...]
 else:
 
     class Keyword(CustomStringField, str):
@@ -161,6 +162,27 @@ else:
         @classmethod
         def serialise_value(cls, value: Any, info: core_schema.FieldSerializationInfo):
             return str(value) if not (info.context or {}).get("use_objectid") else BsonObjectId(value)
+
+    class DateWithOptionalTime(CustomStringField):
+        json_schema = {
+            "type": "string",
+            "anyOf": [
+                {"title": "Date", "pattern": "^\d{4}-\d{2}-\d{2}$"},
+                {"title": "Date and time", "pattern": "^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?)$"},
+                {
+                    "title": "Date, time and UTC offset",
+                    "pattern": "^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}(:?\d{2})?)?)?$",
+                },
+            ],
+            "examples": [
+                "2025-07-21",
+                "2025-07-21T10:30:00",
+                "2025-07-21T10:30:00Z",
+                "2025-07-21T10:30:00+1100",
+                "2025-07-21T10:30:00+11:00",
+            ],
+        }
+        elastic_mapping = {"type": "date"}
 
 
 def elastic_mapping(mapping: dict[str, Any]) -> WithJsonSchema:
@@ -204,6 +226,10 @@ def nested_list(include_in_parent: bool = False) -> WithJsonSchema:
 
 def not_indexed() -> WithJsonSchema:
     return Field(json_schema_extra={"elastic_mapping": {"type": "text", "index": False}})
+
+
+def exclude_from_docs() -> WithJsonSchema:
+    return Field(json_schema_extra={"exclude_from_docs": True})
 
 
 @dataclass(config=dict(validate_assignment=True))

@@ -167,6 +167,11 @@ class EndpointGroup(EndpointGroupProtocol):
         name: str | None = None,
         methods: list[HTTP_METHOD] | None = None,
         auth: AuthConfig = None,
+        cors: bool | None = None,
+        tags: list[str] | None = None,
+        summary: str | None = None,
+        description: str | None = None,
+        responses: dict | None = None,
     ):
         """Decorator function to register an endpoint to this group
 
@@ -183,6 +188,11 @@ class EndpointGroup(EndpointGroupProtocol):
                 name=name,
                 auth=auth,
                 parent=self,
+                cors=cors,
+                tags=tags,
+                summary=summary,
+                description=description,
+                responses=responses,
             )
             self.endpoints.append(endpoint_func)
             return endpoint_func
@@ -199,6 +209,10 @@ def endpoint(
     methods: list[HTTP_METHOD] | None = None,
     auth: AuthConfig = None,
     cors: bool | None = None,
+    tags: list[str] | None = None,
+    summary: str | None = None,
+    description: str | None = None,
+    responses: dict | None = None,
 ):
     """Decorator function to convert a pure function to an Endpoint instance
     which is later used to register with a Module or the app.
@@ -223,6 +237,10 @@ def endpoint(
             func=func,
             auth=auth,
             cors=cors,
+            tags=tags,
+            summary=summary,
+            description=description,
+            responses=responses,
         )
 
     return convert_to_endpoint
