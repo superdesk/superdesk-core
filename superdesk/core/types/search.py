@@ -30,6 +30,11 @@ SortParam = str | SortListParam
 VersionParam = Literal["all"] | NonNegativeInt
 
 
+class DefaultOperator(str, Enum):
+    AND = "AND"
+    OR = "OR"
+
+
 class SearchArgs(TypedDict, total=False):
     """Dictionary containing Elasticsearch search arguments
 
