@@ -41,6 +41,7 @@ __all__ = [
     "ModelWithVersions",
     "ResourceConfig",
     "dataclass",
+    "Dataclass",
     "fields",
     "RestEndpointConfig",
     "RestParentLink",
