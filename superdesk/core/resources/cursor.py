@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Any, Generic, TypeVar, Type, Optional
+from typing import Any, Generic, TypeVar, Type
 
 from pymongo.collation import Collation
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
@@ -128,7 +128,7 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         collection: AsyncIOMotorCollection,
         cursor: AsyncIOMotorCursor,
         lookup: dict[str, Any],
-        collation: Optional[Collation] = None,
+        collation: Collation | None = None,
     ):
         super().__init__(data_class)
         self.collection = collection

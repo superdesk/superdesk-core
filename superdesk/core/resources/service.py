@@ -179,7 +179,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             if projection_arg:
                 kwargs["projection"] = projection_arg
 
-            kwargs["collation"] = self._get_collation()
+            kwargs["collation"] = self._get_collation(search_request)
 
             mongo = self.mongo_async if not search_request.version else self.mongo_versioned_async
             item = await mongo.find_one(**kwargs)
@@ -792,7 +792,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         where = cast_item(where)
 
         kwargs["filter"] = where
-        kwargs["collation"] = self._get_collation()
+        kwargs["collation"] = self._get_collation(req)
 
         projection_arg = self._get_mongo_projection_argument(req)
         if projection_arg:
@@ -983,9 +983,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
         except ElasticNotConfiguredForResource:
             pass
 
-    def _get_collation(self) -> Optional[Collation]:
+    def _get_collation(self, search_request: SearchRequest) -> Optional[Collation]:
         """Get collation for MongoDB queries if configured"""
-        if self.config.mongo is not None and getattr(self.config.mongo, "collation", False):
+        if search_request.collation:
             return Collation("en", strength=2)
         return None
 

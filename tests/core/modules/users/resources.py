@@ -32,7 +32,6 @@ user_model_config = ResourceConfig(
                 collation={"locale": "en", "strength": 1},
             ),
         ],
-        collation=True,
     ),
     elastic=ElasticResourceConfig(),
     service=UserResourceService,

@@ -63,9 +63,6 @@ class MongoResourceConfig:
     #: Boolean determining if this resource supports versioning
     versioning: bool = False
 
-    #: Boolean determining if thise resource supports collation
-    collation: bool = False
-
 
 class MongoClientConfig(ConfigModel):
     host: str = "localhost"

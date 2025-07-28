@@ -170,6 +170,9 @@ class SearchRequest(BaseModel):
 
     elastic: ESQuery = Field(default_factory=ESQuery)
 
+    #: If `True` it will make mongo query case-insensitive
+    collation: bool = False
+
     @field_validator("projection", mode="before")
     def parse_projection(cls, value: ProjectedFieldArg | str | None) -> ProjectedFieldArg | None:
         from superdesk.core import json
