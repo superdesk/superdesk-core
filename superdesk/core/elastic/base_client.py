@@ -168,7 +168,7 @@ class BaseElasticResourceClient:
                 query["query"] = {"bool": {"must": must}}
         elif isinstance(req.where, dict) and req.where.get("query"):
             # This is a direct es query, so use that and remove the where clause
-            query = req.where["query"]
+            query = req.where
             where_param_processed = True
         else:
             query = {"query": {"bool": {}}}
