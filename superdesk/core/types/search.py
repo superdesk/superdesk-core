@@ -171,7 +171,7 @@ class SearchRequest(BaseModel):
     elastic: ESQuery = Field(default_factory=ESQuery)
 
     #: If `True` it will make mongo query case-insensitive
-    collation: bool = False
+    case_insensitive: bool | None = None
 
     @field_validator("projection", mode="before")
     def parse_projection(cls, value: ProjectedFieldArg | str | None) -> ProjectedFieldArg | None:

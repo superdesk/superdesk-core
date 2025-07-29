@@ -43,7 +43,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 
-from ..app import SuperdeskAsyncApp, get_current_async_app
+from ..app import SuperdeskAsyncApp, get_current_async_app, get_config
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
 from .utils import get_projection_from_request, combine_projection_args
 from .types import ResourceModelType
@@ -985,8 +985,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
     def _get_collation(self, search_request: SearchRequest) -> Optional[Collation]:
         """Get collation for MongoDB queries if configured"""
-        if search_request.collation:
-            return Collation("en", strength=2)
+        if search_request.case_insensitive:
+            return Collation(get_config(str, "MONGO_LOCALE", "en"), strength=2)
         return None
 
 
