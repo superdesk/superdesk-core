@@ -49,8 +49,8 @@ class ElasticClientConfig(ConfigModel):
     #: If ``True``, automatically requests aggregations on search.
     auto_aggregations: bool = True
 
-    #: Set the default ``track_total_hits`` for search requests. See https://www.elastic.co/guide/en/elasticsearch/reference/master/search-your-data.html#track-total-hits
-    track_total_hits: int = 10000
+    #: Set the default ``track_total_hits`` for search requests. See https://www.elastic.co/docs/solutions/search/the-search-api#track-total-hits
+    track_total_hits: int | bool = 10_000
 
     #: Number of retries when timing out
     retry_on_timeout: bool = True
