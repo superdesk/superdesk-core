@@ -189,7 +189,7 @@ MONGO_URI = env("MONGO_URI", "mongodb://localhost/%s" % MONGO_DBNAME)
 #: More info in `SDESK-7092<https://sofab.atlassian.net/browse/SDESK-7092>`_.
 MONGO_QUERY_BLACKLIST = ["$where", "$expr"]
 
-MONGO_LOCALE = "en_US"
+MONGO_LOCALE = "en"
 
 #: legal archive switch
 LEGAL_ARCHIVE = env("LEGAL_ARCHIVE", None)
