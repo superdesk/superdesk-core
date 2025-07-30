@@ -30,6 +30,8 @@ from werkzeug.exceptions import NotFound
 from pymongo.errors import DuplicateKeyError
 from sentry_sdk.integrations.quart import QuartIntegration
 from eve.io.mongo.mongo import _create_index as create_index
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from typing import Dict, Any, Type, Optional, Union, Mapping, cast, NoReturn
 
@@ -421,14 +423,20 @@ class SuperdeskEve(eve.Eve):
         if not self.config.get("SENTRY_DSN"):
             return
 
-        # Given how quart_flask_patch patches things, it makes Sentry SDK to think that flask is installed
-        # mistakenly enabling FlaskIntegration, which breaks QuartIntegration, and preventing sentry from working properly.
-        # https://github.com/pgjones/quart-flask-patch/blob/0.3.0/src/quart_flask_patch/_patch.py#L110
-        # This prevents flask integration from being enabled at all until we're can use a newer version of sentry-sdk where
-        # specific integrations can be disabled https://github.com/getsentry/sentry-python/releases/tag/2.11.0
-        sentry_sdk.integrations._processed_integrations.add("flask")
-
-        sentry_sdk.init(dsn=self.config["SENTRY_DSN"], integrations=[QuartIntegration(), AsyncioIntegration()])
+        sentry_sdk.init(
+            dsn=self.config["SENTRY_DSN"],
+            send_default_pii=True,
+            integrations=[
+                QuartIntegration(),
+                AsyncioIntegration(),
+                CeleryIntegration(monitor_beat_tasks=True),
+            ],
+            disabled_integrations=[
+                FlaskIntegration,
+            ],
+            traces_sample_rate=self.config.get("SENTRY_TRACES_SAMPLE_RATE"),
+            profiles_sample_rate=self.config.get("SENTRY_PROFILES_SAMPLE_RATE"),
+        )
 
     def extend_eve_home_endpoint(self, links: list[dict]) -> None:
         """Adds async resources to Eve's api root endpoint"""
