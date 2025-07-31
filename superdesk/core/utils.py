@@ -8,14 +8,14 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import TypeVar, cast, AsyncGenerator
+from typing import TypeVar, cast, AsyncGenerator, Any
 from typing_extensions import Self
-from inspect import isgenerator
 from importlib import import_module
 from datetime import datetime
 from uuid import uuid4
 
 from .app import get_app_config
+from .types import DefaultNoValue
 
 GUID_TAG = "tag"
 GUID_NEWSML = "newsml"
@@ -161,3 +161,44 @@ LIST_ITEM_TYPE = TypeVar("LIST_ITEM_TYPE")
 async def list_to_async_generator(items: list[LIST_ITEM_TYPE]) -> AsyncGenerator[LIST_ITEM_TYPE, None]:
     for item in items:
         yield item
+
+
+NESTED_VALUE_TYPE = TypeVar("NESTED_VALUE_TYPE")
+
+
+def get_nested_value(
+    expected_type: type[NESTED_VALUE_TYPE],
+    value: dict,
+    path: str,
+    default_value: NESTED_VALUE_TYPE | None | object = DefaultNoValue,
+) -> NESTED_VALUE_TYPE | None:
+    """Retrieves a nested value from a dictionary using a dot-notation path.
+
+    :param expected_type: The expected type of the nested value
+    :param value: The dictionary to search in
+    :param path: Dot notation path to the nested value (e.g. "parent.child.value")
+    :param default_value: Value to return if the nested value is None or path not found in value
+    :return: The nested value cast to the expected type, or None if not found and no default provided
+    :raises ValueError: If any nested value is not a dictionary
+    :raises KeyError: If the path is not found and no default value provided
+    :raises TypeError: If the nested value is not of the expected type
+    """
+
+    current_value: Any = value
+    try:
+        for path_part in path.split("."):
+            current_value = current_value[path_part]
+    except (TypeError, AttributeError):
+        raise ValueError(f"Nested value for path '{path}' is not a dictionary")
+    except KeyError:
+        current_value = None
+
+    final_value = default_value if current_value is None else current_value
+    if final_value is None:
+        return None
+    elif final_value is DefaultNoValue:
+        raise KeyError(f"Unable to find value at path '{path}' in data structure")
+    elif not isinstance(final_value, expected_type):
+        raise TypeError(f"Expected value at path '{path}' to be of type {expected_type}, got {type(final_value)}")
+
+    return cast(NESTED_VALUE_TYPE, final_value)

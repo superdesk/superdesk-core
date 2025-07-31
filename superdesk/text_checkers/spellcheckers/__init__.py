@@ -8,8 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import logging
 from typing import Any
+import logging
+from inspect import isawaitable
+
 import superdesk
 from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource
@@ -145,10 +147,14 @@ class SpellcheckerService(AsyncBaseService):
             raise SuperdeskApiError.notFoundError("{sc_name} spellchecker can't be found".format(sc_name=sc_name))
 
         if doc["suggestions"]:
-            check_data = await spellchecker.suggest(doc["text"], language)
+            check_data = spellchecker.suggest(doc["text"], language)
+            if isawaitable(check_data):
+                check_data = await check_data
             assert "suggestions" in check_data
         else:
             check_data = spellchecker.check(doc["text"], language)
+            if isawaitable(check_data):
+                check_data = await check_data
             assert "errors" in check_data
             if doc["use_internal_dict"]:
                 await self.remove_errors_in_dict(spellchecker, language, check_data)
