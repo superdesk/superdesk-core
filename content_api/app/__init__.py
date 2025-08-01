@@ -45,6 +45,9 @@ def get_app(config=None):
     # get content api default conf
     app_config.from_object("content_api.app.settings")
 
+    if "planning.content_api" in app_config.get("CONTENT_API_MODULES", []):
+        app_config.from_object("planning.content_api.settings")
+
     # set some required fields
     app_config.update({"DOMAIN": {"upload": {}}, "SOURCES": {}})
 
