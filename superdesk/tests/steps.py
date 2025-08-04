@@ -28,6 +28,7 @@ from re import findall
 from inspect import isawaitable
 from urllib.parse import urlparse
 from pathlib import Path
+import yaml
 
 from behave import given, when, then  # @UnresolvedImport
 from behave.api.async_step import async_run_until_complete
@@ -1006,6 +1007,14 @@ async def step_impl_when_put_url(context, url):
 @async_run_until_complete
 async def _when_we_get_url(context, url):
     await when_we_get_url(context, url)
+
+
+@when('we get raw "{url}"')
+@async_run_until_complete
+async def _when_we_get_raw_url(context, url):
+    url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
+    async with context.app.app_context():
+        context.response = await context.client.get(url, headers=context.headers)
 
 
 async def when_we_get_url(context, url):
@@ -2825,6 +2834,18 @@ async def transmit_items(context):
 async def remove_item_from_mongo(context, _id):
     async with context.app.app_context():
         context.app.data.mongo.remove("archive", {"_id": _id})
+
+
+@then("we get yaml")
+@async_run_until_complete
+async def step_impl_then_get_yaml(context):
+    context.yaml = yaml.safe_load(await context.response.get_data(as_text=True))
+
+
+@then("we check yaml against dict")
+def step_impl_then_get_text(context):
+    context_data = json.loads(apply_placeholders(context, context.text))
+    assert json_match(context_data, context.yaml), str(context_data) + "\n != \n" + str(context.yaml)
 
 
 @then('we get text "{text}" in response field "{field}"')
