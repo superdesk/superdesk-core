@@ -29,6 +29,7 @@ from inspect import isawaitable
 from urllib.parse import urlparse
 from pathlib import Path
 import yaml
+import requests_mock
 
 from behave import given, when, then  # @UnresolvedImport
 from behave.api.async_step import async_run_until_complete
@@ -676,11 +677,6 @@ async def step_impl_run_update_ingest_command(context, provider_name):
 
 @mock.patch.object(ftp, "ftp_connect", return_value=mock.MagicMock())
 @mock.patch.object(update_ingest, "is_scheduled", return_value=True)
-@async_run_until_complete
-async def run_update_ingest_ftp_step(*args):
-    await run_update_ingest_ftp(*args)
-
-
 async def run_update_ingest_ftp(*args):
     def retrieve_and_parse_side_effect(ftp, config, filename, provider, registered_parser):
         created = datetime.now() + timedelta(days=365)
@@ -2034,7 +2030,7 @@ async def when_we_setup_test_user(context):
     if context.text:
         user_data = json.loads(apply_placeholders(context, context.text))
         user_data.setdefault("username", "test-user-123")
-        user_data.setdefault("password", "pwd")
+        user_data.setdefault("password", "password123")
         user_data.setdefault("email", "test123@example.com")
     else:
         user_data = deepcopy(tests.test_user)
@@ -2369,7 +2365,7 @@ async def login_as(context, username, password, user_type):
         "is_active": True,
         "is_enabled": True,
         "needs_activation": False,
-        "email": "behave_test_user@sourcefabric.org",
+        "email": f"behave_test_{username}@sourcefabric.org",
         user_type: user_type,
     }
 
@@ -2503,18 +2499,22 @@ async def step_field_name_does_not_exist(context, field_name):
 @when('we publish "{item_id}" with "{pub_type}" type and "{state}" state')
 @async_run_until_complete
 async def step_impl_when_publish_url(context, item_id, pub_type, state):
-    item_id = apply_placeholders(context, item_id)
-    res = await get_res("/archive/" + item_id, context)
-    headers = if_match(context, res.get("_etag"))
-    context_data = {"state": state}
-    if context.text:
-        data = apply_placeholders(context, context.text)
-        context_data.update(json.loads(data))
-    data = json.dumps(context_data)
-    context.response = await context.client.patch(
-        get_prefixed_url(context.app, "/archive/{}/{}".format(pub_type, item_id)), data=data, headers=headers
-    )
-    await store_placeholder(context, "archive_{}".format(pub_type))
+    with requests_mock.Mocker() as m:
+        context.http_mock = m
+        m.post("mock://publish", text=json.dumps({}))
+        m.post("mock://assets", text=json.dumps({}))
+        item_id = apply_placeholders(context, item_id)
+        res = await get_res("/archive/" + item_id, context)
+        headers = if_match(context, res.get("_etag"))
+        context_data = {"state": state}
+        if context.text:
+            data = apply_placeholders(context, context.text)
+            context_data.update(json.loads(data))
+        data = json.dumps(context_data)
+        context.response = await context.client.patch(
+            get_prefixed_url(context.app, "/archive/{}/{}".format(pub_type, item_id)), data=data, headers=headers
+        )
+        await store_placeholder(context, "archive_{}".format(pub_type))
 
 
 @then('the ingest item is routed based on routing scheme and rule "{rule_name}"')
@@ -3098,7 +3098,7 @@ async def step_impl_when_oauth2_client_auth(context, client_id, password):
     ]
     headers = unique_headers(headers, context.headers)
     context.response = await context.client.post(
-        get_prefixed_url(context.app, TOKEN_ENDPOINT), data={"grant_type": "client_credentials"}, headers=headers
+        get_prefixed_url(context.app, TOKEN_ENDPOINT), form={"grant_type": "client_credentials"}, headers=headers
     )
 
 
@@ -3148,7 +3148,7 @@ async def setp_impl_when_we_init_data(context, entity):
 async def when_we_run_task(context, name):
     task = celery.signature(name)
     assert task is not None
-    await task.apply()
+    await task.apply_async()
 
 
 @when('the lock expires "{url}"')

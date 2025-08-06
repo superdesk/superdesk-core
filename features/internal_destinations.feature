@@ -808,6 +808,7 @@ Feature: Internal Destinations
         Then we get list with 0 items
         When we get "/published"
         Then we get list with 1 items
+
     @auth
     Scenario: Item created sucessfully for destinations on publish does not depend on send_after_schedule internal destinations
         When we post to "archive" with success
@@ -876,4 +877,4 @@ Feature: Internal Destinations
         When we get "/archive"
         Then we get list with 0 items
         When we get "/published"
-        Then we get list with 4 items
+        Then we get list with 5 items

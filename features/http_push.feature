@@ -1,7 +1,6 @@
 Feature: HTTP Push publishing
 
     @auth
-    @http_mock_adapter
     Scenario: Publish a text item
         Given "products"
         """
@@ -69,8 +68,6 @@ Feature: HTTP Push publishing
         When we publish "#archive._id#" with "publish" type and "published" state
         Then we get OK response
 
-        When we transmit published
-        # TODO-ASYNC: We're using mock PublishConsumer, so HTTP push is not actually happening
         Then we pushed 1 item
         """
         [{
@@ -92,7 +89,6 @@ Feature: HTTP Push publishing
         {"body_html": "corrected"}
         """
 
-        When we transmit published
         Then we pushed 1 item
         """
         [{"guid": "#archive.guid#", "type": "text", "version": "4", "body_html": "corrected"}]
@@ -100,14 +96,12 @@ Feature: HTTP Push publishing
 
         When we rewrite "#archive._id#"
         And we publish "#REWRITE_ID#" with "publish" type and "published" state
-        And we transmit published
         Then we pushed 1 item
         """
         [{"guid": "#REWRITE_ID#", "evolvedfrom": "#archive.guid#"}]
         """
 
         When we publish "#archive._id#" with "kill" type and "killed" state
-        When we transmit published
         Then we pushed 1 item
         """
         [{"guid": "#archive.guid#", "type": "text", "pubstatus": "canceled", "version": "5"}]

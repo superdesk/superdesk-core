@@ -49,7 +49,7 @@ Feature: Rundowns
         When we delete "/shows/#shows._id#"
         Then we get error 409
         """
-        {"message": "Can't remove show if there are rundowns."}
+        {"_error": {"code": 409, "message": "Can't remove show if there are rundowns."}, "_status": "ERR"}
         """
 
         When we delete "/rundowns/#rundowns._id#"

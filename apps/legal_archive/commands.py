@@ -35,7 +35,7 @@ from superdesk.users.services import get_display_name
 from apps.archive.common import ARCHIVE
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_STATES
 from superdesk.lock import lock, unlock
-from superdesk.errors import update_notifiers
+from superdesk.errors import update_notifiers, SuperdeskApiError
 from superdesk.activity import ACTIVITY_ERROR
 from superdesk.utc import utcnow
 
@@ -492,6 +492,11 @@ async def import_into_legal_archive(self, item_id):
         return
     try:
         await LegalArchiveImport().upsert_into_legal_archive(item_id)
+    except SuperdeskApiError as error:
+        if error.status_code == 403:
+            # A forbidden error has occurred, no need to retry this one
+            raise
+        raise self.retry()
     except Exception:
         # we can't loose stuff for legal archive.
         logger.exception("Failed to process legal archive doc {}. Retrying again.".format(item_id))

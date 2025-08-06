@@ -146,12 +146,8 @@ Feature: Publish embedded items feature
       "is_active": true,
       "subscriber_type": "all",
       "sequence_num_settings":{"min" : 1, "max" : 10}, "email": "test@test.com",
-      "api_products": ["58f6120488ea94d000369a32", "58f6120488ea94d000369a32"]
+      "api_products": ["58f6120488ea94d000369a32", "58f6120488ea94d000369a33"]
     }]
-    """
-    And "vocabularies"
-    """
-    [{"_id": "crop_sizes", "items": [{"is_active": true, "name": "3:2", "width": 3, "height": 2}]}]
     """
 
     @auth
@@ -477,7 +473,7 @@ Feature: Publish embedded items feature
         Then we assert the content api item "foo" is published to subscriber "#subscribers._id#"
         Then we assert the content api item "foo" is not published to subscriber "58f6113988ea94d000369a30"
         Then we assert content api item "foo" with associated item "embedded1" is published to "58f6115b88ea94d000369a31"
-        Then we assert content api item "foo" with associated item "embedded1" is published to "#subscribers._id#"
+        Then we assert content api item "foo" with associated item "embedded1" is not published to "#subscribers._id#"
         Then we assert content api item "foo" with associated item "embedded1" is not published to "58f6110d88ea94d000369a2f"
 
     @auth

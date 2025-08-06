@@ -9,7 +9,6 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-import requests_mock
 from behave import when, then  # @UnresolvedImport
 from behave.api.async_step import async_run_until_complete
 from superdesk.core import json
@@ -82,14 +81,3 @@ def then_we_pushed_x_items(context, count):
         context_data = json.loads(apply_placeholders(context, context.text))
         for i, _ in enumerate(context_data):
             assert_equal(json_match(context_data[i], history[i].json()), True, msg="item[%d]: %s" % (i, history[i]))
-
-
-@when("we transmit published")
-@async_run_until_complete
-async def when_we_transmit_published(context):
-    with requests_mock.Mocker() as m:
-        context.http_mock = m
-        m.post("mock://publish", text=json.dumps({}))
-        m.post("mock://assets", text=json.dumps({}))
-        await transmit.apply_async()
-        await transmit.apply_async()
