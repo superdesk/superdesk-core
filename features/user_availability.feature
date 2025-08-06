@@ -465,7 +465,8 @@ Feature: User Availability
         """
         {
             "username": "foo",
-            "user_type": "user"
+            "user_type": "user",
+            "email": "foo@example.com"
         }
         """
 
@@ -479,7 +480,8 @@ Feature: User Availability
         """
         {
             "username": "bar",
-            "user_type": "user"
+            "user_type": "user",
+            "email": "bar@example.com"
         }
         """
 

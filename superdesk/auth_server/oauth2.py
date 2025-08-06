@@ -37,7 +37,7 @@ class SuperdeskOAuth2Server(OAuth2Server):
         return OAuth2Client(client_data, auth_methods=["client_secret_basic"], allowed_scopes=allowed_scopes)
 
 
-TOKEN_ENDPOINT = "/auth_server/token"
+TOKEN_ENDPOINT = "auth_server/token"
 authorization = SuperdeskOAuth2Server(TOKEN_ENDPOINT)
 
 module = Module(name="superdesk.auth_server.oauth2", init=authorization.init_app)

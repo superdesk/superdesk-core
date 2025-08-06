@@ -62,7 +62,7 @@ class FilterConditionsService(AsyncResourceService[FilterConditionsResource]):
         if doc.operator not in parameter[0].operators:
             print(parameter[0].operators)
             raise SuperdeskApiError.badRequestError(
-                gettext(f"Filter condition:{doc.name} has unidentified operator: {doc.operator}")
+                gettext(f"Filter condition:{doc.name} has unidentified operator: {doc.operator.value}")
             )
 
     def _are_equal(self, fc1: FilterConditionsResource, fc2: FilterConditionsResource) -> bool:

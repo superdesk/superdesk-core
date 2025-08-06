@@ -187,6 +187,7 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
                 target_media_type=request.target_media_type,
                 sender_type=request.sender_type,
                 subscribers=response.subscribers.copy(),
+                publish_to_content_api=request.publish_to_content_api,
             )
             assoc_response = PublishRequestResponse()
             await super().filter_subscribers(assoc_request, assoc_response)
@@ -208,6 +209,6 @@ class ContentPublishExchangeFilter(BasePublishExchangeFilter):
                     associations[subscriber_id].append(assoc_id)
                     assoc_subscribers.add(subscriber_id)
 
-            request.item["subscribers"] = list(assoc_subscribers)
+            item["subscribers"] = list(assoc_subscribers)
 
         return associations
