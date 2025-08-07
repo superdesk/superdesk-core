@@ -190,7 +190,7 @@ MONGO_URI = env("MONGO_URI", "mongodb://localhost/%s" % MONGO_DBNAME)
 #: More info in `SDESK-7092<https://sofab.atlassian.net/browse/SDESK-7092>`_.
 MONGO_QUERY_BLACKLIST = ["$where", "$expr"]
 
-MONGO_LOCALE = "en_US"
+MONGO_LOCALE = "en"
 
 #: legal archive switch
 LEGAL_ARCHIVE = env("LEGAL_ARCHIVE", None)
@@ -396,6 +396,12 @@ CELERY_BEAT_SCHEDULE = {
 #: Sentry DSN - will report exceptions there
 SENTRY_DSN = env("SENTRY_DSN")
 SENTRY_INCLUDE_PATHS = ["superdesk", "apps"]
+SENTRY_TRACES_SAMPLE_RATE = (
+    float(os.environ["SENTRY_TRACES_SAMPLE_RATE"]) if os.environ.get("SENTRY_TRACES_SAMPLE_RATE") else None
+)
+SENTRY_PROFILES_SAMPLE_RATE = (
+    float(os.environ["SENTRY_PROFILES_SAMPLE_RATE"]) if os.environ.get("SENTRY_PROFILES_SAMPLE_RATE") else None
+)
 
 #: Set to number between 0.0 to 1.0 to enable sentry Enable Sentry traces
 SENTRY_TRACES_SAMPLE_RATE = float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")) or None

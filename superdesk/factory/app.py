@@ -16,6 +16,7 @@ import jinja2
 import importlib
 import superdesk
 import logging
+import sentry_sdk
 
 from pydantic import ValidationError
 from celery import Celery
@@ -28,6 +29,10 @@ from eve.io.media import MediaStorage
 from werkzeug.exceptions import NotFound
 from pymongo.errors import DuplicateKeyError
 from eve.io.mongo.mongo import _create_index as create_index
+from sentry_sdk.integrations.quart import QuartIntegration
+from sentry_sdk.integrations.flask import FlaskIntegration
+from sentry_sdk.integrations.celery import CeleryIntegration
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from typing import Dict, Any, Type, Optional, Union, Mapping, cast, NoReturn
 from bson import ObjectId
 
@@ -45,7 +50,6 @@ from superdesk.flask import (
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
-from superdesk.factory.sentry import SuperdeskSentry
 from superdesk.logging import configure_logging
 from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
@@ -244,6 +248,7 @@ class SuperdeskEve(eve.Eve):
         self._endpoint_groups = []
         self._endpoint_lookup = {}
         super().__init__(**kwargs)
+        self.setup_sentry()
         self.async_app = SuperdeskAsyncApp(self)
         self.teardown_request(self._after_each_request)
 
@@ -424,6 +429,25 @@ class SuperdeskEve(eve.Eve):
             new_request.user = self.async_app.auth.get_current_user(new_request)
         return new_request
 
+    def setup_sentry(self):
+        if not self.config.get("SENTRY_DSN"):
+            return
+
+        sentry_sdk.init(
+            dsn=self.config["SENTRY_DSN"],
+            send_default_pii=True,
+            integrations=[
+                QuartIntegration(),
+                AsyncioIntegration(),
+                CeleryIntegration(monitor_beat_tasks=True),
+            ],
+            disabled_integrations=[
+                FlaskIntegration,
+            ],
+            traces_sample_rate=self.config.get("SENTRY_TRACES_SAMPLE_RATE"),
+            profiles_sample_rate=self.config.get("SENTRY_PROFILES_SAMPLE_RATE"),
+        )
+
     def extend_eve_home_endpoint(self, links: list[dict]) -> None:
         """Adds async resources to Eve's api root endpoint"""
 
@@ -551,7 +575,6 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
     app.jinja_loader = custom_loader
     app.mail = Mail(app)
-    app.sentry = SuperdeskSentry(app)
     cache_backend.init_app(app)
     setup_apm(app)
 

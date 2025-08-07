@@ -31,6 +31,7 @@ from hashlib import sha1
 
 from bson import ObjectId, UuidRepresentation
 from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
+from pymongo.collation import Collation
 from motor.motor_asyncio import AsyncIOMotorCursor
 
 # TODO-ASYNC: Replace Eve's parser with our own
@@ -45,7 +46,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 
-from ..app import SuperdeskAsyncApp, get_current_async_app
+from ..app import SuperdeskAsyncApp, get_current_async_app, get_config
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
 from .utils import get_projection_from_request, combine_projection_args
 from .types import ResourceModelType
@@ -180,6 +181,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
             projection_arg = self._get_mongo_projection_argument(search_request)
             if projection_arg:
                 kwargs["projection"] = projection_arg
+
+            kwargs["collation"] = self._get_collation(search_request)
+
             mongo = self.mongo_async if not search_request.version else self.mongo_versioned_async
             item = await mongo.find_one(**kwargs)
 
@@ -799,6 +803,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         where = cast_item(where or {})
         kwargs["filter"] = where
+        kwargs["collation"] = self._get_collation(req)
 
         projection_arg = self._get_mongo_projection_argument(req)
         if projection_arg:
@@ -811,6 +816,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             self.mongo_async if not versioned else self.mongo_versioned_async,
             cursor,
             where,
+            collation=kwargs["collation"],
         )
 
     def _convert_req_to_mongo_sort(self, sort: SortParam | None) -> SortListParam:
@@ -1000,6 +1006,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
             await self.elastic.update(str(item_id), updates)
         except ElasticNotConfiguredForResource:
             pass
+
+    def _get_collation(self, search_request: SearchRequest) -> Optional[Collation]:
+        """Get collation for MongoDB queries if configured"""
+        if search_request.case_insensitive:
+            return Collation(get_config(str, "MONGO_LOCALE", "en"), strength=2)
+        return None
 
 
 class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
