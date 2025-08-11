@@ -13,7 +13,7 @@ from unittest.mock import MagicMock, patch
 from .utils import mock_dictionaries
 
 from superdesk.flask import Flask
-from superdesk.tests import AsyncTestCase
+from superdesk.tests import TestCase
 from superdesk.text_checkers import tools
 from superdesk.text_checkers import spellcheckers
 from superdesk.text_checkers.spellcheckers import SPELLCHECKER_DEFAULT
@@ -43,7 +43,7 @@ def load_spellcheckers():
     tools.import_services(app, spellcheckers.__name__, SpellcheckerBase)
 
 
-class DefaultSpellcheckerTestCase(AsyncTestCase):
+class DefaultSpellcheckerTestCase(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         load_spellcheckers()

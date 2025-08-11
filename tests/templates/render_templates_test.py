@@ -8,24 +8,22 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import unittest
 from unittest.mock import patch
 from datetime import datetime, timedelta
 
-from superdesk.flask import Flask
 from apps.templates.filters import format_datetime_filter
 from apps.templates.content_templates import get_item_from_template, render_content_template
+from superdesk.tests import AsyncFlaskTestCase
 
 
-class RenderTemplateTestCase(unittest.IsolatedAsyncioTestCase):
+class RenderTemplateTestCase(AsyncFlaskTestCase):
+    app_config = {
+        "DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES": "",
+    }
+
     async def asyncSetUp(self):
-        self.app = Flask(__name__)
-        self.ctx = self.app.app_context()
-        await self.ctx.push()
+        await super().asyncSetUp()
         self.app.jinja_env.filters["format_datetime"] = format_datetime_filter
-
-    async def asyncTearDown(self):
-        await self.ctx.pop()
 
     async def test_render_content_template(self):
         template = {

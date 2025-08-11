@@ -309,7 +309,8 @@ class RemoveSpikedContentTestCase(TestCase):
         media_delete.assert_any_call("foo", "attachments")
 
     async def test_delete_by_ids(self):
-        ids = await test_utils.post_items(ARCHIVE, self.articles, use_eve=True)
+        # use data interface directly, so we aren't hitting the validation of the data itself
+        ids = self.app.data.insert(ARCHIVE, self.articles)
         archive_service = get_resource_service(ARCHIVE)
         archive_service.on_delete = MagicMock()
         await archive_service.delete_by_article_ids(ids)

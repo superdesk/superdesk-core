@@ -10,7 +10,6 @@
 
 import json
 
-from unittest import mock
 from datetime import timedelta
 
 from superdesk.utc import utcnow
@@ -19,7 +18,6 @@ from superdesk.publish.formatters.ninjs_newsroom_formatter import NewsroomNinjsF
 from superdesk.publish import init_app
 
 
-# @mock.patch("superdesk.publish.subscribers.SubscribersService.generate_sequence_number", lambda self, subscriber: 1)
 class NewsroomNinjsFormatterTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
@@ -29,23 +27,25 @@ class NewsroomNinjsFormatterTest(TestCase):
         self.subscriber = fixtures.subscribers.sub1_subscriber().to_dict()
 
     async def test_products(self):
-        await test_utils.post_items(
-            "content_filters",
-            [{"_id": 3, "content_filter": [{"expression": {"pf": [1], "fc": [2]}}], "name": "soccer-only3"}],
-        )
-        await test_utils.post_items(
+        fc_ids = await test_utils.post_items(
             "filter_conditions",
-            [{"_id": 1, "field": "headline", "operator": "like", "value": "test", "name": "test-1"}],
+            [
+                {"field": "headline", "operator": "like", "value": "test", "name": "test-1"},
+                {"field": "urgency", "operator": "in", "value": "2", "name": "test-2"},
+            ],
         )
-        await test_utils.post_items(
-            "filter_conditions", [{"_id": 2, "field": "urgency", "operator": "in", "value": "2", "name": "test-2"}]
+
+        cf_ids = await test_utils.post_items(
+            "content_filters",
+            [{"content_filter": [{"expression": {"pf": [fc_ids[0]], "fc": [fc_ids[1]]}}], "name": "soccer-only3"}],
         )
-        await test_utils.post_items(
+
+        product_ids = await test_utils.post_items(
             "products",
             [
                 {
-                    "_id": 1,
-                    "content_filter": {"filter_id": 3, "filter_type": "permitting"},
+                    # "_id": 1,
+                    "content_filter": {"filter_id": cf_ids[0], "filter_type": "permitting"},
                     "name": "p-1",
                     "product_type": "api",
                 }
@@ -146,13 +146,13 @@ class NewsroomNinjsFormatterTest(TestCase):
             "charcount": 67,
             "wordcount": 13,
             "readtime": 0,
-            "products": [{"code": 1, "name": "p-1"}],
+            "products": [{"code": str(product_ids[0]), "name": "p-1"}],
         }
         self.assertEqual(json.loads(doc), expected)
-        article.update(urgency=1, _id="v2")
+        article.update(urgency=1, _id="v2", guid="v2")
         seq, doc = (await self.formatter.format(article, self.subscriber))[0]
         expected = {
-            "guid": "tag:aap.com.au:20150613:12345",
+            "guid": "v2",
             "version": "1",
             "place": [{"code": "NSW", "name": "New South Wales"}],
             "pubstatus": "usable",
@@ -192,7 +192,7 @@ class NewsroomNinjsFormatterTest(TestCase):
         self.assertEqual(json.loads(doc), expected)
 
     async def test_planning_data(self):
-        assignments = [{"coverage_item": "urn:coverage-id", "planning_item": "urn:planning-id"}]
+        assignments = [{"coverage_item": "urn:coverage-id", "planning_item": "urn:planning-id", "planning": {}}]
         await test_utils.post_items("assignments", assignments)
 
         article = {

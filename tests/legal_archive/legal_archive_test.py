@@ -8,19 +8,17 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import json
 from bson import ObjectId
 
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import AsyncMock
 from datetime import timedelta
 
 from eve.versioning import resolve_document_version
-from eve.utils import ParsedRequest
 
 from apps.archive.common import insert_into_versions_async, ARCHIVE
 from superdesk import get_resource_service
 from superdesk.types import PublishQueueResource
-from superdesk.tests import TestCase, markers, utils as test_utils, fixtures
+from superdesk.tests import TestCase, utils as test_utils, fixtures
 from superdesk.utc import utcnow
 from apps.legal_archive.commands import LegalArchiveImport
 
@@ -82,8 +80,8 @@ class ImportLegalArchiveCommandTestCase(TestCase):
             ]
 
             await test_utils.post_items("validators", self.validators)
-            await test_utils.post_items("products", fixtures.products.all_products())
-            await test_utils.post_items("subscribers", [fixtures.subscribers.sub1_subscriber()])
+            await test_utils.post_items("products", [fixtures.products.text_product()])
+            await test_utils.post_items("subscribers", [fixtures.subscribers.text_subscriber()])
 
             self.desks = await test_utils.find_many("desks")
 
@@ -194,8 +192,6 @@ class ImportLegalArchiveCommandTestCase(TestCase):
 
         # items are moved to legal publish queue
         for item in self.archive_items:
-            req = ParsedRequest()
-            req.where = json.dumps({"item_id": item["_id"]})
             cursor = await publish_queue.search({"item_id": item["_id"]})
             self.assertGreaterEqual(await cursor.count(), 1)
             queue_item = await cursor.next()

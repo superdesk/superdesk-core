@@ -180,7 +180,7 @@ class HTTPPushServiceTestCase(TestCase):
 
         with self.assertRaises(PublishHTTPPushClientError):
             async with self.app.app_context():
-                service._push_item(self.destination, json.dumps(self.item))
+                await service._push_item(self.destination, json.dumps(self.item))
 
     @mock.patch("superdesk.errors.notifiers")
     @mock.patch("requests.post")
@@ -196,25 +196,25 @@ class HTTPPushServiceTestCase(TestCase):
 
         with self.assertRaises(PublishHTTPPushServerError):
             async with self.app.app_context():
-                service._push_item(self.destination, json.dumps(self.item))
+                await service._push_item(self.destination, json.dumps(self.item))
 
     @mock.patch("superdesk.publish.transmitters.http_push.get_current_app", return_value=mock.MagicMock())
     @mock.patch("superdesk.publish.transmitters.http_push.get_app_config", return_value=(5, 30))
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_associated_assets(self, get_mock, send_mock, get_config_mock, get_app_mock):
+    async def test_push_associated_assets(self, get_mock, send_mock, get_config_mock, get_app_mock):
         app_mock = get_app_mock()
         app_mock.media.get.return_value = TestMedia(b"bin")
         dest = {"config": {"assets_url": "http://example.com"}}
         item = get_fixture("package")
 
         service = HTTPPushService()
-        service._copy_published_media_files({}, dest)
+        await service._copy_published_media_files({}, dest)
 
         get_mock.assert_not_called()
         send_mock.assert_not_called()
 
-        service._copy_published_media_files(item, dest)
+        await service._copy_published_media_files(item, dest)
 
         images = [
             # embedded original
@@ -232,7 +232,7 @@ class HTTPPushServiceTestCase(TestCase):
     @mock.patch("superdesk.publish.transmitters.http_push.get_app_config", return_value=(5, 30))
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_attachments(self, get_mock, send_mock, get_config_mock, get_app_mock):
+    async def test_push_attachments(self, get_mock, send_mock, get_config_mock, get_app_mock):
         app_mock = get_app_mock()
         app_mock.media.get.return_value = TestMedia(b"bin")
 
@@ -245,7 +245,7 @@ class HTTPPushServiceTestCase(TestCase):
         }
 
         service = HTTPPushService()
-        service._copy_published_media_files(item, dest)
+        await service._copy_published_media_files(item, dest)
 
         app_mock.media.get.assert_called_with("media-id", resource="attachments")
         get_mock.assert_called_with("http://example.com/media-id", timeout=(5, 30))
@@ -264,11 +264,11 @@ class HTTPPushServiceTestCase(TestCase):
     @mock.patch("superdesk.publish.transmitters.http_push.get_app_config", return_value=(5, 30))
     @mock.patch("superdesk.publish.transmitters.http_push.requests.Session.send", return_value=CreatedResponse)
     @mock.patch("requests.get", return_value=NotFoundResponse)
-    def test_push_binaries(self, get_mock, send_mock, *args):
+    async def test_push_binaries(self, get_mock, send_mock, *args):
         media = TestMedia(b"content")
         dest = {"config": {"assets_url": "http://example.com", "secret_token": "foo"}}
         service = HTTPPushService()
-        service._transmit_media(media, dest)
+        await service._transmit_media(media, dest)
         get_mock.assert_called_with("http://example.com/media-id", timeout=(5, 30))
         send_mock.assert_called_once_with(mock.ANY, timeout=(5, 30))
         request = send_mock.call_args[0][0]

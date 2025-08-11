@@ -13,7 +13,7 @@ from sys import argv
 from celery import Celery
 from typing import TYPE_CHECKING
 
-from .context_task import HybridAppContextTask, HybridAppContextWorkerTask
+from .context_task import HybridAppContextTask, HybridAppContextWorkerTask, celery_wsgi_instance
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
 
 from superdesk.logging import logger
@@ -34,16 +34,7 @@ IS_BEAT_PROCESS = "celery" in argv[0] and "beat" in argv
 BaseTaskClass: type[HybridAppContextTask] = HybridAppContextTask if IS_BEAT_PROCESS else HybridAppContextWorkerTask
 
 
-class SuperdeskCelery(Celery):
-    def task(self, *args, **opts):
-        # TODO-ASYNC: ``soft_time_limit`` is not working,
-        # for some reason it's converting the int to datetime instance
-        # such as: datetime.datetime(1970, 1, 1, 0, 10, tzinfo=tzutc())
-        opts.pop("soft_time_limit", None)
-        return super().task(*args, **opts)
-
-
-celery: SuperdeskCelery = SuperdeskCelery(__name__)
+celery = Celery(__name__, task_cls=BaseTaskClass)
 
 
 def init_celery(app: "SuperdeskEve") -> None:
@@ -54,20 +45,8 @@ def init_celery(app: "SuperdeskEve") -> None:
     3. Sets up proper app context for the celery task
     """
 
-    class ContextTask(BaseTaskClass):  # type: ignore
-        # NOTE: This is a temporary workaround that needs production testing
-        # for potential issues.
-
-        # Future improvement: Use factory pattern where app is created first,
-        # then tasks are registered with Celery. This ensures proper context
-        # by leveraging the app's global state management through Quart's
-        # current_app proxy.
-        def get_current_app(self):
-            return app
-
+    celery_wsgi_instance.set(app)
     celery.config_from_object(app.config, namespace="CELERY")
-    celery.Task = ContextTask
-
     app.celery = celery
     app.redis = __get_redis(app)
 

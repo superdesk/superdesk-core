@@ -29,20 +29,20 @@ class SearchProviderTestCase(TestCase):
     async def test_set_is_default_on_create(self):
         provider1 = {"search_provider": "provider1", "source": "provider1", "is_default": True}
         provider2 = {"search_provider": "provider2", "source": "provider2", "is_default": True}
-        provider1_id = self.service.post([provider1])[0]
-        provider2_id = self.service.post([provider2])[0]
-        provider1 = self.service.find_one(req=None, _id=provider1_id)
-        provider2 = self.service.find_one(req=None, _id=provider2_id)
+        provider1_id = (await self.service.post_async([provider1]))[0]
+        provider2_id = (await self.service.post_async([provider2]))[0]
+        provider1 = await self.service.find_one_async(req=None, _id=provider1_id)
+        provider2 = await self.service.find_one_async(req=None, _id=provider2_id)
         self.assertEqual(provider1["is_default"], False)
         self.assertEqual(provider2["is_default"], True)
 
     async def test_set_is_default_on_update(self):
         provider1 = {"search_provider": "provider1", "source": "provider1", "is_default": False}
         provider2 = {"search_provider": "provider2", "source": "provider2", "is_default": True}
-        provider1_id = self.service.post([provider1])[0]
-        provider2_id = self.service.post([provider2])[0]
-        self.service.patch(provider1_id, {"is_default": True})
-        provider1 = self.service.find_one(req=None, _id=provider1_id)
-        provider2 = self.service.find_one(req=None, _id=provider2_id)
+        provider1_id = (await self.service.post_async([provider1]))[0]
+        provider2_id = (await self.service.post_async([provider2]))[0]
+        await self.service.patch_async(provider1_id, {"is_default": True})
+        provider1 = await self.service.find_one_async(req=None, _id=provider1_id)
+        provider2 = await self.service.find_one_async(req=None, _id=provider2_id)
         self.assertEqual(provider1["is_default"], True)
         self.assertEqual(provider2["is_default"], False)

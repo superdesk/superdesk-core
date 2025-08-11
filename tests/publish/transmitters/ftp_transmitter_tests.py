@@ -19,6 +19,8 @@ from superdesk.publish.transmitters.file_providers import *  # NOQA
 import io
 from unittest import mock
 
+from tests.io.feeding_services.ftp_tests import mock_ftp_connect
+
 
 ASSOCIATIONS = {
     "featuremedia": {
@@ -169,7 +171,7 @@ class FTPPublishServiceTestCase(TestCase):
         mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448dd1016d1f63a92f0398.png", b"binary")
         mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448dd1016d1f63a92f039e.png", b"binary")
 
-    @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect")
+    @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect", return_value=mock_ftp_connect())
     @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
     async def test_publish_non_ninjs_item_assoc(self, ftp_connect_mock, *args):
         service = FTPPublishService()
@@ -179,12 +181,7 @@ class FTPPublishServiceTestCase(TestCase):
             "formatted_item": "<?xml ...>",  # something json won't handle
             "destination": {"config": {"push_associated": True}},
         }
-
-        ftp_mock = create_autospec(ftplib.FTP)()
-        context_mock = mock.Mock()
-        context_mock.__enter__ = mock.Mock(return_value=ftp_mock)
-        context_mock.__exit__ = mock.Mock(return_value=None)
-        ftp_connect_mock.return_value = context_mock
+        ftp_mock = ftp_connect_mock.return_value.ftp
 
         self.app.data.insert(
             "published",
@@ -198,7 +195,7 @@ class FTPPublishServiceTestCase(TestCase):
         )
 
         subscriber = {}
-        service._transmit(queue_item, subscriber)
+        await service._transmit(queue_item, subscriber)
 
         ftp_mock.storbinary.assert_any_call("STOR 5e448e47016d1f63a92f03b8.jpg", b"binary")
         ftp_mock.storbinary.assert_any_call("STOR 5e448dd1016d1f63a92f0393.png", b"binary")

@@ -35,8 +35,8 @@ def init_app(app):
     )
 
 
-@celery.task
-def generate_user_availability():
+@celery.task()
+async def generate_user_availability():
     """
     Generate user availability for all users.
     """

@@ -117,7 +117,7 @@ class UpdateIngestTest(TestCase):
 
         with self.assertRaises(SuperdeskApiError) as error_context:
             aap = self._get_provider_service(provider)
-            aap.update(provider, {})
+            await aap.update(provider, {})
         ex = error_context.exception
         self.assertTrue(ex.status_code == 500)
 
@@ -142,7 +142,7 @@ class UpdateIngestTest(TestCase):
         provider_service.provider = provider
         provider_service._update = mock_update
         with self.assertRaises(ProviderError):
-            provider_service.update(provider, {})
+            await provider_service.update(provider, {})
         provider = await self._get_provider(provider_name)
         self.assertTrue(provider.get("is_closed"))
 
@@ -528,7 +528,7 @@ class UpdateIngestTest(TestCase):
         provider, provider_service = await self.setup_reuters_provider()
 
         desk = {"name": "foo"}
-        self.app.data.insert("desks", [desk])
+        await test_utils.post_items("desks", [desk])
         self.assertIsNotNone(desk["_id"])
         self.assertIsNotNone(desk["incoming_stage"])
 
@@ -759,7 +759,7 @@ class UpdateIngestTest(TestCase):
         self.assertIn(item["guid"], ids)
 
         # post an event
-        events_post_service.post(
+        await events_post_service.post_async(
             [
                 {
                     "event": item["_id"],
@@ -772,7 +772,7 @@ class UpdateIngestTest(TestCase):
         self.assertEqual(dest.get("state"), "scheduled")
 
         # Un-post an event
-        events_post_service.post(
+        await events_post_service.post_async(
             [
                 {
                     "event": item["_id"],

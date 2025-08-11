@@ -1,9 +1,8 @@
 from superdesk.emails import send_user_status_changed_email, send_activity_emails, send_email, send_translation_changed
 from superdesk.tests import TestCase, markers
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
 
 
-@markers.requires_async_celery
 class SendEmailTestCase(TestCase):
     async def test_send_email(self):
         with self.app.mail.record_messages() as outbox:
@@ -14,7 +13,7 @@ class SendEmailTestCase(TestCase):
 
     async def test_send_email_multiline_subject(self):
         with self.app.mail.record_messages() as outbox:
-            send_email("foo\nbar", "admin@localhost", ["foo@example.com"], "text", "<p>html</p>")
+            await send_email("foo\nbar", "admin@localhost", ["foo@example.com"], "text", "<p>html</p>")
             assert len(outbox) == 1
             assert outbox[0].subject == "foo"
 
@@ -24,7 +23,7 @@ class SendEmailTestCase(TestCase):
             {"message": "error", "data": {"foo": 1}},
             {"message": "error", "data": {"bar": 1}},
         ]
-        with patch.object(send_email, "delay", return_value=None) as sent:
+        with patch.object(send_email, "delay", return_value=None, new_callable=AsyncMock) as sent:
             await send_activity_emails(activities[0], recipients)
             self.assertEqual(1, sent.call_count)
             await send_activity_emails(activities[0], recipients)

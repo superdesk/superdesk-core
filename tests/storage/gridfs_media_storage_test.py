@@ -1,42 +1,36 @@
 import os
 import io
-import eve
 import bson
-import unittest
 from unittest.mock import Mock, ANY
-from superdesk.upload import bp, upload_url
-from superdesk.datalayer import SuperdeskDataLayer
-from superdesk.storage import SuperdeskGridFSMediaStorage
+
+from superdesk.upload import upload_url
 from superdesk.utc import utcnow
 from superdesk.utils import sha
+from superdesk.tests import AsyncFlaskTestCase
 from datetime import timedelta
 
 
-class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
-    async def asyncSetUp(self):
-        self.app = eve.Eve(__name__, {"DOMAIN": {}})
-        self.app.config["MEDIA_PREFIX"] = "http://localhost/upload-raw"
-        self.app.config["DOMAIN"] = {"upload": {}}
-        self.app.config["MONGO_DBNAME"] = "sptests"
-        self.app.data = SuperdeskDataLayer(self.app)
-        self.media = SuperdeskGridFSMediaStorage(self.app)
-        self.app.register_blueprint(bp)
-        self.app.upload_url = upload_url
-        self.ctx = self.app.app_context()
-        await self.ctx.push()
+class GridFSMediaStorageTestCase(AsyncFlaskTestCase):
+    app_config = {
+        "MEDIA_PREFIX": "http://localhost/upload-raw",
+        "DOMAIN": {"upload": {}},
+        "MONGO_DBNAME": "sptests",
+        "MEDIA_STORAGE_PROVIDER": "superdesk.storage.SuperdeskGridFSMediaStorage",
+    }
 
-    async def asyncTearDown(self):
-        await self.ctx.pop()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.app.upload_url = upload_url
 
     async def test_url_for_media(self):
         _id = bson.ObjectId(sha("test")[:24])
-        url = self.media.url_for_media(_id)
+        url = self.app.media.url_for_media(_id)
         self.assertEqual("http://localhost/upload-raw/%s" % _id, url)
 
     async def test_url_for_media_content_type(self):
         _id_str = "1" * 24
         _id = bson.ObjectId(_id_str)
-        url = self.media.url_for_media(_id, "image/jpeg")
+        url = self.app.media.url_for_media(_id, "image/jpeg")
         self.assertEqual("http://localhost/upload-raw/{}.jpg".format(_id_str), url)
 
     async def test_put_media_with_id(self):
@@ -46,7 +40,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         gridfs = self._mock_gridfs()
         _id = bson.ObjectId()
 
-        self.media.put(data, filename=filename, content_type="text/plain", _id=str(_id))
+        self.app.media.put(data, filename=filename, content_type="text/plain", _id=str(_id))
 
         kwargs = {
             "content_type": "text/plain",
@@ -68,7 +62,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
 
         gridfs = self._mock_gridfs()
 
-        self.media.put(data, filename=filename, content_type="text/plain", folder=folder)
+        self.app.media.put(data, filename=filename, content_type="text/plain", folder=folder)
 
         kwargs = {
             "content_type": "text/plain",
@@ -89,29 +83,29 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         query_filename = {"filename": {"$regex": "^{}/".format(folder)}}
         query_upload_date = {"uploadDate": upload_date}
 
-        self.media.find(folder=folder, upload_date=upload_date)
+        self.app.media.find(folder=folder, upload_date=upload_date)
         gridfs.find.assert_called_once_with({"$and": [query_filename, query_upload_date]})
 
-        self.media.find(folder=folder)
+        self.app.media.find(folder=folder)
         gridfs.find.assert_called_with(query_filename)
 
-        self.media.find(upload_date=upload_date)
+        self.app.media.find(upload_date=upload_date)
         gridfs.find.assert_called_with(query_upload_date)
 
-        self.media.find()
+        self.app.media.find()
         gridfs.find.assert_called_with({})
 
     async def test_custom_id(self):
         data = b"foo"
-        self.media.put(data, _id="foo")
-        _file = self.media.get("foo")
+        self.app.media.put(data, _id="foo")
+        _file = self.app.media.get("foo")
         assert data == _file.read()
 
     def _mock_gridfs(self):
         gridfs = Mock()
         gridfs.put = Mock(return_value="y")
         gridfs.find = Mock(return_value=[])
-        self.media._fs["MONGO"] = gridfs
+        self.app.media._fs["MONGO"] = gridfs
         return gridfs
 
     async def test_mimetype_detect(self):
@@ -121,7 +115,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         content = b"bytes are here"
         filename = "extensionless"
         content_type = "text/css"
-        self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
+        self.app.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
         kwargs = {
             "content_type": content_type,
             "filename": filename,
@@ -140,7 +134,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         content = b"bytes are here"
         filename = "styles.css"
         content_type = "application/pdf"
-        self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
+        self.app.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
         kwargs = {
             "content_type": "text/css",
             "filename": filename,
@@ -158,7 +152,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
         content = b"bytes are here"
         filename = "styles.JpG"
         content_type = "application/pdf"
-        self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
+        self.app.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
         kwargs = {
             "content_type": "image/jpeg",
             "filename": filename,
@@ -178,7 +172,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             _id = bson.ObjectId()
             filename = "extensionless"
             content_type = "dummy/text"
-            self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
+            self.app.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "image/jpeg",
                 "filename": filename,
@@ -196,7 +190,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             _id = bson.ObjectId()
             filename = "extensionless"
             content_type = "dummy/text"
-            self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
+            self.app.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "application/vnd.ms-excel",
                 "filename": filename,
@@ -214,7 +208,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             _id = bson.ObjectId()
             filename = "extensionless"
             content_type = "dummy/text"
-            self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
+            self.app.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 "filename": filename,
@@ -232,7 +226,7 @@ class GridFSMediaStorageTestCase(unittest.IsolatedAsyncioTestCase):
             _id = bson.ObjectId()
             filename = "extensionless"
             content_type = "dummy/text"
-            self.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
+            self.app.media.put(content, filename=filename, content_type=content_type, _id=str(_id))
             kwargs = {
                 "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 "filename": filename,

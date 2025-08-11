@@ -1,3 +1,4 @@
+from superdesk.core.utils import list_to_async_generator
 from superdesk.tests import TestCase
 from superdesk.vocabularies.commands import get_vocabularies, is_changed, update_item
 
@@ -52,8 +53,8 @@ class VocabulariesUpdateArchiveTestCase(TestCase):
         },
     ]
 
-    def test_get_vocabularies(self):
-        vocabularies = get_vocabularies(self.vocabularies_list)
+    async def test_get_vocabularies(self):
+        vocabularies = await get_vocabularies(list_to_async_generator(self.vocabularies_list))
 
         self.assertTrue("country_custom" in vocabularies)
         self.assertTrue("values" in vocabularies["country_custom"])
@@ -99,8 +100,8 @@ class VocabulariesUpdateArchiveTestCase(TestCase):
         self.assertFalse(is_changed(old, old))
         self.assertTrue(is_changed(old, new))
 
-    def test_update_item(self):
-        vocabularies = get_vocabularies(self.vocabularies_list)
+    async def test_update_item(self):
+        vocabularies = await get_vocabularies(list_to_async_generator(self.vocabularies_list))
 
         item = {
             "place": [self.vocabularies_list[0]["items"][0], self.vocabularies_list[0]["items"][0]],

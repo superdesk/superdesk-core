@@ -556,9 +556,9 @@ class ImportLegalArchiveCommand:
             archive_service = get_resource_service(ARCHIVE)
             for item_id in expired_items:
                 try:
-                    item = archive_service.find_one(req=None, _id=item_id)
+                    item = await archive_service.find_one_async(req=None, _id=item_id)
                     if item:
-                        archive_service.system_update(item_id, {"expiry_status": ""}, item)
+                        await archive_service.system_update_async(item_id, {"expiry_status": ""}, item)
                 except Exception:
                     logger.exception("Failed to reset expiry status for item id: {}.".format(item_id))
         except Exception:

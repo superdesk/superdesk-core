@@ -754,10 +754,18 @@ class AsyncQuartTestCase(IsolatedAsyncioTestCase):
         if self.app_config:
             self.app.config.update(deepcopy(self.app_config))
 
+        original_app = None
+        if core_app._global_app is not None:
+            original_app = getattr(core_app._global_app, "wsgi", None)
+            core_app._global_app.wsgi = self.app
+
         self.ctx = self.app.app_context()
         await self.ctx.push()
 
         async def clean_ctx():
+            if original_app:
+                core_app._global_app.wsgi = original_app
+
             if self.ctx:
                 try:
                     await self.ctx.pop()
@@ -826,7 +834,10 @@ class AsyncFlaskTestCase(AsyncTestCase):
         # Make sure to reset the config for each scenario, based on the config
         # created in the feature setup
         if self._config_backup:
-            self.app.config.update(deepcopy(self._config_backup))
+            # Make sure to keep original ``DOMAIN`` config from Eve
+            domain_config = self.app.config["DOMAIN"]
+            self.app.config = deepcopy(self._config_backup)
+            self.app.config["DOMAIN"] = domain_config
 
         self.ctx = self.app.app_context()
         await self.ctx.push()

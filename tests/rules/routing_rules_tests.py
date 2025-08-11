@@ -1,16 +1,17 @@
-import unittest
 from unittest import mock
 from copy import deepcopy
 from datetime import datetime
 
 from apps.rules.routing_rules import RoutingRuleSchemeService
 from superdesk.errors import SuperdeskApiError
+from superdesk.tests import IsolatedAsyncioTestCase
 
 
-class RoutingRuleSchemeServiceTest(unittest.TestCase):
+class RoutingRuleSchemeServiceTest(IsolatedAsyncioTestCase):
     """Base class for RoutingRuleSchemeService tests."""
 
-    def setUp(self):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.instance = RoutingRuleSchemeService()
 
 
@@ -19,7 +20,7 @@ class RoutingRuleSchemeServiceTest(unittest.TestCase):
 class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
     """Tests for the on_create() method."""
 
-    def test_does_not_modify_semantically_non_empty_schedules(self, *mocks):
+    async def test_does_not_modify_semantically_non_empty_schedules(self, *mocks):
         routing_schemes = [
             {
                 "name": "scheme_1",
@@ -37,16 +38,16 @@ class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
             }
         ]
         original_scheme = deepcopy(routing_schemes[0])
-        self.instance.on_create(routing_schemes)
+        await self.instance.on_create_async(routing_schemes)
         self.assertEqual(routing_schemes[0], original_scheme)
 
-    def test_does_not_modify_empty_schedules(self, *mocks):
+    async def test_does_not_modify_empty_schedules(self, *mocks):
         routing_schemes = [{"name": "scheme_1", "rules": [{"name": "rule_1", "schedule": None}]}]
         original_scheme = deepcopy(routing_schemes[0])
-        self.instance.on_create(routing_schemes)
+        await self.instance.on_create_async(routing_schemes)
         self.assertEqual(routing_schemes[0], original_scheme)
 
-    def test_sets_semantically_empty_schedules_to_none(self, *mocks):
+    async def test_sets_semantically_empty_schedules_to_none(self, *mocks):
         routing_schemes = [
             {
                 "name": "scheme_1",
@@ -57,7 +58,7 @@ class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
         expected_scheme = deepcopy(routing_schemes[0])
         expected_scheme["rules"][0]["schedule"] = None
 
-        self.instance.on_create(routing_schemes)
+        await self.instance.on_create_async(routing_schemes)
 
         self.assertEqual(routing_schemes[0], expected_scheme)
 
@@ -67,7 +68,7 @@ class OnCreateMethodTestCase(RoutingRuleSchemeServiceTest):
 class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
     """Tests for the on_update() method."""
 
-    def test_does_not_modify_semantically_non_empty_schedules(self, *mocks):
+    async def test_does_not_modify_semantically_non_empty_schedules(self, *mocks):
         routing_scheme = {
             "name": "scheme_1",
             "rules": [
@@ -83,16 +84,16 @@ class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
             ],
         }
         original_scheme = deepcopy(routing_scheme)
-        self.instance.on_update(routing_scheme, {})
+        await self.instance.on_update_async(routing_scheme, {})
         self.assertEqual(routing_scheme, original_scheme)
 
-    def test_does_not_modify_empty_schedules(self, *mocks):
+    async def test_does_not_modify_empty_schedules(self, *mocks):
         routing_scheme = {"name": "scheme_1", "rules": [{"name": "rule_1", "schedule": None}]}
         original_scheme = deepcopy(routing_scheme)
-        self.instance.on_update(routing_scheme, {})
+        await self.instance.on_update_async(routing_scheme, {})
         self.assertEqual(routing_scheme, original_scheme)
 
-    def test_sets_semantically_empty_schedules_to_none(self, *mocks):
+    async def test_sets_semantically_empty_schedules_to_none(self, *mocks):
         routing_scheme = {
             "name": "scheme_1",
             "rules": [{"name": "rule_1", "schedule": {"time_zone": "UTC"}}],  # effectively empty schedule
@@ -101,7 +102,7 @@ class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
         expected_scheme = deepcopy(routing_scheme)
         expected_scheme["rules"][0]["schedule"] = None
 
-        self.instance.on_update(routing_scheme, {})
+        await self.instance.on_update_async(routing_scheme, {})
 
         self.assertEqual(routing_scheme, expected_scheme)
 
@@ -109,12 +110,12 @@ class OnUpdateMethodTestCase(RoutingRuleSchemeServiceTest):
 class ValidateScheduleMethodTestCase(RoutingRuleSchemeServiceTest):
     """Tests for the _validate_schedule() method."""
 
-    def setUp(self):
-        super().setUp()
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
         self.schedule = {"day_of_week": ["WED", "FRI"]}
 
     @mock.patch("apps.rules.routing_rules.all_timezones_set", {"Foo/Bar", "Foo/Baz", "Here/There"})
-    def test_raises_error_on_unknown_time_zone(self):
+    async def test_raises_error_on_unknown_time_zone(self):
         self.schedule["time_zone"] = "Invalid/Zone"
 
         with self.assertRaises(SuperdeskApiError) as context:
@@ -126,7 +127,7 @@ class ValidateScheduleMethodTestCase(RoutingRuleSchemeServiceTest):
         self.assertIn("time zone", msg)
         self.assertIn("invalid/zone", msg)
 
-    def test_allows_empty_end_time(self):
+    async def test_allows_empty_end_time(self):
         self.schedule["hour_of_day_from"] = "10:30:00"
         self.schedule["hour_of_day_to"] = ""
 
@@ -139,7 +140,7 @@ class ValidateScheduleMethodTestCase(RoutingRuleSchemeServiceTest):
 class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
     """Tests for the _get_scheduled_routing_rules() method."""
 
-    def test_returns_only_the_rules_scheduled_at_current_time(self):
+    async def test_returns_only_the_rules_scheduled_at_current_time(self):
         rules = [
             {
                 "name": "rule_1",
@@ -177,7 +178,7 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0], rules[1])
 
-    def test_takes_rule_time_zone_into_account(self):
+    async def test_takes_rule_time_zone_into_account(self):
         rules = [
             {
                 "name": "rule_berlin",
@@ -206,7 +207,7 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0], rules[1])
 
-    def test_assumes_utc_time_zone_if_none_set(self):
+    async def test_assumes_utc_time_zone_if_none_set(self):
         rules = [
             {
                 "name": "rule_berlin",
@@ -226,7 +227,7 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
         self.assertEqual(len(result), 1)
         self.assertEqual(result[0], rules[0])
 
-    def test_assumes_from_the_start_of_the_day_if_start_time_not_set(self):
+    async def test_assumes_from_the_start_of_the_day_if_start_time_not_set(self):
         rules = [
             {
                 "name": "rule_berlin",
@@ -244,7 +245,7 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
 
         self.assertEqual(result, rules)
 
-    def test_assumes_until_the_end_of_the_day_if_end_time_not_set(self):
+    async def test_assumes_until_the_end_of_the_day_if_end_time_not_set(self):
         rules = [
             {
                 "name": "rule_berlin",
@@ -262,7 +263,7 @@ class GetScheduledRoutingRulesMethodTestCase(RoutingRuleSchemeServiceTest):
 
         self.assertEqual(result, rules)
 
-    def test_schedule_routing_rules_at_end_time(self):
+    async def test_schedule_routing_rules_at_end_time(self):
         rules = [
             {
                 "name": "rule_berlin",

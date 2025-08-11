@@ -1,7 +1,8 @@
 import asyncio
 from inspect import isawaitable
 import werkzeug
-from quart import has_app_context
+from quart import has_app_context, Quart
+from contextvars import ContextVar
 
 from celery import Task
 from typing import Any
@@ -9,6 +10,9 @@ from typing import Any
 from superdesk.logging import logger
 from superdesk.errors import SuperdeskError
 from superdesk.celery_app.serializer import CELERY_SERIALIZER_NAME
+
+
+celery_wsgi_instance: ContextVar[Quart] = ContextVar("celery_wsgi_instance")
 
 
 class HybridAppContextTask(Task):
@@ -30,7 +34,10 @@ class HybridAppContextTask(Task):
         """
         from superdesk.core import get_current_app
 
-        return get_current_app()
+        try:
+            return celery_wsgi_instance.get()
+        except LookupError:
+            return get_current_app()
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """
