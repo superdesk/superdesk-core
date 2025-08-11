@@ -10,6 +10,7 @@
 
 from typing import Any, Generic, TypeVar, Type
 
+from pymongo.collation import Collation
 from motor.motor_asyncio import AsyncIOMotorCollection, AsyncIOMotorCursor
 
 from .model import ResourceModel
@@ -133,11 +134,13 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         collection: AsyncIOMotorCollection,
         cursor: AsyncIOMotorCursor,
         lookup: dict[str, Any],
+        collation: Collation | None = None,
     ):
         super().__init__(data_class)
         self.collection = collection
         self.cursor = cursor
         self.lookup = lookup
+        self.collation = collation
 
     async def __anext__(self) -> ResourceModelType:
         item = await self.next()
@@ -163,4 +166,4 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         self.cursor.rewind()
 
     async def count(self):
-        return await self.collection.count_documents(self.lookup)
+        return await self.collection.count_documents(self.lookup, collation=self.collation)
