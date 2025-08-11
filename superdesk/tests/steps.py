@@ -3146,9 +3146,10 @@ async def setp_impl_when_we_init_data(context, entity):
 @when('we run task "{name}"')
 @async_run_until_complete
 async def when_we_run_task(context, name):
-    task = celery.signature(name)
-    assert task is not None
-    await task.apply_async()
+    async with context.app.app_context():
+        task = celery.signature(name)
+        assert task is not None
+        await task.apply_async()
 
 
 @when('the lock expires "{url}"')
