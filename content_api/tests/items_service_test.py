@@ -8,9 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from unittest import IsolatedAsyncioTestCase
 import json
-import unittest
 from datetime import date, timedelta
 from eve.utils import ParsedRequest
 
@@ -18,9 +16,8 @@ from unittest import mock
 from unittest.mock import MagicMock
 from werkzeug.datastructures import MultiDict
 
-from superdesk.flask import Flask
 from superdesk import resources
-from superdesk.tests import TestCase
+from superdesk.tests import TestCase, AsyncQuartTestCase
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from content_api.api_audit import ApiAuditService
@@ -41,17 +38,12 @@ class FakeAuditResource:
         self.service = service
 
 
-class ItemsServiceTestCase(IsolatedAsyncioTestCase):
+class ItemsServiceTestCase(AsyncQuartTestCase):
     """Base class for the `items` service tests."""
 
     async def asyncSetUp(self):
-        self.app = Flask(__name__)
-        self.ctx = self.app.test_request_context("/")
-        await self.ctx.push()
+        await super().asyncSetUp()
         resources["api_audit"] = FakeAuditResource(FakeAuditService())
-
-    async def asyncTearDown(self):
-        await self.ctx.pop()
 
     def _get_target_class(self):
         """Return the class under test.
@@ -727,19 +719,10 @@ class FindOneMethodTestCase(ItemsServiceTestCase):
 class OnFetchedItemMethodTestCase(ItemsServiceTestCase):
     """Tests for the on_fetched_item() method."""
 
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
-
-        self.app = Flask(__name__)
-        self.app.config["CONTENTAPI_URL"] = "http://content_api.com"
-        self.app.config["URLS"] = {"items": "items_endpoint"}
-
-        self.app_context = self.app.app_context()
-        await self.app_context.push()
-
-    async def asyncTearDown(self):
-        await self.app_context.pop()
-        await super().asyncTearDown()
+    app_config = {
+        "CONTENTAPI_URL": "http://content_api.com",
+        "URLS": {"items": "items_endpoint"},
+    }
 
     async def test_sets_uri_field_on_fetched_document(self):
         document = {"_id": "item:123", "headline": "a test item"}
@@ -796,22 +779,10 @@ class OnFetchedItemMethodTestCase(ItemsServiceTestCase):
 class OnFetchedMethodTestCase(ItemsServiceTestCase):
     """Tests for the on_fetched() method."""
 
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
-
-        self.app = Flask(__name__)
-        self.app.config["CONTENTAPI_URL"] = "http://content_api.com"
-        self.app.config["URLS"] = {"items": "items_endpoint"}
-
-        self.app_context = self.app.app_context()
-        await self.app_context.push()
-        self.req_context = self.app.test_request_context("items/")
-        await self.req_context.push()
-
-    async def asyncTearDown(self):
-        await self.req_context.pop()
-        await self.app_context.pop()
-        await super().asyncTearDown()
+    app_config = {
+        "CONTENTAPI_URL": "http://content_api.com",
+        "URLS": {"items": "items_endpoint"},
+    }
 
     async def test_sets_uri_field_on_all_fetched_documents(self):
         result = {
@@ -951,19 +922,10 @@ class OnFetchedMethodTestCase(ItemsServiceTestCase):
 class GetUriMethodTestCase(ItemsServiceTestCase):
     """Tests for the _get_uri() helper method."""
 
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
-
-        self.app = Flask(__name__)
-        self.app.config["CONTENTAPI_URL"] = "http://content_api.com"
-        self.app.config["URLS"] = {"items": "items_endpoint", "packages": "packages_endpoint"}
-
-        self.app_context = self.app.app_context()
-        await self.app_context.push()
-
-    async def asyncTearDown(self):
-        await self.app_context.pop()
-        await super().asyncTearDown()
+    app_config = {
+        "CONTENTAPI_URL": "http://content_api.com",
+        "URLS": {"items": "items_endpoint", "packages": "packages_endpoint"},
+    }
 
     async def test_generates_correct_uri_for_non_composite_items(self):
         document = {"_id": "foo:bar", "type": "picture"}

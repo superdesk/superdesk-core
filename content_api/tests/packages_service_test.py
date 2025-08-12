@@ -8,14 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from unittest import mock, IsolatedAsyncioTestCase
+from unittest import mock
 
-from superdesk.flask import Flask
-from content_api.tests import ApiTestCase
+from superdesk.tests import AsyncQuartTestCase
 
 
-class PackagesServiceTestCase(IsolatedAsyncioTestCase):
+class PackagesServiceTestCase(AsyncQuartTestCase):
     """Base class for the `packages` service tests."""
+
+    app_config = {
+        "CONTENTAPI_URL": "http://content_api.com",
+        "URLS": {"items": "items_endpoint", "packages": "packages_endpoint"},
+    }
 
     def _get_target_class(self):
         """Return the class under test.
@@ -37,20 +41,6 @@ class PackagesServiceTestCase(IsolatedAsyncioTestCase):
 @mock.patch("content_api.packages.service.ItemsService.on_fetched_item")
 class OnFetchedItemMethodTestCase(PackagesServiceTestCase):
     """Tests for the on_fetched_item() method."""
-
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
-
-        self.app = Flask(__name__)
-        self.app.config["CONTENTAPI_URL"] = "http://content_api.com"
-        self.app.config["URLS"] = {"items": "items_endpoint", "packages": "packages_endpoint"}
-
-        self.app_context = self.app.app_context()
-        await self.app_context.push()
-
-    async def asyncTearDown(self):
-        await self.app_context.pop()
-        await super().asyncTearDown()
 
     async def test_invokes_superclass_method_with_correct_args(self, super_fetched):
         document = {"_id": "item:XYZ"}
@@ -82,20 +72,6 @@ class OnFetchedItemMethodTestCase(PackagesServiceTestCase):
 @mock.patch("content_api.packages.service.ItemsService.on_fetched")
 class OnFetchedMethodTestCase(PackagesServiceTestCase):
     """Tests for the on_fetched() method."""
-
-    async def asyncSetUp(self):
-        await super().asyncSetUp()
-
-        self.app = Flask(__name__)
-        self.app.config["CONTENTAPI_URL"] = "http://content_api.com"
-        self.app.config["URLS"] = {"items": "items_endpoint", "packages": "packages_endpoint"}
-
-        self.app_context = self.app.app_context()
-        await self.app_context.push()
-
-    async def asyncTearDown(self):
-        await self.app_context.pop()
-        await super().asyncTearDown()
 
     async def test_invokes_superclass_method_with_correct_args(self, super_fetched):
         result = {"_items": []}

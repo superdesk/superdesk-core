@@ -15,6 +15,8 @@ The meaning of configuration options is described in the Eve framework
 `documentation <http://python-eve.org/config.html#global-configuration>`_.
 """
 
+from importlib.util import find_spec
+
 from superdesk.default_settings import env, urlparse, strtobool
 
 from superdesk.default_settings import (  # noqa
@@ -62,12 +64,9 @@ CONTENT_API_MODULES = ["content_api.items.module", "content_api.auth"]
 
 # If the Planning module is installed, then include it by default
 # Can be overridden in the local ``settings.py`` file
-try:
-    import planning
-
+# Note: Uses ``find_spec`` so we're not importing the module here
+if find_spec("planning") is not None:
     CONTENT_API_MODULES.append("planning.content_api")
-except ImportError:
-    pass
 
 PUBLISH_MODULES = []
 

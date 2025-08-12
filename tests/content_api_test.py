@@ -29,17 +29,18 @@ test_subscriber_2_id = ObjectId()
 
 class ContentAPITestCase(TestCase):
     async def asyncSetUp(self):
-        await super().asyncSetUp()
-        self.content_api = superdesk.get_resource_service("content_api")
-        self.db = self.app.data.mongo.pymongo(prefix=MONGO_PREFIX).db
-        self.app.config["SECRET_KEY"] = "secret"
         config = copy(self.app.config)
         config["AMAZON_CONTAINER_NAME"] = None  # force gridfs
         config["URL_PREFIX"] = ""
         config["MEDIA_PREFIX"] = "/assets"
         config["PUBLISH_MODULES"] = []
         self.capi = get_app(config)
+
         self.capi.testing = True
+        await super().asyncSetUp()
+        self.content_api = superdesk.get_resource_service("content_api")
+        self.db = self.app.data.mongo.pymongo(prefix=MONGO_PREFIX).db
+        self.app.config["SECRET_KEY"] = "secret"
 
         subscribers = [
             {

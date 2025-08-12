@@ -51,7 +51,7 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
         except (EndpointConnectionError, ConnectionClosedError, NewConnectionError) as error:
             raise await PublishAmazonSQSError.connectionError(error, destination).send_notifications()
         except ClientError as error:
-            raise await PublishAmazonSQSError.clientError(error, destination).sendMessageError()
+            raise await PublishAmazonSQSError.clientError(error, destination).send_notifications()
         except Exception as error:
             raise await PublishAmazonSQSError.sendMessageError(error, destination).send_notifications()
 

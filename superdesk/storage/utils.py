@@ -9,25 +9,7 @@ from werkzeug import datastructures
 logger = logging.getLogger(__name__)
 
 
-def get_mimetype(content, filename=None, content_type=None):
-    """
-    Return mimetype of the `content` and as a fallback using `filename`
-
-    :param content: binary stream
-    :type stream: `io.BytesIO` | `io.BufferedReader` | `io.BufferedIOBase` | `werkzeug.datastructures.FileStorage`
-    :param filename: filename
-    :type filename: str
-    :param content_type: expected content type, used as a fallback
-    :type filename: str
-    """
-
-    if content_type:
-        for media_type in ("image", "video", "audio"):
-            if content_type.startswith(media_type):
-                return content_type
-
-    determined_content_type = None
-
+def _get_mimetype_from_stream(content) -> str:
     try:
         stream = content
         if isinstance(content, (bytes, str)):
@@ -57,9 +39,34 @@ def get_mimetype(content, filename=None, content_type=None):
             raise Exception(msg)
     except Exception as e:
         logger.warning(e)
-        if filename:
-            # detect mimetype using filename extension
-            determined_content_type = mimetypes.MimeTypes().guess_type(filename)[0]
+        determined_content_type = "text/plain"
+
+    return determined_content_type or "text/plain"
+
+
+def get_mimetype(content, filename=None, content_type=None):
+    """
+    Return mimetype of the `content` and as a fallback using `filename`
+
+    :param content: binary stream
+    :type stream: `io.BytesIO` | `io.BufferedReader` | `io.BufferedIOBase` | `werkzeug.datastructures.FileStorage`
+    :param filename: filename
+    :type filename: str
+    :param content_type: expected content type, used as a fallback
+    :type filename: str
+    """
+
+    if content_type:
+        for media_type in ("image", "video", "audio"):
+            if content_type.startswith(media_type):
+                return content_type
+
+    determined_content_type = _get_mimetype_from_stream(content)
+
+    if determined_content_type == "text/plain" and filename:
+        # libmagic determined the type to be plain text from the stream
+        # fallback to using the filename to determine the type
+        determined_content_type = mimetypes.MimeTypes().guess_type(filename)[0]
 
     if determined_content_type and determined_content_type != content_type:
         logger.info(

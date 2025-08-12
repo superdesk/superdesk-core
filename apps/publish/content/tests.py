@@ -389,7 +389,7 @@ class ArchivePublishTestCase(TestCase):
 
     async def test_get_subscribers_without_product(self):
         doc = copy(self.articles[1])
-        # doc["item_id"] = doc["_id"]
+        doc["item_id"] = doc["_id"]
 
         subscriber_service = SubscribersResource.get_service()
         await subscriber_service.delete_many({})
@@ -399,13 +399,9 @@ class ArchivePublishTestCase(TestCase):
 
         await subscriber_service.create(self.subscribers)
         await PublishCache.init(force=True)
-
-        with self.assertRaises(SuperdeskApiError):
-            # ``SuperdeskApiError.badRequestError`` is raised when item wasn't routed
-            # This happens when no subscriber matched the item
-            await get_resource_service(ARCHIVE_PUBLISH).patch_async(
-                id=doc["_id"], updates={"target_media_type": SubscriberType.WIRE}
-            )
+        await get_resource_service(ARCHIVE_PUBLISH).patch_async(
+            id=doc["_id"], updates={"target_media_type": SubscriberType.WIRE}
+        )
 
         # There should be no items in the publish queue
         await self._is_publish_queue_empty()

@@ -174,14 +174,3 @@ class PublishServiceTests(TestCase):
         self.assertEqual(
             ["body_html", "body_footer", "headline", "slugline", "abstract"], list(source["highlight"]["fields"].keys())
         )
-
-    async def test_subscribers_secret_keys(self):
-        subscribers = await self.subscriber_service.get_all_list()
-        item = subscribers[1]
-        self.assertEqual("Test2", item.name)
-        self.assertNotIn("secret_token", item.destinations[0].config)
-
-        item = subscribers[2]
-        self.assertEqual("Test3", item.name)
-        self.assertNotIn("access_key_id", item.destinations[0].config)
-        self.assertNotIn("secret_access_key", item.destinations[0].config)

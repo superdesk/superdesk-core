@@ -88,9 +88,10 @@ async def post_items(
     except KeyError:
         pass
 
-    current_app = get_current_app()
-    for item in items:
-        current_app.data.mongo._mongotize(item, resource)
+    if eve_service is not None:
+        current_app = get_current_app()
+        for item in items:
+            current_app.data.mongo._mongotize(item, resource)
 
     if not eve_service:
         raise RuntimeError(f"Resource {resource} not found")

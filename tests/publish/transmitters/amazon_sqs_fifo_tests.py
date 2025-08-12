@@ -16,9 +16,10 @@ from unittest import TestCase, mock
 
 from superdesk.publish.transmitters.amazon_sqs_fifo import AmazonSQSFIFOPublishService
 from superdesk.errors import PublishAmazonSQSError
+from superdesk.tests import IsolatedAsyncioTestCase
 
 
-class AmazonSQSFIFOPublishServiceTestCase(TestCase):
+class AmazonSQSFIFOPublishServiceTestCase(IsolatedAsyncioTestCase):
     def setUp(self):
         self.config = {
             "region": "ap-southeast-2",
@@ -75,44 +76,44 @@ class AmazonSQSFIFOPublishServiceTestCase(TestCase):
         queue = self.sqs.get_queue_by_name(QueueName=self.config["queue_name"])
         return queue.receive_messages()
 
-    def test_publish_an_item(self):
+    async def test_publish_an_item(self):
         self._create_queue()
 
-        self.service._transmit(self.item, {})
+        await self.service._transmit(self.item, {})
         messages = self._get_queue_messages()
         item = json.loads(messages[0].body)
         self.assertDictEqual(item, self.formatted_item1)
 
     @mock.patch("superdesk.errors.notifications_enabled", return_value=False)
-    def test_connection_error(self, _notifications_enabled):
+    async def test_connection_error(self, _notifications_enabled):
         self.config["endpoint_url"] = "http://abcd"
 
         with self.assertRaises(PublishAmazonSQSError) as context:
-            self.service._transmit(self.item, {})
+            await self.service._transmit(self.item, {})
 
         ex = context.exception
         self.assertEqual(str(ex), "PublishAmazonSQSError Error 15000 - Amazon SQS publish connection error")
         self.assertEqual(ex.code, 15000)
 
     @mock.patch("superdesk.errors.notifications_enabled", return_value=False)
-    def test_client_error(self, _notifications_enabled):
+    async def test_client_error(self, _notifications_enabled):
         self._create_queue()
         self.config["queue_name"] = "missing_queue.fifo"
 
         with self.assertRaises(PublishAmazonSQSError) as context:
-            self.service._transmit(self.item, {})
+            await self.service._transmit(self.item, {})
 
         ex = context.exception
         self.assertEqual(str(ex), "PublishAmazonSQSError Error 15001 - Amazon SQS publish client error")
         self.assertEqual(ex.code, 15001)
 
     @mock.patch("superdesk.errors.notifications_enabled", return_value=False)
-    def test_send_message_error(self, _notifications_enabled):
+    async def test_send_message_error(self, _notifications_enabled):
         self._create_queue()
         self.item["formatted_item"] = None
 
         with self.assertRaises(PublishAmazonSQSError) as context:
-            self.service._transmit(self.item, {})
+            await self.service._transmit(self.item, {})
 
         ex = context.exception
         self.assertEqual(str(ex), "PublishAmazonSQSError Error 15002 - Amazon SQS publish sendMessage error")

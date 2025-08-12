@@ -10,7 +10,7 @@
 
 """This module contains common tools for spellchecker tests"""
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock
 from superdesk import get_resource_service
 
 
@@ -20,7 +20,7 @@ def mock_dictionaries(service, model):
     other services are returned normally
     """
     if service == "dictionaries":
-        fake_service = MagicMock()
+        fake_service = AsyncMock()
         fake_service.get_model_for_lang.return_value = model
         return fake_service
     else:

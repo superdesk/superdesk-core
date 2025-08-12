@@ -46,7 +46,7 @@ def init_app(app) -> None:
     AuthResource(endpoint_name, app=app, service=service)
 
 
-@celery.task
+@celery.task()
 async def session_purge():
     try:
         await RemoveExpiredSessions().run()

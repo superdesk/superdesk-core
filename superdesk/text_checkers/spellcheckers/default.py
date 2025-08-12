@@ -10,6 +10,7 @@
 
 import re
 import logging
+from inspect import isawaitable
 
 # from superdesk.errors import SuperdeskApiError
 import superdesk
@@ -32,12 +33,11 @@ class Default(SpellcheckerBase):
     capacities = (CAP_SPELLING,)
     languages = [LANG_ANY]
 
-    def check(self, text, language=None):
+    async def check(self, text, language=None):
         if language is None:
             raise SuperdeskApiError.badRequestError("missing language for default spellchecker")
         dictionaries_service = superdesk.get_resource_service("dictionaries")
-        # TODO-ASYNC[DictionaryService] - Update this to use async `get_model_for_lang` when upgrading the module
-        model = dictionaries_service.get_model_for_lang(language)
+        model = await dictionaries_service.get_model_for_lang(language)
         err_list = []
         check_data = {"errors": err_list}
         for match in re.finditer(r"([^\d\W]+-?)+", text):
