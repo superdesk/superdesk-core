@@ -17,7 +17,6 @@ import logging
 import superdesk
 
 from typing import Callable, List, Tuple
-
 from superdesk.core import get_app_config, get_current_app
 from superdesk.flask import Blueprint
 
@@ -59,10 +58,17 @@ checks: List[Tuple[str, Callable[[], bool]]] = [
 ]
 
 
-@bp.route("/system/health", methods=["GET", "OPTIONS"])
-def health():
+def get_health_status(app_name: str) -> dict[str, str]:
+    """Get health status for all configured checks.
+
+    Args:
+        app_name: Name of the application
+
+    Returns:
+        Dictionary containing health status for each component and overall status
+    """
     output = {
-        "application_name": get_app_config("APPLICATION_NAME"),
+        "application_name": app_name,
     }
 
     status = True
@@ -77,6 +83,11 @@ def health():
 
     output["status"] = human(status)
     return output
+
+
+@bp.route("/system/health", methods=["GET", "OPTIONS"])
+def health():
+    return get_health_status(get_app_config("APPLICATION_NAME"))
 
 
 def init_app(app) -> None:
