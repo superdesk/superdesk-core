@@ -986,6 +986,16 @@ class BasePublishService(BaseService):
             updated_renditions = deepcopy(renditions)
             updates["renditions"] = updated_renditions
 
+            original_metadata = get_metadata_from_item(original, mapping)
+            updated_metadata = get_metadata_from_item(updated, mapping)
+
+            original_state = original.get("state")
+            updated_state = updated.get("state")
+
+            should_update_metadata = updated_state in PUBLISH_STATES and (
+                original_state != updated_state or original_metadata != updated_metadata
+            )
+
             for rendition_key, rendition_data in renditions.items():
                 if not rendition_data or not isinstance(rendition_data, dict):
                     continue
@@ -994,18 +1004,18 @@ class BasePublishService(BaseService):
                 if not media_id:
                     continue
 
-                original_metadata = get_metadata_from_item(original, mapping)
-                metadata = get_metadata_from_item(updated, mapping)
-
-                if original_metadata == metadata:
+                if not should_update_metadata and original_metadata == updated_metadata:
                     continue
 
                 picture = app.media.get(media_id)
                 binary = picture.read()
-                updated_binary = write_metadata(binary, metadata)
-                if updated_binary != binary:
+                updated_binary = write_metadata(binary, updated_metadata)
+
+                if updated_binary != binary or should_update_metadata:
                     updated_media_id = app.media.put(
-                        updated_binary, content_type=picture.content_type, filename=picture.filename
+                        updated_binary,
+                        content_type=picture.content_type,
+                        filename=picture.filename,
                     )
                     updated_renditions[rendition_key].update(
                         {
