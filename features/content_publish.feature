@@ -5384,3 +5384,131 @@ Feature: Content Publishing
         }
       }
       """
+
+    @auth
+    Scenario: All image renditions preserve mapped metadata after publish (SDCP-910)
+      Given config update
+      """
+      {
+        "PICTURE_METADATA_MAPPING": {
+          "slugline": "Title",
+          "extra.filename": "JobId",
+          "description_text": "Description"
+        }
+      }
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
+      And "validators"
+      """
+      [
+        {"_id": "publish_picture", "act": "publish", "type": "picture", "schema": {}}
+      ]
+      """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "original", "width": 800, "height": 600},
+          {"is_active": true, "name": "viewImage", "width": 640, "height": 480},
+          {"is-active": true, "name": "thumbnail", "width": 200, "height": 150}
+        ]
+      }]
+      """
+
+      When we upload a file "bike.jpg" to "archive"
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {
+        "slugline": "SDCP910-Test-Image",
+        "headline": "Comprehensive Metadata Test Image",
+        "description_text": "This image tests all metadata fields for SDCP-910 verification",
+        "byline": "Test Photographer",
+        "copyrightnotice": "Copyright 2023 Test Organization",
+        "creditline": "Photo by Test Photographer/Test Organization",
+        "extra": {"filename": "SDCP910-COMPLETE-REF"}
+      }
+      """
+      Then we get OK response
+      
+      # Verify metadata exists in ALL renditions using archive_publish
+      And we get picture metadata "{{ archive_publish.renditions.original.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": "Test Photographer",
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ archive_publish.renditions.viewImage.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": "Test Photographer",
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ archive_publish.renditions.thumbnail.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": "Test Photographer",
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+
+      # Also verify the published version has the same metadata in all renditions
+      When we get "/published"
+      Then we get list with 1 items
+      And we get picture metadata "{{ items.0.renditions.original.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": "Test Photographer",
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ items.0.renditions.viewImage.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": "Test Photographer",
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ items.0.renditions.thumbnail.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": "Test Photographer",
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
