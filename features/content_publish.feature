@@ -5392,8 +5392,12 @@ Feature: Content Publishing
       {
         "PICTURE_METADATA_MAPPING": {
           "slugline": "Title",
-          "extra.filename": "JobId",
-          "description_text": "Description"
+          "description_text": "Description",
+          "headline": "Headline", 
+          "byline": "Creator",
+          "copyrightnotice": "CopyrightNotice",
+          "creditline": "CreditLine",
+          "extra.filename": "JobId"
         }
       }
       """
@@ -5415,7 +5419,7 @@ Feature: Content Publishing
         "items": [
           {"is_active": true, "name": "original", "width": 800, "height": 600},
           {"is_active": true, "name": "viewImage", "width": 640, "height": 480},
-          {"is-active": true, "name": "thumbnail", "width": 200, "height": 150}
+          {"is_active": true, "name": "thumbnail", "width": 200, "height": 150}
         ]
       }]
       """
@@ -5443,7 +5447,7 @@ Feature: Content Publishing
         "Title": "SDCP910-Test-Image",
         "Description": "This image tests all metadata fields for SDCP-910 verification",
         "Headline": "Comprehensive Metadata Test Image",
-        "Creator": "Test Photographer",
+        "Creator": ["Test Photographer"],
         "CopyrightNotice": "Copyright 2023 Test Organization",
         "CreditLine": "Photo by Test Photographer/Test Organization"
       }
@@ -5455,7 +5459,7 @@ Feature: Content Publishing
         "Title": "SDCP910-Test-Image",
         "Description": "This image tests all metadata fields for SDCP-910 verification",
         "Headline": "Comprehensive Metadata Test Image",
-        "Creator": "Test Photographer",
+        "Creator": ["Test Photographer"],
         "CopyrightNotice": "Copyright 2023 Test Organization",
         "CreditLine": "Photo by Test Photographer/Test Organization"
       }
@@ -5467,7 +5471,7 @@ Feature: Content Publishing
         "Title": "SDCP910-Test-Image",
         "Description": "This image tests all metadata fields for SDCP-910 verification",
         "Headline": "Comprehensive Metadata Test Image",
-        "Creator": "Test Photographer",
+        "Creator": ["Test Photographer"],
         "CopyrightNotice": "Copyright 2023 Test Organization",
         "CreditLine": "Photo by Test Photographer/Test Organization"
       }
@@ -5483,7 +5487,7 @@ Feature: Content Publishing
         "Title": "SDCP910-Test-Image",
         "Description": "This image tests all metadata fields for SDCP-910 verification",
         "Headline": "Comprehensive Metadata Test Image",
-        "Creator": "Test Photographer",
+        "Creator": ["Test Photographer"],
         "CopyrightNotice": "Copyright 2023 Test Organization",
         "CreditLine": "Photo by Test Photographer/Test Organization"
       }
@@ -5495,7 +5499,7 @@ Feature: Content Publishing
         "Title": "SDCP910-Test-Image",
         "Description": "This image tests all metadata fields for SDCP-910 verification",
         "Headline": "Comprehensive Metadata Test Image",
-        "Creator": "Test Photographer",
+        "Creator": ["Test Photographer"],
         "CopyrightNotice": "Copyright 2023 Test Organization",
         "CreditLine": "Photo by Test Photographer/Test Organization"
       }
@@ -5507,7 +5511,7 @@ Feature: Content Publishing
         "Title": "SDCP910-Test-Image",
         "Description": "This image tests all metadata fields for SDCP-910 verification",
         "Headline": "Comprehensive Metadata Test Image",
-        "Creator": "Test Photographer",
+        "Creator": ["Test Photographer"],
         "CopyrightNotice": "Copyright 2023 Test Organization",
         "CreditLine": "Photo by Test Photographer/Test Organization"
       }
