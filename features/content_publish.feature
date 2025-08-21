@@ -5269,7 +5269,9 @@ Feature: Content Publishing
       Given empty "subscribers"
       And config update
       """
-      { "PUBLISH_ASSOCIATED_ITEMS": true }
+      { "PUBLISH_ASSOCIATED_ITEMS": true,
+        "PICTURE_METADATA_MAPPING": {}
+      }
       """
       And "desks"
       """
