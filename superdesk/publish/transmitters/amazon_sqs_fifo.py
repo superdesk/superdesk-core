@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import boto3
-from botocore.exceptions import EndpointConnectionError, ConnectionClosedError, ClientError
+from botocore.exceptions import EndpointConnectionError, ConnectionClosedError, ClientError, NoCredentialsError
 from urllib3.exceptions import NewConnectionError
 
 from superdesk.publish import publish_service, register_transmitter
@@ -48,6 +48,8 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
                 MessageBody=queue_item["formatted_item"],
                 MessageGroupId=config.get("message_group_id"),
             )
+        except NoCredentialsError as error:
+            raise PublishAmazonSQSError.credentialsError(error, destination)
         except (EndpointConnectionError, ConnectionClosedError, NewConnectionError) as error:
             raise PublishAmazonSQSError.connectionError(error, destination)
         except ClientError as error:
