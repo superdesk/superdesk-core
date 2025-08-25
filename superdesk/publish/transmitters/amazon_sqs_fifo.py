@@ -49,20 +49,21 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
         return {}
 
     def _send_to_sqs(self, config, message_body, destination):
-        sqs = boto3.resource(
-            "sqs",
-            aws_access_key_id=config.get("access_key_id"),
-            aws_secret_access_key=config.get("secret_access_key"),
-            region_name=config.get("region"),
-            endpoint_url=config.get("endpoint_url"),
-        )
-        queue = sqs.get_queue_by_name(QueueName=config.get("queue_name"))
-
         try:
+            sqs = boto3.resource(
+                "sqs",
+                aws_access_key_id=config.get("access_key_id"),
+                aws_secret_access_key=config.get("secret_access_key"),
+                region_name=config.get("region"),
+                endpoint_url=config.get("endpoint_url"),
+            )
+            queue = sqs.get_queue_by_name(QueueName=config.get("queue_name"))
             queue.send_message(
                 MessageBody=message_body,
                 MessageGroupId=config.get("message_group_id"),
             )
+        except NoCredentialsError:
+            raise
         except (EndpointConnectionError, ConnectionClosedError, NewConnectionError) as error:
             raise PublishAmazonSQSError.connectionError(error, destination)
         except ClientError as error:
