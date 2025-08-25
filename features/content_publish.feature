@@ -4860,15 +4860,22 @@ Feature: Content Publishing
       {"PICTURE_METADATA_MAPPING": {"slugline": "Title", "extra.transref": "JobId"}}
       """
       And "desks"
-        """
-        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
-        """
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
       When we upload a file "bike.jpg" to "archive"
-      When we publish "#archive._id#" with "publish" type and "published" state
+      When we patch "archive/#archive._id#"
       """
       {
         "slugline": "test publish",
         "extra": {"transref": "1234"}
+      }
+      """
+      Then we get OK response
+
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {
       }
       """
       Then we get OK response
