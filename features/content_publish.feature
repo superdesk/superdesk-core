@@ -5131,3 +5131,513 @@ Feature: Content Publishing
         }
       }
       """
+
+    @auth
+    Scenario: Correcting an item and its association
+      Given config update
+      """
+      {
+        "PUBLISH_ASSOCIATED_ITEMS": true
+      }
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "1234",
+                "guid": "1234",
+                "slugline": "picture",
+                "headline": "picture",
+                "alt_text": "alt_text",
+                "description_text": "description_text",
+                "type": "text",
+                "state": "in_progress",
+                "operation": "update",
+                "_current_version": 1,
+                "task": {
+                    "desk": "#desks._id#",
+                    "stage": "#desks.incoming_stage#",
+                    "user": "#CONTEXT_USER_ID#"
+                }
+            },
+            {
+              "_id": "5678",
+              "guid": "5678",
+              "slugline": "story",
+              "headline": "story headline",
+              "type": "text",
+              "state": "in_progress",
+              "_current_version": 1,
+              "associations": {
+                "picture": {
+                  "_id": "1234",
+                  "guid": "1234",
+                  "slugline": "picture",
+                  "state": "in_progress",
+                  "_current_version": 1
+                }
+              }
+            }
+        ]
+      """
+      When we publish "5678" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+        {
+            "_id": "5678",
+            "guid": "5678",
+            "_current_version": 2,
+            "slugline": "story",
+            "headline": "story headline",
+            "state": "published",
+            "operation": "publish",
+            "associations": {
+                "picture": {
+                "_id": "1234",
+                "slugline": "picture",
+                "state": "published",
+                "_current_version": 2
+                }
+            }
+        }
+      """
+      When we publish "5678" with "correct" type and "corrected" state
+      """
+      {
+          "headline": "corrected story headline",
+          "correction_sequence": "2",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "corrected picture",
+              "_current_version": 2
+            }
+          }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "5678",
+          "guid": "5678",
+          "slugline": "story",
+          "headline": "corrected story headline",
+          "state": "corrected",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "corrected picture",
+              "state": "corrected",
+              "_current_version": 3
+            }
+          }
+      }
+      """
+      When we publish "5678" with "correct" type and "corrected" state
+      """
+      {
+          "headline": "re corrected story headline",
+          "correction_sequence": "3",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "re corrected picture",
+              "_current_version": 4
+            }
+          }
+      }
+      """
+      Then we get OK response
+      And we get existing resource
+      """
+      {
+          "_id": "5678",
+          "guid": "5678",
+          "slugline": "story",
+          "headline": "re corrected story headline",
+          "state": "corrected",
+          "associations": {
+            "picture": {
+              "_id": "1234",
+              "slugline": "re corrected picture",
+              "state": "corrected",
+              "_current_version": 4
+            }
+          }
+      }
+      """
+
+    @auth
+    Scenario: Publishing item with associated image still in progress, without modifying the image
+      Given config update
+      """
+      {
+        "PUBLISH_ASSOCIATED_ITEMS": true
+      }
+      """
+      And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
+        ]
+        """
+      And "desks"
+        """
+        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+      And "archive"
+        """
+        [
+            {
+                "_id": "img1",
+                "guid": "img1",
+                "slugline": "picture",
+                "headline": "picture",
+                "type": "picture",
+                "state": "in_progress",
+                "_current_version": 1
+            },
+            {
+                "_id": "text1",
+                "guid": "text1",
+                "slugline": "story",
+                "headline": "story headline",
+                "type": "text",
+                "state": "in_progress",
+                "_current_version": 1,
+                "associations": {
+                  "picture": {
+                    "_id": "img1",
+                    "guid": "img1",
+                    "slugline": "picture",
+                    "type": "picture",
+                    "state": "in_progress",
+                    "_current_version": 1
+                  }
+                },
+                "task": {
+                  "desk": "#desks._id#",
+                  "stage": "#desks.incoming_stage#",
+                  "user": "#CONTEXT_USER_ID#"
+                }
+            }
+        ]
+        """
+      When we publish "text1" with "publish" type and "published" state
+      Then we get OK response
+      And we get existing resource
+      """
+        {
+            "_id": "text1",
+            "guid": "text1",
+            "slugline": "story",
+            "headline": "story headline",
+            "state": "published",
+            "operation": "publish",
+            "associations": {
+                "picture": {
+                  "_id": "img1",
+                  "slugline": "picture",
+                  "state": "published",
+                  "_current_version": 2
+                }
+            }
+        }
+      """
+
+    @auth
+    Scenario: All image renditions preserve mapped metadata after publish (SDCP-910)
+      Given config update
+      """
+      {
+        "PICTURE_METADATA_MAPPING": {
+          "slugline": "Title",
+          "description_text": "Description",
+          "headline": "Headline",
+          "byline": "Creator",
+          "copyrightnotice": "CopyrightNotice",
+          "creditline": "CreditLine",
+          "extra.filename": "JobId"
+        }
+      }
+      """
+      And "desks"
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
+      And "validators"
+      """
+      [
+        {"_id": "publish_picture", "act": "publish", "type": "picture", "schema": {}}
+      ]
+      """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "original", "width": 800, "height": 600},
+          {"is_active": true, "name": "viewImage", "width": 640, "height": 480},
+          {"is_active": true, "name": "thumbnail", "width": 200, "height": 150}
+        ]
+      }]
+      """
+
+      When we upload a file "bike.jpg" to "archive"
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {
+        "slugline": "SDCP910-Test-Image",
+        "headline": "Comprehensive Metadata Test Image",
+        "description_text": "This image tests all metadata fields for SDCP-910 verification",
+        "byline": "Test Photographer",
+        "copyrightnotice": "Copyright 2023 Test Organization",
+        "creditline": "Photo by Test Photographer/Test Organization",
+        "extra": {"filename": "SDCP910-COMPLETE-REF"}
+      }
+      """
+      Then we get OK response
+
+      # Verify metadata exists in ALL renditions using archive_publish
+      And we get picture metadata "{{ archive_publish.renditions.original.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": ["Test Photographer"],
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ archive_publish.renditions.viewImage.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": ["Test Photographer"],
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ archive_publish.renditions.thumbnail.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": ["Test Photographer"],
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+
+      # Also verify the published version has the same metadata in all renditions
+      When we get "/published"
+      Then we get list with 1 items
+      And we get picture metadata "{{ items.0.renditions.original.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": ["Test Photographer"],
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ items.0.renditions.viewImage.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": ["Test Photographer"],
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+      And we get picture metadata "{{ items.0.renditions.thumbnail.media }}"
+      """
+      {
+        "JobId": "SDCP910-COMPLETE-REF",
+        "Title": "SDCP910-Test-Image",
+        "Description": "This image tests all metadata fields for SDCP-910 verification",
+        "Headline": "Comprehensive Metadata Test Image",
+        "Creator": ["Test Photographer"],
+        "CopyrightNotice": "Copyright 2023 Test Organization",
+        "CreditLine": "Photo by Test Photographer/Test Organization"
+      }
+      """
+
+    @auth @notification
+    Scenario: Update published article with associated images without errors (SDESK-7755)
+      Given empty "subscribers"
+      And config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true,
+        "PICTURE_METADATA_MAPPING": {}
+      }
+      """
+      And "desks"
+      """
+      [{ "name": "News", "content_expiry": 60 }]
+      """
+      And "validators"
+      """
+      [
+        {"_id": "publish_text", "act": "publish", "type": "text", "schema": {}},
+        {"_id": "correct_text", "act": "correct", "type": "text", "schema": {}},
+        {"_id": "publish_picture", "act": "publish", "type": "picture", "schema": {}}
+      ]
+      """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "original", "width": 800, "height": 600}
+        ]
+      }]
+      """
+      And "archive"
+      """
+      [
+        {
+          "_id": "img-1",
+          "guid": "img-1",
+          "_current_version": 1,
+          "type": "picture",
+          "slugline": "Associated image",
+          "headline": "Associated image",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "renditions": {
+            "original": {"width": 800, "height": 600, "media": "media-id-1"}
+          }
+        },
+        {
+          "_id": "art-1",
+          "guid": "art-1",
+          "_current_version": 1,
+          "type": "text",
+          "headline": "Main Article",
+          "slugline": "Main Article",
+          "body_html": "Initial article body",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "associations": {
+            "featuremedia": {
+              "_id": "img-1",
+              "guid": "img-1",
+              "type": "picture",
+              "slugline": "Associated image",
+              "headline": "Associated image",
+              "state": "in_progress",
+              "renditions": {
+                "original": {"width": 800, "height": 600, "media": "media-id-1"}
+              }
+            }
+          }
+        }
+      ]
+      """
+
+      # Step 1: Schedule the article with its associated image
+      When we publish "art-1" with "publish" type and "published" state
+      """
+      {
+          "publish_schedule": "#DATE+1#",
+          "schedule_settings": {"time_zone": "Europe/Prague"}
+      }
+      """
+      Then we get OK response
+
+      # Step 2: Let the scheduled items publish
+      When the publish schedule lapses
+      """
+      ["art-1", "img-1"]
+      """
+
+      # Step 3: Complete the publish queue workflow
+      When we enqueue published
+      And we transmit items
+      And run import legal publish queue
+
+      # Step 4: Verify both items are now published
+      When we get "/archive/art-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "art-1",
+        "state": "published"
+      }
+      """
+
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "img-1",
+        "state": "published"
+      }
+      """
+
+      # Step 5: Update only text fields of the published article
+      When we publish "art-1" with "correct" type and "corrected" state
+      """
+      {
+        "headline": "Main Article Updated",
+        "body_html": "Updated article body text"
+      }
+      """
+      Then we get OK response
+
+      # Step 6: Verify article republished successfully with image intact
+      When we get "/archive/art-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "art-1",
+        "headline": "Main Article Updated",
+        "body_html": "Updated article body text"
+      }
+      """
+
+      # Step 7: Verify the associated image remains unchanged
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "img-1",
+        "headline": "Associated image"
+      }
+      """
