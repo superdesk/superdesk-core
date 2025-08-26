@@ -40,7 +40,7 @@ from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
-from superdesk.media.image import get_metadata_from_item, write_metadata
+from superdesk.media.image import get_metadata_from_item, read_metadata, write_metadata
 
 from eve.utils import config
 from eve.versioning import resolve_document_version
@@ -938,6 +938,7 @@ class BasePublishService(BaseService):
             return
 
         try:
+            updated_metadata = get_metadata_from_item(updated, mapping)
             updated_renditions = deepcopy(renditions)
             updates["renditions"] = updated_renditions
 
@@ -949,28 +950,26 @@ class BasePublishService(BaseService):
                 if not media_id:
                     continue
 
-                original_metadata = get_metadata_from_item(original, mapping)
-                metadata = get_metadata_from_item(updated, mapping)
-
-                if original_metadata == metadata:
-                    continue
-
                 picture = app.media.get(media_id)
                 binary = picture.read()
-                updated_binary = write_metadata(binary, metadata)
-                if updated_binary != binary:
-                    updated_media_id = app.media.put(
-                        updated_binary, content_type=picture.content_type, filename=picture.filename
-                    )
-                    updated_renditions[rendition_key].update(
-                        {
-                            "media": updated_media_id,
-                            "href": app.media.url_for_media(updated_media_id, picture.content_type),
-                        }
-                    )
+                rendition_metadata = read_metadata(binary)
+
+                # check if the rendition metadata should be updated
+                if rendition_metadata == updated_metadata:
+                    continue
+
+                updated_binary = write_metadata(binary, updated_metadata)
+                updated_media_id = app.media.put(
+                    updated_binary, content_type=picture.content_type, filename=picture.filename
+                )
+                updated_renditions[rendition_key].update(
+                    {
+                        "media": updated_media_id,
+                        "href": app.media.url_for_media(updated_media_id, picture.content_type),
+                    }
+                )
 
             updated["renditions"] = updated_renditions
-
         except (KeyError, TypeError):
             return
 
