@@ -43,7 +43,7 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
             return {}
 
         for destination in destinations:
-            if delivery_type and destination.get("name") == name and destination.get("delivery_type"):
+            if destination.get("name") == name and destination.get("delivery_type") == delivery_type:
                 return destination
 
         return {}
