@@ -542,6 +542,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
         convert_task_attributes_to_objectId(new_doc)
         await transtype_metadata(new_doc)
+        await signals.item_duplicate_async.send(new_doc, original_doc, operation)
         signals.item_duplicate.send(self, item=new_doc, original=original_doc, operation=operation)
         await get_model(ItemModel).create_async([new_doc])
         await self._duplicate_versions(original_doc["_id"], new_doc)
@@ -564,6 +565,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
                 {"duplicate_id": original_doc["_id"]}, new_doc, operation or ITEM_DUPLICATED_FROM
             )
 
+        await signals.item_duplicated_async.send(new_doc, original_doc, operation)
         signals.item_duplicated.send(self, item=new_doc, original=original_doc, operation=operation)
 
         return new_doc["guid"]
@@ -600,7 +602,6 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
                 "marked_desks",
                 "_type",
                 "event_id",
-                "assignment_id",
                 PROCESSED_FROM,
                 "translations",
                 "translation_id",

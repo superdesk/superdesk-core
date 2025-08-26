@@ -29,7 +29,9 @@ __all__ = [
     "item_validate",
     "item_routed",
     "item_duplicate",
+    "item_duplicate_async",
     "item_duplicated",
+    "item_duplicated_async",
     "archived_item_removed",
     "item_resend",
     "item_resent",
@@ -150,6 +152,7 @@ item_routed = signals.signal("item:routed")
 #: :param original: original item
 #: :param operation: operation
 item_duplicate = signals.signal("item:duplicate")
+item_duplicate_async = AsyncSignal[dict, dict, str]("item:duplicate")
 
 
 #: Sent after item is duplicated
@@ -161,6 +164,7 @@ item_duplicate = signals.signal("item:duplicate")
 #: :param original: original item
 #: :param operation: operation
 item_duplicated = signals.signal("item:duplicated")
+item_duplicated_async = AsyncSignal[dict, dict, str]("item:duplicate")
 
 
 #: Sent then item is removed from archived
