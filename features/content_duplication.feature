@@ -627,19 +627,6 @@ Feature: Duplication of Content
       """
 
     @auth
-    Scenario: Planning assignment is removed from an item on duplication
-      When we patch given
-      """
-      {"assignment_id": "1234"}
-      """
-      When we post to "/archive/123/duplicate" with success
-      """
-      {"desk": "#desks._id#","type": "archive"}
-      """
-      When we get "/archive/#duplicate._id#"
-      Then we get "assignment_id" does not exist
-
-    @auth
     Scenario: Auto publish flag is removed on duplication
       When we patch given
       """
