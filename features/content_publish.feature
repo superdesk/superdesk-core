@@ -3656,21 +3656,7 @@ Feature: Content Publishing
                             "media": "600x800_new",
                             "mimetype": "image/jpeg"
                         },
-                        "1280x720": {
-                            "poi": {
-                                "x": 3024,
-                                "y": 756
-                            },
-                            "CropLeft": 0,
-                            "CropRight": 4032,
-                            "CropTop": 0,
-                            "CropBottom": 2277,
-                            "width": 1280,
-                            "height": 720,
-                            "href": "http://localhost:5000/api/upload-raw/1280x720.jpg",
-                            "media": "1280x720",
-                            "mimetype": "image/jpeg"
-                        }
+                        "1280x720": "__none__"
                     }
                 }
             }
@@ -4889,15 +4875,22 @@ Feature: Content Publishing
       {"PICTURE_METADATA_MAPPING": {"slugline": "Title", "extra.transref": "JobId"}}
       """
       And "desks"
-        """
-        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
-        """
+      """
+      [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+      """
       When we upload a file "bike.jpg" to "archive"
-      When we publish "#archive._id#" with "publish" type and "published" state
+      When we patch "archive/#archive._id#"
       """
       {
         "slugline": "test publish",
         "extra": {"transref": "1234"}
+      }
+      """
+      Then we get OK response
+
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {
       }
       """
       Then we get OK response
@@ -4996,228 +4989,168 @@ Feature: Content Publishing
       """
 
     @auth
-    Scenario: Correcting an item and its association
-      Given config update
+    Scenario: Associated image maintains correct schedule and timezone across publish, deschedule, and reschedule
+      Given empty "subscribers"
+      And config update
       """
-      { 
-        "PUBLISH_ASSOCIATED_ITEMS": true
-      }
+      { "PUBLISH_ASSOCIATED_ITEMS": true }
+      """
+      And "desks"
+      """
+      [{ "name": "News", "content_expiry": 60 }]
       """
       And "validators"
-        """
-        [
-            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
-        ]
-        """
-      And "desks"
-        """
-        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
-        """
+      """
+      [{ "_id": "publish_text", "act": "publish", "type": "text", "schema": {} }]
+      """
       And "archive"
-        """
-        [
-            {
-                "_id": "1234",
-                "guid": "1234",
-                "slugline": "picture",
-                "headline": "picture",
-                "alt_text": "alt_text",
-                "description_text": "description_text",
-                "type": "text",
-                "state": "in_progress",
-                "operation": "update",
-                "_current_version": 1,
-                "task": {
-                    "desk": "#desks._id#",
-                    "stage": "#desks.incoming_stage#",
-                    "user": "#CONTEXT_USER_ID#"
-                }
-            },
-            {
-              "_id": "5678",
-              "guid": "5678",
-              "slugline": "story",
-              "headline": "story headline",
-              "type": "text",
-              "state": "in_progress",
+      """
+      [
+        {
+          "_id": "img-1",
+          "guid": "img-1",
+          "_current_version": 1,
+          "type": "picture",
+          "slugline": "Associated image",
+          "headline": "Associated image",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "renditions": {}
+        },
+        {
+          "_id": "art-1",
+          "guid": "art-1",
+          "_current_version": 1,
+          "headline": "Main Article",
+          "slugline": "Main Article",
+          "body_html": "Article body",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "associations": {
+            "media--1": {
+              "_id": "img-1",
               "_current_version": 1,
-              "associations": {
-                "picture": {
-                  "_id": "1234",
-                  "guid": "1234",
-                  "slugline": "picture",
-                  "state": "in_progress",
-                  "_current_version": 1
-                }
+              "guid": "img-1",
+              "type": "picture",
+              "slugline": "Associated image",
+              "headline": "Associated image",
+              "state": "in_progress",
+              "renditions": {},
+              "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
               }
             }
-        ]
-      """
-      When we publish "5678" with "publish" type and "published" state
-      Then we get OK response
-      And we get existing resource
-      """
-        {
-            "_id": "5678",
-            "guid": "5678",
-            "_current_version": 2,
-            "slugline": "story",
-            "headline": "story headline",
-            "state": "published",
-            "operation": "publish",
-            "associations": {
-                "picture": {
-                "_id": "1234",
-                "slugline": "picture",
-                "state": "published",
-                "_current_version": 2 
-                }
-            }
+          }
         }
+      ]
       """
-      When we publish "5678" with "correct" type and "corrected" state
+
+      # Schedule article & image in Europe/Prague
+      When we publish "art-1" with "publish" type and "published" state
       """
       {
-          "headline": "corrected story headline",
-          "correction_sequence": "2",
-          "associations": {
-            "picture": {
-              "_id": "1234",
-              "slugline": "corrected picture",
-              "_current_version": 2
-            }
-          }
+          "publish_schedule": "2035-04-01T10:00:00+0200",
+          "schedule_settings": { "time_zone": "Europe/Prague" }
       }
       """
       Then we get OK response
-      And we get existing resource
+
+    # Validate both article and image are scheduled
+      When we get "/archive/art-1"
+      Then we get existing resource
       """
       {
-          "_id": "5678",
-          "guid": "5678",
-          "slugline": "story",
-          "headline": "corrected story headline",
-          "state": "corrected",
+          "_id": "art-1",
+          "guid": "art-1",
+          "state": "scheduled",
+          "operation": "publish",
+          "publish_schedule": "2035-04-01T08:00:00+0000",
+          "schedule_settings": {
+            "time_zone": "Europe/Prague",
+            "utc_publish_schedule": "2035-04-01T08:00:00+0000"
+          },
           "associations": {
-            "picture": {
-              "_id": "1234",
-              "slugline": "corrected picture",
-              "state": "corrected",
-              "_current_version": 3
-            }
+            "media--1": {
+              "guid": "img-1",
+              "type": "picture",
+              "state": "scheduled",
+              "operation": "publish"
           }
-      }
-      """
-      When we publish "5678" with "correct" type and "corrected" state
-      """
-      {
-          "headline": "re corrected story headline",
-          "correction_sequence": "3",
-          "associations": {
-            "picture": {
-              "_id": "1234",
-              "slugline": "re corrected picture",
-              "_current_version": 4
-            }
-          }
-      }
-      """
-      Then we get OK response
-      And we get existing resource
-      """
-      {
-          "_id": "5678",
-          "guid": "5678",
-          "slugline": "story",
-          "headline": "re corrected story headline",
-          "state": "corrected",
-          "associations": {
-            "picture": {
-              "_id": "1234",
-              "slugline": "re corrected picture",
-              "state": "corrected",
-              "_current_version": 4
-            }
-          }
+        }
       }
       """
 
-    @auth
-    Scenario: Publishing item with associated image still in progress, without modifying the image
-      Given config update
+      # Validate image scheduled
+      When we get "/archive/img-1"
+      Then we get existing resource
       """
       {
-        "PUBLISH_ASSOCIATED_ITEMS": true
+          "_id": "img-1",
+          "guid": "img-1",
+          "state": "scheduled",
+          "operation": "publish",
+          "publish_schedule": "2035-04-01T08:00:00+0000",
+          "schedule_settings": {
+            "time_zone": "Europe/Prague",
+            "utc_publish_schedule": "2035-04-01T08:00:00+0000"
+        }
       }
       """
-      And "validators"
-        """
-        [
-            {"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}
-        ]
-        """
-      And "desks"
-        """
-        [{"name": "Sports", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
-        """
-      And "archive"
-        """
-        [
-            {
-                "_id": "img1",
-                "guid": "img1",
-                "slugline": "picture",
-                "headline": "picture",
-                "type": "picture",
-                "state": "in_progress",
-                "_current_version": 1
-            },
-            {
-                "_id": "text1",
-                "guid": "text1",
-                "slugline": "story",
-                "headline": "story headline",
-                "type": "text",
-                "state": "in_progress",
-                "_current_version": 1,
-                "associations": {
-                  "picture": {
-                    "_id": "img1",
-                    "guid": "img1",
-                    "slugline": "picture",
-                    "type": "picture",
-                    "state": "in_progress",
-                    "_current_version": 1
-                  }
-                },
-                "task": {
-                  "desk": "#desks._id#",
-                  "stage": "#desks.incoming_stage#",
-                  "user": "#CONTEXT_USER_ID#"
-                }
-            }
-        ]
-        """
-      When we publish "text1" with "publish" type and "published" state
-      Then we get OK response
-      And we get existing resource
+
+      # Deschedule article (and image should also be descheduled)
+      When we patch "/archive/art-1"
       """
-        {
-            "_id": "text1",
-            "guid": "text1",
-            "slugline": "story",
-            "headline": "story headline",
-            "state": "published",
-            "operation": "publish",
-            "associations": {
-                "picture": {
-                  "_id": "img1",
-                  "slugline": "picture",
-                  "state": "published",
-                  "_current_version": 2
-                }
-            }
-        }
+      { "publish_schedule": null }
+      """
+      Then we get OK response
+
+    # Validate image also descheduled
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "_id": "img-1",
+          "guid": "img-1",
+          "state": "in_progress",
+          "operation": "deschedule"
+      }
+      """
+
+      # Reschedule article & image in America/New_York
+      When we publish "art-1" with "publish" type and "published" state
+      """
+      {
+          "publish_schedule": "2035-04-01T08:00:00-0400",
+          "schedule_settings": { "time_zone": "America/New_York" }
+      }
+      """
+      Then we get OK response
+
+      # Validate image scheduled in New York timezone
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+          "_id": "img-1",
+          "guid": "img-1",
+          "state": "scheduled",
+          "operation": "publish",
+          "publish_schedule": "2035-04-01T12:00:00+0000",
+          "schedule_settings": {
+            "time_zone": "America/New_York",
+            "utc_publish_schedule": "2035-04-01T12:00:00+0000"
+          }
+      }
       """
 
     @auth
