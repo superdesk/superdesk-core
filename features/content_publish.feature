@@ -5351,3 +5351,156 @@ Feature: Content Publishing
             }
         }
       """
+
+    @auth @notification
+    Scenario: Update published article with associated images without errors (SDESK-7755)
+      Given empty "subscribers"
+      And config update
+      """
+      { "PUBLISH_ASSOCIATED_ITEMS": true,
+        "PICTURE_METADATA_MAPPING": {}
+      }
+      """
+      And "desks"
+      """
+      [{ "name": "News", "content_expiry": 60 }]
+      """
+      And "validators"
+      """
+      [
+        {"_id": "publish_text", "act": "publish", "type": "text", "schema": {}},
+        {"_id": "correct_text", "act": "correct", "type": "text", "schema": {}},
+        {"_id": "publish_picture", "act": "publish", "type": "picture", "schema": {}}
+      ]
+      """
+      And "vocabularies"
+      """
+      [{
+        "_id": "crop_sizes",
+        "unique_field": "name",
+        "items": [
+          {"is_active": true, "name": "original", "width": 800, "height": 600}
+        ]
+      }]
+      """
+      And "archive"
+      """
+      [
+        {
+          "_id": "img-1",
+          "guid": "img-1",
+          "_current_version": 1,
+          "type": "picture",
+          "slugline": "Associated image",
+          "headline": "Associated image",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "renditions": {
+            "original": {"width": 800, "height": 600, "media": "media-id-1"}
+          }
+        },
+        {
+          "_id": "art-1",
+          "guid": "art-1",
+          "_current_version": 1,
+          "type": "text",
+          "headline": "Main Article",
+          "slugline": "Main Article",
+          "body_html": "Initial article body",
+          "state": "in_progress",
+          "task": {
+            "desk": "#desks._id#",
+            "stage": "#desks.incoming_stage#",
+            "user": "#CONTEXT_USER_ID#"
+          },
+          "associations": {
+            "featuremedia": {
+              "_id": "img-1",
+              "guid": "img-1",
+              "type": "picture",
+              "slugline": "Associated image",
+              "headline": "Associated image",
+              "state": "in_progress",
+              "renditions": {
+                "original": {"width": 800, "height": 600, "media": "media-id-1"}
+              }
+            }
+          }
+        }
+      ]
+      """
+
+      # Step 1: Schedule the article with its associated image
+      When we publish "art-1" with "publish" type and "published" state
+      """
+      {
+          "publish_schedule": "#DATE+1#",
+          "schedule_settings": {"time_zone": "Europe/Prague"}
+      }
+      """
+      Then we get OK response
+
+      # Step 2: Let the scheduled items publish
+      When the publish schedule lapses
+      """
+      ["art-1", "img-1"]
+      """
+
+      # Step 3: Complete the publish queue workflow
+      When we enqueue published
+      And we transmit items
+      And run import legal publish queue
+
+      # Step 4: Verify both items are now published
+      When we get "/archive/art-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "art-1",
+        "state": "published"
+      }
+      """
+
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "img-1",
+        "state": "published"
+      }
+      """
+
+      # Step 5: Update only text fields of the published article
+      When we publish "art-1" with "correct" type and "corrected" state
+      """
+      {
+        "headline": "Main Article Updated",
+        "body_html": "Updated article body text"
+      }
+      """
+      Then we get OK response
+
+      # Step 6: Verify article republished successfully with image intact
+      When we get "/archive/art-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "art-1",
+        "headline": "Main Article Updated",
+        "body_html": "Updated article body text"
+      }
+      """
+
+      # Step 7: Verify the associated image remains unchanged
+      When we get "/archive/img-1"
+      Then we get existing resource
+      """
+      {
+        "_id": "img-1",
+        "headline": "Associated image"
+      }
+      """
