@@ -29,6 +29,7 @@ from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
+from superdesk.cache import cache_backend
 
 
 def get_app(config=None):
@@ -76,6 +77,7 @@ def get_app(config=None):
 
     set_error_handlers(app)
     setup_apm(app, "Content API")
+    cache_backend.init_app(app)
 
     for module_name in app.config.get("CONTENTAPI_INSTALLED_APPS", []):
         app_module = importlib.import_module(module_name)
