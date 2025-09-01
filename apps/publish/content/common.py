@@ -60,7 +60,7 @@ from superdesk.errors import (
 )
 from superdesk.flask import request as flask_request
 from superdesk.media.crop import CropService
-from superdesk.media.image import get_metadata_from_item, write_metadata
+from superdesk.media.image import get_metadata_from_item, read_metadata, write_metadata
 from superdesk.metadata.item import (
     ASSOCIATIONS,
     CONTENT_STATE,
@@ -1018,33 +1018,14 @@ class BasePublishService(AsyncBaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    orig_associated_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
-                    if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
-                        orig_associated_item, associated_item
-                    ):
+                    if association_updates.get("state") not in PUBLISH_STATES:
+                        # There's an update to the published associated item
                         remove_unwanted(association_updates)
                         await publish_service.patch_async(id=associated_item[ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             await insert_into_versions_async(doc=associated_item)
         await self._refresh_associated_items(original)
-
-    def is_changed(self, old: dict, new: dict) -> bool:
-        """
-        Compare all top-level fields except those starting with an underscore (_).
-        Return True if any such field has changed.
-        """
-
-        if old is None or len(old) != len(new):
-            return True
-
-        fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
-
-        for field in fields_to_check:
-            if old.get(field) != new.get(field):
-                return True
-
-        return False
 
     async def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
@@ -1068,6 +1049,7 @@ class BasePublishService(AsyncBaseService):
             schedule_settings = updates.get(SCHEDULE_SETTINGS, original.get(SCHEDULE_SETTINGS, {}))
             publish_schedule = updates.get(PUBLISH_SCHEDULE, original.get(PUBLISH_SCHEDULE))
             if publish_schedule and not associated_item.get(PUBLISH_SCHEDULE):
+                # Always overwrite to ensure consistency
                 associated_item[PUBLISH_SCHEDULE] = publish_schedule
                 associated_item[SCHEDULE_SETTINGS] = schedule_settings
 
@@ -1079,6 +1061,7 @@ class BasePublishService(AsyncBaseService):
             return
 
         try:
+            updated_metadata = get_metadata_from_item(updated, mapping)
             updated_renditions = deepcopy(renditions)
             updates["renditions"] = updated_renditions
 
@@ -1093,19 +1076,22 @@ class BasePublishService(AsyncBaseService):
                 app = get_current_app()
                 picture = app.media.get(media_id)
                 binary = picture.read()
-                metadata = get_metadata_from_item(updated, mapping)
+                rendition_metadata = read_metadata(binary)
 
-                updated_binary = write_metadata(binary, metadata)
-                if updated_binary != binary:
-                    updated_media_id = app.media.put(
-                        updated_binary, content_type=picture.content_type, filename=picture.filename
-                    )
-                    updated_renditions[rendition_key].update(
-                        {
-                            "media": updated_media_id,
-                            "href": app.media.url_for_media(updated_media_id, picture.content_type),
-                        }
-                    )
+                # check if the rendition metadata should be updated
+                if rendition_metadata == updated_metadata:
+                    continue
+
+                updated_binary = write_metadata(binary, updated_metadata)
+                updated_media_id = app.media.put(
+                    updated_binary, content_type=picture.content_type, filename=picture.filename
+                )
+                updated_renditions[rendition_key].update(
+                    {
+                        "media": updated_media_id,
+                        "href": app.media.url_for_media(updated_media_id, picture.content_type),
+                    }
+                )
 
             updated["renditions"] = updated_renditions
 

@@ -67,7 +67,7 @@ CHECK_GENERATE_CONSISTENCY = True
 # FIXME: those fields are currently hardcoded because they were hardcoded in client too
 #   (see https://github.com/superdesk/superdesk-core/pull/1865#issuecomment-632103773).
 #   A cleaner way to get field content type should be done (cf. https://dev.sourcefabric.org/browse/SDESK-5316)
-TEXT_FIELDS = ["headline", "slugline"]
+TEXT_FIELDS = ["headline", "slugline", "description_text"]
 
 
 def get_field_content_state(item, field):
@@ -824,7 +824,11 @@ def generate_fields(item, fields=None, force=False, reload=False, original=None)
 
     for field in fields:
         client_value = get_field_value(item, field)
-        editor = Editor3Content(item, field, is_html=is_html(field), reload=reload)
+        content_state = get_field_content_state(item, field)
+        reload_field = reload
+        if content_state is None and client_value:
+            reload_field = True  # when content state is set to null regenerate it from client value
+        editor = Editor3Content(item, field, is_html=is_html(field), reload=reload_field)
         editor.update_item()
         if CHECK_GENERATE_CONSISTENCY and not force and client_value is not None:
             server_value = get_field_value(item, field) or ""

@@ -7,8 +7,6 @@
     "language": ["en"],
     "working_hours": [
       {
-        "start_time": "09:00:00",
-        "end_time": "17:00:00",
         "tags": [
           {"code": "regular"}
         ]

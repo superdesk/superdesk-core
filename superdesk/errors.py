@@ -761,6 +761,7 @@ class PublishAmazonSQSError(SuperdeskPublishError):
         15000: "Amazon SQS publish connection error",
         15001: "Amazon SQS publish client error",
         15002: "Amazon SQS publish sendMessage error",
+        15003: "Amazon SQS missing credentials error",
     }
 
     @classmethod
@@ -774,6 +775,10 @@ class PublishAmazonSQSError(SuperdeskPublishError):
     @classmethod
     def sendMessageError(cls, exception=None, destination=None):
         return PublishAmazonSQSError(15002, exception, destination)
+
+    @classmethod
+    def credentialsError(cls, exception=None, destination=None):
+        return PublishAmazonSQSError(15003, exception, destination)
 
 
 class AlreadyExistsError(Exception):

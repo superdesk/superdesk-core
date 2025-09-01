@@ -94,6 +94,17 @@ components:
               published_events:
                 type: integer
                 example: 2
+              working_hours:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    start:
+                      type: string
+                      example: "09:00:00"
+                    end:
+                      type: string
+                      example: "17:00:00"
 
   responses:
     '401':

@@ -77,7 +77,7 @@ typing-extensions==4.13.2
     # via
     #   anyio
     #   uvicorn
-urllib3==2.4.0
+urllib3==2.5.0
     # via requests
 uvicorn==0.34.2
     # via sphinx-autobuild

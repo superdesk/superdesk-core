@@ -17,7 +17,7 @@ install_requires = [
     "elasticsearch[async]<7.18",  # we are using oss version on test server
     "flask-mail>=0.9,<0.11",
     "arrow>=0.4,<=1.3.0",
-    "pillow>=9.2,<11.2",
+    "pillow>=9.2,<11.3",
     "bcrypt>=3.1.1,<4.4",
     "blinker>=1.3,<1.10",
     "celery[redis]>=5.2.7,<5.5",
@@ -43,7 +43,7 @@ install_requires = [
     "pymongo>=4.9.1,<4.10",
     "croniter<6.1",
     "python-dateutil<2.10",
-    "unidecode>=0.04.21,<=1.3.8",
+    "unidecode>=0.04.21,<=1.4.0",
     "authlib>0.14,<1.5",
     "draftjs-exporter[lxml]<5.2",
     "regex>=2020.7.14,<=2024.11.6",

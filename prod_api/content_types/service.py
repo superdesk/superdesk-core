@@ -16,10 +16,12 @@ from superdesk.utils import format_content_type_name
 
 
 class ContentTypesService(AsyncBaseService):
-    async def get_output_name(self, profile):
+    async def get_output_name(self, profile_id):
+        service = superdesk.get_resource_service("content_types")
         try:
-            _id = bson.ObjectId(profile)
-            item = (await superdesk.get_resource_service("content_types").find_one_async(req=None, _id=_id)) or {}
-            return format_content_type_name(item, str(_id))
+            _id = bson.ObjectId(profile_id)
         except bson.errors.InvalidId:
-            return "None"
+            _id = profile_id
+
+        profile = (await service.find_one_async(req=None, _id=_id)) or {}
+        return format_content_type_name(profile, str(profile_id))
