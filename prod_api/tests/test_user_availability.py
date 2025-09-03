@@ -105,7 +105,13 @@ def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
                     "date": "2023-05-16",
                     "status": "partial",
                     "working_hours": [{"start_time": "12:00", "end_time": "17:00"}],
-                }
+                },
+                {
+                    "user": user["_id"],
+                    "date": "2023-05-17",
+                    "status": "available",
+                    "working_hours": [{"start_time": "09:00", "end_time": "12:00"}],
+                },
             ],
         )
 
@@ -115,9 +121,10 @@ def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
         items = resp.json["_items"]
 
         assert len(items) == 1
-        availability = items[0]["availability"][0]
+        availability = items[0]["availability"]
+        assert len(availability) == 1
 
-        assert availability["date"] == "2023-05-16"
-        assert availability["status"] == "partial"
-        assert availability["working_hours"][0]["start"] == "12:00"
-        assert availability["working_hours"][0]["end"] == "17:00"
+        assert availability[0]["date"] == "2023-05-16"
+        assert availability[0]["status"] == "partial"
+        assert availability[0]["working_hours"][0]["start"] == "12:00"
+        assert availability[0]["working_hours"][0]["end"] == "17:00"
