@@ -258,34 +258,6 @@ Production API **v1** provides next endpoints:
     | path: **/prodapi/v1/users/<_id>**
     | allowed methods: GET
 
-- user availability list
-    | path: **/prodapi/v1/user_availability**
-    | search backend: mongo
-    | allowed methods: GET
-    | query parameters:
-        | **month**: Filter by month in YYYY-MM format
-        | **day**: Filter by specific day in YYYY-MM-DD format
-    | query examples:
-
-    - get availability for a specific month
-
-    .. code::
-
-            http://hostname/prodapi/v1/user_availability?month=2023-05
-
-    - get availability for a specific day
-
-    .. code::
-
-            http://hostname/prodapi/v1/user_availability?day=2023-05-16
-
-- user availability details
-    | path: **/prodapi/v1/user_availability/<_id>**
-    | allowed methods: GET
-    | query parameters:
-        | **month**: Filter by month in YYYY-MM format
-        | **day**: Filter by specific day in YYYY-MM-DD format
-
 - contacts list
     | path: **/prodapi/v1/contacts**
     | search backend: elastic
