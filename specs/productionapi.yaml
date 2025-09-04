@@ -13,6 +13,7 @@ paths:
         - User Availability
       parameters:
         - $ref: '#/components/parameters/month'
+        - $ref: '#/components/parameters/day'
       responses:
         '200':
           description: List of user availabilities
@@ -31,6 +32,7 @@ paths:
     parameters:
       - $ref: '#/components/parameters/userId'
       - $ref: '#/components/parameters/month'
+      - $ref: '#/components/parameters/day'
 
     get:
       summary: Get specific user availability
@@ -65,6 +67,14 @@ components:
       schema:
         type: string
       example: "2023-05"
+
+    day:
+      in: query
+      name: day
+      description: Filter availability by specific day (YYYY-MM-DD format)
+      schema:
+        type: string
+      example: "2023-05-16"
 
   schemas:
     UserAvailability:
@@ -101,10 +111,10 @@ components:
                   properties:
                     start:
                       type: string
-                      example: "09:00:00"
+                      example: "09:00"
                     end:
                       type: string
-                      example: "17:00:00"
+                      example: "17:00"
 
   responses:
     '401':

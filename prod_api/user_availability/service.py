@@ -67,15 +67,23 @@ class UserAvailabilityService(ProdApiService):
     def get_start_end_dates(self, req) -> Tuple[date, date]:
         """Get the start and end dates for the availability data."""
         today = date.today()
-        if req and req.args.get("month"):
-            year, month = req.args.get("month").split("-")
-        else:
-            year = today.year
-            month = today.month
-        start_date = date(int(year), int(month), 1)
-        end_date = (start_date + timedelta(days=31)).replace(day=1)
-        if end_date > today:
-            end_date = today
+        if req:
+            if req.args.get("day"):
+                year, month, day = map(int, req.args.get("day").split("-"))
+                start_date = date(year, month, day)
+                end_date = start_date + timedelta(days=1)
+                return start_date, end_date
+
+            elif req.args.get("month"):
+                year, month = map(int, req.args.get("month").split("-"))
+                start_date = date(year, month, 1)
+                end_date = (start_date + timedelta(days=31)).replace(day=1)
+                if end_date > today:
+                    end_date = today + timedelta(days=1)
+                return start_date, end_date
+
+        start_date = date(today.year, today.month, 1)
+        end_date = today + timedelta(days=1)
         return start_date, end_date
 
     def _get_user_availability(self, user, start_date, end_date):
