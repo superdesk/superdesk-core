@@ -111,10 +111,10 @@ components:
                   properties:
                     start:
                       type: string
-                      example: "09:00:00"
+                      example: "09:00"
                     end:
                       type: string
-                      example: "17:00:00"
+                      example: "17:00"
 
   responses:
     '401':
