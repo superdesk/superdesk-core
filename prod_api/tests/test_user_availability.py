@@ -81,3 +81,50 @@ def test_readonly(prodapi_app_with_data, prodapi_app_with_data_client):
             resp = getattr(prodapi_app_with_data_client, method)(url_for("user_availability|resource"))
             # we get a response
             assert resp.status_code == status
+
+
+def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
+    """
+    Test fetching user availability by day.
+    Ensures timestamps are in 4-digit format (HH:MM) and day filter works.
+    """
+    with superdesk_app.app_context():
+        user = superdesk_app.data.find_one("users", req=None, username="admin")
+        assert user
+        superdesk_app.data.insert(
+            "default_user_availability",
+            [{"_id": user["_id"], "enabled": True}],
+        )
+
+        # Insert a user availability entry
+        superdesk_app.data.insert(
+            "user_availability",
+            [
+                {
+                    "user": user["_id"],
+                    "date": "2023-05-16",
+                    "status": "partial",
+                    "working_hours": [{"start_time": "12:00", "end_time": "17:00"}],
+                },
+                {
+                    "user": user["_id"],
+                    "date": "2023-05-17",
+                    "status": "available",
+                    "working_hours": [{"start_time": "09:00", "end_time": "12:00"}],
+                },
+            ],
+        )
+
+    with prodapi_app_with_data.test_client() as client:
+        resp = client.get("/prodapi/v1/user_availability?day=2023-05-16")
+        assert resp.status_code == 200
+        items = resp.json["_items"]
+
+        assert len(items) == 1
+        availability = items[0]["availability"]
+        assert len(availability) == 1
+
+        assert availability[0]["date"] == "2023-05-16"
+        assert availability[0]["status"] == "partial"
+        assert availability[0]["working_hours"][0]["start"] == "12:00"
+        assert availability[0]["working_hours"][0]["end"] == "17:00"
