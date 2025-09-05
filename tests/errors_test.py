@@ -13,7 +13,8 @@ import logging
 
 from superdesk import errors
 from superdesk.errors import IngestApiError, IngestFileError, ParserError, ProviderError, IngestFtpError
-from superdesk.tests import TestCase, setup_notification
+from superdesk.core.tests.app import setup_mock_notifications
+from superdesk.tests import TestCase
 
 
 class MockLoggingHandler(logging.Handler):
@@ -87,7 +88,7 @@ class ErrorsTestCase(TestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        setup_notification(context=self)
+        setup_mock_notifications(context=self)
         mock_logger = logging.getLogger("test")
         self.mock_logger_handler = MockLoggingHandler()
         mock_logger.addHandler(self.mock_logger_handler)

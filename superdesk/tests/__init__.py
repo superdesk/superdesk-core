@@ -42,6 +42,12 @@ from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 from superdesk.storage.proxy import ProxyMediaStorage
 from superdesk.types import User, UsersResourceModel
 
+from superdesk.core.tests import TestClient
+from superdesk.core.tests.common import NotificationMock
+from superdesk.core.tests.app import get_prefixed_url
+from superdesk.core.tests.behave import set_placeholder
+from superdesk.core.tests.mongo import get_mongo_uri
+
 
 logger = logging.getLogger(__name__)
 test_user = {
@@ -570,24 +576,6 @@ def add_user_info_to_context(context: Any, token: str, user: User, auth_id=None)
     set_placeholder(context, f"{user.get('username', '').upper()}_USER_ID", str(user.get("_id")))
 
 
-def set_placeholder(context, name, value):
-    old_p = getattr(context, "placeholders", None)
-    if not old_p:
-        context.placeholders = dict()
-    context.placeholders[name] = value
-
-
-def get_prefixed_url(current_app, endpoint):
-    if endpoint.startswith("http://") or endpoint.startswith("https://"):
-        return endpoint
-
-    endpoint = endpoint.lstrip("/")
-    url_prefix = current_app.config["URL_PREFIX"] + "/"
-    if endpoint.startswith(url_prefix):
-        return endpoint
-    return url_prefix + endpoint
-
-
 async def setup_db_user(context, user):
     """Setup the user for the DB authentication.
 
@@ -667,19 +655,6 @@ async def setup_ad_user(context, user):
         ad_user["_id"] = auth_response_as_json["user"]
 
         add_user_info_to_context(context, token, ad_user)
-
-
-class NotificationMock:
-    def __init__(self):
-        self.messages = []
-        self.client = None
-        self.open = True
-
-    def send(self, message, name):
-        self.messages.append(message)
-
-    def reset(self):
-        self.messages = []
 
 
 def setup_notification(context):
@@ -773,37 +748,6 @@ class AsyncQuartTestCase(IsolatedAsyncioTestCase):
                     pass
 
         self.addAsyncCleanup(clean_ctx)
-
-
-class TestClient(QuartClient):
-    async def open(self, *args, **kwargs) -> Response:
-        """
-        Appends the request path to the response object for later debugging
-        """
-
-        response = await super().open(*args, **kwargs)
-        response.request_path = kwargs.get("path", args[0] if args else "/")  # type: ignore[attr-defined]
-        return response
-
-    def model_instance_to_json(self, model_instance: ResourceModel):
-        return model_instance.to_dict(mode="json")
-
-    async def post(self, *args, **kwargs) -> Response:
-        if "json" in kwargs:
-            if isinstance(kwargs["json"], ResourceModel):
-                kwargs["json"] = self.model_instance_to_json(kwargs["json"])
-            elif isinstance(kwargs["json"], list):
-                kwargs["json"] = [
-                    self.model_instance_to_json(item) if isinstance(item, ResourceModel) else item
-                    for item in kwargs["json"]
-                ]
-            elif isinstance(kwargs["json"], dict):
-                kwargs["json"] = {
-                    key: self.model_instance_to_json(value) if isinstance(value, ResourceModel) else value
-                    for key, value in kwargs["json"].items()
-                }
-
-        return await super().post(*args, **kwargs)
 
 
 class AsyncFlaskTestCase(AsyncTestCase):
