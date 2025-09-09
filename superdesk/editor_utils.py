@@ -354,6 +354,9 @@ class DraftJSHTMLExporter:
                         if ch == "\n":
                             normalized_text.append("\u2028")  # Use Unicode LINE SEPARATOR
                         elif unicodedata.category(ch) != "Cc":
+                            # Filter out control characters (Unicode category C) that break XML rendering in lxml.
+                            # Keeps normal text and Unicode (like 'qualité') safe for HTML export.
+                            # Valid formatting characters like tabs can be preserved if needed.
                             normalized_text.append(ch)
                     block["text"] = "".join(normalized_text)
 
