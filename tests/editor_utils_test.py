@@ -2178,4 +2178,4 @@ class Editor3TestCase(unittest.TestCase):
         item = self.build_item(draftjs_data)
         editor = Editor3Content(item)
         html = editor.html
-        assert html in ("<p>first line<br/>second line</p>", "<p>first line<br>second line</p>")
+        assert html == "<p>first line<br>second line</p>"

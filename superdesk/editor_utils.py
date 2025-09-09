@@ -358,7 +358,7 @@ class DraftJSHTMLExporter:
                     block["text"] = "".join(normalized_text)
 
             html = self.exporter.render(content_state)
-            html = html.replace("\u2028", "<br/>")
+            html = html.replace("\u2028", "<br>")
         except KeyError as e:
             if e.args == ("text",):
                 # "text" may be missing in some case (e.g. comments), and the exporter
