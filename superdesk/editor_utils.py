@@ -648,6 +648,12 @@ class Editor3Content(EditorContent):
                 inline_style_ranges = []
                 entity_ranges = []
                 for child in elem:
+                    if child.tag in ("br",):
+                        block_text += "\n"
+                        if child.tail and child.tail.strip():
+                            block_text += child.tail
+                        continue
+
                     child_text = "".join(child.itertext())
 
                     if child.tag in TAG_STYLE_MAP:

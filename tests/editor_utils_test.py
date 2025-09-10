@@ -2179,3 +2179,15 @@ class Editor3TestCase(unittest.TestCase):
         editor = Editor3Content(item)
         html = editor.html
         assert html == "<p>first line<br>second line</p>"
+
+    def test_import_br_preserves_breaks(self):
+        body_html = """
+        <p>first line<br>second line</p>
+        <p>Another paragraph</p>
+        """
+        item = {"body_html": body_html}
+        editor = Editor3Content(item, field="body_html")
+        html_after = editor.html
+
+        expected_html = "<p>first line<br>second line</p>\n<p>Another paragraph</p>"
+        self.assertEqual(html_after, expected_html)
