@@ -42,7 +42,7 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
             "published_articles": 0,
             "published_events": 2,
             "working_hours": [
-                {"start": "12:00:00", "end": "17:00:00"},
+                {"start": "12:00", "end": "17:00"},
             ],
         } in items[0]["availability"]
 
@@ -91,6 +91,8 @@ def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
     with superdesk_app.app_context():
         user = superdesk_app.data.find_one("users", req=None, username="admin")
         assert user
+        superdesk_app.data.remove("user_availability", {"user": user["_id"], "date": "2023-05-16"})
+        superdesk_app.data.remove("user_metrics", {"user": user["_id"], "date": "2023-05-16"})
         superdesk_app.data.insert(
             "default_user_availability",
             [{"_id": user["_id"], "enabled": True}],
@@ -102,29 +104,53 @@ def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
             [
                 {
                     "user": user["_id"],
-                    "date": "2023-05-16",
+                    "date": "2023-05-15",
+                    "status": "",
+                },
+                {
+                    "user": user["_id"],
+                    "date": "2023-05-20",
                     "status": "partial",
                     "working_hours": [{"start_time": "12:00", "end_time": "17:00"}],
                 },
                 {
                     "user": user["_id"],
-                    "date": "2023-05-17",
+                    "date": "2023-06-01",
                     "status": "available",
-                    "working_hours": [{"start_time": "09:00", "end_time": "12:00"}],
+                    "working_hours": [],
                 },
             ],
         )
-
     with prodapi_app_with_data.test_client() as client:
-        resp = client.get("/prodapi/v1/user_availability?day=2023-05-16")
+        # Query for a specific day
+        resp = client.get("/prodapi/v1/user_availability?day=2023-05-20")
         assert resp.status_code == 200
         items = resp.json["_items"]
 
         assert len(items) == 1
         availability = items[0]["availability"]
+        # Only one entry for the requested day should be returned
         assert len(availability) == 1
-
-        assert availability[0]["date"] == "2023-05-16"
+        assert availability[0]["date"] == "2023-05-20"
         assert availability[0]["status"] == "partial"
         assert availability[0]["working_hours"][0]["start"] == "12:00"
         assert availability[0]["working_hours"][0]["end"] == "17:00"
+
+        # entry for another day should be returned
+        resp = client.get("/prodapi/v1/user_availability?day=2023-06-01")
+        assert resp.status_code == 200
+        items = resp.json["_items"]
+        assert len(items) == 1
+        availability = items[0]["availability"]
+        assert len(availability) == 1
+        assert availability[0]["date"] == "2023-06-01"
+        assert availability[0]["status"] == "available"
+        assert availability[0]["working_hours"] == []
+
+        # Query for a day with no availability
+        resp = client.get("/prodapi/v1/user_availability?day=2023-05-16")
+        assert resp.status_code == 200
+        items = resp.json["_items"]
+        assert len(items) == 1
+        availability = items[0]["availability"]
+        assert availability == []
