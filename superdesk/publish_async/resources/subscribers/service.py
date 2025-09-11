@@ -1,5 +1,7 @@
 from typing import Any
+from datetime import datetime
 
+from superdesk.utc import utcnow
 from superdesk.core import get_config
 from superdesk.core.resources import AsyncResourceService
 
@@ -21,6 +23,7 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
     async def on_create(self, docs: list[SubscribersResource]) -> None:
         await super().on_create(docs)
         for doc in docs:
+            self._apply_schedule_status(doc)
             self._validate_seq_num_settings(doc)
             await self._validate_products_destinations(doc)
             for destination in doc.destinations or []:
@@ -37,6 +40,11 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
         updates["sequence_num_settings"] = (
             subscriber.sequence_num_settings.to_dict() if subscriber.sequence_num_settings else None
         )
+
+        self._apply_schedule_status(subscriber)
+        # Apply the calculated status back to `updates`
+        if "is_active" in subscriber:
+            updates["is_active"] = subscriber["is_active"]
 
         await self._validate_products_destinations(subscriber)
         self.keep_destinations_secrets(updates, original)
@@ -136,3 +144,32 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
                     payload={"products": 1},
                     message="Invalid Product Type. " "API Products {}.".format(", ".join(products)),
                 )
+
+    def _apply_schedule_status(self, subscriber: SubscribersResource) -> None:
+        """Set is_active flag based on current time and schedule.start_date/end_date if it exists."""
+        schedule = subscriber.schedule
+        if not schedule:
+            return
+
+        now = utcnow().date()
+        start_str = schedule.start_date
+        end_str = schedule.end_date
+
+        start = datetime.fromisoformat(start_str).date() if start_str else None
+        end = datetime.fromisoformat(end_str).date() if end_str else None
+
+        # If schedule is in future, and is_active is True - match start date with current date
+        if start and now < start and subscriber.is_active is True:
+            schedule.start_date = now.strftime("%Y-%m-%d")
+            return
+
+        # If schedule is in the past, don't enforce any changes to status
+        if end and now > end:
+            return
+
+        if start and end and start <= now <= end:
+            subscriber.is_active = True
+        elif start and now < start:
+            subscriber.is_active = False
+        elif end and now > end:
+            subscriber.is_active = False
