@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from typing import Dict, Tuple, TypedDict
 from superdesk import get_resource_service
 from superdesk.utils import ListCursor
@@ -26,13 +26,16 @@ AvailabilityMap = Dict[str, AvailabilityData]
 
 
 def format_hours(availability_day):
-    def to_hhmm(t):
+    def format_time(t):
         # Converts 'HH:MM:SS' or 'HH:MM' to 'HH:MM'
-        return t[:5] if t and len(t) >= 5 else t
+        try:
+            return time.fromisoformat(t).strftime("%H:%M")
+        except Exception:
+            return t[:5] if t and len(t) >= 5 else t
 
     if availability_day.get("working_hours"):
         hours = [
-            {"start": to_hhmm(wh["start_time"]), "end": to_hhmm(wh["end_time"])}
+            {"start": format_time(wh["start_time"]), "end": format_time(wh["end_time"])}
             for wh in availability_day["working_hours"]
             if wh.get("start_time") and wh.get("end_time")
         ]
@@ -49,7 +52,6 @@ class UserAvailabilityService(ProdApiService):
 
     def get(self, req, lookup):
         start_date, end_date = self.get_start_end_dates(req)
-        day_str = req.args.get("day") if req and req.args.get("day") else None
         availability_enabled = [
             default_availability["_id"]
             for default_availability in get_resource_service("default_user_availability").get_from_mongo(
@@ -57,7 +59,7 @@ class UserAvailabilityService(ProdApiService):
             )
         ]
         users = get_resource_service("users").find(where={"_id": {"$in": availability_enabled}})
-        user_data = [self._get_user_availability(user, start_date, end_date, day_str) for user in users]
+        user_data = [self._get_user_availability(user, start_date, end_date) for user in users]
         return ListCursor(user_data)
 
     def find_one(self, req, **lookup):
@@ -91,7 +93,7 @@ class UserAvailabilityService(ProdApiService):
         end_date = today + timedelta(days=1)
         return start_date, end_date
 
-    def _get_user_availability(self, user, start_date, end_date, day_str=None):
+    def _get_user_availability(self, user, start_date, end_date):
         user_data = {"_id": user["_id"], "username": user["username"], "availability": []}
         availability_map: AvailabilityMap = {}
 
@@ -106,7 +108,7 @@ class UserAvailabilityService(ProdApiService):
         )
 
         for availability_day in availability_days:
-            if availability_day.get("status") is not None:
+            if availability_day.get("status"):
                 availability_map[availability_day["date"]] = {
                     "status": availability_day["status"],
                     "published_articles": 0,
@@ -129,30 +131,15 @@ class UserAvailabilityService(ProdApiService):
                 metric["date"], {"status": "", "published_articles": 0, "published_events": 0, "working_hours": []}
             )[metric["name"]] = metric["value"]
 
-        if day_str:
-            # Only return the requested day if it exists in the map
-            if day_str in availability_map:
-                user_data["availability"] = [
-                    {
-                        "date": day_str,
-                        "status": availability_map[day_str]["status"],
-                        "published_articles": availability_map[day_str]["published_articles"],
-                        "published_events": availability_map[day_str]["published_events"],
-                        "working_hours": availability_map[day_str]["working_hours"],
-                    }
-                ]
-            else:
-                user_data["availability"] = []
-        else:
-            user_data["availability"] = [
-                {
-                    "date": date,
-                    "status": availability_map[date]["status"],
-                    "published_articles": availability_map[date]["published_articles"],
-                    "published_events": availability_map[date]["published_events"],
-                    "working_hours": availability_map[date]["working_hours"],
-                }
-                for date in sorted(availability_map.keys())
-            ]
+        user_data["availability"] = [
+            {
+                "date": date,
+                "status": availability_map[date]["status"],
+                "published_articles": availability_map[date]["published_articles"],
+                "published_events": availability_map[date]["published_events"],
+                "working_hours": availability_map[date]["working_hours"],
+            }
+            for date in sorted(availability_map.keys())
+        ]
 
         return user_data
