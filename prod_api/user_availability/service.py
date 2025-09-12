@@ -28,10 +28,13 @@ AvailabilityMap = Dict[str, AvailabilityData]
 def format_hours(availability_day):
     def format_time(t):
         # Converts 'HH:MM:SS' or 'HH:MM' to 'HH:MM'
+        if not t or not isinstance(t, str):
+            # Handle None and non-string inputs
+            return ""
         try:
             return time.fromisoformat(t).strftime("%H:%M")
-        except (ValueError, TypeError):
-            return t[:5] if t and len(t) >= 5 else t
+        except ValueError:
+            return t[:5] if len(t) >= 5 else t
 
     if availability_day.get("working_hours"):
         hours = [
