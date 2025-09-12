@@ -30,7 +30,7 @@ def format_hours(availability_day):
         # Converts 'HH:MM:SS' or 'HH:MM' to 'HH:MM'
         try:
             return time.fromisoformat(t).strftime("%H:%M")
-        except Exception:
+        except (ValueError, TypeError):
             return t[:5] if t and len(t) >= 5 else t
 
     if availability_day.get("working_hours"):
