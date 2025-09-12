@@ -3,6 +3,7 @@ from quart_babel import lazy_gettext
 import superdesk
 from superdesk.core.utils import load_class_from_config
 from superdesk.types import PublishExchangeFactory
+from .resources.subscribers.subscribers_schedule import update_subscriber_activation_states
 
 
 __all__ = ["get_exchange_factory"]

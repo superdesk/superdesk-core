@@ -35,6 +35,11 @@ class SubscriberDestination(Dataclass):
     config: dict | None = None
 
 
+class SubscriberSchedule(Dataclass):
+    start_date: str | None = None
+    end_date: str | None = None
+
+
 @unique
 class SubscriberType(str, Enum):
     DIGITAL = "digital"
@@ -62,6 +67,7 @@ class SubscribersResource(ResourceModelWithObjectId):
     api_products: Annotated[list[fields.ObjectId] | None, validate_data_relation_async("products")] = None
     is_async: Annotated[bool | None, Field(alias="async")] = None
     priority: bool | None = None
+    schedule: SubscriberSchedule | None = None
 
     init_version: int | None = None
 
