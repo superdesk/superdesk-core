@@ -43,8 +43,8 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
 
         self._apply_schedule_status(subscriber)
         # Apply the calculated status back to `updates`
-        if "is_active" in subscriber:
-            updates["is_active"] = subscriber["is_active"]
+        if subscriber.is_active:
+            updates["is_active"] = subscriber.is_active
 
         await self._validate_products_destinations(subscriber)
         self.keep_destinations_secrets(updates, original)

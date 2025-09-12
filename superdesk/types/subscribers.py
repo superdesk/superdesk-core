@@ -34,9 +34,11 @@ class SubscriberDestination(Dataclass):
     preview_endpoint_url: str | None = None
     config: dict | None = None
 
+
 class SubscriberSchedule(Dataclass):
     start_date: str | None = None
     end_date: str | None = None
+
 
 @unique
 class SubscriberType(str, Enum):
