@@ -167,14 +167,9 @@
             },
             "monitoring:view": {
                 "type": "string",
-                "allowed": [
-                    "list",
-                    "swimlane"
-                ],
                 "view": "list",
                 "default": "list",
-                "label": "Monitoring view",
-                "category": "monitoring"
+                "label": "Monitoring view"
             },
             "slack:notification": {
                 "type": "bool",
