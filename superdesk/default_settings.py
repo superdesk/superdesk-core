@@ -108,8 +108,9 @@ ELASTIC_QUERY_STRING_TYPE = "cross_fields"
 #: max api items to get with single query
 #:
 #: .. versionchanged:: 2.4.1
+#: .. versionchanged:: 2.10
 #:
-PAGINATION_LIMIT = 500
+PAGINATION_LIMIT = 1000
 
 MERGE_NESTED_DOCUMENTS = False
 
@@ -117,7 +118,7 @@ MERGE_NESTED_DOCUMENTS = False
 #:
 #: .. versionadded:: 1.33
 #:
-PAGINATION_DEFAULT = PAGINATION_LIMIT
+PAGINATION_DEFAULT = 500
 
 LOG_CONFIG_FILE = env("LOG_CONFIG_FILE", "logging_config.yml")
 LOG_SERVER_ADDRESS = env("LOG_SERVER_ADDRESS", "localhost")
