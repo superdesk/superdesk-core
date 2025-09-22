@@ -21,7 +21,6 @@ from PIL import IptcImagePlugin
 from PIL.TiffImagePlugin import IFDRational
 from flask import json
 
-from superdesk.types import Item
 from .iim_codes import iim_codes
 
 logger = logging.getLogger(__name__)
@@ -269,19 +268,3 @@ def write_metadata(input: bytes, metadata: PhotoMetadata) -> bytes:
         img.modify_xmp(xmp)
         img.modify_iptc(iptc)
         return img.get_bytes()
-
-
-def get_metadata_from_item(item: Item, mapping: PhotoMetadataMapping) -> PhotoMetadata:
-    metadata = PhotoMetadata()
-    for src, dest in mapping.items():
-        value = get_item_value(item, src)
-        if value is not None:
-            metadata[dest] = value
-    return metadata
-
-
-def get_item_value(item, src: str):
-    if src.startswith("extra."):
-        extra = item.get("extra") or {}
-        return extra.get(src[6:])
-    return item.get(src)

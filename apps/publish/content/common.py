@@ -44,17 +44,7 @@ from superdesk.services import BaseService
 from superdesk.utc import utcnow
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.validation import ValidationError
-from superdesk.media.image import (
-    read_metadata as image_read_metadata,
-    get_metadata_from_item,
-    write_metadata as image_write_metadata,
-)
-from superdesk.media.video import (
-    read_metadata as video_read_metadata,
-    get_video_from_photo,
-    write_metadata as video_write_metadata,
-)
-
+from superdesk.media.metadata import get_metadata_from_item, read_metadata, write_metadata
 
 from eve.utils import config
 from eve.versioning import resolve_document_version
@@ -1003,36 +993,26 @@ class BasePublishService(BaseService):
                 if not media_id:
                     continue
 
-                picture = app.media.get(media_id)
-                binary = picture.read()
+                media = app.media.get(media_id)
+                binary = media.read()
 
-                file_metadata = (
-                    video_read_metadata(binary) if updated[ITEM_TYPE] == "video" else image_read_metadata(binary)
-                )
-                metadata = (
-                    get_video_from_photo(get_metadata_from_item(updated, mapping))
-                    if updated[ITEM_TYPE] == "video"
-                    else get_metadata_from_item(updated, mapping)
-                )
+                file_metadata = read_metadata(binary, updated[ITEM_TYPE])
+                metadata = get_metadata_from_item(updated, mapping, updated[ITEM_TYPE])
                 should_update = any(metadata[k] != file_metadata.get(k) for k in metadata)
 
                 if not should_update:
                     continue
 
-                updated_binary = (
-                    video_write_metadata(binary, metadata)
-                    if updated[ITEM_TYPE] == "video"
-                    else image_write_metadata(binary, metadata)
-                )
+                updated_binary = write_metadata(binary, metadata, updated[ITEM_TYPE])
 
                 if updated_binary != binary:
                     updated_media_id = app.media.put(
-                        updated_binary, content_type=picture.content_type, filename=picture.filename
+                        updated_binary, content_type=media.content_type, filename=media.filename
                     )
                     updated_renditions[rendition_key].update(
                         {
                             "media": updated_media_id,
-                            "href": app.media.url_for_media(updated_media_id, picture.content_type),
+                            "href": app.media.url_for_media(updated_media_id, media.content_type),
                         }
                     )
 

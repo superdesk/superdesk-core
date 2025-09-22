@@ -6,10 +6,10 @@ from PIL.IptcImagePlugin import getiptcinfo
 from superdesk.media.image import (
     PhotoMetadata,
     PhotoMetadataMapping,
-    get_metadata_from_item,
     read_metadata,
     write_metadata,
 )
+from superdesk.media.metadata import get_metadata_from_item
 from superdesk.types import Item
 
 from .. import fixture_path
@@ -86,7 +86,7 @@ def test_get_metadata_from_item() -> None:
         slugline="Title",
     )
     mapping["extra.filename"] = "JobId"
-    metadata = get_metadata_from_item(item, mapping)
+    metadata = get_metadata_from_item(item, mapping, "picture")
     assert metadata == PhotoMetadata(
         Headline="foo",
         Title="bar",

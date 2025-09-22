@@ -5,8 +5,8 @@ sudo apt-get -y update
 sudo apt-get -y install libxml2-dev libxmlsec1-dev libxmlsec1-openssl perl make curl
 
 # Install ExifTool
-EXIFTOOL_VERSION="13.32"
-curl -LO "https://sourceforge.net/projects/exiftool/files/Image-ExifTool-${EXIFTOOL_VERSION}.tar.gz"
+EXIFTOOL_VERSION="13.30"
+curl -LO "https://cpan.metacpan.org/authors/id/E/EX/EXIFTOOL/Image-ExifTool-${EXIFTOOL_VERSION}.tar.gz"
 gzip -dc "Image-ExifTool-${EXIFTOOL_VERSION}.tar.gz" | tar -xf -
 cd "Image-ExifTool-${EXIFTOOL_VERSION}"
 perl Makefile.PL
