@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from typing import Dict, Tuple, TypedDict
 from superdesk import get_resource_service
 from superdesk.utils import ListCursor
@@ -26,9 +26,19 @@ AvailabilityMap = Dict[str, AvailabilityData]
 
 
 def format_hours(availability_day):
+    def format_time(t):
+        # Converts 'HH:MM:SS' or 'HH:MM' to 'HH:MM'
+        if not t or not isinstance(t, str):
+            # Handle None and non-string inputs
+            return ""
+        try:
+            return time.fromisoformat(t).strftime("%H:%M")
+        except ValueError:
+            return t[:5] if len(t) >= 5 else t
+
     if availability_day.get("working_hours"):
         hours = [
-            {"start": wh["start_time"], "end": wh["end_time"]}
+            {"start": format_time(wh["start_time"]), "end": format_time(wh["end_time"])}
             for wh in availability_day["working_hours"]
             if wh.get("start_time") and wh.get("end_time")
         ]

@@ -42,7 +42,7 @@ def test_service_get(superdesk_app, prodapi_app_with_data):
             "published_articles": 0,
             "published_events": 2,
             "working_hours": [
-                {"start": "12:00:00", "end": "17:00:00"},
+                {"start": "12:00", "end": "17:00"},
             ],
         } in items[0]["availability"]
 
