@@ -102,7 +102,7 @@ def read_with_exiftool(bin: bytes) -> dict[str, Any]:
             with ExifToolHelper() as et:
                 return et.get_metadata(tmp.name, ["-xmp:all"])[0]
         except ExifToolException as e:
-            logger.exception(e.stderr)
+            logger.exception("ExifTool read failed: %s", e)
             return {}
 
 
@@ -121,7 +121,7 @@ def write_metadata(bin: bytes, video: VideoMetadata) -> bytes:
 def get_video_from_photo(photo: PhotoMetadata) -> VideoMetadata:
     """Get XMP from IPTC and truthy custom tags
 
-    @param metadata: PhotoMetadata
+    @param photo: PhotoMetadata
     """
 
     from typing import cast
@@ -176,7 +176,7 @@ def get_video_from_photo(photo: PhotoMetadata) -> VideoMetadata:
 def map_exiftool_args(video: VideoMetadata) -> list[str]:
     args = ["-sep", ","]
     args.extend(f"-{k}={','.join(v) if isinstance(v, list) else v}" for k, v in video.items())
-    args.append("-overwrite_original")
+    args.append("-overwrite_original_in_place")
     return args
 
 
@@ -184,21 +184,16 @@ def write_with_exiftool(bin: bytes, args: list[str]) -> bytes:
     import tempfile
     from exiftool import ExifToolHelper
     from exiftool.exceptions import ExifToolExecuteError
-    from os import remove
-
-    with tempfile.NamedTemporaryFile(delete=False) as tmp:
-        tmp.write(bin)
-        tmp.flush()
-        path = tmp.name
 
     try:
-        with ExifToolHelper() as et:
-            et.execute(*args, path)
+        with tempfile.NamedTemporaryFile() as tmp:
+            tmp.write(bin)
+            tmp.flush()
+            with ExifToolHelper() as et:
+                et.execute(*args, tmp.name)
 
-        with open(path, "rb") as r:
-            return r.read()
+            tmp.seek(0)
+            return tmp.read()
     except ExifToolExecuteError as e:
-        logger.exception(e.stderr)
+        logger.exception("ExifTool write failed: %s", e)
         return bin
-    finally:
-        remove(path)
