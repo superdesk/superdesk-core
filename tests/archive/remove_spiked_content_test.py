@@ -165,21 +165,21 @@ class RemoveSpikedContentTestCase(TestCase):
         self.app.data.insert(
             ARCHIVE,
             [
-                {"expiry": get_expiry_date(0), "state": "spiked"},
-                {"expiry": get_expiry_date(10), "state": "spiked"},
-                {"expiry": get_expiry_date(20), "state": "spiked"},
-                {"expiry": get_expiry_date(30), "state": "spiked"},
-                {"expiry": None, "state": "spiked"},
-                {"unique_id": 97, "state": "spiked"},
-                {"expiry": now - timedelta(minutes=10), "state": "spiked", "unique_id": 100},
+                {"expiry": get_expiry_date(0), "state": "spiked", "_id": "1"},
+                {"expiry": get_expiry_date(10), "state": "spiked", "_id": "2"},
+                {"expiry": get_expiry_date(20), "state": "spiked", "_id": "3"},
+                {"expiry": get_expiry_date(30), "state": "spiked", "_id": "4"},
+                {"expiry": None, "state": "spiked", "_id": "5"},
+                {"unique_id": 97, "state": "spiked", "_id": "6"},
+                {"expiry": now - timedelta(minutes=10), "state": "spiked", "_id": "7"},
             ],
         )
 
         now = utcnow()
         for expired_items in get_resource_service(ARCHIVE).get_expired_items(now):
             if expired_items:
-                self.assertEqual(1, len(expired_items))
-                self.assertEqual(100, expired_items[0]["unique_id"])
+                self.assertEqual(4, len(expired_items))
+                assert {"1", "5", "6", "7"} == {item["_id"] for item in expired_items}
                 break
         else:
             assert False, "break was not called"
