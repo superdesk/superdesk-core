@@ -44,7 +44,7 @@ class CeleryPublishRouter(AsyncioPublishRouter):
         )
 
 
-@celery.task(soft_time_limit=600, expires=10)
+@celery.task(soft_time_limit=600)
 async def send_task_to_consumer(consumer_name: str, subscriber_id: ObjectId, task_ids: list[ObjectId]) -> None:
     """
     An asynchronous function to send tasks to a specified consumer by identifying the subscriber
