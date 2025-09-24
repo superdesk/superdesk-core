@@ -59,19 +59,20 @@ def test_read_metadata(read_with_exiftool, video_binary) -> None:
 
 
 def test_map_exiftool_args() -> None:
-    from superdesk.media.video import VideoMetadata, map_exiftool_args
+    from superdesk.media.metadata_mapping import Metadata
+    from superdesk.media.video import map_exiftool_args
 
-    video: VideoMetadata = {"Creator": ["Phil", "Harvey"]}
+    video: Metadata = {"Creator": ["Phil", "Harvey"]}
     expected = ["-sep", ",", "-Creator=Phil,Harvey", "-overwrite_original_in_place"]
 
     assert map_exiftool_args(video) == expected
 
 
 def test_get_video_from_photo() -> None:
-    from superdesk.media.image import PhotoMetadata
+    from superdesk.media.metadata_mapping import Metadata
     from superdesk.media.video import get_video_from_photo
 
-    photo: PhotoMetadata = {
+    photo: Metadata = {
         "Description": (
             "The Montreal Police logo is seen on "
             "a police car in Montreal on Wednesday, July 8, 2020. "
@@ -159,9 +160,10 @@ def test_read_from_video(video_binary) -> None:
 
 
 def test_write_from_video(video_binary, video_updated_binary) -> None:
-    from superdesk.media.video import VideoMetadata, write_metadata
+    from superdesk.media.metadata_mapping import Metadata
+    from superdesk.media.video import write_metadata
 
-    updates: VideoMetadata = {
+    updates: Metadata = {
         "Description": "Your Description Here 1",
         "Headline": "Your Headline 2",
         "City": "Your City 3",

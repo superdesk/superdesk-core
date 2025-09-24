@@ -13,13 +13,14 @@
 import io
 import logging
 
-from typing import BinaryIO, Dict, List, Literal, TypedDict, Union
+from typing import BinaryIO, Dict, List, Union
 
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
 from PIL.TiffImagePlugin import IFDRational
 from flask import json
+from superdesk.media.metadata_mapping import Metadata
 
 from .iim_codes import iim_codes
 
@@ -165,44 +166,7 @@ def get_meta_iptc(file_stream: BinaryIO):
     return metadata
 
 
-class PhotoMetadata(TypedDict, total=False):
-    Description: str
-    DescriptionWriter: str
-    Headline: str
-    Instructions: str
-    JobId: str
-    Title: str
-    Creator: List[str]
-    CreatorsJobtitle: str
-    City: str
-    ProvinceState: str
-    Country: str
-    CountryCode: str
-    CopyrightNotice: str
-    CreditLine: str
-
-
-PhotoMetadataKeys = Literal[
-    "Description",
-    "DescriptionWriter",
-    "Headline",
-    "Instructions",
-    "JobId",
-    "Title",
-    "Creator",
-    "CreatorsJobtitle",
-    "City",
-    "ProvinceState",
-    "Country",
-    "CountryCode",
-    "CopyrightNotice",
-    "CreditLine",
-]
-
-PhotoMetadataMapping = Dict[str, PhotoMetadataKeys]
-
-
-def read_metadata(input: bytes) -> PhotoMetadata:
+def read_metadata(input: bytes) -> Metadata:
     """Reads the metadata from the image file.
 
     @param file_stream: stream
@@ -236,7 +200,7 @@ def get_xmp_lang_string(value, lang="x-default"):
     return ""
 
 
-def write_metadata(input: bytes, metadata: PhotoMetadata) -> bytes:
+def write_metadata(input: bytes, metadata: Metadata) -> bytes:
     """Writes the metadata to the image file.
 
     @param file_stream: stream
