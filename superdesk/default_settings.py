@@ -784,7 +784,10 @@ INGEST_OLD_CONTENT_MINUTES = 10
 EMAIL_TIMEOUT = 10
 
 #: This setting is used to overide the desk/stage expiry for items when spiked
-SPIKE_EXPIRY_MINUTES = None
+#:
+#: .. versionchanged:: 2.10
+#:
+SPIKE_EXPIRY_MINUTES = 30 * 24 * 60
 
 #: A secret key that will be used to securely sign cookies and other things
 #:
