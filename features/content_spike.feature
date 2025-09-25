@@ -46,7 +46,7 @@ Feature: Content Spiking
         Then we get OK response
         And we get spiked content "item-1"
         And we get version 2
-        And we get desk spike expiry after "60"
+        And we get desk spike expiry after "99"
         When we get "/archive/item-1"
         Then we get existing resource
         """

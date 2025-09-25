@@ -79,6 +79,7 @@ def update_config(conf):
     conf["CELERY_BEAT_SCHEDULE_FILENAME"] = "./testschedule.db"
     conf["CELERY_BEAT_SCHEDULE"] = {}
     conf["CONTENT_EXPIRY_MINUTES"] = 99
+    conf["SPIKE_EXPIRY_MINUTES"] = 99
     conf["VERSION"] = "_current_version"
     conf["SECRET_KEY"] = "test-secret"
     conf["JSON_SORT_KEYS"] = True
