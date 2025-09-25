@@ -2,7 +2,7 @@ from typing import overload, Literal
 
 from superdesk.types import Item
 
-from superdesk.media.metadata_mapping import Metadata, MetadataMapping
+from superdesk.media.metadata_mapping import MediaMetadata, MediaMetadataMapping
 from superdesk.metadata.item import CONTENT_TYPE_LITERAL
 from superdesk.media.image import (
     read_metadata as image_read_metadata,
@@ -15,12 +15,14 @@ from superdesk.media.video import (
 )
 
 
-def read_metadata(bin: bytes, content_type: CONTENT_TYPE_LITERAL) -> Metadata:
+def read_metadata(bin: bytes, content_type: CONTENT_TYPE_LITERAL) -> MediaMetadata:
     return video_read_metadata(bin) if content_type == "video" else image_read_metadata(bin)
 
 
-def get_metadata_from_item(item: Item, mapping: MetadataMapping, content_type: CONTENT_TYPE_LITERAL) -> Metadata:
-    metadata = Metadata()
+def get_metadata_from_item(
+    item: Item, mapping: MediaMetadataMapping, content_type: CONTENT_TYPE_LITERAL
+) -> MediaMetadata:
+    metadata = MediaMetadata()
     for src, dest in mapping.items():
         value = _get_item_value(item, src)
         if value is not None:
@@ -39,12 +41,12 @@ def _get_item_value(item, src: str) -> str | None:
 
 
 @overload
-def write_metadata(bin: bytes, metadata: Metadata, content_type: Literal["video"]) -> bytes:
+def write_metadata(bin: bytes, metadata: MediaMetadata, content_type: Literal["video"]) -> bytes:
     ...  # noqa
 
 
 @overload
-def write_metadata(bin: bytes, metadata: Metadata, content_type: Literal["picture"]) -> bytes:
+def write_metadata(bin: bytes, metadata: MediaMetadata, content_type: Literal["picture"]) -> bytes:
     ...  # noqa
 
 

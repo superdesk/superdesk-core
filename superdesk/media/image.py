@@ -20,7 +20,7 @@ from PIL import Image, ExifTags
 from PIL import IptcImagePlugin
 from PIL.TiffImagePlugin import IFDRational
 from flask import json
-from superdesk.media.metadata_mapping import Metadata
+from superdesk.media.metadata_mapping import MediaMetadata
 
 from .iim_codes import iim_codes
 
@@ -166,7 +166,7 @@ def get_meta_iptc(file_stream: BinaryIO):
     return metadata
 
 
-def read_metadata(input: bytes) -> Metadata:
+def read_metadata(input: bytes) -> MediaMetadata:
     """Reads the metadata from the image file.
 
     @param file_stream: stream
@@ -200,7 +200,7 @@ def get_xmp_lang_string(value, lang="x-default"):
     return ""
 
 
-def write_metadata(input: bytes, metadata: Metadata) -> bytes:
+def write_metadata(input: bytes, metadata: MediaMetadata) -> bytes:
     """Writes the metadata to the image file.
 
     @param file_stream: stream

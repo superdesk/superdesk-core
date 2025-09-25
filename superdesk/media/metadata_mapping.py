@@ -1,7 +1,7 @@
 from typing import Dict, List, Literal, TypedDict
 
 
-class Metadata(TypedDict, total=False):
+class MediaMetadata(TypedDict, total=False):
     Description: str | None
     CaptionWriter: str | None
     Headline: str | None
@@ -47,9 +47,9 @@ class Metadata(TypedDict, total=False):
     CreditLine: str
 
 
-MetadataKeys = set(Metadata.__annotations__.keys())
+MediaMetadataKeys = set(MediaMetadata.__annotations__.keys())
 
-MetadataMappingKeys = Literal[
+MediaMetadataMappingKeys = Literal[
     "Description",
     "DescriptionWriter",
     "Headline",
@@ -66,4 +66,4 @@ MetadataMappingKeys = Literal[
     "CreditLine",
 ]
 
-MetadataMapping = Dict[str, MetadataMappingKeys]
+MediaMetadataMapping = Dict[str, MediaMetadataMappingKeys]

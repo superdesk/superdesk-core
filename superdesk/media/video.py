@@ -14,7 +14,7 @@ from hachoir.parser import guessParser
 from hachoir.metadata import extractMetadata
 from flask import json
 import logging
-from superdesk.media.metadata_mapping import Metadata, MetadataKeys
+from superdesk.media.metadata_mapping import MediaMetadata, MediaMetadataKeys
 
 
 logger = logging.getLogger(__name__)
@@ -63,19 +63,19 @@ def read_with_exiftool(bin: bytes) -> dict[str, Any]:
             return {}
 
 
-def read_metadata(bin: bytes) -> Metadata:
+def read_metadata(bin: bytes) -> MediaMetadata:
     from typing import cast
 
     raw_metadata = read_with_exiftool(bin)
-    metadata = {kk: v for k, v in raw_metadata.items() if v and (kk := k.replace("XMP:", "")) in MetadataKeys}
-    return cast(Metadata, metadata)
+    metadata = {kk: v for k, v in raw_metadata.items() if v and (kk := k.replace("XMP:", "")) in MediaMetadataKeys}
+    return cast(MediaMetadata, metadata)
 
 
-def write_metadata(bin: bytes, video: Metadata) -> bytes:
+def write_metadata(bin: bytes, video: MediaMetadata) -> bytes:
     return write_with_exiftool(bin, map_exiftool_args(video))
 
 
-def get_video_from_photo(photo: Metadata) -> Metadata:
+def get_video_from_photo(photo: MediaMetadata) -> MediaMetadata:
     """Get XMP from IPTC and truthy custom tags
 
     @param photo: Metadata
@@ -127,10 +127,10 @@ def get_video_from_photo(photo: Metadata) -> Metadata:
         ),
     }
     tags = {k: vv for k, v in xmp.items() if (vv := v or photo.get(k))}
-    return cast(Metadata, tags)
+    return cast(MediaMetadata, tags)
 
 
-def map_exiftool_args(video: Metadata) -> list[str]:
+def map_exiftool_args(video: MediaMetadata) -> list[str]:
     args = ["-sep", ","]
     args.extend(f"-{k}={','.join(v) if isinstance(v, list) else v}" for k, v in video.items())
     args.append("-overwrite_original_in_place")
