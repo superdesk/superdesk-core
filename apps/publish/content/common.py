@@ -13,9 +13,6 @@ import superdesk
 import superdesk.signals as signals
 import superdesk.users.user_metrics as user_metrics
 
-from bson import ObjectId
-from datetime import datetime
-
 from copy import copy
 from copy import deepcopy
 from flask import current_app as app
@@ -810,9 +807,6 @@ class BasePublishService(BaseService):
         for associations_key, associated_item in associations.items():
             if associated_item is None:
                 continue
-            if associated_item.get("state") == CONTENT_STATE.CORRECTED:
-                # Skip already corrected associated items; they don't need re-publishing
-                continue
             if isinstance(associated_item, dict) and associated_item.get(config.ID_FIELD):
                 if not config.PUBLISH_ASSOCIATED_ITEMS or not publish_service:
                     if original.get(ASSOCIATIONS, {}).get(associations_key):
@@ -905,48 +899,14 @@ class BasePublishService(BaseService):
                         sync_associated_item_changes(associated_item, associated_item_updates)
                         continue
 
-                    orig_associated_item = archive_service.find_one(req=None, _id=associated_item[config.ID_FIELD])
-                    if association_updates.get("state") not in PUBLISH_STATES or self.is_changed(
-                        orig_associated_item, associated_item
-                    ):
+                    if association_updates.get("state") not in PUBLISH_STATES:
+                        # There's an update to the published associated item
                         remove_unwanted(association_updates)
                         publish_service.patch(id=associated_item[config.ID_FIELD], updates=association_updates)
 
             # When there is an associated item which is published, Inserts the latest version of that associated item into archive_versions.
             insert_into_versions(doc=associated_item)
         self._refresh_associated_items(original)
-
-    def _normalize(self, val):
-        """Normalize values for comparison, handling ObjectId, datetime, etc."""
-        if isinstance(val, ObjectId):
-            return str(val)
-        if isinstance(val, datetime):
-            return val.isoformat().replace("+00:00", "Z")
-        if isinstance(val, str):
-            return val.replace("+0000", "Z") if val.endswith("+0000") else val
-        if isinstance(val, dict):
-            return {k: self._normalize(v) for k, v in val.items()}
-        if isinstance(val, list):
-            return [self._normalize(i) for i in val]
-        return val
-
-    def is_changed(self, old: dict, new: dict) -> bool:
-        """
-        Check if content was meaningfully changed.
-        Normalizes values before comparison to handle ObjectId/datetime differences.
-        """
-        if old is None or len(old) != len(new):
-            return True
-
-        fields_to_check = {key for key in old.keys() | new.keys() if not key.startswith("_")}
-
-        for field in fields_to_check:
-            old_val = self._normalize(old.get(field))
-            new_val = self._normalize(new.get(field))
-
-            if old_val != new_val:
-                return True
-        return False
 
     def _mark_media_item_as_used(self, updates, original):
         if ASSOCIATIONS not in updates or not updates.get(ASSOCIATIONS):
@@ -1017,7 +977,6 @@ class BasePublishService(BaseService):
                     )
 
             updated["renditions"] = updated_renditions
-
         except (KeyError, TypeError):
             return
 
@@ -1060,15 +1019,7 @@ def sync_associated_item_changes(associated_item, updates):
 superdesk.workflow_state("published")
 superdesk.workflow_action(
     name="publish",
-    include_states=[
-        "fetched",
-        "routed",
-        "submitted",
-        "in_progress",
-        "scheduled",
-        "unpublished",
-        "correction",
-    ],
+    include_states=["fetched", "routed", "submitted", "in_progress", "scheduled", "unpublished", "correction"],
     privileges=["publish"],
 )
 

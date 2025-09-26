@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from datetime import date, timedelta
+from datetime import date, timedelta, time
 from typing import Dict, Tuple, TypedDict
 from superdesk import get_resource_service
 from superdesk.utils import ListCursor
@@ -26,9 +26,23 @@ AvailabilityMap = Dict[str, AvailabilityData]
 
 
 def format_hours(availability_day):
+    def format_time(t):
+        # Converts 'HH:MM:SS' or 'HH:MM' to 'HH:MM'
+        if not t or not isinstance(t, str):
+            # Handle None and non-string inputs
+            return ""
+        try:
+            return time.fromisoformat(t).strftime("%H:%M")
+        except ValueError:
+            return t[:5] if len(t) >= 5 else t
+
     if availability_day.get("working_hours"):
-        sorted_hours = sorted(availability_day["working_hours"], key=lambda wh: wh["start_time"])
-        return [{"start": wh["start_time"], "end": wh["end_time"]} for wh in sorted_hours]
+        hours = [
+            {"start": format_time(wh["start_time"]), "end": format_time(wh["end_time"])}
+            for wh in availability_day["working_hours"]
+            if wh.get("start_time") and wh.get("end_time")
+        ]
+        return sorted(hours, key=lambda wh: wh["start"])
     return []
 
 
@@ -63,15 +77,23 @@ class UserAvailabilityService(ProdApiService):
     def get_start_end_dates(self, req) -> Tuple[date, date]:
         """Get the start and end dates for the availability data."""
         today = date.today()
-        if req and req.args.get("month"):
-            year, month = req.args.get("month").split("-")
-        else:
-            year = today.year
-            month = today.month
-        start_date = date(int(year), int(month), 1)
-        end_date = (start_date + timedelta(days=31)).replace(day=1)
-        if end_date > today:
-            end_date = today
+        if req:
+            if req.args.get("day"):
+                year, month, day = map(int, req.args.get("day").split("-"))
+                start_date = date(year, month, day)
+                end_date = start_date + timedelta(days=1)
+                return start_date, end_date
+
+            elif req.args.get("month"):
+                year, month = map(int, req.args.get("month").split("-"))
+                start_date = date(year, month, 1)
+                end_date = (start_date + timedelta(days=31)).replace(day=1)
+                if end_date > today:
+                    end_date = today + timedelta(days=1)
+                return start_date, end_date
+
+        start_date = date(today.year, today.month, 1)
+        end_date = today + timedelta(days=1)
         return start_date, end_date
 
     def _get_user_availability(self, user, start_date, end_date):
