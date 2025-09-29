@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import NamedTuple
+from typing import NamedTuple, Literal
 from copy import deepcopy
 
 from superdesk.resource import (
@@ -58,6 +58,18 @@ class ContentTypes(NamedTuple):
 CONTENT_TYPE: ContentTypes = ContentTypes(
     "text", "preformatted", "audio", "video", "picture", "graphic", "composite", "event", "planning"
 )
+
+CONTENT_TYPE_LITERAL = Literal[
+    "text",
+    "preformatted",
+    "audio",
+    "video",
+    "picture",
+    "graphic",
+    "composite",
+    "event",
+    "planning",
+]
 
 MEDIA_TYPES = ("audio", "video", "picture", "graphic")
 ITEM_TYPE = "type"
