@@ -85,12 +85,12 @@ async def test_readonly(prodapi_app_with_data, prodapi_app_with_data_client):
             assert resp.status_code == status
 
 
-def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
+async def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
     """
     Test fetching user availability by day.
     Ensures timestamps are in 4-digit format (HH:MM) and day filter works.
     """
-    with superdesk_app.app_context():
+    async with superdesk_app.app_context():
         user = superdesk_app.data.find_one("users", req=None, username="admin")
         assert user
         superdesk_app.data.insert(
@@ -117,10 +117,11 @@ def test_service_get_by_day(superdesk_app, prodapi_app_with_data):
             ],
         )
 
-    with prodapi_app_with_data.test_client() as client:
-        resp = client.get("/prodapi/v1/user_availability?day=2023-05-16")
+    async with prodapi_app_with_data.test_client() as client:
+        resp = await client.get("/prodapi/v1/user_availability?day=2023-05-16")
         assert resp.status_code == 200
-        items = resp.json["_items"]
+        resp_json = await resp.get_json()
+        items = resp_json["_items"]
 
         assert len(items) == 1
         availability = items[0]["availability"]
