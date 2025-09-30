@@ -2154,3 +2154,24 @@ class Editor3TestCase(TestCase):
         editor = Editor3Content(item, field="body_html", is_html=True)
         editor.update_item()
         assert item["body_html"] == "<p>qualité</p>"
+
+    def test_preserve_soft_breaks(self):
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "foo",
+                    "text": "first line\nsecond line",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {},
+                },
+            ],
+            "entityMap": {},
+        }
+
+        item = self.build_item(draftjs_data)
+        editor = Editor3Content(item)
+        html = editor.html
+        assert html == "<p>first line<br>second line</p>"

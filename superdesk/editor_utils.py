@@ -349,8 +349,19 @@ class DraftJSHTMLExporter:
                 block.setdefault("entityRanges", [])
                 block.setdefault("inlineStyleRanges", [])
                 if block.get("text"):
-                    block["text"] = "".join(ch for ch in block["text"] if unicodedata.category(ch) != "Cc")
+                    normalized_text = []
+                    for ch in block["text"]:
+                        if ch == "\n":
+                            normalized_text.append("\u2028")  # Use Unicode LINE SEPARATOR
+                        elif unicodedata.category(ch) != "Cc":
+                            # Filter out control characters (Unicode category C) that break XML rendering in lxml.
+                            # Keeps normal text and Unicode (like 'qualité') safe for HTML export.
+                            # Valid formatting characters like tabs can be preserved if needed.
+                            normalized_text.append(ch)
+                    block["text"] = "".join(normalized_text)
+
             html = self.exporter.render(content_state)
+            html = html.replace("\u2028", "<br>")
         except KeyError as e:
             if e.args == ("text",):
                 # "text" may be missing in some case (e.g. comments), and the exporter
