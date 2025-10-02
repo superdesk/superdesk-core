@@ -22,7 +22,9 @@ class RemoveExpiredContentTestCase(TestCase):
     async def test_spiked_expired_without_explicit_expiry(self):
         now = utcnow()
 
-        await test_utils.post_items(
+        desk_id = (await test_utils.post_items("desks", [{"name": "sports"}]))[0]
+
+        await self.app.data.insert_async(
             "archive",
             [
                 {"type": "text", "state": "spiked", "_updated": now - timedelta(days=50)},
@@ -30,17 +32,17 @@ class RemoveExpiredContentTestCase(TestCase):
                     "type": "text",
                     "state": "in_progress",
                     "_updated": now - timedelta(days=50),
-                    "task": {"desk": "sports"},
+                    "task": {"desk": desk_id},
                     "expiry": None,
                 },
             ],
         )
 
-        assert len(await test_utils.find_many("archive")) == 2
+        assert await test_utils.count("archive") == 2
 
         await RemoveExpiredContent().run()
 
-        assert len(await test_utils.find_many("archive")) == 0
+        assert await test_utils.count("archive") == 0
 
     async def test_expired_archived_picture(self):
         await test_utils.post_items(
@@ -58,5 +60,4 @@ class RemoveExpiredContentTestCase(TestCase):
         with patch.dict(self.app.config, {"ARCHIVED_EXPIRY_MINUTES": 1}):
             await RemoveExpiredContent().run()
 
-        archived_items = await test_utils.find_many("archived")
-        assert 0 == len(archived_items)
+        assert await test_utils.count("archived") == 0

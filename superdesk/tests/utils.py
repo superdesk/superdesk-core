@@ -70,6 +70,24 @@ async def find_many(resource: str, lookup: dict | None = None, use_eve: bool = T
         return list(eve_service.get(req=None, lookup=lookup, **kwargs))
 
 
+async def count(resource: str, lookup: dict | None = None, use_eve: bool = True) -> int:
+    async_app = get_current_async_app()
+    eve_service = _get_eve_service(resource)
+
+    try:
+        if not eve_service or not use_eve:
+            return await async_app.resources.get_resource_service(resource).count(lookup or {}, use_mongo=True)
+    except KeyError:
+        pass
+
+    if not eve_service:
+        raise RuntimeError(f"Resource {resource} not found")
+    elif hasattr(eve_service, "count_async"):
+        return await eve_service.count_async(lookup or {})
+    else:
+        return eve_service.count(lookup=lookup)
+
+
 async def post_items(
     resource: str, items: list[dict] | list[ResourceModel], use_eve: bool = True
 ) -> list[str | ObjectId]:
