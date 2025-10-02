@@ -67,7 +67,7 @@ CHECK_GENERATE_CONSISTENCY = True
 # FIXME: those fields are currently hardcoded because they were hardcoded in client too
 #   (see https://github.com/superdesk/superdesk-core/pull/1865#issuecomment-632103773).
 #   A cleaner way to get field content type should be done (cf. https://dev.sourcefabric.org/browse/SDESK-5316)
-TEXT_FIELDS = ["headline", "slugline"]
+TEXT_FIELDS = ["headline", "slugline", "description_text"]
 
 
 def get_field_content_state(item, field):
@@ -349,8 +349,19 @@ class DraftJSHTMLExporter:
                 block.setdefault("entityRanges", [])
                 block.setdefault("inlineStyleRanges", [])
                 if block.get("text"):
-                    block["text"] = "".join(ch for ch in block["text"] if unicodedata.category(ch) != "Cc")
+                    normalized_text = []
+                    for ch in block["text"]:
+                        if ch == "\n":
+                            normalized_text.append("\u2028")  # Use Unicode LINE SEPARATOR
+                        elif unicodedata.category(ch) != "Cc":
+                            # Filter out control characters (Unicode category C) that break XML rendering in lxml.
+                            # Keeps normal text and Unicode (like 'qualité') safe for HTML export.
+                            # Valid formatting characters like tabs can be preserved if needed.
+                            normalized_text.append(ch)
+                    block["text"] = "".join(normalized_text)
+
             html = self.exporter.render(content_state)
+            html = html.replace("\u2028", "<br>")
         except KeyError as e:
             if e.args == ("text",):
                 # "text" may be missing in some case (e.g. comments), and the exporter
@@ -824,7 +835,11 @@ def generate_fields(item, fields=None, force=False, reload=False, original=None)
 
     for field in fields:
         client_value = get_field_value(item, field)
-        editor = Editor3Content(item, field, is_html=is_html(field), reload=reload)
+        content_state = get_field_content_state(item, field)
+        reload_field = reload
+        if content_state is None and client_value:
+            reload_field = True  # when content state is set to null regenerate it from client value
+        editor = Editor3Content(item, field, is_html=is_html(field), reload=reload_field)
         editor.update_item()
         if CHECK_GENERATE_CONSISTENCY and not force and client_value is not None:
             server_value = get_field_value(item, field) or ""
