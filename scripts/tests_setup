@@ -2,7 +2,7 @@
 
 # Install python package dependencie
 sudo apt-get -y update
-sudo apt-get -y install libxml2-dev libxmlsec1-dev libxmlsec1-openssl
+sudo apt-get -y install libxml2-dev libxmlsec1-dev libxmlsec1-openssl libimage-exiftool-perl
 
 if [ "$SKIP_SERVER_INSTALL" != "true" ]; then
     docker compose up -d

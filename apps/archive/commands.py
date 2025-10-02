@@ -35,7 +35,7 @@ from superdesk.lock import lock, unlock, remove_locks
 from superdesk.notification import push_notification
 from superdesk import get_resource_service
 from bson.objectid import ObjectId
-from datetime import timedelta
+from datetime import timedelta, datetime
 from werkzeug.exceptions import Conflict
 from .common import remove_media_files
 from celery.exceptions import SoftTimeLimitExceeded
@@ -146,7 +146,9 @@ class RemoveExpiredContent:
         if last_id:
             logger.info("%s Continuing from id %s", self.log_msg, last_id)
 
-        async for expired_items in archive_service.get_expired_items(expiry_datetime, last_id=last_id):
+        async for expired_items in archive_service.get_expired_items(
+            expiry_datetime, last_id=last_id, ignore_published_on_desks=list(preserve_published_desks)
+        ):
             items_to_remove = set()
             items_to_be_archived = dict()
             items_having_issues = dict()
@@ -161,7 +163,7 @@ class RemoveExpiredContent:
                 await config_service.set(LAST_ID_CONFIG, last_id)
 
             # delete spiked items
-            await self.delete_spiked_items(expired_items)
+            await self.delete_spiked_items(expired_items, expiry_datetime)
 
             # get killed items
             killed_items = {
@@ -350,7 +352,7 @@ class RemoveExpiredContent:
         item_refs.extend(package_service.get_linked_in_package_ids(item))
 
         # check item refs in the ids to remove set
-        is_expired = item.get("expiry") and item.get("expiry") < now
+        is_expired = is_item_expired(item, now)
         reason = "expiry" if not is_expired else ""
 
         # if the item is published or corrected and desk has preserve_published_content as true
@@ -489,7 +491,7 @@ class RemoveExpiredContent:
         logger.info("{} No filter conditions matched Archiving item {}.".format(self.log_msg, item.get(ID_FIELD)))
         return True
 
-    async def delete_spiked_items(self, items):
+    async def delete_spiked_items(self, items, expiry_datetime):
         """Delete spiked items
 
         :param list items:
@@ -499,7 +501,9 @@ class RemoveExpiredContent:
             spiked_ids = [
                 item.get(ID_FIELD)
                 for item in items
-                if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED and not await self._get_associated_items(item)
+                if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED
+                and not await self._get_associated_items(item)
+                and is_item_expired(item, expiry_datetime)
             ]
             if spiked_ids:
                 logger.warning("{} deleting spiked items: {}.".format(self.log_msg, spiked_ids))
@@ -542,3 +546,22 @@ class RemoveExpiredContent:
             )
 
         return items_not_moved
+
+
+def is_item_expired(item, now: datetime) -> bool:
+    """Check if item is expired.
+
+    If not set explicitly check it based on config and updated time.
+    """
+    if item.get("expiry"):
+        return item.get("expiry") < now
+
+    expiry_minutes = 0
+
+    if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED:
+        expiry_minutes = int(app.config.get("SPIKE_EXPIRY_MINUTES") or 0)
+
+    if item.get(ITEM_STATE) in {CONTENT_STATE.DRAFT, CONTENT_STATE.PROGRESS}:
+        expiry_minutes = int(app.config.get("CONTENT_EXPIRY_MINUTES") or 0)
+
+    return expiry_minutes > 0 and item.get("_updated") + timedelta(minutes=expiry_minutes) < now

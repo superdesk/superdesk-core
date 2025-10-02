@@ -1012,30 +1012,28 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         if updates.get("force_unlock", False):
             del updates["force_unlock"]
 
-    async def get_expired_items(self, expiry_datetime, last_id=None, invalid_only=False):
+    async def get_expired_items(self, expiry_datetime, last_id=None, invalid_only=False, ignore_published_on_desks=None):
         """Get the expired items.
 
         Where content state is not scheduled and the item matches given parameters
 
         :param datetime expiry_datetime: expiry datetime
         :param bool invalid_only: True only invalid items
+        :param str[] ignore_desks: list of desk ids to ignore
         :return pymongo.cursor: expired non published items.
         """
         for i in range(get_app_config("MAX_EXPIRY_LOOPS")):  # avoid blocking forever just in case
             query = {
                 "bool": {
-                    "must": [
-                        {"range": {"expiry": {"lte": expiry_datetime}}},
-                        {
-                            "bool": {
-                                "should": [
-                                    {"exists": {"field": "task.desk"}},
-                                    {"term": {ITEM_STATE: CONTENT_STATE.SPIKED}},
-                                ],
-                            }
-                        },
+                    "must": [],
+                    "should": [
+                        {"exists": {"field": "task.desk"}},
+                        {"term": {ITEM_STATE: CONTENT_STATE.SPIKED}},
                     ],
-                    "must_not": [],
+                    "must_not": [
+                        {"range": {"expiry": {"gt": expiry_datetime}}},
+                    ],
+                    "minimum_should_match": 1,
                 }
             }
 
@@ -1046,6 +1044,18 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
 
             if last_id:  # elastic does not support range query on _id, so using guid
                 query["bool"]["must"].append({"range": {"guid": {"gt": last_id}}})
+
+            if ignore_published_on_desks:
+                query["bool"]["must_not"].append(
+                    {
+                        "bool": {
+                            "must": [
+                                {"terms": {"task.desk": ignore_published_on_desks}},
+                                {"terms": {"state": [CONTENT_STATE.PUBLISHED, CONTENT_STATE.CORRECTED]}},
+                            ],
+                        },
+                    }
+                )
 
             source = {
                 "query": query,

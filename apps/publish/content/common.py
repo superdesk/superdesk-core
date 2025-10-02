@@ -60,7 +60,7 @@ from superdesk.errors import (
 )
 from superdesk.flask import request as flask_request
 from superdesk.media.crop import CropService
-from superdesk.media.image import get_metadata_from_item, read_metadata, write_metadata
+from superdesk.media.metadata import get_metadata_from_item, read_metadata, write_metadata
 from superdesk.metadata.item import (
     ASSOCIATIONS,
     CONTENT_STATE,
@@ -296,8 +296,8 @@ class BasePublishService(AsyncBaseService):
                 if updated.get(ASSOCIATIONS):
                     self._fix_related_references(updated, updates)
 
-                if updated[ITEM_TYPE] == "picture":
-                    self._update_picture_metadata(updates, original, updated)
+                if updated[ITEM_TYPE] == "picture" or updated[ITEM_TYPE] == "video":
+                    self._update_media_metadata(updates, updated)
 
                 signals.item_publish.send(self, item=updated, updates=updates)
                 await signals.item_publish_async.send(updated, updates)
@@ -1053,7 +1053,7 @@ class BasePublishService(AsyncBaseService):
                 associated_item[PUBLISH_SCHEDULE] = publish_schedule
                 associated_item[SCHEDULE_SETTINGS] = schedule_settings
 
-    def _update_picture_metadata(self, updates, original, updated):
+    def _update_media_metadata(self, updates, updated):
         renditions = updated.get("renditions") or {}
         mapping = get_config(dict, "PICTURE_METADATA_MAPPING")
 
@@ -1061,7 +1061,6 @@ class BasePublishService(AsyncBaseService):
             return
 
         try:
-            updated_metadata = get_metadata_from_item(updated, mapping)
             updated_renditions = deepcopy(renditions)
             updates["renditions"] = updated_renditions
 
@@ -1074,24 +1073,28 @@ class BasePublishService(AsyncBaseService):
                     continue
 
                 app = get_current_app()
-                picture = app.media.get(media_id)
-                binary = picture.read()
-                rendition_metadata = read_metadata(binary)
+                media = app.media.get(media_id)
+                binary = media.read()
 
-                # check if the rendition metadata should be updated
-                if rendition_metadata == updated_metadata:
+                file_metadata = read_metadata(binary, updated[ITEM_TYPE])
+                metadata = get_metadata_from_item(updated, mapping, updated[ITEM_TYPE])
+                should_update = any(metadata[k] != file_metadata.get(k) for k in metadata)
+
+                if not should_update:
                     continue
 
-                updated_binary = write_metadata(binary, updated_metadata)
-                updated_media_id = app.media.put(
-                    updated_binary, content_type=picture.content_type, filename=picture.filename
-                )
-                updated_renditions[rendition_key].update(
-                    {
-                        "media": updated_media_id,
-                        "href": app.media.url_for_media(updated_media_id, picture.content_type),
-                    }
-                )
+                updated_binary = write_metadata(binary, metadata, updated[ITEM_TYPE])
+
+                if updated_binary != binary:
+                    updated_media_id = app.media.put(
+                        updated_binary, content_type=media.content_type, filename=media.filename
+                    )
+                    updated_renditions[rendition_key].update(
+                        {
+                            "media": updated_media_id,
+                            "href": app.media.url_for_media(updated_media_id, media.content_type),
+                        }
+                    )
 
             updated["renditions"] = updated_renditions
 

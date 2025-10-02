@@ -93,6 +93,8 @@ def update_config(conf, auto_add_apps: bool = True, include_planning: bool = Tru
     conf["CELERY_BEAT_SCHEDULE_FILENAME"] = "./testschedule.db"
     conf["CELERY_BEAT_SCHEDULE"] = {}
     conf["CONTENT_EXPIRY_MINUTES"] = 99
+    conf["SPIKE_EXPIRY_MINUTES"] = 99
+    conf["VERSION"] = "_current_version"
     conf["SECRET_KEY"] = "test-secret"
     conf["JSON_SORT_KEYS"] = True
     conf["ELASTICSEARCH_INDEXES"] = {

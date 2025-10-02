@@ -73,7 +73,7 @@ desks_schema = {
         "type": "dict",
     },
     "desk_language": {"type": "string"},
-    "monitoring_default_view": {"type": "string", "allowed": ["", "list", "swimlane", "photogrid"], "required": False},
+    "monitoring_default_view": {"type": "string", "required": False},
     "default_content_profile": Resource.rel("content_types", type="string", nullable=True),
     "default_content_template": Resource.rel("content_templates", nullable=True),
     # name of a Slack channel that may be associated with the desk

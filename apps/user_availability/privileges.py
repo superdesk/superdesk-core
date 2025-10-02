@@ -9,6 +9,7 @@ from superdesk.users.services import current_user_has_privilege
 
 USER_AVAILABILITY_READ = "user_availability"
 USER_AVAILABILITY_WRITE = "user_availability_manage"
+USER_AVAILABILITY_MANAGE_OWN = "user_availability_manage_own"
 
 
 def validate_user_can_manage_availability(modified_user_id: Id) -> None:
