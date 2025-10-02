@@ -19,7 +19,6 @@ class RemoveExpiredContentTestCase(TestCase):
         item["expiry"] = now + timedelta(days=1)
         self.assertFalse(await command._can_remove_item(item, now))
 
-
     async def test_spiked_expired_without_explicit_expiry(self):
         now = utcnow()
 

@@ -1012,7 +1012,9 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
         if updates.get("force_unlock", False):
             del updates["force_unlock"]
 
-    async def get_expired_items(self, expiry_datetime, last_id=None, invalid_only=False, ignore_published_on_desks=None):
+    async def get_expired_items(
+        self, expiry_datetime, last_id=None, invalid_only=False, ignore_published_on_desks=None
+    ):
         """Get the expired items.
 
         Where content state is not scheduled and the item matches given parameters

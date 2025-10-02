@@ -11,7 +11,7 @@
 import functools as ft
 import logging
 import superdesk
-from superdesk.core import get_app_config
+from superdesk.core import get_app_config, get_config
 from superdesk.resource_fields import ID_FIELD, VERSION
 import superdesk.signals as signals
 from superdesk.commands import cli
@@ -559,9 +559,9 @@ def is_item_expired(item, now: datetime) -> bool:
     expiry_minutes = 0
 
     if item.get(ITEM_STATE) == CONTENT_STATE.SPIKED:
-        expiry_minutes = int(app.config.get("SPIKE_EXPIRY_MINUTES") or 0)
+        expiry_minutes = get_config(int, "SPIKE_EXPIRY_MINUTES", 0)
 
     if item.get(ITEM_STATE) in {CONTENT_STATE.DRAFT, CONTENT_STATE.PROGRESS}:
-        expiry_minutes = int(app.config.get("CONTENT_EXPIRY_MINUTES") or 0)
+        expiry_minutes = get_config(int, "CONTENT_EXPIRY_MINUTES", 0)
 
     return expiry_minutes > 0 and item.get("_updated") + timedelta(minutes=expiry_minutes) < now
