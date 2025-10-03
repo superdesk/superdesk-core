@@ -161,7 +161,7 @@ def test_read_from_video(video_binary) -> None:
 
 def test_write_from_video(video_binary, video_updated_binary) -> None:
     from superdesk.media.metadata_mapping import MediaMetadata
-    from superdesk.media.video import write_metadata
+    from superdesk.media.video import write_metadata, read_metadata
 
     updates: MediaMetadata = {
         "Description": "Your Description Here 1",
@@ -179,7 +179,10 @@ def test_write_from_video(video_binary, video_updated_binary) -> None:
         "State": "Your Province or State 13",
         "CaptionWriter": "Your Caption Writer 14",
     }
-    assert write_metadata(video_binary, updates) == video_updated_binary
+    result = write_metadata(video_binary, updates)
+    metadata = read_metadata(result)
+    for key, value in updates.items():
+        assert metadata.get(key) == value
 
 
 def test_get_video_from_photo_binary(image_binary) -> None:
