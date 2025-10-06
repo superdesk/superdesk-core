@@ -142,8 +142,14 @@ def configure_google(app, extra_scopes: Optional[List[str]] = None, refresh: boo
     )
 
     @bp.route("/login/google")
+    def google_login():
+        return _google_login()
+
     @bp.route("/login/google/<url_id>")
-    def google_login(url_id=None):
+    def google_login_with_id(url_id=None):
+        return _google_login(url_id)
+
+    def _google_login(url_id=None):
         """Redirect to google OAuth authorization page
 
         :param url_id: used to identify the token
