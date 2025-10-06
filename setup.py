@@ -54,7 +54,7 @@ install_requires = [
     "reportlab>=3.6.11,<4.5",
     "pyjwt>=2.4.0,<2.11",
     "pymemcache>=4.0,<4.1",
-    "xmlsec>=1.3.13,<1.3.15",
+    "xmlsec>=1.3.13,<1.3.17",
     # Async libraries
     "motor>=3.4.0,<4.0",
     "pydantic>=2.7.4,<3.0",
