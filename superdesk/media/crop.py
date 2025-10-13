@@ -152,9 +152,14 @@ class CropService:
         :param crop_name: Crop name
         :return: Matching crop or None
         """
-        if not self.crop_sizes:
+
+        custom_crops = get_resource_service("vocabularies").find_one(req=None, _id="crop_sizes")
+        if not custom_crops:
+            # No custom crops defined, only ``RENDITIONS` config will be supported and used
+            return None
+        elif not self.crop_sizes:
             # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
-            self.crop_sizes = get_resource_service("vocabularies").find_one(req=None, _id="crop_sizes").get("items")
+            self.crop_sizes = custom_crops.get("items")
 
         if not self.crop_sizes:
             raise SuperdeskApiError.badRequestError(message="Crops sizes couldn't be loaded!")
