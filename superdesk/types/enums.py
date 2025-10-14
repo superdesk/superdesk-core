@@ -11,18 +11,10 @@ class DeskTypeEnum(str, Enum):
 class MonitoringTypeEnum(str, Enum):
     SEARCH = "search"
     STAGE = "stage"
-    SCHEDULED_DESK_OUTPUT = "scheduled_desk_output"
-    DESK_OUTPUT = "desk_output"
+    SCHEDULED_DESK_OUTPUT = "scheduledDeskOutput"
+    DESK_OUTPUT = "deskOutput"
     PERSONAL = "personal"
-    SENT_DESK_OUTPUT = "sent_desk_output"
-
-
-@unique
-class MonitoringViewEnum(str, Enum):
-    BLANK = ""
-    LIST = "list"
-    SWIMLANE = "swimlane"
-    PHOTOGRID = "photogrid"
+    SENT_DESK_OUTPUT = "sentDeskOutput"
 
 
 @unique
