@@ -7,7 +7,6 @@ import bson
 from .enums import (
     DeskTypeEnum,
     MonitoringTypeEnum,
-    MonitoringViewEnum,
     UserTypeEnum,
     PublishState,
     ContentState,
@@ -49,7 +48,6 @@ __all__ = [
     "Id",
     "DeskTypeEnum",
     "MonitoringTypeEnum",
-    "MonitoringViewEnum",
     "UserTypeEnum",
     "PublishState",
     "ContentState",

@@ -1,7 +1,7 @@
 from typing import Annotated, Any
 from pydantic import Field
 
-from .enums import MonitoringTypeEnum, MonitoringViewEnum, DeskTypeEnum
+from .enums import MonitoringTypeEnum, DeskTypeEnum
 from superdesk.core.resources import ResourceModelWithObjectId, fields, dataclass, Dataclass
 from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_unique_value_async, validate_data_relation_async
@@ -32,7 +32,7 @@ class DesksResourceModel(ResourceModelWithObjectId):
     desk_metadata: dict[str, Any] = Field(default_factory=dict)
     content_profiles: dict[str, Any] = Field(default_factory=dict)
     desk_language: str | None = None
-    monitoring_default_view: MonitoringViewEnum | None = None
+    monitoring_default_view: str | None = None
     default_content_profile: Annotated[str | ObjectId, validate_data_relation_async("content_types")] | None = None
     default_content_template: Annotated[ObjectId, validate_data_relation_async("content_templates")] | None = None
     slack_channel_name: str | None = Field(
