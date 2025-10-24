@@ -61,7 +61,7 @@ class UserAvailabilityService(ProdApiService):
                 req=None, lookup={"enabled": True}, projection={"_id": 1}
             )
         ]
-        users = get_resource_service("users").find(where={"_id": {"$in": availability_enabled}})
+        users = get_resource_service("users").find(where={"_id": {"$in": availability_enabled}, "is_active": True})
         user_data = [self._get_user_availability(user, start_date, end_date) for user in users]
         return ListCursor(user_data)
 
