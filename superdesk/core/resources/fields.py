@@ -171,15 +171,15 @@ def keyword_mapping() -> WithJsonSchema:
     return Field(json_schema_extra={"elastic_mapping": {"type": "keyword"}})
 
 
-def dynamic_mapping() -> WithJsonSchema:
-    return Field(json_schema_extra={"elastic_mapping": {"type": "object", "dynamic": True}})
+def dynamic_mapping(dynamic: bool = True) -> WithJsonSchema:
+    return Field(json_schema_extra={"dynamic": dynamic})
 
 
 def mapping_disabled(data_type: str) -> WithJsonSchema:
     return Field(json_schema_extra={"elastic_mapping": {"type": data_type, "enabled": False}})
 
 
-def nested_list(include_in_parent: bool = False) -> WithJsonSchema:
+def nested_list(include_in_parent: bool = False, dynamic: bool | None = None) -> WithJsonSchema:
     """Field modifier, to enabled nested in Elasticsearch for the field
 
     Example usage::
@@ -199,7 +199,7 @@ def nested_list(include_in_parent: bool = False) -> WithJsonSchema:
             subjects: Annotated[list[Subjects], fields.nested_list()]
     """
 
-    return Field(json_schema_extra={"nested": True, "include_in_parent": include_in_parent})
+    return Field(json_schema_extra={"nested": True, "include_in_parent": include_in_parent, "dynamic": dynamic})
 
 
 def not_indexed() -> WithJsonSchema:

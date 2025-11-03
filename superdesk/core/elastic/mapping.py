@@ -84,6 +84,11 @@ def _get_field_type_from_json_schema(
                     parent_props is not None and parent_props.get("include_in_parent")
                 ):
                     mapping["include_in_parent"] = True
+
+            if props.get("dynamic") in (True, False):
+                mapping["dynamic"] = props["dynamic"]
+                mapping.setdefault("type", "object")
+
             return mapping
         except KeyError:
             # If ``items`` is not defined, we cannot determine the type
