@@ -12,10 +12,12 @@ import time
 import pymongo
 import superdesk
 
+from bson.objectid import ObjectId
 from flask import current_app as app
+from datetime import datetime
+
 from superdesk.errors import BulkIndexError
 from superdesk import config
-from bson.objectid import ObjectId
 
 
 class IndexFromMongo(superdesk.Command):
@@ -30,6 +32,8 @@ class IndexFromMongo(superdesk.Command):
 
         $ python manage.py app:index_from_mongo --from=archive
         $ python manage.py app:index_from_mongo --all
+        $ python manage.py app:index_from_mongo --from=archive --date=2024-01-01
+        $ python manage.py app:index_from_mongo --all --date="2024-01-01T12:00:00"
 
     """
 
@@ -39,23 +43,24 @@ class IndexFromMongo(superdesk.Command):
         superdesk.Option("--page-size", "-p"),
         superdesk.Option("--last-id"),
         superdesk.Option("--string-id", dest="string_id", action="store_true", help="Treat the id's as strings"),
+        superdesk.Option("--date", "-d", help="Start from date"),
     ]
     default_page_size = 500
 
-    def run(self, collection_name, all_collections, page_size, last_id, string_id):
+    def run(self, collection_name, all_collections, page_size, last_id, string_id, date=None):
         if not collection_name and not all_collections:
             raise SystemExit("Specify --all to index from all collections")
         elif all_collections:
             app.data.init_elastic(app)
             resources = app.data.get_elastic_resources()
             for resource in resources:
-                self.copy_resource(resource, page_size)
+                self.copy_resource(resource, page_size, date=date)
         else:
-            self.copy_resource(collection_name, page_size, last_id, string_id)
+            self.copy_resource(collection_name, page_size, last_id, string_id, date=date)
 
     @classmethod
-    def copy_resource(cls, resource, page_size, last_id=None, string_id=False):
-        for items in cls.get_mongo_items(resource, page_size, last_id, string_id):
+    def copy_resource(cls, resource, page_size, last_id=None, string_id=False, date=None):
+        for items in cls.get_mongo_items(resource, page_size, last_id, string_id, date):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
             success, failed = 0, 0
@@ -79,11 +84,14 @@ class IndexFromMongo(superdesk.Command):
         return "Finished indexing collection {}".format(resource)
 
     @classmethod
-    def get_mongo_items(cls, mongo_collection_name, page_size, last_id, string_id):
+    def get_mongo_items(cls, mongo_collection_name, page_size, last_id, string_id, date=None):
         """Generate list of items from given mongo collection per page size.
 
         :param mongo_collection_name: Name of the collection to get the items
         :param page_size: Size of every list in each iteration
+        :param last_id: Last processed document ID for pagination
+        :param string_id: Whether to treat IDs as strings
+        :param date: Start date to filter documents (ISO format string)
         :return: list of items
         """
         bucket_size = int(page_size) if page_size else cls.default_page_size
@@ -92,14 +100,36 @@ class IndexFromMongo(superdesk.Command):
         db = app.data.get_mongo_collection(mongo_collection_name)
         args = {"limit": bucket_size, "sort": [(config.ID_FIELD, pymongo.ASCENDING)]}
 
+        # Parse date filter once if provided
+        date_filter = None
+        if date:
+            try:
+                start_date = datetime.fromisoformat(date)
+                # Try common date fields used in Superdesk
+                date_filter = {"_updated": {"$gte": start_date}}
+                print("Filtering documents from date: {}".format(start_date))
+            except ValueError as e:
+                print("Warning: Could not parse date '{}': {}".format(date, e))
+                raise
+
         while True:
+            # Build filter for this iteration
+            filter_conditions = []
+
             if last_id:
                 if not string_id:
                     try:
                         last_id = ObjectId(last_id)
                     except Exception:
                         pass
-                args.update({"filter": {config.ID_FIELD: {"$gt": last_id}}})
+                filter_conditions.append({config.ID_FIELD: {"$gt": last_id}})
+
+            if date_filter:
+                filter_conditions.append(date_filter)
+
+            # Combine filters
+            if filter_conditions:
+                args["filter"] = {"$and": filter_conditions}
 
             cursor = db.find(**args)
             if not cursor.count():
