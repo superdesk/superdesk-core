@@ -69,6 +69,8 @@ def _get_field_type_from_json_schema(
     elif field_type == "boolean":
         return {"type": "boolean"}
     elif field_type == "object":
+        if parent_props and parent_props.get("dynamic") is not None:
+            return {"type": "object", "dynamic": parent_props["dynamic"]}
         # Objects, unstructured dictionaries, are not supported.
         # So we will disable elastic mapping for this field
         return {"type": "object", "enabled": False}
@@ -85,9 +87,8 @@ def _get_field_type_from_json_schema(
                 ):
                     mapping["include_in_parent"] = True
 
-            if props.get("dynamic") in (True, False):
+            if props.get("dynamic") is not None:
                 mapping["dynamic"] = props["dynamic"]
-                mapping.setdefault("type", "object")
 
             return mapping
         except KeyError:
