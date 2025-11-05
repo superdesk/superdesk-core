@@ -463,14 +463,14 @@ class SuperdeskEve(eve.Eve):
                         links.append(
                             {
                                 "href": sub_endpoint.url,
-                                "title": sub_endpoint.name or sub_endpoint.url.replace("/", "_"),
+                                "title": sub_endpoint.title or sub_endpoint.name or sub_endpoint.url.replace("/", "_"),
                             }
                         )
                 else:
                     links.append(
                         {
                             "href": endpoint.url,
-                            "title": endpoint.name or endpoint.url.replace("/", "_"),
+                            "title": endpoint.title or endpoint.name or endpoint.url.replace("/", "_"),
                         }
                     )
 
