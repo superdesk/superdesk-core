@@ -133,6 +133,7 @@ class EndpointGroup(EndpointGroupProtocol):
         self,
         url: str,
         name: str | None = None,
+        title: str | None = None,
         methods: list[HTTP_METHOD] | None = None,
         auth: AuthConfig = None,
     ):
@@ -149,6 +150,7 @@ class EndpointGroup(EndpointGroupProtocol):
                 func,
                 methods=methods,
                 name=name,
+                title=title,
                 auth=auth,
                 parent=self,
             )
@@ -161,7 +163,13 @@ class EndpointGroup(EndpointGroupProtocol):
         return return_404()
 
 
-def endpoint(url: str, name: str | None = None, methods: list[HTTP_METHOD] | None = None, auth: AuthConfig = None):
+def endpoint(
+    url: str,
+    name: str | None = None,
+    title: str | None = None,
+    methods: list[HTTP_METHOD] | None = None,
+    auth: AuthConfig = None,
+):
     """Decorator function to convert a pure function to an Endpoint instance
     which is later used to register with a Module or the app.
 
@@ -171,7 +179,8 @@ def endpoint(url: str, name: str | None = None, methods: list[HTTP_METHOD] | Non
             For example:
             - "items" becomes "{api_prefix}{api_version}/items"
             - "/custom/path" stays as "/custom/path"
-        name: The optional name of the endpoint
+        name: The optional name of the endpoint (used for registering with Flask/Quart)
+        title: The optional title of the endpoint (used for HATEOAS links)
         methods: The optional list of HTTP methods allowed
     """
 
@@ -179,6 +188,7 @@ def endpoint(url: str, name: str | None = None, methods: list[HTTP_METHOD] | Non
         return Endpoint(
             url=url,
             name=name,
+            title=title,
             methods=methods,
             func=func,
             auth=auth,
