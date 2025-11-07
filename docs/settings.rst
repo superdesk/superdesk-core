@@ -378,6 +378,21 @@ Uses for generation of media url ``(<media_prefix>/<media_id>)``::
     # or using api view
     '/api/upload-raw'
 
+``RENDITION_FORMAT``
+^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+When set to ``"webp"``, all image renditions (except the original) will be generated 
+in WebP format, resulting in smaller file sizes while maintaining image quality.
+The original image format is preserved for compatibility.
+
+Example::
+
+    RENDITION_FORMAT = "webp"
+
+Note: Requires Pillow to be compiled with WebP support.
+
 .. _settings.amazons3:
 
 Amazon S3 settings

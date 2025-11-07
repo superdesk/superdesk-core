@@ -89,3 +89,50 @@ class GenerateRenditionsTestCase(TestCase):
         self.assertEqual(1200, landscape["CropRight"])
         self.assertEqual(500, landscape["CropTop"])
         self.assertEqual(1100, landscape["CropBottom"])
+
+    async def test_generate_renditions_webp_format(self):
+        """Test that RENDITION_FORMAT config converts renditions to WebP"""
+        self.app.config["RENDITION_FORMAT"] = "webp"
+        inserted = []
+        renditions = get_renditions_spec()
+        with open(IMG_PATH, "rb") as original:
+            generated = generate_renditions(
+                original, "id", inserted, "image", "image/jpeg", renditions, self.app.media.url_for_media
+            )
+
+        # Original stays JPEG
+        self.assertIn("original", generated)
+        self.assertEqual("image/jpeg", generated["original"]["mimetype"])
+
+        # All other renditions should be WebP
+        self.assertIn("thumbnail", generated)
+        self.assertEqual("image/webp", generated["thumbnail"]["mimetype"])
+
+        self.assertIn("viewImage", generated)
+        self.assertEqual("image/webp", generated["viewImage"]["mimetype"])
+
+        self.assertIn("baseImage", generated)
+        self.assertEqual("image/webp", generated["baseImage"]["mimetype"])
+
+    async def test_generate_renditions_preserves_webp_original(self):
+        """Test that WebP originals are handled correctly"""
+        inserted = []
+        renditions = get_renditions_spec()
+        # Create a simple WebP image for testing
+        from io import BytesIO
+        img = Image.new("RGB", (400, 300), color="red")
+        webp_buffer = BytesIO()
+        img.save(webp_buffer, "webp")
+        webp_buffer.seek(0)
+
+        generated = generate_renditions(
+            webp_buffer, "id", inserted, "image", "image/webp", renditions, self.app.media.url_for_media
+        )
+
+        # Original should be WebP
+        self.assertIn("original", generated)
+        self.assertEqual("image/webp", generated["original"]["mimetype"])
+
+        # Renditions should also be WebP (format preserved)
+        self.assertIn("thumbnail", generated)
+        self.assertEqual("image/webp", generated["thumbnail"]["mimetype"])

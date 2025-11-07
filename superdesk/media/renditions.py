@@ -86,8 +86,12 @@ def generate_renditions(
     ext = content_type.split("/")[1].lower()
     if ext in ("JPG", "jpg"):
         ext = "jpeg"
-    elif ext not in ("jpeg", "gif", "tiff", "png"):
+    elif ext not in ("jpeg", "gif", "tiff", "png", "webp"):
         ext = "png"
+
+    if get_app_config("RENDITION_FORMAT") == "webp":
+        ext = "webp"
+
     # make baseImage rendition first
     base_image = rendition_config.pop("baseImage", None)
     specs = list(rendition_config.items())

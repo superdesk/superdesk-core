@@ -792,6 +792,9 @@ RENDITIONS = {
 
 NINJS_COMMON_RENDITIONS = list(RENDITIONS["picture"].keys())
 
+#: rendition output format - set to "webp" to generate all renditions in WebP format
+RENDITION_FORMAT = env("RENDITION_FORMAT", None)
+
 #: BCRYPT work factor
 BCRYPT_GENSALT_WORK_FACTOR = 12
 
