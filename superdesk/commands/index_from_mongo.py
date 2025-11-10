@@ -13,9 +13,11 @@ import time
 import click
 import pymongo
 from bson.objectid import ObjectId
+from flask import current_app as app
+from datetime import datetime
 
-from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import BulkIndexError
+from superdesk.resource_fields import ID_FIELD
 from superdesk.core import get_current_async_app
 
 from .async_cli import cli
@@ -27,7 +29,8 @@ from .async_cli import cli
 @click.option("--page-size", "-p")
 @click.option("--last-id")
 @click.option("--string-id", is_flag=True, help="Treat the id's as strings")
-async def cli_index_from_mongo(collection_name, all_collections, page_size, last_id, string_id):
+@click.option("--date", "-d", help="Start from date")
+async def cli_index_from_mongo(collection_name, all_collections, page_size, last_id, string_id, date):
     """Index the specified mongo collection in the specified elastic collection/type.
 
     This will use the default APP mongo DB to read the data and the default Elastic APP index.
@@ -39,16 +42,18 @@ async def cli_index_from_mongo(collection_name, all_collections, page_size, last
 
         $ python manage.py app:index_from_mongo --from=archive
         $ python manage.py app:index_from_mongo --all
+        $ python manage.py app:index_from_mongo --from=archive --date=2024-01-01
+        $ python manage.py app:index_from_mongo --all --date="2024-01-01T12:00:00"
 
     """
 
-    await IndexFromMongo().run(collection_name, all_collections, page_size, last_id, string_id)
+    await IndexFromMongo().run(collection_name, all_collections, page_size, last_id, string_id, date)
 
 
 class IndexFromMongo:
     default_page_size = 500
 
-    async def run(self, collection_name, all_collections, page_size, last_id, string_id):
+    async def run(self, collection_name, all_collections, page_size, last_id, string_id, date=None):
         if not collection_name and not all_collections:
             raise SystemExit("Specify --all to index from all collections")
         elif all_collections:
@@ -68,14 +73,14 @@ class IndexFromMongo:
                     # This resource has already been processed by the new app
                     # No need to re-index this resource
                     continue
-                self.copy_resource(resource, page_size)
+                self.copy_resource(resource, page_size, date=date)
         else:
-            self.copy_resource(collection_name, page_size, last_id, string_id)
+            self.copy_resource(collection_name, page_size, last_id, string_id, date=date)
 
     @classmethod
-    def copy_resource(cls, resource, page_size, last_id=None, string_id=False):
+    def copy_resource(cls, resource, page_size, last_id=None, string_id=False, date=None):
         async_app = get_current_async_app()
-        for items in cls.get_mongo_items(resource, page_size, last_id, string_id):
+        for items in cls.get_mongo_items(resource, page_size, last_id, string_id, date):
             print("{} Inserting {} items".format(time.strftime("%X %x %Z"), len(items)))
             s = time.time()
             success, failed = 0, 0
@@ -103,11 +108,14 @@ class IndexFromMongo:
         return "Finished indexing collection {}".format(resource)
 
     @classmethod
-    def get_mongo_items(cls, mongo_collection_name, page_size, last_id, string_id):
+    def get_mongo_items(cls, mongo_collection_name, page_size, last_id, string_id, date=None):
         """Generate list of items from given mongo collection per page size.
 
         :param mongo_collection_name: Name of the collection to get the items
         :param page_size: Size of every list in each iteration
+        :param last_id: Last processed document ID for pagination
+        :param string_id: Whether to treat IDs as strings
+        :param date: Start date to filter documents (ISO format string)
         :return: list of items
         """
         bucket_size = int(page_size) if page_size else cls.default_page_size
@@ -122,14 +130,36 @@ class IndexFromMongo:
 
         args = {"limit": bucket_size, "sort": [(ID_FIELD, pymongo.ASCENDING)]}
 
+        # Parse date filter once if provided
+        date_filter = None
+        if date:
+            try:
+                start_date = datetime.fromisoformat(date)
+                # Try common date fields used in Superdesk
+                date_filter = {"_updated": {"$gte": start_date}}
+                print("Filtering documents from date: {}".format(start_date))
+            except ValueError as e:
+                print("Warning: Could not parse date '{}': {}".format(date, e))
+                raise
+
         while True:
+            # Build filter for this iteration
+            filter_conditions = []
+
             if last_id:
                 if not string_id:
                     try:
                         last_id = ObjectId(last_id)
                     except Exception:
                         pass
-                args.update({"filter": {ID_FIELD: {"$gt": last_id}}})
+                filter_conditions.append({ID_FIELD: {"$gt": last_id}})
+
+            if date_filter:
+                filter_conditions.append(date_filter)
+
+            # Combine filters
+            if filter_conditions:
+                args["filter"] = {"$and": filter_conditions}
 
             cursor = db.find(**args)
             items = list(cursor)
