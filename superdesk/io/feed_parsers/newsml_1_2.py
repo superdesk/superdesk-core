@@ -82,9 +82,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
 
             parsed_el = xml.findall("NewsItem/NewsComponent/DescriptiveMetadata/Genre")
             if parsed_el is not None:
-                item["genre"] = []
-                for el in parsed_el:
-                    item["genre"].append({"name": el.get("FormalName")})
+                item["genre"] = [{"name": el.get("FormalName")} for el in parsed_el]
 
             return self.populate_fields(item)
         except Exception as ex:
