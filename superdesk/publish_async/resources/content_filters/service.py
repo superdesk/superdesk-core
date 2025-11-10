@@ -38,7 +38,7 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
     async def on_delete(self, doc: ContentFiltersResource) -> None:
         # check if the filter is referenced by any subscribers...
         subscribers = await self._get_referencing_subscribers(doc.id)
-        if len(subscribers) > 0:
+        if subscribers:
             references = ",".join(subscriber.name for subscriber in subscribers)
             raise SuperdeskApiError.badRequestError(
                 gettext("Content filter has been referenced by subscriber(s) {references}").format(
@@ -48,7 +48,7 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
 
         # check if the filter is referenced by any routing schemes...
         schemes = await self._get_referencing_routing_schemes(doc.id)
-        if len(schemes) > 0:
+        if schemes:
             references = ",".join(s["name"] for s in schemes)
             raise SuperdeskApiError.badRequestError(
                 gettext("Content filter has been referenced by routing scheme(s) {references}").format(
@@ -58,7 +58,7 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
 
         # check if the filter is referenced by any other content filters...
         referenced_filters = await _get_content_filters_by_content_filter(doc.id)
-        if len(referenced_filters) > 0:
+        if referenced_filters:
             references = ",".join([pf.name for pf in referenced_filters])
             raise SuperdeskApiError.badRequestError(
                 gettext("Content filter has been referenced in {references})").format(references=references)

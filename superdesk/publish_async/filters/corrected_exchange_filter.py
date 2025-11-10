@@ -76,7 +76,7 @@ class CorrectedPublishExchangeFilter(ContentPublishExchangeFilter):
             if not any(active_subscriber.id == previous_subscriber.id for previous_subscriber in subscribers)
         ]
 
-        if len(subscribers_yet_to_receive) > 0:
+        if subscribers_yet_to_receive:
             # Step 3
             if request.item.get("target_regions"):
                 subscribers_yet_to_receive = SubscribersResource.filter_non_digital(subscribers_yet_to_receive)

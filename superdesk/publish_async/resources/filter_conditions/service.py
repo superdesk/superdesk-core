@@ -24,7 +24,7 @@ class FilterConditionsService(AsyncResourceService[FilterConditionsResource]):
 
     async def delete(self, doc: FilterConditionsResource, etag: str | None = None):
         referenced_filters = await self._get_referenced_filter_conditions(doc.id)
-        if len(referenced_filters) > 0:
+        if referenced_filters:
             references = ",".join([pf.name for pf in referenced_filters])
             raise SuperdeskApiError.badRequestError(
                 gettext(f"Filter condition has been referenced in content filter: {references}")
@@ -55,7 +55,7 @@ class FilterConditionsService(AsyncResourceService[FilterConditionsResource]):
     async def _check_parameters(self, doc: FilterConditionsResource) -> None:
         parameters = await get_available_filter_params()
         parameter = [param for param in parameters if param.field == doc.field]
-        if not parameter or len(parameter) == 0:
+        if not parameter:
             raise SuperdeskApiError.badRequestError(
                 gettext(f"Filter condition:{doc.name} has unidentified field: {doc.field}")
             )

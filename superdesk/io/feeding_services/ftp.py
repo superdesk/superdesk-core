@@ -386,4 +386,5 @@ register_feeding_service(FTPFeedingService)
 
 
 def _format_extension(ext: str) -> str:
-    return ext.strip().lower() if ext.startswith(".") else ".{ext}".format(ext=ext.strip().lower())
+    ext_cleaned = ext.strip().lower()
+    return ext_cleaned if ext.startswith(".") else f".{ext_cleaned}"

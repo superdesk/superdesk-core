@@ -34,11 +34,11 @@ def remove_ref_from_inmem_package(package: dict, ref_id: str) -> bool:
     non_root_groups = [group for group in package.get(GROUPS, []) if group.get(GROUP_ID) != ROOT_GROUP]
     for non_rg in non_root_groups:
         refs = [r for r in non_rg.get(REFS, []) if r.get(RESIDREF, "") != ref_id]
-        if len(refs) == 0:
+        if not refs:
             groups_to_be_removed.add(non_rg.get(GROUP_ID))
         non_rg[REFS] = refs
 
-    if len(groups_to_be_removed) > 0:
+    if groups_to_be_removed:
         root_group = [group for group in package.get(GROUPS, []) if group.get(GROUP_ID) == ROOT_GROUP][0]
         refs = [r for r in root_group.get(REFS, []) if r.get(ID_REF) not in groups_to_be_removed]
         root_group[REFS] = refs
@@ -46,7 +46,7 @@ def remove_ref_from_inmem_package(package: dict, ref_id: str) -> bool:
         package[GROUPS] = removed_groups
 
         # return if the package has any items left in it
-        return len(refs) > 0
+        return bool(refs)
 
     # still has items in the package
     return True

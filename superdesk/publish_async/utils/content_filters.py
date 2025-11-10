@@ -30,7 +30,7 @@ async def _get_referenced_content_filters(
     for pf in content_filters:
         pf_list.append(pf)
         references = await _get_content_filters_by_content_filter(pf.id)
-        if references and len(references) > 0:
+        if references:
             return await _get_referenced_content_filters(references, pf_list)
     return pf_list
 

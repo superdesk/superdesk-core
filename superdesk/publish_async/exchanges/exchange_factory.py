@@ -345,7 +345,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         try:
             items = await self.get_pending_or_scheduled_content_for_publishing()
-            if len(items) > 0:
+            if items:
                 await self.send_items(items)
         finally:
             unlock(lock_name)
@@ -383,7 +383,7 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
                 logger.exception(error)
                 failed_items[str(queue_item.get("_id"))] = queue_item
 
-        if len(failed_items) > 0:
+        if failed_items:
             logger.error("Failed to publish items", extra=dict(failed_items=failed_items.keys()))
 
     async def get_pending_or_scheduled_content_for_publishing(self) -> list[dict]:
@@ -512,7 +512,7 @@ async def transmit_subscriber_items(
 
     exchange_factory = get_exchange_factory()
     tasks = await exchange_factory.get_subscriber_tasks(subscriber_id, retries, priority)
-    if len(tasks) == 0:
+    if not tasks:
         logger.info(f"No tasks found for subscriber {subscriber_id}")
         return
 

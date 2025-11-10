@@ -26,11 +26,9 @@ def is_doc_targeted(item: dict, target: str | None = None) -> bool:
     """
 
     if target:
-        return len(item.get(target, [])) > 0
+        return bool(item.get(target))
     else:
-        return (
-            len(item.get("target_regions", []) + item.get("target_types", []) + item.get("target_subscribers", [])) > 0
-        )
+        return bool(item.get("target_regions") or item.get("target_types") or item.get("target_subscribers"))
 
 
 def get_codes(item: Any) -> set[str]:
