@@ -61,7 +61,9 @@ class UserAvailabilityService(ProdApiService):
                 req=None, lookup={"enabled": True}, projection={"_id": 1}
             )
         ]
-        users = await get_resource_service("users").find_async(where={"_id": {"$in": availability_enabled}})
+        users = await get_resource_service("users").find_async(
+            where={"_id": {"$in": availability_enabled}, "is_active": True}
+        )
         user_data = [self._get_user_availability(user, start_date, end_date) async for user in users]
         return AsyncListCursor(user_data)
 
