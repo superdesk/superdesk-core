@@ -98,7 +98,7 @@ async def create():
     if post_response.status_code == 201:
         if response.get("mimetype", "").startswith("image/"):
             # Create renditions.
-            renditions = [k for k in get_app_config("RENDITIONS")["sams"].keys()]
+            renditions = [k for k in get_app_config("RENDITIONS")["sams"]]
             for rendition in renditions:
                 dimensions = get_app_config("RENDITIONS")["sams"][rendition]
                 rendition_response = sams_client.images.generate_rendition(

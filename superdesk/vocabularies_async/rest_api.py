@@ -42,7 +42,7 @@ class VocabulariesRestEndpoints(ResourceRestEndpoints):
     def _filter_inactive_vocabularies(self, item: dict) -> None:
         vocs = item["items"]
         active_vocs = (
-            {k: voc[k] for k in voc.keys() if k != "is_active"} for voc in vocs if voc.get("is_active", True)
+            {k: voc[k] for k in voc if k != "is_active"} for voc in vocs if voc.get("is_active", True)
         )
 
         item["items"] = list(active_vocs)

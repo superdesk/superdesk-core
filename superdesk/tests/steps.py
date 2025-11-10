@@ -170,7 +170,7 @@ async def expect_json_contains_async(response, expected_json, path=None, reverse
     json_response = apply_path(json.loads(await response.get_data()), path)
 
     if isinstance(expected_json, dict) and isinstance(json_response, dict):
-        for key in expected_json.keys():
+        for key in expected_json:
             if not reverse_expectation:
                 await assert_and_print_body_async(response, assert_sequence, key, json_response, key_message)
             await assert_and_print_body_async(

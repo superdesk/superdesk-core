@@ -376,8 +376,7 @@ def parse_dump_file(
     with open_dump(dump_file) as f:
         buf = f.read(BUF_LEN)
         while buf:
-            for idx in range(len(buf)):
-                c = buf[idx]
+            for c in buf:
                 if state == State.INIT:
                     if c in (" ", "\n"):
                         pass

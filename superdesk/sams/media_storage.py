@@ -59,7 +59,7 @@ def get_sams_values_from_resource_schema(resource: str, data: Dict[str, Any]):
 
         return (sams_mapping.get("map_value") or {}).get(data_value) or data_value
 
-    return {_get_field(field): _get_value(field) for field in data.keys()}
+    return {_get_field(field): _get_value(field) for field in data}
 
 
 class SAMSMediaStorage(MediaStorage, MimetypeMixin):

@@ -511,7 +511,7 @@ class NINJSFormatter(Formatter):
             else:
                 if get_app_config("NINJS_PLACE_EXTENDED"):
                     place = {}
-                    for key in item.keys():
+                    for key in item:
                         if item.get(key):
                             if key == "qcode":
                                 place["code"] = item.get(key)

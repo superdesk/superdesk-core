@@ -48,7 +48,7 @@ def build_custom_hateoas(hateoas, doc, **values):
         links = {}
         doc[LINKS] = links
 
-    for link_name in hateoas.keys():
+    for link_name in hateoas:
         link = hateoas[link_name]
         link = {"title": link["title"], "href": link["href"]}
         link["href"] = link["href"].format(**values)

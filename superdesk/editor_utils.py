@@ -706,7 +706,7 @@ class Editor3Content(EditorContent):
 
     def get_next_entity_key(self):
         """Return a non existing key for entityMap"""
-        return max((int(k) for k in self.content_state["entityMap"].keys()), default=-1) + 1
+        return max((int(k) for k in self.content_state["entityMap"]), default=-1) + 1
 
     def update_item(self):
         value = self.html if self.is_html else self.text

@@ -50,7 +50,7 @@ def get_diff_keys(updates, original=None, parent=None):
     if original is None:
         original = {}
     if original and parent:
-        keys = set([get_key(key, parent) for key in set(original.keys()) - set(updates.keys())])
+        keys = set([get_key(key, parent) for key in set(original) - set(updates)])
     else:
         keys = set()
     for key, val in updates.items():

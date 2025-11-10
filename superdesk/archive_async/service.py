@@ -688,7 +688,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         archive_schema_keys.extend([ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG])
 
         # Delete the keys that are not part of archive schema.
-        keys_to_delete = [key for key in copied_item.keys() if key not in archive_schema_keys]
+        keys_to_delete = [key for key in copied_item if key not in archive_schema_keys]
         keys_to_delete.extend(
             [
                 ID_FIELD,

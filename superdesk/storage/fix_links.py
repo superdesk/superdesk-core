@@ -104,7 +104,7 @@ class MediaFixLinksCommand:
 
         # check editor fields - recursive
         fields_meta = item.get("fields_meta") or {}
-        for field in fields_meta.keys():
+        for field in fields_meta:
             content_state = get_field_content_state(item, field) or {}
             entity_map = content_state.get("entityMap") or {}
             for entity in entity_map.values():
