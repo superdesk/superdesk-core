@@ -8,11 +8,11 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from pytz import utc
+
 from superdesk.io.feed_parsers.newsml_2_0 import NewsMLTwoFeedParser
 from superdesk.io.registry import register_feed_parser
-from superdesk.etree import etree
-from pytz import utc
-import re
+from superdesk.etree import clean_html, to_string
 
 
 class DPAFeedParser(NewsMLTwoFeedParser):
@@ -65,13 +65,9 @@ class DPAFeedParser(NewsMLTwoFeedParser):
             if section is None:
                 continue
 
-            body_html = etree.tostring(section, encoding="unicode", method="html")
-            body_html = re.sub(
-                r'<section[^>]*class="[^"]*{}[^"]*"[^>]*>'.format(re.escape(section_class)), "", body_html
-            )
-            body_html = body_html.replace("</section>", "")
-
-            item["body_html"] = body_html
+            body_xml = clean_html(section)
+            contents = [to_string(node, encoding="unicode", method="html") for node in body_xml]
+            item["body_html"] = "\n".join(contents)
 
     def parse_content_meta(self, tree, item):
         self.parse_keywords(tree, item)

@@ -86,22 +86,22 @@ class DPANewsMLTestCase(TestCase):
         with self.app.app_context():
             self.assertIsInstance(self.item.get("body_html"), str)
             expected_output = (
-                '<p><span class="dateline">London <span class="credit">(dpa)'
-                "</span> - </span>2019 gab es bittere Tränen in der Kurve"
+                "<p>London (dpa) - 2019 gab es bittere Tränen in der Kurve"
                 ", 2022 erst mächtig Wut auf englische Fans und eine Woche später ausgelassenen Jubel:"
                 " Für Eintracht Frankfurt ist London in den vergangenen Jahren zu einem Standard-Reiseziel"
                 " im europäischen Fußball-Wettbewerb geworden. Bevor es am Mittwochabend (21.00 Uhr/DAZN) "
                 "bei Tottenham Hotspur um wichtige Punkte in der Champions League geht, wird sich die Reisegruppe "
-                "um Torhüter Kevin Trapp und Routinier Makoto Hasebe bestimmt an die vergangenen London-Reisen erinnern."
-                "</p><p>Beim Topclub FC Chelsea wollte die damals von Adi Hütter trainierte Eintracht in der Saison 2018/19 "
+                "um Torhüter Kevin Trapp und Routinier Makoto Hasebe bestimmt an die vergangenen London-Reisen erinnern.</p>\n"
+                "<p>Beim Topclub FC Chelsea wollte die damals von Adi Hütter trainierte Eintracht in der Saison 2018/19 "
                 "ihre Erfolgsserie fortsetzen und nach Inter Mailand und Schachtjor Donezk auch die «Blues» aus der Europa League werfen. "
                 "Nach zwei 1:1 ging es an der Stamford Bridge in die Verlängerung und ins Elfmeterschießen. Der inzwischen abgetretene"
-                " Martin Hinteregger vergab vom Punkt, vergoss nach dem bitteren Aus Tränen und wurde anschließend in der Fankurve getröstet."
-                "</p><p>Sportlich weckt der 2:1-Erfolg im Halbfinal-Hinspiel bei West Ham United Ende April positive Erinnerungen "
+                " Martin Hinteregger vergab vom Punkt, vergoss nach dem bitteren Aus Tränen und wurde anschließend in der Fankurve getröstet.</p>\n"
+                "<p>Sportlich weckt der 2:1-Erfolg im Halbfinal-Hinspiel bei West Ham United Ende April positive Erinnerungen "
                 "- schließlich war er der Grundstein für den späteren Triumph in Sevilla. Doch eine Attacke von englischen Fans gegen "
                 "zwei Journalisten des Hessischen Rundfunks trübte das Bild. Die Rundfunk-Reporter bekamen nach eigenen Angaben «mehrfach Faustschläge an den Hinterkopf"
                 ", in den Nacken, in den Rücken». West Ham United machte die Täter später ausfindig. Eine Woche später gewann die Eintracht"
-                " auch das Rückspiel und zog ins Endspiel ein.</p><p> </p>"
+                " auch das Rückspiel und zog ins Endspiel ein.</p>\n"
+                "<p> </p>"
             )
 
             self.assertEqual(self.item.get("body_html").strip(), expected_output.strip())
