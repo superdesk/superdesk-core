@@ -120,6 +120,7 @@ class GenerateRenditionsTestCase(TestCase):
         renditions = get_renditions_spec()
         # Create a simple WebP image for testing
         from io import BytesIO
+
         img = Image.new("RGB", (400, 300), color="red")
         webp_buffer = BytesIO()
         img.save(webp_buffer, "webp")
