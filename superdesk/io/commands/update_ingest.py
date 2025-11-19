@@ -48,6 +48,7 @@ from superdesk.notification import push_notification
 from superdesk.utc import utcnow, get_expiry_date
 from superdesk.workflow import set_default_state
 from superdesk.errors import IngestFileError
+from superdesk.dates import get_naive_utc
 from copy import deepcopy
 
 UPDATE_SCHEDULE_DEFAULT = {"minutes": 5}
@@ -290,7 +291,9 @@ def update_last_item_updated(update, items):
         last_item_update = max(
             [item["versioncreated"] for item in items if item.get("versioncreated")], default=utcnow()
         )
-        if not update.get(LAST_ITEM_UPDATE) or update[LAST_ITEM_UPDATE] < last_item_update:
+        if not update.get(LAST_ITEM_UPDATE) or get_naive_utc(update[LAST_ITEM_UPDATE]) < get_naive_utc(
+            last_item_update
+        ):
             update[LAST_ITEM_UPDATE] = last_item_update
 
 
