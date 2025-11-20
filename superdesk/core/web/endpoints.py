@@ -165,6 +165,7 @@ class EndpointGroup(EndpointGroupProtocol):
         self,
         url: str,
         name: str | None = None,
+        title: str | None = None,
         methods: list[HTTP_METHOD] | None = None,
         auth: AuthConfig = None,
         cors: bool | None = None,
@@ -186,6 +187,7 @@ class EndpointGroup(EndpointGroupProtocol):
                 func,
                 methods=methods,
                 name=name,
+                title=title,
                 auth=auth,
                 parent=self,
                 cors=cors,
@@ -206,6 +208,7 @@ class EndpointGroup(EndpointGroupProtocol):
 def endpoint(
     url: str,
     name: str | None = None,
+    title: str | None = None,
     methods: list[HTTP_METHOD] | None = None,
     auth: AuthConfig = None,
     cors: bool | None = None,
@@ -223,6 +226,7 @@ def endpoint(
         - "items" becomes "{api_prefix}{api_version}/items"
         - "/custom/path" stays as "/custom/path"
     :param name: The optional name of the endpoint
+    :param title: The optional title of the endpoint (used for HATEOAS links)
     :param methods: The optional list of HTTP methods allowed
     :param auth: The auth configuration for this endpoint
     :param cors: If True, CORS will be enabled for this endpoint.
@@ -233,6 +237,7 @@ def endpoint(
         return Endpoint(
             url=url,
             name=name,
+            title=title,
             methods=methods,
             func=func,
             auth=auth,

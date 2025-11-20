@@ -1,3 +1,5 @@
+import logging
+
 from pydantic import BaseModel, field_validator
 from quart_babel import gettext
 from eve.utils import ParsedRequest
@@ -16,10 +18,12 @@ from superdesk.publish_async.utils import (
     content_filter_to_elastic_query,
     item_matches_content_filter,
     get_available_filter_params,
+    test_products_against_item,
 )
 from superdesk.publish_async.publish_cache import PublishCache
 
 
+logger = logging.getLogger(__name__)
 publish_endpoints = EndpointGroup("publish", __name__)
 
 
@@ -106,3 +110,29 @@ async def content_filter_test_endpoint(request: Request) -> Response:
 
     result["_status"] = "OK"
     return Response(result, 201)
+
+
+class ProductTestBody(BaseModel):
+    article_id: str
+
+
+@publish_endpoints.endpoint(
+    "products/test", "product_tests", methods=["POST"], auth=[required_privilege_rule("products")]
+)
+async def product_test_endpoint(request: Request) -> Response:
+    body = ProductTestBody.model_validate_json(await request.get_data())
+
+    archive_service = get_resource_service("archive")
+    article = await archive_service.find_one_async(req=None, _id=body.article_id)
+
+    if not article:
+        raise SuperdeskApiError.badRequestError(gettext("Article not found"))
+
+    try:
+        await PublishCache.init()
+        results = test_products_against_item(article)
+    except Exception as ex:
+        logger.exception(ex)
+        raise SuperdeskApiError.badRequestError(gettext(f"Error in testing article: {ex}"))
+
+    return Response({"_status": "OK", "_id": body.article_id, "_items": results}, 201)
