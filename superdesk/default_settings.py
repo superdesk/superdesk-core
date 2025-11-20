@@ -401,16 +401,14 @@ CELERY_BEAT_SCHEDULE = {
 #: Sentry DSN - will report exceptions there
 SENTRY_DSN = env("SENTRY_DSN")
 SENTRY_INCLUDE_PATHS = ["superdesk", "apps"]
+
+#: Set to number between 0.0 to 1.0 to enable sentry Enable Sentry traces
 SENTRY_TRACES_SAMPLE_RATE = (
     float(os.environ["SENTRY_TRACES_SAMPLE_RATE"]) if os.environ.get("SENTRY_TRACES_SAMPLE_RATE") else None
 )
 SENTRY_PROFILES_SAMPLE_RATE = (
     float(os.environ["SENTRY_PROFILES_SAMPLE_RATE"]) if os.environ.get("SENTRY_PROFILES_SAMPLE_RATE") else None
 )
-
-#: Set to number between 0.0 to 1.0 to enable sentry Enable Sentry traces
-SENTRY_TRACES_SAMPLE_RATE = float(os.environ.get("SENTRY_TRACES_SAMPLE_RATE", "0")) or None
-SENTRY_PROFILES_SAMPLE_RATE = float(os.environ.get("SENTRY_PROFILES_SAMPLE_RATE", "0")) or None
 
 CORE_APPS = [
     "apps.auth",
