@@ -13,7 +13,7 @@
 
 Environment variables names match config name, with some expections documented below.
 """
-from typing import Any, Callable
+from typing import Callable
 from typing_extensions import TypedDict
 import json
 import os
@@ -25,16 +25,23 @@ import logging
 from datetime import timedelta, datetime
 from celery.schedules import crontab
 from kombu import Queue, Exchange
-from distutils.util import strtobool as _strtobool
 
 logger = logging.getLogger()
 
 
-def strtobool(value: Any) -> bool:
-    try:
-        return bool(_strtobool(value)) if isinstance(value, str) else bool(value)
-    except ValueError:
+def strtobool(value: str | bool | int | None) -> bool:
+    if not value:
         return False
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, int):
+        return value > 0
+    if isinstance(value, str):
+        if value.lower() in ("y", "yes", "t", "true", "on", "1"):
+            return True
+        if value.lower() in ("n", "now", "f", "false", "off", "0"):
+            return False
+    raise ValueError(f"Invalid bool value {value!r}")
 
 
 def env(variable, fallback_value=None):
