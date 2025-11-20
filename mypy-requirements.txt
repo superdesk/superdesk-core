@@ -12,7 +12,7 @@ types-python-dateutil
 types-pytz
 types-PyYAML
 types-redis
-types-requests<2.32.4.20250612  # https://github.com/python/typeshed/issues/10825
+types-requests<2.32.4.20250914  # https://github.com/python/typeshed/issues/10825
 types-tzlocal
 types-Werkzeug
 types-jwt
