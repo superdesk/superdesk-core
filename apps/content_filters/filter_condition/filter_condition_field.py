@@ -43,6 +43,7 @@ class FilterConditionFieldsEnum(Enum):
     featuremedia = 19
     agendas = 20
     languages = 21
+    profile = 22
 
 
 @cache(ttl=3600, tags=("vocabularies",))

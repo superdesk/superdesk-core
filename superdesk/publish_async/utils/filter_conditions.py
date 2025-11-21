@@ -295,11 +295,30 @@ async def get_available_filter_params() -> list[FilterConditionFieldParam]:
                 FilterConditionOperator.ENDS_WITH,
             ],
         ),
+        FilterConditionFieldParam(
+            field="profile",
+            operators=[
+                FilterConditionOperator.IN,
+                FilterConditionOperator.NOT_IN,
+                FilterConditionOperator.EQUALS,
+                FilterConditionOperator.NOT_EQUALS,
+            ],
+            values=await _get_profiles(),
+            value_field="qcode",
+        ),
     ]
 
     fields.extend(await _get_vocabulary_fields(values))
     await on_get_available_filter_params.send(fields)
     return fields
+
+
+async def _get_profiles() -> list[dict]:
+    profiles = []
+    profiles_resource = get_resource_service("content_types")
+    async for profile in await profiles_resource.find_async({"enabled": True}):
+        profiles.append({"qcode": profile["_id"], "name": profile.get("label") or profile["_id"]})
+    return profiles
 
 
 async def _get_vocabulary_fields(values: dict[str, list[str] | list[dict]]) -> list[FilterConditionFieldParam]:
