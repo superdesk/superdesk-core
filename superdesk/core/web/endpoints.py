@@ -165,7 +165,6 @@ class EndpointGroup(EndpointGroupProtocol):
         self,
         url: str,
         name: str | None = None,
-        title: str | None = None,
         methods: list[HTTP_METHOD] | None = None,
         auth: AuthConfig = None,
         cors: bool | None = None,
@@ -187,7 +186,6 @@ class EndpointGroup(EndpointGroupProtocol):
                 func,
                 methods=methods,
                 name=name,
-                title=title,
                 auth=auth,
                 parent=self,
                 cors=cors,
@@ -208,7 +206,6 @@ class EndpointGroup(EndpointGroupProtocol):
 def endpoint(
     url: str,
     name: str | None = None,
-    title: str | None = None,
     methods: list[HTTP_METHOD] | None = None,
     auth: AuthConfig = None,
     cors: bool | None = None,
@@ -237,7 +234,6 @@ def endpoint(
         return Endpoint(
             url=url,
             name=name,
-            title=title,
             methods=methods,
             func=func,
             auth=auth,
