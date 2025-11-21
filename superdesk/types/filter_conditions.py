@@ -58,6 +58,7 @@ DEFAULT_ALLOWED_FILTERS: list[str] = [
     "featuremedia",
     "anpa_take_key",
     "agendas",
+    "profile",
 ]
 
 

@@ -10,6 +10,7 @@
 
 import os
 import json
+from typing import List
 
 from bson import ObjectId
 from eve.utils import ParsedRequest
@@ -44,10 +45,30 @@ from superdesk.tests import TestCase
 from .utils import content_filter_to_mongo_query
 
 
-FILTER_CONDITION_IDS = [ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId()]
-CONTENT_FILTER_IDS = [ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId(), ObjectId()]
+FILTER_CONDITION_IDS: List[ObjectId] = [
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+]
+CONTENT_FILTER_IDS: List[ObjectId] = [
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+    ObjectId(),
+]
 PRODUCT_IDS = [ObjectId(), ObjectId()]
 SUBSCRIBER_IDS = [ObjectId(), ObjectId()]
+PROFILE_IDS = ["test", ObjectId()]
 
 
 class ContentFilterTests(TestCase):
@@ -63,6 +84,8 @@ class ContentFilterTests(TestCase):
             {"_id": "6", "state": "fetched", "task": {"desk": 1}},
             {"_id": "7", "subject": [{"scheme": "my_vocabulary", "qcode": "MV:01"}], "task": {"desk": 1}},
             {"_id": "8", "extra": {"custom_text": "my text"}, "task": {"desk": 1}},
+            {"_id": "9", "profile": str(PROFILE_IDS[0]), "task": {"desk": 1}},
+            {"_id": "10", "profile": str(PROFILE_IDS[1]), "task": {"desk": 1}},
         ]
         self.app.data.insert("archive", self.articles)
 
@@ -136,6 +159,20 @@ class ContentFilterTests(TestCase):
                     "value": "my text",
                     "name": "test-7",
                 },
+                {
+                    "_id": FILTER_CONDITION_IDS[7],
+                    "field": "profile",
+                    "operator": "in",
+                    "value": str(PROFILE_IDS[0]),
+                    "name": "test-8",
+                },
+                {
+                    "_id": FILTER_CONDITION_IDS[8],
+                    "field": "profile",
+                    "operator": "in",
+                    "value": str(PROFILE_IDS[1]),
+                    "name": "test-9",
+                },
             ]
         )
 
@@ -175,6 +212,16 @@ class ContentFilterTests(TestCase):
                     "_id": CONTENT_FILTER_IDS[5],
                     "content_filter": [{"expression": {"fc": [FILTER_CONDITION_IDS[6]]}}],
                     "name": "custom-text",
+                },
+                {
+                    "_id": CONTENT_FILTER_IDS[6],
+                    "content_filter": [{"expression": {"fc": [FILTER_CONDITION_IDS[7]]}}],
+                    "name": "profile-1",
+                },
+                {
+                    "_id": CONTENT_FILTER_IDS[7],
+                    "content_filter": [{"expression": {"fc": [FILTER_CONDITION_IDS[8]]}}],
+                    "name": "profile-2",
                 },
             ]
         )
@@ -549,6 +596,26 @@ class FilteringDataTests(ContentFilterTests):
         )
         self.assertTrue(item_matches_content_filter(self.articles[6], doc1))
         self.assertTrue(item_matches_content_filter(self.articles[7], doc2))
+
+    async def test_does_match_profile_str(self):
+        _filter = ContentFiltersResource(
+            id=ObjectId(),
+            name="profile-1",
+            content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_IDS[7]]))],
+        )
+        self.assertTrue(item_matches_content_filter(self.articles[8], _filter))
+        self.assertFalse(item_matches_content_filter(self.articles[9], _filter))
+        self.assertFalse(item_matches_content_filter(self.articles[0], _filter))
+
+    async def test_does_match_profile_objectid(self):
+        _filter = ContentFiltersResource(
+            id=ObjectId(),
+            name="profile-2",
+            content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_IDS[8]]))],
+        )
+        self.assertTrue(item_matches_content_filter(self.articles[9], _filter))
+        self.assertFalse(item_matches_content_filter(self.articles[8], _filter))
+        self.assertFalse(item_matches_content_filter(self.articles[0], _filter))
 
     async def test_does_match_using_like_filter_single_fc(self):
         doc = ContentFiltersResource(
