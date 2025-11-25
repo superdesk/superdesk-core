@@ -18,7 +18,7 @@ install_requires = [
     "flask-mail>=0.9,<0.11",
     "arrow>=0.4,<=1.3.0",
     "pillow>=9.2,<11.3",
-    "bcrypt>=3.1.1,<4.4",
+    "bcrypt>=3.1.1,<5.1",
     "blinker>=1.3,<1.10",
     "celery[redis]>=5.2.7,<5.6",
     "cerberus>=1.3.2,<1.4",
