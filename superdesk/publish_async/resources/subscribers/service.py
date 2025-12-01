@@ -69,6 +69,10 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
                 if dest_id == update_destination.get("_id"):
                     for field, value in destination.config.items():
                         update_destination["config"].setdefault(field, value)
+        # ensure all destinations have _id
+        for destination_dict in updates_destinations:
+            if destination_dict.get("_id") is None:
+                destination_dict["_id"] = get_subscriber_destination_id(destination)
 
     def _validate_seq_num_settings(self, subscriber: SubscribersResource) -> None:
         """
