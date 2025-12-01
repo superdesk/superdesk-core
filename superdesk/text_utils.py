@@ -176,7 +176,7 @@ def sanitize_html(html, remove_tags=None, kill_tags=None):
     return safe_html
 
 
-def decode(bytes_str):
+def decode(bytes_str: bytes) -> str:
     """Decode bytes value
 
     try to decode using UTF-8, or to detect encoding. Will ignore bad chars as a last resort

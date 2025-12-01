@@ -69,6 +69,7 @@ def test_picture_metadata_read_write(image_binary) -> None:
     image = Image.open(io.BytesIO(next_image))
     iptc_info = getiptcinfo(image)
     assert iptc_info is not None
+    assert isinstance(iptc_info[(2, 120)], bytes)
     assert iptc_info[(2, 120)].decode() == "description"
 
 
