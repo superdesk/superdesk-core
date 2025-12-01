@@ -243,9 +243,11 @@ def test_key_is_present(key, context, response):
     :param context
     :param response
     """
-    assert (
-        not isinstance(context[key], bool) or not response[key]
-    ), '"%s" should be empty or false, but it was "%s" in (%s)' % (key, response[key], response)
+    assert response.get(key) is not None, '"%s" should be present and not None, but it was "%s" in (%s)' % (
+        key,
+        response[key],
+        response,
+    )
 
 
 def test_key_is_not_present(key, response):

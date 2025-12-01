@@ -102,6 +102,9 @@ Feature: Subscribers
     }
     """
     Then we get OK response
+    """
+    {"destinations": [{"_id": "__any_value__"}]}
+    """
     Then we get notifications
     """
     [{"event": "subscriber:create", "extra": {"_id": ["#subscribers._id#"]}}]
@@ -112,7 +115,7 @@ Feature: Subscribers
     """
     Then we get updated response
     """
-    {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
+    {"destinations":[{"name":"destination2", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}, "_id": "__any_value__"}]}
     """
     Then we get notifications
     """
