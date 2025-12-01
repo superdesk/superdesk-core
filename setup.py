@@ -16,7 +16,7 @@ install_requires = [
     "urllib3>=1.26,<3",
     "elasticsearch[async]<7.18",  # we are using oss version on test server
     "flask-mail>=0.9,<0.11",
-    "arrow>=0.4,<=1.3.0",
+    "arrow>=0.4,<=1.4.0",
     "pillow>=9.2,<12.1",
     "bcrypt>=3.1.1,<5.1",
     "blinker>=1.3,<1.10",
