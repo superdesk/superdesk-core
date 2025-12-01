@@ -141,7 +141,7 @@ Feature: Highlights
 		"""
 		Then we get new resource
         """
-        {"_id": "__any_value__","highlights": ["#highlights._id#"], "marked_item": "not_available_item_id"}
+        {"_id": "__none__","highlights": ["#highlights._id#"], "marked_item": "not_available_item_id"}
         """
         When we get "archive"
         Then we get list with 0 items

@@ -152,12 +152,17 @@ Feature: User Activity
         Then we get list with 2 items
         """
         {"_items": [
-        		{"item": "some-global-unique-id",
-        		 "message": "added new {{ type }} item with empty header/title",
-        		 "data": {"type": "text", "subject": "__any_value__"}},
-        		{"item": "some-global-unique-id",
-        		 "message": "created new version {{ version }} for item {{ type }} about \"{{ subject }}\"",
-        		 "data": {"version": 2, "type": "text", "subject": "test"}}]}
+            {
+                "item": "some-global-unique-id",
+                "message": "added new {{ type }} item with empty header/title",
+                "data": {"type": "text"}
+            },
+            {
+                "item": "some-global-unique-id",
+                "message": "created new version {{ version }} for item {{ type }} about \"{{ subject }}\"",
+                "data": {"version": 2, "type": "text", "subject": "test"}
+            }
+        ]}
         """
 
  	@auth
