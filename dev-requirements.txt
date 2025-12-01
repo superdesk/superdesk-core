@@ -7,7 +7,7 @@ flake8==7.1.2
 flake8-bugbear==24.12.12
 flake8-docstrings==1.7.0
 pep8==1.7.1
-pyflakes==3.2.0
+pyflakes==3.4.0
 pydocstyle==6.3.0
 httmock==1.4.0
 wooper==0.4.4
