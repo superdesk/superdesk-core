@@ -165,10 +165,9 @@ def get_meta_iptc(file_stream: BinaryIO):
         except KeyError:
             continue
         if isinstance(value, list):
-            value = [decode(v) for v in value]
+            metadata[tag] = [decode(v) for v in value]
         elif isinstance(value, bytes):
-            value = decode(value)
-        metadata[tag] = value
+            metadata[tag] = decode(value)
     return metadata
 
 
