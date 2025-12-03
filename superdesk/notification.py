@@ -96,11 +96,7 @@ def push_notification(name, filters: Optional[WebsocketMessageFilterConditions] 
 
 
 async def _send_pydantic_resource_inserted_notification(doc: ResourceModelType):
-    push_notification(
-        "resource:created",
-        resource=doc.model_resource_name,
-        _id=doc.id
-    )
+    push_notification("resource:created", resource=doc.model_resource_name, _id=doc.id)
 
 
 async def _send_pydantic_resource_updated_notification(original: ResourceModelType, updates: dict):
@@ -109,16 +105,9 @@ async def _send_pydantic_resource_updated_notification(original: ResourceModelTy
     updated_fields = get_diff_keys(updates, original.to_dict())
     if updated_fields:
         push_notification(
-            "resource:updated",
-            resource=original.model_resource_name,
-            _id=original.id,
-            fields=updated_fields
+            "resource:updated", resource=original.model_resource_name, _id=original.id, fields=updated_fields
         )
 
 
 async def _send_pydantic_resource_deleted_notification(doc: ResourceModelType):
-    push_notification(
-        "resource:deleted",
-        resource=doc.model_resource_name,
-        _id=doc.id
-    )
+    push_notification("resource:deleted", resource=doc.model_resource_name, _id=doc.id)
