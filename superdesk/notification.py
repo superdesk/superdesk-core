@@ -20,6 +20,7 @@ from superdesk.core import get_current_app
 from superdesk.utils import json_serialize_datetime_objectId
 from superdesk.websockets_comms import SocketMessageProducer
 from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditions
+from superdesk.core.resources import ResourceModelType, global_signals
 
 
 logger = logging.getLogger(__name__)
@@ -42,6 +43,10 @@ def init_app(app) -> None:
     except (RuntimeError, OSError):
         # not working now, but we can try later when actually sending something
         app.notification_client = ClosedSocket()
+
+    global_signals.data.on_created += _send_pydantic_resource_inserted_notification
+    global_signals.data.on_updated += _send_pydantic_resource_updated_notification
+    global_signals.data.on_deleted += _send_pydantic_resource_deleted_notification
 
 
 def _create_socket_message(**kwargs) -> str:
@@ -88,3 +93,32 @@ def push_notification(name, filters: Optional[WebsocketMessageFilterConditions] 
         app.notification_client.send(message, name)
     except Exception as err:
         logger.exception(err)
+
+
+async def _send_pydantic_resource_inserted_notification(doc: ResourceModelType):
+    push_notification(
+        "resource:created",
+        resource=doc.model_resource_name,
+        _id=doc.id
+    )
+
+
+async def _send_pydantic_resource_updated_notification(original: ResourceModelType, updates: dict):
+    from superdesk.eve_backend import get_diff_keys
+
+    updated_fields = get_diff_keys(updates, original.to_dict())
+    if updated_fields:
+        push_notification(
+            "resource:updated",
+            resource=original.model_resource_name,
+            _id=original.id,
+            fields=updated_fields
+        )
+
+
+async def _send_pydantic_resource_deleted_notification(doc: ResourceModelType):
+    push_notification(
+        "resource:deleted",
+        resource=doc.model_resource_name,
+        _id=doc.id
+    )
