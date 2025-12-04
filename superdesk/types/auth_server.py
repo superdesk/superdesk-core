@@ -38,10 +38,7 @@ class AuthServerClientResource(ResourceModelWithObjectId):
         ),
         validate_iunique_value_async("auth_server_clients", "name"),
     ]
-    password: Annotated[
-        str,
-        Field(default_factory=gen_password),
-    ]
+    password: str = Field(default_factory=gen_password)
     scope: Annotated[list[AuthServerScope], Field(min_length=1)]
 
     @field_validator("id", mode="before")
@@ -53,8 +50,7 @@ class AuthServerClientResource(ResourceModelWithObjectId):
 
     @field_validator("password", mode="before")
     def parse_password(cls, value: str | None) -> str:
-        password = gen_password() if not value or not value.strip() else value
-        return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
+        return gen_password() if not value or not value.strip() else value
 
     @field_validator("scope", mode="after")
     def parse_scope(cls, scopes: list[AuthServerScope]) -> list[AuthServerScope]:
