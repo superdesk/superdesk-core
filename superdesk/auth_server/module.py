@@ -12,7 +12,7 @@ auth_server_client_resource_config = ResourceConfig(
     data_class=AuthServerClientResource,
     rest_endpoints=RestEndpointConfig(
         auth=[required_privilege_rule("auth_server_clients")],
-        exclude_fields_in_response={"GET": ["password"]},
+        exclude_fields_in_response={"GET": ["password"], "PATCH": ["password"]},
     ),
 )
 
