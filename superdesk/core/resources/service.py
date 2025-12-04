@@ -379,7 +379,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         # This will make sure values are of correct type for MongoDB (such as ObjectId)
         return model_instance.to_dict(context=self.get_storage_serialise_context())
 
-    async def create(self, docs: Sequence[ResourceModelType | dict[str, Any]]) -> List[ResourceModelType]:
+    async def create(self, docs: Sequence[ResourceModelType | dict]) -> List[ResourceModelType]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
@@ -393,44 +393,72 @@ class AsyncResourceService(Generic[ResourceModelType]):
         instances = await self._convert_dicts_to_model(docs)
         await self.on_create(instances)
 
-        ids: List[str] = []
-
         for index, doc in enumerate(instances):
             await self.validate_create(doc)
             versioned_model = get_versioned_model(doc)
             if versioned_model is not None:
                 versioned_model.current_version = 1
-            doc_dict = doc.to_dict(
-                context=self.get_storage_serialise_context(),
-                # Include default values, but exclude ``None`` on creation
-                exclude_none=True,
-                exclude_unset=False,
-                exclude_defaults=False,
-            )
-            doc.etag = doc_dict["_etag"] = self.generate_etag(doc_dict, self.config.etag_ignore_fields)
-            response = await self.mongo_async.insert_one(doc_dict)
-            ids.append(response.inserted_id)
 
-            # Update the provided docs, so the `_id` and `_etag` get applied to the supplied dicts
-            doc.id = response.inserted_id
+            doc.id, doc.etag = await self.insert_into_dbs(doc)
             docs_entry = docs[index]
             if isinstance(docs_entry, dict):
                 docs_entry.update(
                     dict(
-                        _id=response.inserted_id,
+                        _id=doc.id,
                         _etag=doc.etag,
                     )
                 )
-            try:
-                await self.elastic.insert([doc_dict])
-            except ElasticNotConfiguredForResource:
-                pass
-
-            if self.config.versioning:
-                await self.insert_versioned_document(doc_dict)
 
         await self.on_created(instances)
         return instances
+
+    async def insert_into_dbs(self, doc: ResourceModelType) -> tuple[str | ObjectId, str]:
+        doc_dict = doc.to_dict(
+            context=self.get_storage_serialise_context(),
+            # Include default values, but exclude ``None`` on creation
+            exclude_none=True,
+            exclude_unset=False,
+            exclude_defaults=False,
+        )
+        doc_dict["_etag"] = self.generate_etag(doc_dict, self.config.etag_ignore_fields)
+        response = await self.mongo_async.insert_one(doc_dict)
+
+        try:
+            await self.elastic.insert([doc_dict])
+        except ElasticNotConfiguredForResource:
+            pass
+
+        if self.config.versioning:
+            await self.insert_versioned_document(doc_dict)
+
+        return cast(str | ObjectId, response.inserted_id), doc_dict["_etag"]
+
+    async def update_in_dbs(
+        self,
+        item_id: str | ObjectId,
+        original: ResourceModelType,
+        updates: dict,
+        validated_updates: dict,
+    ) -> dict:
+        updates_dict = {key: val for key, val in validated_updates.items() if key in updates}
+        updates["_etag"] = updates_dict["_etag"] = self.generate_etag(validated_updates, self.config.etag_ignore_fields)
+
+        # Remove the ``_latest_version`` in case the client sent this to us
+        # as we populate that on fetch of a version
+
+        if model_has_versions(original):
+            updates.pop("_latest_version", None)
+            updates_dict.pop("_latest_version", None)
+        response = await self.mongo_async.update_one({"_id": item_id}, {"$set": updates_dict})
+        try:
+            await self.elastic.update(item_id, updates_dict)
+        except ElasticNotConfiguredForResource:
+            pass
+
+        if self.config.versioning:
+            await self.mongo_versioned_async.insert_one(self._get_versioned_document(validated_updates))
+
+        return updates_dict
 
     async def insert_versioned_document(self, doc_dict: dict[str, Any]):
         await self.mongo_versioned_async.insert_one(self._get_versioned_document(doc_dict))
@@ -495,25 +523,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
             raise SuperdeskApiError.notFoundError()
 
         await self.on_update(updates, original)
-        validated_updates = await self.validate_update(updates, original, etag)
-        updates_dict = {key: val for key, val in validated_updates.items() if key in updates}
-        updates["_etag"] = updates_dict["_etag"] = self.generate_etag(validated_updates, self.config.etag_ignore_fields)
-
-        # Remove the ``_latest_version`` in case the client sent this to us
-        # as we populate that on fetch of a version
-
-        if model_has_versions(original):
-            updates.pop("_latest_version", None)
-            updates_dict.pop("_latest_version", None)
-        response = await self.mongo_async.update_one({"_id": item_id}, {"$set": updates_dict})
-        try:
-            await self.elastic.update(item_id, updates_dict)
-        except ElasticNotConfiguredForResource:
-            pass
-
-        if self.config.versioning:
-            await self.mongo_versioned_async.insert_one(self._get_versioned_document(validated_updates))
-
+        updates_dict = await self.update_in_dbs(
+            item_id, original, updates, await self.validate_update(updates, original, etag)
+        )
         await self.on_updated(updates, original)
 
         return original.clone_with(updates_dict)
