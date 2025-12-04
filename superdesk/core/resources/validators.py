@@ -301,7 +301,7 @@ def get_field_errors_from_pydantic_validation_error(validation_error: Validation
             elif error["type"] == "enum":
                 error_destination[field] = error["msg"]  # type: ignore[assignment]
             elif error["type"] in ["string_too_short", "too_short"]:
-                error_destination[field] = gettext("Value is too short")
+                error_destination[field] = gettext("Value is too short")  # type: ignore[assignment]
             else:
                 error_destination[field][error["type"]] = error["msg"]
         except (KeyError, TypeError, ValueError) as error:
