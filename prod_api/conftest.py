@@ -16,7 +16,7 @@ from eve.methods.common import parse
 from superdesk.flask import url_for
 from superdesk.tests import get_mongo_uri, setup, clean_dbs
 from superdesk.factory import get_app as get_sd_app
-from superdesk.auth_server.clients import RegisterClient
+from superdesk.types import AuthServerClientResource
 from prod_api.app import get_app as get_prodapi_api
 
 from planning.prod_api.events.resource import EventsResource
@@ -284,7 +284,7 @@ async def auth_server_registered_clients(request, superdesk_app):
                     "scope": param,
                 }
             )
-            await RegisterClient().run(**clients_data[-1])
+            await AuthServerClientResource.get_service().create([clients_data[-1]])
 
     return clients_data
 
@@ -305,7 +305,7 @@ async def issued_tokens(request, superdesk_app, superdesk_client):
                     "scope": param,
                 }
             )
-            await RegisterClient().run(**clients_data[-1])
+            await AuthServerClientResource.get_service().create([clients_data[-1]])
 
     # retrieve tokens
     async with superdesk_app.test_request_context("/"):
