@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from superdesk.resource import Resource
-from superdesk.auth_server.scopes import Scope
+from superdesk.types import AuthServerScope
 
 
 class UserMetricsResource(Resource):
@@ -27,5 +27,5 @@ class UserMetricsResource(Resource):
     }
 
     privileges = {
-        "GET": Scope.USERS_READ.name,
+        "GET": AuthServerScope.USERS_READ.name,
     }

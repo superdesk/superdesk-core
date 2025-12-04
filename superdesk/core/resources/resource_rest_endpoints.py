@@ -111,7 +111,7 @@ class RestEndpointConfig:
 
     #: Exclude these fields from ALL responses (uses MongoDB or Elasticsearch to provide projection)
     #: Raises an exception if client specifically requests any of these fields to be included
-    exclude_fields_in_response: list[str] | None = None
+    exclude_fields_in_response: list[str] | dict[HTTP_METHOD, list[str]] | None = None
 
     additional_lookup: AdditionalLookupConfig | None = None
 
@@ -307,12 +307,13 @@ class ResourceRestEndpoints(RestEndpoints):
     def service(self):
         return get_current_async_app().resources.get_resource_service(self.resource_config.name)
 
-    def get_exclude_fields_projection(self) -> dict[str, Literal[False]] | None:
-        if self.endpoint_config.exclude_fields_in_response:
-            return cast(
-                dict[str, Literal[False]], {field: False for field in self.endpoint_config.exclude_fields_in_response}
-            )
-        return None
+    def get_exclude_fields_projection(self, method: HTTP_METHOD) -> dict[str, Literal[False]] | None:
+        exclude_fields = self.endpoint_config.exclude_fields_in_response
+
+        if isinstance(exclude_fields, dict):
+            exclude_fields = exclude_fields.get(method)
+
+        return cast(dict[str, Literal[False]], {field: False for field in exclude_fields}) if exclude_fields else None
 
     @override
     async def get_item(
@@ -328,7 +329,7 @@ class ResourceRestEndpoints(RestEndpoints):
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_get.send(request)
 
-        projection_args = combine_projection_args(self.get_exclude_fields_projection(), params.projection)
+        projection_args = combine_projection_args(self.get_exclude_fields_projection("GET"), params.projection)
         if params.version == "all":
             items, count = await self.service.get_all_item_versions(
                 args.item_id, params.max_results, params.page, projection=projection_args
@@ -466,7 +467,7 @@ class ResourceRestEndpoints(RestEndpoints):
             # If projection is enabled, we fetch all newly created items with projection applied
             # That way projection is applied to all Create request responses
             model_instances = await self.service.find_by_ids(
-                [instance.id for instance in model_instances], projection=self.get_exclude_fields_projection()
+                [instance.id for instance in model_instances], projection=self.get_exclude_fields_projection("POST")
             )
 
         results: list[dict]
@@ -555,7 +556,7 @@ class ResourceRestEndpoints(RestEndpoints):
                 # If projection is enabled, we fetch the updated item with projection applied
                 # That way projection is applied to all Update request responses
                 updated = (
-                    await self.service.find_by_id(args.item_id, projection=self.get_exclude_fields_projection())
+                    await self.service.find_by_id(args.item_id, projection=self.get_exclude_fields_projection("PATCH"))
                 ).to_dict()
             else:
                 updated = updated_instance.to_dict()
@@ -639,7 +640,7 @@ class ResourceRestEndpoints(RestEndpoints):
         params.args = cast(SearchArgs, params.model_extra)
         signals = self.resource_config.data_class.get_signals()
         await signals.web.on_search.send(request, params)
-        params.projection = combine_projection_args(self.get_exclude_fields_projection(), params)
+        params.projection = combine_projection_args(self.get_exclude_fields_projection("GET"), params)
         cursor = await self.service.find(params)
         count = await cursor.count()
 

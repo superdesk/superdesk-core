@@ -10,7 +10,7 @@
 
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
-from superdesk.auth_server.scopes import Scope
+from superdesk.types import AuthServerScope
 
 
 class DesksResource(Resource):
@@ -20,4 +20,4 @@ class DesksResource(Resource):
     resource_methods = ["GET"]
     allow_unknown = True
     datasource = {"source": "desks", "default_sort": [("name", 1)]}
-    privileges = {"GET": Scope.DESKS_READ.name}
+    privileges = {"GET": AuthServerScope.DESKS_READ.name}

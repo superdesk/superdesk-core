@@ -43,6 +43,7 @@ from .publish import (
 )
 from .archive import ArchiveResourceModel
 from .base import ItemOperation, ContentTypes, FORMATS
+from .auth_server import AuthServerScope, AuthServerClientResource, allowed_auth_server_scopes
 
 __all__ = [
     "Id",
@@ -98,6 +99,9 @@ __all__ = [
     "ItemOperation",
     "ContentTypes",
     "FORMATS",
+    "AuthServerScope",
+    "AuthServerClientResource",
+    "allowed_auth_server_scopes",
 ]
 
 

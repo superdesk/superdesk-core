@@ -11,22 +11,20 @@ import logging
 from bson import ObjectId
 from bson.errors import InvalidId
 
-from superdesk import get_resource_service
 from superdesk.core.module import Module
+from superdesk.types import AuthServerClientResource, allowed_auth_server_scopes
 
 from .quart_oauth2 import OAuth2Server, OAuth2Client
-from .scopes import allowed_scopes
 
 
 logger = logging.getLogger(__name__)
 
 
 class SuperdeskOAuth2Server(OAuth2Server):
+    # TODO-ASYNC[auth]: Add async support for this method
     def query_client(self, client_id: str) -> OAuth2Client | None:
-        clients_service = get_resource_service("auth_server_clients")
         try:
-            # TODO-ASYNC[auth]: Use ``find_one_async`` when upgrading this module
-            client_data = clients_service.find_one(req=None, _id=ObjectId(client_id))
+            client_data = AuthServerClientResource.get_service().mongo.find_one({"_id": ObjectId(client_id)})
         except InvalidId as e:
             logger.error("Invalid 'client_id' was provided. Exception: {}".format(e))
             return None
@@ -34,7 +32,9 @@ class SuperdeskOAuth2Server(OAuth2Server):
         if client_data is None:
             return None
 
-        return OAuth2Client(client_data, auth_methods=["client_secret_basic"], allowed_scopes=allowed_scopes)
+        return OAuth2Client(
+            client_data, auth_methods=["client_secret_basic"], allowed_scopes=allowed_auth_server_scopes
+        )
 
 
 TOKEN_ENDPOINT = "auth_server/token"

@@ -2368,7 +2368,7 @@ async def login_as(context, username, password, user_type):
         "is_enabled": True,
         "needs_activation": False,
         "email": f"behave_test_{username}@sourcefabric.org",
-        user_type: user_type,
+        "user_type": user_type,
     }
 
     if context.text:

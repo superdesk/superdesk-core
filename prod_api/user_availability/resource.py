@@ -10,7 +10,7 @@
 
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
-from superdesk.auth_server.scopes import Scope
+from superdesk.types import AuthServerScope
 
 
 class UserAvailabilityResource(Resource):
@@ -27,4 +27,4 @@ class UserAvailabilityResource(Resource):
         "working_hours": {"type": "list"},
     }
     datasource = {"source": "user_availability", "default_sort": [("date", 1)]}
-    privileges = {"GET": Scope.USERS_READ.name}
+    privileges = {"GET": AuthServerScope.USERS_READ.name}

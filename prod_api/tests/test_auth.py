@@ -4,14 +4,14 @@ import pytest
 from requests.auth import _basic_auth_str
 
 from superdesk.flask import url_for
-from superdesk.auth_server.scopes import Scope
+from superdesk.types import AuthServerScope
 
 from ..conftest import get_test_prodapi_app
 
 
 RESOURCES = ("archive", "assignments", "contacts", "desks", "events", "planning", "users")
 
-SCOPES = tuple(i.name for i in Scope)
+SCOPES = tuple(i.name for i in AuthServerScope)
 
 
 async def test_not_authenticated(prodapi_app, prodapi_client):
