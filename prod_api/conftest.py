@@ -9,14 +9,13 @@ import pytest
 import random
 import string
 from pathlib import Path
-from bson import ObjectId
 from requests.auth import _basic_auth_str
 from eve.methods.common import parse
 
 from superdesk.flask import url_for
 from superdesk.tests import get_mongo_uri, setup, clean_dbs
 from superdesk.factory import get_app as get_sd_app
-from superdesk.types import AuthServerClientResource
+from superdesk.types import AuthServerClientResource, AuthServerScope
 from prod_api.app import get_app as get_prodapi_api
 
 from planning.prod_api.events.resource import EventsResource
@@ -265,47 +264,26 @@ async def superdesk_client(superdesk_app):
         yield client
 
 
+async def _create_clients_from_scope_sets(scope_sets: list[list[AuthServerScope]]) -> list[AuthServerClientResource]:
+    return await AuthServerClientResource.get_service().create(
+        [AuthServerClientResource(name=generate_random_string(), scope=scopes) for scopes in scope_sets]  # type: ignore[call-arg,arg-type]
+    )
+
+
 @pytest.fixture(scope="function")
 async def auth_server_registered_clients(request, superdesk_app):
     """
     Registers clients for auth server.
     :return: dict with clients
     """
-    clients_data = []
 
-    async with superdesk_app.app_context():
-        for param in request.param:
-            # register clients
-            clients_data.append(
-                {
-                    "name": generate_random_string(),
-                    "client_id": str(ObjectId()),
-                    "password": generate_random_string(),
-                    "scope": param,
-                }
-            )
-            await AuthServerClientResource.get_service().create([clients_data[-1]])
-
-    return clients_data
+    return await _create_clients_from_scope_sets(request.param)
 
 
 @pytest.fixture(scope="function")
 async def issued_tokens(request, superdesk_app, superdesk_client):
     tokens = []
-    clients_data = []
-
-    # register clients
-    async with superdesk_app.app_context():
-        for param in request.param:
-            clients_data.append(
-                {
-                    "name": generate_random_string(),
-                    "client_id": str(ObjectId()),
-                    "password": generate_random_string(),
-                    "scope": param,
-                }
-            )
-            await AuthServerClientResource.get_service().create([clients_data[-1]])
+    clients_data = await _create_clients_from_scope_sets(request.param)
 
     # retrieve tokens
     async with superdesk_app.test_request_context("/"):
@@ -313,7 +291,7 @@ async def issued_tokens(request, superdesk_app, superdesk_client):
             resp = await superdesk_client.post(
                 url_for("auth_server.issue_token"),
                 form={"grant_type": "client_credentials"},
-                headers={"Authorization": _basic_auth_str(client_data["client_id"], client_data["password"])},
+                headers={"Authorization": _basic_auth_str(str(client_data.id), client_data.password)},
             )
             tokens.append(json.loads((await resp.get_data()).decode("utf-8")))
 
