@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.signals import SignalGroup, Signal
 
@@ -73,12 +71,12 @@ class Resources(SignalGroup):
         :raises KeyError: If the resource is not registered
         """
 
-        return deepcopy(self._resource_configs[name])
+        return self._resource_configs[name]
 
     def get_all_configs(self) -> list[ResourceConfig]:
         """Get a copy of the configs for all the registered resources in the system"""
 
-        return deepcopy(list(self._resource_configs.values()))
+        return list(self._resource_configs.values())
 
     def get_resource_service(self, resource_name: str) -> AsyncResourceService:
         return self._resource_services[resource_name]
