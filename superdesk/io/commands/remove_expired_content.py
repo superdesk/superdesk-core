@@ -52,7 +52,7 @@ class RemoveExpiredContent:
     async def remove_expired(self, provider):
         lock_name = "ingest:gc"
 
-        if not lock(lock_name, expire=300):
+        if not lock(lock_name, expire=60 * 30):
             return
 
         try:

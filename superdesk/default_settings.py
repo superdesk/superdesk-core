@@ -365,7 +365,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     "ingest:gc": {
         "task": "superdesk.io.gc_ingest",
-        "schedule": timedelta(minutes=15),
+        "schedule": crontab(minute=30),
     },
     "audit:gc": {"task": "superdesk.audit.gc_audit", "schedule": crontab(minute="8", hour=local_to_utc_hour(1))},
     "session:gc": {"task": "apps.auth.session_purge", "schedule": timedelta(minutes=5)},

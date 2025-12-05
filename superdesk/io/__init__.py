@@ -82,6 +82,6 @@ async def update_ingest():
     await UpdateIngest().run()
 
 
-@celery.task(soft_time_limit=600)
+@celery.task(soft_time_limit=60 * 30)
 async def gc_ingest():
     await RemoveExpiredContent().run()
