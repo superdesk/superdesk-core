@@ -453,9 +453,7 @@ class TestResourceService(AsyncTestCase):
         # Test with default sort in the resource config
         sort_query = [("email.keyword", 1)]
 
-        with mock.patch.object(
-            self.service.config, "default_sort", sort_query
-        ):
+        with mock.patch.object(self.service.config, "default_sort", sort_query):
             expected = SearchRequest(sort=sort_query)
             await assert_es_find_called_with(SearchRequest(), expected=expected)
             expected.where = {}
