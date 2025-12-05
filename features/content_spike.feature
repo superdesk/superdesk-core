@@ -163,7 +163,7 @@ Feature: Content Spiking
         """
         {"sign_off": "abc/foo"}
         """
-        When we login as user "bar" with password "foobar" and user type "admin"
+        When we login as user "bar" with password "foobar" and user type "administrator"
         """
         {"sign_off": "bar"}
         """

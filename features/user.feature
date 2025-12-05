@@ -473,7 +473,7 @@ Feature: User Resource
     @auth
     @notification
     Scenario: Delete a user removes content in draft state and releases user lock
-        Given we login as user "foo" with password "barword" and user type "admin"
+        Given we login as user "foo" with password "barword" and user type "administrator"
         And "archive"
         """
         [{"_id": "item2", "headline": "test", "slugline": "test", "state": "draft",
