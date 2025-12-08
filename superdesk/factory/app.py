@@ -566,6 +566,11 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     superdesk.app = app
     app.async_app.start()
 
+    from superdesk.privilege import privilege as register_privilege
+
+    for privilege in app.async_app.privileges.get_all():
+        register_privilege(privilege.name, privilege.label, privilege.description, privilege.category)
+
     custom_loader = jinja2.ChoiceLoader(
         [
             jinja2.FileSystemLoader("templates"),

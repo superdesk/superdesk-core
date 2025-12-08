@@ -11,7 +11,7 @@
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
 from superdesk.metadata.item import metadata_schema
-from superdesk.auth_server.scopes import Scope
+from superdesk.types import AuthServerScope
 
 
 # NOTE: since schema is not defined here, setting up a projection explicitly is required,
@@ -38,4 +38,4 @@ class ItemsResource(Resource):
         "default_sort": [("_updated", -1)],
         "projection": projection,
     }
-    privileges = {"GET": Scope.ARCHIVE_READ.name}
+    privileges = {"GET": AuthServerScope.ARCHIVE_READ.name}

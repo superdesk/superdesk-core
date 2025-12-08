@@ -438,7 +438,6 @@ CORE_APPS = [
     "superdesk.auth",
     "superdesk.auth.oauth",
     "superdesk.attachments",
-    "superdesk.auth_server",
     "apps.links",
     "superdesk.locales",
     "apps.usage_metrics",
@@ -463,6 +462,7 @@ MODULES = [
     "superdesk.content_types_async",
     "superdesk.publish_async.module",
     "superdesk.auth_server.oauth2",
+    "superdesk.auth_server.module",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"

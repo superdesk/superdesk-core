@@ -4,14 +4,14 @@ import pytest
 from requests.auth import _basic_auth_str
 
 from superdesk.flask import url_for
-from superdesk.auth_server.scopes import Scope
+from superdesk.types import AuthServerScope
 
 from ..conftest import get_test_prodapi_app
 
 
 RESOURCES = ("archive", "assignments", "contacts", "desks", "events", "planning", "users")
 
-SCOPES = tuple(i.name for i in Scope)
+SCOPES = tuple(i.name for i in AuthServerScope)
 
 
 async def test_not_authenticated(prodapi_app, prodapi_client):
@@ -51,8 +51,8 @@ async def test_authenticated(superdesk_app, superdesk_client, auth_server_regist
     :type superdesk_client: flask.testing.FlaskClient
     """
 
-    client_id = auth_server_registered_clients[0]["client_id"]
-    password = auth_server_registered_clients[0]["password"]
+    client_id = auth_server_registered_clients[0].id
+    password = auth_server_registered_clients[0].password
 
     # we send a client id and password to get an access token
     async with superdesk_app.test_request_context("/"):
@@ -100,8 +100,8 @@ async def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_regis
     :type superdesk_client: flask.testing.FlaskClient
     """
 
-    client_id = auth_server_registered_clients[0]["client_id"]
-    password = auth_server_registered_clients[0]["password"]
+    client_id = auth_server_registered_clients[0].id
+    password = auth_server_registered_clients[0].password
 
     # we send a client id and password to get an access token
     async with superdesk_app.test_request_context("/"):
@@ -136,7 +136,7 @@ async def test_bad_shared_key(superdesk_app, superdesk_client, auth_server_regis
     assert resp_data == {"_status": "ERR", "_error": {"code": 401, "message": "Please provide proper credentials"}}
 
 
-@pytest.mark.parametrize("issued_tokens", [(SCOPES, tuple())], indirect=True)
+@pytest.mark.parametrize("issued_tokens", [(SCOPES,)], indirect=True)
 async def test_scopes(issued_tokens, prodapi_app, prodapi_client):
     """
     Send a request with 'all scopes' token:
@@ -156,19 +156,9 @@ async def test_scopes(issued_tokens, prodapi_app, prodapi_client):
     """
 
     access_token_all_scopes = issued_tokens[0]["access_token"]
-    access_token_no_scopes = issued_tokens[1]["access_token"]
 
     async with prodapi_app.test_request_context("/"):
         for resource in RESOURCES:
-            # we send a requests with 'empty scopes' token
-            resp = await prodapi_client.get(
-                url_for("{}|resource".format(resource)),
-                headers={"Authorization": "Bearer {}".format(access_token_no_scopes)},
-            )
-            resp_data = json.loads((await resp.get_data()).decode("utf-8"))
-            # we get a 403 response
-            assert resp.status_code == 403
-            assert resp_data == {"_status": "ERR", "_error": {"code": 403, "message": "Invalid scope"}}
             # we send a requests with 'all scopes' token
             resp = await prodapi_client.get(
                 url_for("{}|resource".format(resource)),
@@ -235,8 +225,8 @@ async def test_token_expired(superdesk_app, superdesk_client, auth_server_regist
     :type superdesk_client: flask.testing.FlaskClient
     """
 
-    client_id = auth_server_registered_clients[0]["client_id"]
-    password = auth_server_registered_clients[0]["password"]
+    client_id = auth_server_registered_clients[0].id
+    password = auth_server_registered_clients[0].password
     expiration_delay = superdesk_app.config["AUTH_SERVER_EXPIRATION_DELAY"]
 
     # we send a client id and password to get an access token

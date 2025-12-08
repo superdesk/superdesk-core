@@ -1891,7 +1891,7 @@ Feature: Content Publishing
       """
       {"_current_version": 3, "state": "corrected", "sign_off": "abc/foo", "operation": "correct", "task":{"desk": "#desks._id#", "stage": "#desks.incoming_stage#"}}
       """
-      When we login as user "bar" with password "foobar" and user type "admin"
+      When we login as user "bar" with password "foobar" and user type "administrator"
       """
       {"sign_off": "bar"}
       """

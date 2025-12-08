@@ -6,19 +6,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import sys
 import logging
-import bcrypt
 
 import click
-from bson import ObjectId
-from bson.errors import InvalidId
+from pydantic import ValidationError
 
-import superdesk
-from superdesk.eve_async import AsyncBaseService
 from superdesk.commands import cli
-from superdesk.utils import gen_password
-from superdesk.auth_server.scopes import allowed_scopes
+
+from superdesk.types import AuthServerClientResource, allowed_auth_server_scopes
+from superdesk.core import json
+from superdesk.core.resources.validators import get_field_errors_from_pydantic_validation_error
 
 
 logger = logging.getLogger(__name__)
@@ -33,8 +30,10 @@ logger = logging.getLogger(__name__)
     "-s",
     multiple=True,
     default=[],
-    type=click.Choice(allowed_scopes),
-    help="scopes allowed (one or more of {allowed_scopes})".format(allowed_scopes=", ".join(allowed_scopes)),
+    type=click.Choice(allowed_auth_server_scopes),
+    help="scopes allowed (one or more of {allowed_scopes})".format(
+        allowed_scopes=", ".join(allowed_auth_server_scopes)
+    ),
 )
 async def cli_auth_server_register_client(name, client_id, password, scope):
     """Register a client to authentication server
@@ -52,7 +51,19 @@ async def cli_auth_server_register_client(name, client_id, password, scope):
 
     """
 
-    await RegisterClient().run(client_id, password, scope, name)
+    try:
+        clients = await AuthServerClientResource.get_service().create(
+            [AuthServerClientResource(id=client_id, name=name, password=password, scope=scope)]
+        )
+        client = clients[0]
+        print(f"Client {client.name} has been registered with id '{client.id}' and password {client.password}")
+    except ValidationError as error:
+        errors = {
+            field_name: list(field_errors.values())
+            for field_name, field_errors in get_field_errors_from_pydantic_validation_error(error).items()
+        }
+
+        raise click.BadParameter("\n" + json.dumps(errors))
 
 
 @cli.command("auth_server:update_client")
@@ -63,8 +74,10 @@ async def cli_auth_server_register_client(name, client_id, password, scope):
     "-s",
     multiple=True,
     default=[],
-    type=click.Choice(allowed_scopes),
-    help="scopes allowed (one or more of {allowed_scopes})".format(allowed_scopes=", ".join(allowed_scopes)),
+    type=click.Choice(allowed_auth_server_scopes),
+    help="scopes allowed (one or more of {allowed_scopes})".format(
+        allowed_scopes=", ".join(allowed_auth_server_scopes)
+    ),
 )
 @click.option("--client-id", "-i", help="ObjectId compatible client id")
 async def cli_auth_server_update_client(client_id, password, scope, name):
@@ -88,7 +101,38 @@ async def cli_auth_server_update_client(client_id, password, scope, name):
         $ python manage.py auth_server:update_client 5dad7f064269dd1d5a78e6a2 -s ARCHIVE_READ
 
     """
-    await UpdateClient().run(client_id, password, scope, name)
+
+    updates: dict = {"password": password}
+    if scope:
+        updates["scope"] = scope
+    if name is not None and name.strip():
+        updates["name"] = name
+
+    try:
+        service = AuthServerClientResource.get_service()
+
+        original = await service.find_by_id(client_id)
+        if not original:
+            raise click.BadParameter(f"Can't find any client with id '{client_id}'")
+
+        updated = await service.update(client_id, updates=updates)
+        print("Client successfuly updated with:")
+        for key, value in updated:
+            if value == getattr(original, key):
+                continue
+            elif key in {"etag", "updated"}:
+                continue
+            elif key == "scope":
+                print(f"\t{key}: {', '.join(value)}")
+
+            print(f"    {key}: {value}")
+    except ValidationError as error:
+        errors = {
+            field_name: list(field_errors.values())
+            for field_name, field_errors in get_field_errors_from_pydantic_validation_error(error).items()
+        }
+
+        raise click.BadParameter("\n" + json.dumps(errors))
 
 
 @cli.command("auth_server:unregister_client")
@@ -102,7 +146,14 @@ async def cli_auth_server_unregister_client(client_id):
         $ python manage.py auth_server:unregister_client 0102030405060708090a0b0c
 
     """
-    await UnregisterClient().run(client_id)
+    service = AuthServerClientResource.get_service()
+
+    client = await service.find_by_id(client_id)
+    if not client:
+        raise click.BadParameter(f"No client with id '{client_id}'")
+
+    await service.delete(client)
+    print(f"Client with id '{client_id}' has been successfuly unregistered")
 
 
 @cli.command("auth_server:list_clients")
@@ -116,175 +167,19 @@ async def cli_auth_server_list_clients():
         $ python manage.py auth_server:list_clients
 
     """
-    await ListClients().run()
-
-
-class AuthServerClientsResource(superdesk.Resource):
-    schema = {
-        "name": {
-            "type": "string",
-            "required": True,
-            "unique": True,
-        },
-        "password": {"type": "string", "required": True},
-        "scope": {"type": "list", "allowed": list(allowed_scopes), "required": True},
-    }
-
-
-class AuthServerClientsService(AsyncBaseService):
-    """Service to handle authorization server clients"""
-
-
-class CommonClient:
-    """Common method for client commands"""
-
-    def validate_scope(self, scope):
-        """Return list of unique and valid scopes, end command execution else"""
-        scope = set(scope)
-        if not scope.issubset(allowed_scopes):
-            raise click.BadParameter(
-                "invalid scopes: {invalid_scopes}\nvalid scopes are: {allowed_scopes}".format(
-                    invalid_scopes=", ".join(scope - allowed_scopes), allowed_scopes=", ".join(allowed_scopes)
-                )
-            )
-        return list(scope)
-
-
-class RegisterClient(CommonClient):
-    async def run(self, client_id, password, scope, name):
-        await self.validate_name(name)
-        scope = self.validate_scope(scope)
-
-        if client_id is None:
-            client_id = ObjectId()
-        else:
-            client_id = await self.validate_client_id(client_id)
-
-        if not password or not password.strip():
-            password = gen_password()
-
-        client_data = {
-            "_id": client_id,
-            "name": name,
-            "password": bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),
-            "scope": list(scope),
-        }
-
-        await superdesk.get_resource_service("auth_server_clients").post_async([client_data])
-        print(
-            "Client {name!r} has been registered with id '{client_id}' and password {password!r}".format(
-                name=name, client_id=client_id, password=password
+    clients_desc = []
+    async for client in await AuthServerClientResource.get_service().search({}):
+        clients_desc.append(
+            "- client {name!r}: id '{client_id}' with scope(s) {scopes}".format(
+                name=client.name,
+                client_id=client.id,
+                scopes=", ".join(client.scope),
             )
         )
 
-    async def validate_client_id(self, client_id):
-        """
-        Validate client id string and return client id ObjectId
-        :param client_id: client id
-        :type client_id: str
-        :return: client id
-        :rtype: ObjectId
-        """
-
-        try:
-            client_id = ObjectId(client_id)
-        except InvalidId as e:
-            raise click.BadParameter("the given client id is not valid: {msg}".format(msg=e))
-
-        if await superdesk.get_resource_service("auth_server_clients").count_async({"_id": client_id}):
-            raise click.BadParameter("a client with this id already exists!")
-
-        return client_id
-
-    async def validate_name(self, name):
-        """
-        Validate name
-        :param name: client name
-        :type name: str
-        """
-
-        if not name.strip():
-            raise click.BadParameter("please enter a valid name")
-
-        if await superdesk.get_resource_service("auth_server_clients").count_async({"name": name}):
-            raise click.BadParameter("a client with this name already exists!")
-
-
-class UpdateClient(CommonClient):
-    async def run(self, client_id, password, scope, name):
-        clients_service = superdesk.get_resource_service("auth_server_clients")
-        try:
-            client_id = ObjectId(client_id)
-        except InvalidId as e:
-            raise click.BadParameter("the given client id is not valid: {msg}".format(msg=e))
-
-        cursor = await clients_service.find_async({"_id": client_id})
-        try:
-            original_client = await cursor.next()
-        except StopAsyncIteration:
-            original_client = None
-
-        if not original_client:
-            raise click.BadParameter("Can't find any client with id '{client_id}'".format(client_id=client_id))
-
-        client_updates = {}
-
-        if name is not None and name.strip():
-            client_updates["name"] = name
-
-        if password is not None:
-            if not password.strip():
-                password = gen_password()
-            client_updates["password"] = (bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode(),)
-
-        if scope:
-            client_updates["scope"] = self.validate_scope(scope)
-
-        await clients_service.update_async(original_client["_id"], client_updates.copy(), original_client)
-
-        print("Client successfuly updated with:")
-        for key, value in client_updates.items():
-            if key == "scope":
-                print("    {key}: {value}".format(key=key, value=", ".join(value)))
-                continue
-            elif key == "password":
-                value = password
-
-            print("    {key}: {value!r}".format(key=key, value=value))
-
-
-class UnregisterClient:
-    async def run(self, client_id):
-        try:
-            client_id = ObjectId(client_id)
-        except InvalidId as e:
-            raise click.BadParameter("the given client id is not valid: {msg}".format(msg=e))
-        clients_service = superdesk.get_resource_service("auth_server_clients")
-        client = await clients_service.find_one_async(req=None, _id=client_id)
-        if client is None:
-            print("No client with id '{client_id}' found".format(client_id=client_id))
-            sys.exit(2)
-
-        await clients_service.delete_async({"_id": client_id})
-        print("Client with id '{client_id}' has been successfuly unregistered".format(client_id=client_id))
-
-
-class ListClients:
-    async def run(self):
-        clients_service = superdesk.get_resource_service("auth_server_clients")
-        clients_desc = []
-        async for client in await clients_service.get_all_async():
-            clients_desc.append(
-                "- client {name!r}: id '{client_id}' with scope(s) {scopes}".format(
-                    name=client["name"],
-                    client_id=client["_id"],
-                    scopes=", ".join(client["scope"]),
-                )
-            )
-
-        if not clients_desc:
-            print("No client currently registered with auth server")
-        else:
-            print("Following clients are currently registered:\n")
-            print("\n".join(clients_desc))
-            print()
+    if not clients_desc:
+        print("No client currently registered with auth server")
+    else:
+        print("Following clients are currently registered:\n")
+        print("\n".join(clients_desc))
+        print()

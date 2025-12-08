@@ -41,6 +41,7 @@ from wooper.assertions import assert_in, assert_equal, assertions, assert_not_eq
 from wooper.general import fail, apply_path, WooperAssertionError, parse_json_input
 from wooper.expect import expect_headers_contain
 
+from superdesk.types import AuthServerClientResource
 from superdesk.core import get_current_async_app
 from superdesk.resource_fields import ID_FIELD, LAST_UPDATED, DATE_CREATED, VERSION, ETAG
 import superdesk
@@ -2368,7 +2369,7 @@ async def login_as(context, username, password, user_type):
         "is_enabled": True,
         "needs_activation": False,
         "email": f"behave_test_{username}@sourcefabric.org",
-        user_type: user_type,
+        "user_type": user_type,
     }
 
     if context.text:
@@ -3080,12 +3081,9 @@ def when_register_custom_schema_field(context, name):
 @given("authorized clients")
 @async_run_until_complete
 async def step_impl_given_authorized_client(context):
-    from superdesk.auth_server import clients
-
     clients_data = json.loads(context.text)
     async with context.app.app_context():
-        for client_data in clients_data:
-            await clients.RegisterClient().run(**client_data)
+        await AuthServerClientResource.get_service().create(clients_data)
 
 
 @when('we do OAuth2 client authentication with id "{client_id}" and password "{password}"')
