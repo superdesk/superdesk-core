@@ -59,20 +59,13 @@ class MongoResources:
     def get_resource_config(self, resource_name: str) -> MongoResourceConfig:
         """Gets a resource config from a registered resource
 
-        Returns a deepcopy of the config, so the original cannot be modified
-
         :raises KeyError: if a resource with the provided ``name`` is not registered
         """
-
-        return deepcopy(self._resource_configs[resource_name])
+        return self._resource_configs[resource_name]
 
     def get_all_resource_configs(self) -> Dict[str, MongoResourceConfig]:
-        """Get configs from all registered resources
-
-        Returns a deepcopy of all configs, so the originals cannot be modified
-        """
-
-        return deepcopy(self._resource_configs)
+        """Get configs from all registered resources"""
+        return self._resource_configs
 
     def get_collection_name(self, resource_name: str, versioning: bool = False) -> str:
         try:
