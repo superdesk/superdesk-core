@@ -53,6 +53,9 @@ class ResourceConfig:
     #: Optional default projection to be used to include/exclude fields
     projection: ProjectedFieldArg | None = None
 
+    #: Boolean to indicate if websocket notifications should be sent for this resource (defaults to ``True``)
+    send_ws_notifications: bool = True
+
 
 from .resource_rest_endpoints import RestEndpointConfig  # noqa: E402
 from .model import ResourceModel  # noqa: E402

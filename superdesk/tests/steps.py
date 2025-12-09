@@ -3197,3 +3197,16 @@ async def step_impl(context, privilege: str, username: str) -> None:
         privileges = user.get("privileges") or {}
         privileges[privilege] = 1
         await get_resource_service("users").system_update_async(user["_id"], {"privileges": privileges}, user)
+
+
+@then("we get audit logs")
+@async_run_until_complete
+async def check_audit_logs(context):
+    async with context.app.app_context():
+        context_data = json.loads(apply_placeholders(context, context.text))
+        for log in context_data:
+            if log.get("user"):
+                log["user"] = ObjectId(log["user"])
+
+        audit_logs = await find_many("audit")
+        assert json_match(context_data, audit_logs), str(context_data) + "\n != \n" + str(audit_logs)

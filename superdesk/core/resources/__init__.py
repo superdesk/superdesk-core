@@ -31,6 +31,7 @@ from .resource_rest_endpoints import (
 from .service import AsyncResourceService, AsyncCacheableService
 from .resource_signals import global_signals
 from .cursor import ResourceCursorAsync
+from .types import ResourceModelType
 
 __all__ = [
     "get_projection_from_request",
@@ -55,4 +56,5 @@ __all__ = [
     "ResourceRestEndpoints",
     "ItemRequestUrlArgs",
     "ResourceCursorAsync",
+    "ResourceModelType",
 ]
