@@ -227,10 +227,18 @@ class SearchService(AsyncBaseService):
 
         return docs
 
-    async def get_async(self, req: ParsedRequest | None, lookup: dict | None) -> ElasticAsyncEveCursor:
+    async def get_async(
+        self, req: ParsedRequest | None, lookup: dict | None, signals: bool = True
+    ) -> ElasticAsyncEveCursor:
         """
         Runs elastic search on multiple doc types.
+
+        :param req: object representing the HTTP request
+        :param lookup: requested item lookup
+        :param signals: whether to execute resource signals or not
+        :return: Elasticsearch results cursor object
         """
+
         query = self._get_query(req)
         fields = self._get_projected_fields(req)
         types = self._get_types(req)
@@ -250,7 +258,7 @@ class SearchService(AsyncBaseService):
 
         cursor = await self.elastic_async.search(query, types, params)
 
-        if not req or not req.args or req.args.get("run_signals", True):
+        if signals:
             app = get_current_app().as_any()
             for resource in types:
                 response = {ITEMS: [doc async for doc in cursor if doc["_type"] == resource]}
