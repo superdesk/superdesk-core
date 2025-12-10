@@ -11,11 +11,11 @@
 import superdesk
 
 from copy import deepcopy
-from eve_elastic.elastic import set_filters, fix_query
+from eve.utils import ParsedRequest
+from eve_elastic.elastic import set_filters
 
-from superdesk.core import json, get_current_app, get_app_config, get_current_async_app
+from superdesk.core import json, get_current_app, get_app_config
 from superdesk.resource_fields import ITEMS
-from superdesk.types import ArchiveResourceModel
 from superdesk.eve_async import AsyncBaseService, ElasticAsyncEveCursor
 from superdesk import get_resource_service
 from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, get_schema
@@ -25,7 +25,6 @@ from apps.archive.archive import SOURCE as ARCHIVE, private_content_filter
 from superdesk.resource import build_custom_hateoas
 from apps.publish.published_item import published_item_fields
 from superdesk import es_utils
-from superdesk.utils import ListCursor
 
 
 class SearchService(AsyncBaseService):
@@ -121,7 +120,9 @@ class SearchService(AsyncBaseService):
             pass
 
         app = get_current_app()
-        if app.data.elastic.should_aggregate(req):
+        if "aggs" in args and args["aggs"] is not None:
+            source["aggs"] = args["aggs"]
+        elif "aggs" not in args and app.data.elastic.should_aggregate(req):
             source["aggs"] = self.aggregations
 
         if app.data.elastic.should_highlight(req):
@@ -226,7 +227,7 @@ class SearchService(AsyncBaseService):
 
         return docs
 
-    async def get_async(self, req, lookup) -> ElasticAsyncEveCursor:
+    async def get_async(self, req: ParsedRequest | None, lookup: dict | None) -> ElasticAsyncEveCursor:
         """
         Runs elastic search on multiple doc types.
         """
@@ -249,12 +250,13 @@ class SearchService(AsyncBaseService):
 
         cursor = await self.elastic_async.search(query, types, params)
 
-        app = get_current_app().as_any()
-        for resource in types:
-            response = {ITEMS: [doc async for doc in cursor if doc["_type"] == resource]}
-            await getattr(app, "on_fetched_resource").call_async(resource, response)
-            await getattr(app, "on_fetched_resource_%s_async" % resource).call_async(response)
-            await getattr(app, "on_fetched_resource_%s" % resource).call_async(response)
+        if not req or not req.args or req.args.get("run_signals", True):
+            app = get_current_app().as_any()
+            for resource in types:
+                response = {ITEMS: [doc async for doc in cursor if doc["_type"] == resource]}
+                await getattr(app, "on_fetched_resource").call_async(resource, response)
+                await getattr(app, "on_fetched_resource_%s_async" % resource).call_async(response)
+                await getattr(app, "on_fetched_resource_%s" % resource).call_async(response)
 
         return cursor
 
