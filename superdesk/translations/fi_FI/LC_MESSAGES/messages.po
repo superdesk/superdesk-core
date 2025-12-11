@@ -5,9 +5,9 @@
 # FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
 # 
 # Translators:
-# maiju.ylipiessa, 2025
 # Salla Salmela, 2025
 # Maija Paikkala, 2025
+# maiju.ylipiessa, 2025
 # 
 #, fuzzy
 msgid ""
@@ -16,7 +16,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2025-10-21 12:25+0200\n"
 "PO-Revision-Date: 2019-04-04 09:17+0000\n"
-"Last-Translator: Maija Paikkala, 2025\n"
+"Last-Translator: maiju.ylipiessa, 2025\n"
 "Language-Team: Finnish (Finland) (https://app.transifex.com/sourcefabric/teams/6584/fi_FI/)\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -245,7 +245,7 @@ msgstr ""
 #: apps/validate/validate.py:96 superdesk/core/resources/validators.py:121
 #: superdesk/core/resources/validators.py:300
 msgid "empty values not allowed"
-msgstr "tyhjiä arvoja ei sallita"
+msgstr "Ei voi olla tyhjä"
 
 #: superdesk/core/resources/validators.py:175
 #: superdesk/core/resources/validators.py:191
@@ -320,7 +320,7 @@ msgstr ""
 
 #: superdesk/macros/validate_for_publish.py:30
 msgid "Validate for Publish"
-msgstr "Tarkista lähettämistä varten"
+msgstr "Tarkista julkaisua varten"
 
 #: superdesk/macros/imperial/area_acre_to_metric.py:47
 msgid "Area acres to metric"
@@ -433,11 +433,11 @@ msgstr ""
 
 #: apps/publish/__init__.py:83 superdesk/publish_async/module.py:70
 msgid "Publish Queue"
-msgstr "Lähetysjono"
+msgstr "Julkaisujono"
 
 #: apps/publish/__init__.py:84 superdesk/publish_async/module.py:71
 msgid "User can update publish queue"
-msgstr "Käyttäjä voi päivittää lähetysjonoa"
+msgstr "Käyttäjä voi päivittää julkaisujonoa"
 
 #: apps/publish/__init__.py:74 superdesk/publish_async/module.py:75
 msgid "Subscribers"
@@ -520,7 +520,7 @@ msgstr "Prio"
 #: apps/validate/validate.py:64
 #: superdesk/publish_async/utils/filter_conditions.py:104
 msgid "Genre"
-msgstr ""
+msgstr "Juttutyyppi"
 
 #: apps/validate/validate.py:81
 #: superdesk/publish_async/utils/filter_conditions.py:111
@@ -1420,7 +1420,7 @@ msgstr "Julkaise"
 
 #: apps/publish/__init__.py:76
 msgid "Publish a content"
-msgstr "Lähetä versio"
+msgstr "Julkaise versio"
 
 #: apps/publish/__init__.py:77
 msgid "Kill"
@@ -1436,7 +1436,7 @@ msgstr "Korjaus"
 
 #: apps/publish/__init__.py:79
 msgid "Correction to a published content"
-msgstr "Korjaus jo lähetettyyn versioon"
+msgstr "Korjaus jo julkaistuun versioon"
 
 #: apps/publish/__init__.py:88
 msgid "Resending Stories"
@@ -1502,11 +1502,11 @@ msgstr ""
 #: apps/publish/content/common.py:361
 #, python-brace-format
 msgid "Failed to publish the item: {id}"
-msgstr "Version {id} lähetys epäonnistui"
+msgstr "Version {id} julkaisu epäonnistui"
 
 #: apps/publish/content/common.py:413
 msgid "Embargo can't be set after publishing"
-msgstr "Embargoa ei voi lisätä lähettämisen jälkeen"
+msgstr "Embargoa ei voi lisätä julkaisun jälkeen"
 
 #: apps/publish/content/common.py:417
 msgid "Dateline can't be modified on kill or take down"
@@ -1514,11 +1514,11 @@ msgstr "Perutun version päiväyspaikkaa ei voi muuttaa"
 
 #: apps/publish/content/common.py:422
 msgid "Cannot publish the story after Update is published."
-msgstr ""
+msgstr "Ei voi julkaista versiota päivityksen julkaisun jälkeen."
 
 #: apps/publish/content/common.py:434
 msgid "Can't publish update until original story is published."
-msgstr "Päivitystä ei voi tehdä ennen kuin alkuperäinen versio on lähetetty."
+msgstr "Päivitystä ei voi tehdä ennen kuin alkuperäinen versio on julkaistu."
 
 #: apps/publish/content/common.py:477
 msgid ""
