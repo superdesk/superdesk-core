@@ -1787,6 +1787,21 @@ class NinjsFormatterTest(TestCase):
             ],
         )
 
+    async def test_partial_embargo(self):
+        article = {
+            "guid": "bar",
+            "type": "text",
+            "embargo": "2024-01-01T10:00:00Z",
+            "schedule_settings": {
+                "utc_embargo": None,
+            },
+            "version": 1,
+        }
+
+        seq, doc = (await self.formatter.format(article, self.subscriber))[0]
+        ninjs = json.loads(doc)
+        self.assertNotIn("embargoed", ninjs)
+
 
 class Ninjs2FormatterTest(TestCase):
     async def asyncSetUp(self):
