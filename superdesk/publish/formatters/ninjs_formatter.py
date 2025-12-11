@@ -184,7 +184,7 @@ class NINJSFormatter(Formatter):
         except Exception as ex:
             raise await FormatterError.ninjsFormatterError(ex, subscriber).send_notifications()
 
-    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True) -> dict:
         ninjs = {
             "guid": article.get(GUID_FIELD, article.get("uri")),
             "version": str(article.get(VERSION, 1)),
