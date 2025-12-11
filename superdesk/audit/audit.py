@@ -12,6 +12,7 @@ import logging
 from superdesk.flask import g
 from superdesk.resource import Resource
 from superdesk.eve_async import AsyncBaseService
+from superdesk.core.resources import ResourceModelType
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +46,9 @@ class AuditResource(Resource):
 
 
 class AuditService(AsyncBaseService):
+    async def on_pydantic_resource_inserted(self, doc: ResourceModelType):
+        await self.on_generic_inserted(doc.model_resource_name, [doc.to_dict()])
+
     async def on_generic_inserted(self, resource, docs):
         if resource in AuditResource.exclude:
             return
@@ -71,6 +75,9 @@ class AuditService(AsyncBaseService):
 
         await self.post_async([audit])
 
+    async def on_pydantic_resource_updated(self, original: ResourceModelType, updates: dict):
+        await self.on_generic_updated(original.model_resource_name, updates, original.to_dict())
+
     async def on_generic_updated(self, resource, doc, original):
         if resource in AuditResource.exclude:
             return
@@ -89,6 +96,9 @@ class AuditService(AsyncBaseService):
         if "_id" not in doc:
             audit["extra"]["_id"] = original.get("_id", None)
         await self.post_async([audit])
+
+    async def on_pydantic_resource_deleted(self, doc: ResourceModelType):
+        await self.on_generic_deleted(doc.model_resource_name, doc.to_dict())
 
     async def on_generic_deleted(self, resource, doc):
         if resource in AuditResource.exclude:

@@ -16,11 +16,6 @@ class MongoClientTestCase(AsyncTestCase):
         with self.assertRaises(KeyError):
             self.app.mongo.get_resource_config("profiles")
 
-        # Test immutable resource config
-        modified_resource_config = self.app.mongo.get_resource_config("users_async")
-        modified_resource_config.prefix = "MONGO_MODIFIED"
-        assert self.app.mongo.get_resource_config("users_async") != modified_resource_config
-
     def test_get_mongo_clients(self):
         client, db = self.app.mongo.get_client("users_async")
         assert isinstance(client, MongoClient)

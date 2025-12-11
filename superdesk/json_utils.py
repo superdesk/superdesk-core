@@ -1,15 +1,14 @@
-import arrow
+import datetime
 
-from arrow.parser import ParserError
 from bson import ObjectId
 from bson.errors import InvalidId
-from eve.utils import str_to_date
 from eve.io.mongo import MongoJSONEncoder
 from eve_elastic import ElasticJSONSerializer
 from quart_babel.speaklater import LazyString
 
 from superdesk.core import json
 from superdesk.flask import Flask, DefaultJSONProvider
+from superdesk.default_settings import DATE_FORMAT
 
 
 class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
@@ -18,6 +17,8 @@ class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
     def default(self, obj):
         if isinstance(obj, LazyString):
             return str(obj)
+        elif isinstance(obj, datetime.datetime):
+            return obj.strftime(DATE_FORMAT)
         return super().default(obj)
 
 
@@ -52,10 +53,11 @@ def try_cast(v):
 
     :param v: string value
     """
+    if not v:
+        return v
     try:
-        str_to_date(v)  # try if it matches format
-        return arrow.get(v).datetime  # return timezone aware time
-    except (ValueError, ParserError):
+        return datetime.datetime.strptime(v, DATE_FORMAT).replace(tzinfo=datetime.timezone.utc)
+    except ValueError:
         try:
             return ObjectId(v)
         except InvalidId:

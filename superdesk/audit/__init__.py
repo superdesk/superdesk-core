@@ -15,6 +15,8 @@ from .audit import AuditService, AuditResource
 from .commands import cli_audit_purge, PurgeAudit
 import logging
 
+from superdesk.core.resources import global_signals
+
 log = logging.getLogger(__name__)
 
 
@@ -27,6 +29,10 @@ def init_app(app) -> None:
     app.on_inserted += service.on_generic_inserted
     app.on_updated += service.on_generic_updated
     app.on_deleted_item += service.on_generic_deleted
+
+    global_signals.data.on_created += service.on_pydantic_resource_inserted
+    global_signals.data.on_updated += service.on_pydantic_resource_updated
+    global_signals.data.on_deleted += service.on_pydantic_resource_deleted
 
 
 @celery.task(soft_time_limit=600)

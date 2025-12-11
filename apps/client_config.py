@@ -43,5 +43,6 @@ def init_app(app) -> None:
             "allow_updating_scheduled_items": app.config.get("ALLOW_UPDATING_SCHEDULED_ITEMS"),
             "corrections_workflow": app.config.get("CORRECTIONS_WORKFLOW"),
             "default_timezone": app.config.get("DEFAULT_TIMEZONE"),
+            "authoring_actions_default_tab": app.config.get("AUTHORING_ACTIONS_DEFAULT_TAB", "publish"),
         }
     )
