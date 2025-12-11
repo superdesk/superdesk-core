@@ -236,7 +236,9 @@ class NINJSFormatter(Formatter):
             ninjs["embargoed"] = article["embargoed"].isoformat()
 
         if article.get(EMBARGO):  # embargo set in superdesk overrides ingested one
-            ninjs["embargoed"] = get_utc_schedule(article, EMBARGO).isoformat()
+            utc_embargo = get_utc_schedule(article, EMBARGO)
+            if utc_embargo:
+                ninjs["embargoed"] = utc_embargo.isoformat()
 
         if article.get("priority"):
             ninjs["priority"] = article["priority"]
