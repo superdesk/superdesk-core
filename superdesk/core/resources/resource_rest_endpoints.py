@@ -463,11 +463,12 @@ class ResourceRestEndpoints(RestEndpoints):
                 )
                 self._log_traceback(exception, "Unexpected exception while creating item")
 
-        if self.endpoint_config.exclude_fields_in_response:
+        post_projection = self.get_exclude_fields_projection("POST")
+        if post_projection:
             # If projection is enabled, we fetch all newly created items with projection applied
             # That way projection is applied to all Create request responses
             model_instances = await self.service.find_by_ids(
-                [instance.id for instance in model_instances], projection=self.get_exclude_fields_projection("POST")
+                [instance.id for instance in model_instances], projection=post_projection
             )
 
         results: list[dict]

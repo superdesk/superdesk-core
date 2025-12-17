@@ -3091,6 +3091,9 @@ async def step_impl_given_authorized_client(context):
 async def step_impl_when_oauth2_client_auth(context, client_id, password):
     from superdesk.auth_server.oauth2 import TOKEN_ENDPOINT
 
+    client_id = apply_placeholders(context, client_id)
+    password = apply_placeholders(context, password)
+
     encoded_user_pass = b64encode(b"%s:%s" % (client_id.encode(), password.encode())).decode("ascii")
     headers = [
         ("Content-Type", "multipart/form-data"),
