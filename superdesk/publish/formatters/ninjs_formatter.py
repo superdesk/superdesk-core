@@ -184,7 +184,7 @@ class NINJSFormatter(Formatter):
         except Exception as ex:
             raise await FormatterError.ninjsFormatterError(ex, subscriber).send_notifications()
 
-    async def _transform_to_ninjs(self, article, subscriber, recursive=True):
+    async def _transform_to_ninjs(self, article, subscriber, recursive=True) -> dict:
         ninjs = {
             "guid": article.get(GUID_FIELD, article.get("uri")),
             "version": str(article.get(VERSION, 1)),
@@ -236,7 +236,9 @@ class NINJSFormatter(Formatter):
             ninjs["embargoed"] = article["embargoed"].isoformat()
 
         if article.get(EMBARGO):  # embargo set in superdesk overrides ingested one
-            ninjs["embargoed"] = get_utc_schedule(article, EMBARGO).isoformat()
+            utc_embargo = get_utc_schedule(article, EMBARGO)
+            if utc_embargo:
+                ninjs["embargoed"] = utc_embargo.isoformat()
 
         if article.get("priority"):
             ninjs["priority"] = article["priority"]

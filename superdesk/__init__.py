@@ -17,6 +17,7 @@ import logging as logging_lib
 
 from typing import Any, Dict, List, NamedTuple, Optional
 from quart_babel.speaklater import LazyString
+from importlib.metadata import version
 
 # from flask_script import Command as BaseCommand, Option
 from eve.methods.common import document_link  # noqa
@@ -33,7 +34,7 @@ from .signals import *  # noqa
 from apps.common.models.base_model import BaseModel
 from apps.common.components.base_component import BaseComponent
 
-__version__ = "3.2.0-dev.0"
+__version__ = version("superdesk-core")
 
 API_NAME = "Superdesk API"
 SCHEMA_VERSION = 2
