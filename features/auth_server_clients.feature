@@ -151,3 +151,25 @@ Feature: Authorization Server Client Management
         """
         {"_status": "ERR", "_issues": {"scope": {"0": "Input should be 'ARCHIVE_READ', 'DESKS_READ', 'PLANNING_READ', 'CONTACTS_READ', 'USERS_READ', 'ASSIGNMENTS_READ' or 'EVENTS_READ'"}}}
         """
+
+     @auth
+     Scenario: Can register client and authenticate with returned secret
+         When we post to "/auth_server_clients"
+         """
+         [{
+             "name": "Test Client",
+             "scope": ["ARCHIVE_READ", "USERS_READ"]
+         }]
+         """
+         Then we get OK response
+         And we get existing resource
+         """
+         {
+             "_id": "#auth_server_clients._id#",
+             "password": "#auth_server_clients.password#",
+             "name": "Test Client",
+             "scope": ["ARCHIVE_READ", "USERS_READ"]
+         }
+         """
+         When we do OAuth2 client authentication with id "#auth_server_clients._id#" and password "#auth_server_clients.password#"
+         Then we get a valid access token
