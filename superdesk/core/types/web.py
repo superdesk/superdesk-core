@@ -279,7 +279,7 @@ class Endpoint:
         self.func = func
         self.methods = methods or ["GET"]
         self.name = name or func.__name__
-        self.title = title or self.name.replace("_", " ").title()
+        self.title = title or self.name
         self.auth = auth
         self.parent = parent
         self.cors = cors
