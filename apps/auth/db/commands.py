@@ -28,6 +28,14 @@ logger = logging.getLogger(__name__)
 USER_FIELDS_NAMES = {"username", "email", "password", "first_name", "last_name", "sign_off", "role"}
 
 
+def redact_sensitive(userdata):
+    """Return a shallow copy of the dict with sensitive fields redacted."""
+    copy = dict(userdata)
+    if "password" in copy:
+        copy["password"] = "[REDACTED]"
+    return copy
+
+
 @cli.command("users:create")
 @click.option("--username", "-u", required=True, help="Username for the new user.")
 @click.option("--password", "-p", required=True, help="Password for the new user.")
@@ -147,11 +155,11 @@ async def create_user_command_handler(username: str, password: str, email: str, 
         users_service = UsersResourceModel.get_service()
 
         if await users_service.count({"username": userdata.get("username")}):
-            logger.info("user already exists %s" % (userdata))
+            logger.info("user already exists %s" % (redact_sensitive(userdata)))
         else:
-            logger.info("creating user %s" % (userdata))
+            logger.info("creating user %s" % (redact_sensitive(userdata)))
             await users_service.create([userdata])
-            logger.info("user saved %s" % (userdata))
+            logger.info("user saved %s" % (redact_sensitive(userdata)))
 
         return userdata
 
