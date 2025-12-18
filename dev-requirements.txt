@@ -28,4 +28,4 @@ pyexiftool==0.5.6
 
 -e .
 -e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk_planning
--e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
+# -e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
