@@ -72,8 +72,12 @@ class ContactsService(AsyncBaseService):
             )
             req.args = args
 
-        elif "all" not in req.args:
-            lookup["is_active"] = True  # by default the response will have the inactive entries filtered out
+        elif req:
+            if "all" not in req.args:
+                lookup["is_active"] = True  # by default the response will have the inactive entries filtered out
+
+            if req.args.get("contact_type"):
+                lookup["contact_type"] = req.args.get("contact_type")
 
         return await super().get_async(req, lookup)
 
