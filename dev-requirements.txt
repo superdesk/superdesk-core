@@ -18,7 +18,7 @@ pytest-asyncio==1.0.0
 pytest-env==1.1.5
 pytest-timeout==2.4.0
 python3-saml==1.16.0
-moto[sqs]==5.1.16
+moto[sqs]==5.1.18
 pyexiv2==2.15.4; sys_platform == 'linux'
 snowballstemmer==3.0.1
 aioresponses==0.7.8
