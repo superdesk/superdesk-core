@@ -109,6 +109,16 @@ Feature: Contacts
             "_items": [{"first_name" : "Jane"}]
         }
         """
+        When we get "/contacts?q=&contact_type=x"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {"first_name": "Bill"},
+                {"first_name" : "Jane"}
+            ]
+        }
+        """
 
     @auth
     @notification
