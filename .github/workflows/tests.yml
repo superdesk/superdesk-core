@@ -28,11 +28,11 @@ jobs:
     - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings --ignore=tests/core
 
   pip-compile:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ['3.10', '3.12']
 
     steps:
     - uses: actions/checkout@v6
