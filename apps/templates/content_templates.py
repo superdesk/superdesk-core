@@ -13,7 +13,6 @@ import re
 import superdesk
 import logging
 import jinja2.exceptions
-from jinja2.sandbox import SandboxedEnvironment
 
 from copy import deepcopy
 from eve.utils import ParsedRequest
@@ -69,36 +68,6 @@ TEMPLATE_DATA_IGNORE_FIELDS = {  # fields to be ignored when creating item from 
 
 
 logger = logging.getLogger(__name__)
-
-
-async def render_template_string_safe(template_string, **kwargs):
-    """Render a Jinja2 template string in a sandboxed environment.
-
-    This prevents server-side template injection attacks by using a restricted
-    execution environment that disallows access to dangerous attributes and methods.
-
-    :param str template_string: The Jinja2 template string to render
-    :param kwargs: Context variables for the template
-    :return str: The rendered template
-    :raises jinja2.exceptions.TemplateSyntaxError: If template syntax is invalid
-    :raises jinja2.exceptions.UndefinedError: If template references undefined variables
-    """
-    from quart import current_app
-
-    # Create a sandboxed environment that restricts access to dangerous operations
-    env = SandboxedEnvironment(autoescape=True)
-
-    # Copy custom filters from the app's jinja environment if available
-    if current_app and hasattr(current_app, "jinja_env"):
-        for filter_name, filter_func in current_app.jinja_env.filters.items():
-            try:
-                env.filters[filter_name] = filter_func
-            except (TypeError, AttributeError):
-                # Skip filters that can't be added to sandbox
-                pass
-
-    template = env.from_string(template_string)
-    return template.render(**kwargs)
 
 
 class TemplateType(SuperdeskBaseEnum):
@@ -596,18 +565,11 @@ async def render_content_template(item, template, update=False):
                     item.setdefault(key, {}).update(updates[key])
             elif isinstance(value, str):
                 try:
-                    updates[key] = await render_template_string_safe(value, **kwargs)
+                    updates[key] = await render_template_string(value, **kwargs)
                 except jinja2.exceptions.UndefinedError as err:
                     logger.error(err, extra=dict(field=key, template=value))
-                    updates[key] = value  # Keep original value on undefined error
                 except jinja2.exceptions.TemplateSyntaxError as err:
                     logger.error(err, extra=dict(field=key, template=value))
-                    updates[key] = value  # Keep original value on syntax error
-                except jinja2.exceptions.SecurityError as err:
-                    logger.error(
-                        err, extra=dict(field=key, template=value, error="Dangerous operation blocked by sandbox")
-                    )
-                    updates[key] = ""  # Set to empty string for blocked operations
             elif isinstance(value, (dict, list)):
                 updates[key] = value
             elif not isinstance(value, (dict, list)):
