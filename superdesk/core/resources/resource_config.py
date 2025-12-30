@@ -47,6 +47,9 @@ class ResourceConfig:
     #: Optional sorting for this resource
     default_sort: SortListParam | None = None
 
+    #: Optional list of sensitive fields that should not be allowed in filters
+    sensitive_fields: list[str] | None = None
+
     #: Optionally override the name used for the MongoDB/Elastic sources
     datasource_name: str | None = None
 

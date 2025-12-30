@@ -10,11 +10,13 @@
 
 from typing import Dict, Any, List, Optional, Literal
 import logging
+import json
 
 from eve.auth import BasicAuth
 
 import superdesk
 from superdesk.resource_fields import LINKS
+from superdesk.errors import SuperdeskApiError
 
 from .services import Service
 
@@ -98,6 +100,7 @@ class Resource:
     item_privileges = False
     notifications = True
     collation: bool = False
+    sensitive_fields: List[str] = []
     locking: bool = False
 
     def __init__(self, endpoint_name, app, service, endpoint_schema=None):
@@ -283,6 +286,11 @@ class Resource:
                 hook_event -= hook_method
                 hook_event += hook_method
 
+        if self.sensitive_fields:
+            hook_event_name = f"on_pre_GET_{self.endpoint_name}"
+            hook_event = getattr(app, hook_event_name)
+            hook_event += self.validate_lookup
+
         # Register callbacks for operations on other resources
         # The callback format is: on_<operation>_res_<other_resource>
         # where <operation> can be: fetched, fetched_item, create, created, update
@@ -308,6 +316,32 @@ class Resource:
                     eve_hook = getattr(app, f"on_{eve_event}_{foreign_endpoint_name}")
                     eve_hook -= service_method
                     eve_hook += service_method
+
+    def validate_lookup(self, request, lookup):
+        if request and request.args and "where" in request.args:
+            try:
+                where = json.loads(request.args["where"])
+                self._validate_lookup_recursive(where)
+            except (ValueError, TypeError):
+                # Let Eve handle invalid JSON
+                pass
+
+        self._validate_lookup_recursive(lookup)
+
+    def _validate_lookup_recursive(self, lookup):
+        if isinstance(lookup, dict):
+            for key, value in lookup.items():
+                if key in self.sensitive_fields:
+                    raise SuperdeskApiError.badRequestError(f"Filtering by {key} is not allowed")
+
+                for sensitive in self.sensitive_fields:
+                    if key.startswith(f"{sensitive}."):
+                        raise SuperdeskApiError.badRequestError(f"Filtering by {sensitive} is not allowed")
+
+                self._validate_lookup_recursive(value)
+        elif isinstance(lookup, list):
+            for item in lookup:
+                self._validate_lookup_recursive(item)
 
     @staticmethod
     def rel(resource, embeddable=True, required=False, type="objectid", nullable=False, readonly=False):

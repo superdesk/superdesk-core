@@ -788,6 +788,27 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return None
 
+    def _validate_lookup(self, lookup: dict | list | None):
+        if not lookup or not self.config.sensitive_fields:
+            return
+
+        self._validate_lookup_recursive(lookup)
+
+    def _validate_lookup_recursive(self, lookup):
+        if isinstance(lookup, dict):
+            for key, value in lookup.items():
+                if key in self.config.sensitive_fields:
+                    raise SuperdeskApiError.badRequestError(f"Filtering by {key} is not allowed")
+
+                for sensitive in self.config.sensitive_fields:
+                    if key.startswith(f"{sensitive}."):
+                        raise SuperdeskApiError.badRequestError(f"Filtering by {sensitive} is not allowed")
+
+                self._validate_lookup_recursive(value)
+        elif isinstance(lookup, list):
+            for item in lookup:
+                self._validate_lookup_recursive(item)
+
     async def _mongo_find(
         self, req: SearchRequest, versioned: bool = False
     ) -> MongoResourceCursorAsync[ResourceModelType]:
@@ -813,6 +834,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 except ParseError:
                     raise SuperdeskApiError.badRequestError("Failed to parse the where filter")
 
+        self._validate_lookup(where)
         where = cast_item(where or {})
         kwargs["filter"] = where
         kwargs["collation"] = self._get_collation(req)

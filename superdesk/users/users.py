@@ -159,4 +159,5 @@ class UsersResource(Resource):
         self.collation = True
 
         self.privileges = {"POST": "users", "DELETE": "users", "PATCH": "users"}
+        self.sensitive_fields = ["password", "session_preferences"]
         super().__init__(endpoint_name, app=app, service=service, endpoint_schema=endpoint_schema)
