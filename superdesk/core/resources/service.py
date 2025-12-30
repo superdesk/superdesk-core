@@ -45,6 +45,7 @@ from superdesk.cache import cache
 from superdesk.errors import SuperdeskApiError
 from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
+from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
 
 from ..app import SuperdeskAsyncApp, get_current_async_app, get_config
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
@@ -789,25 +790,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         return None
 
     def _validate_lookup(self, lookup: dict | list | None):
-        if not lookup or not self.config.sensitive_fields:
-            return
-
-        self._validate_lookup_recursive(lookup)
-
-    def _validate_lookup_recursive(self, lookup):
-        if isinstance(lookup, dict):
-            for key, value in lookup.items():
-                if key in self.config.sensitive_fields:
-                    raise SuperdeskApiError.badRequestError(f"Filtering by {key} is not allowed")
-
-                for sensitive in self.config.sensitive_fields:
-                    if key.startswith(f"{sensitive}."):
-                        raise SuperdeskApiError.badRequestError(f"Filtering by {sensitive} is not allowed")
-
-                self._validate_lookup_recursive(value)
-        elif isinstance(lookup, list):
-            for item in lookup:
-                self._validate_lookup_recursive(item)
+        validate_lookup_for_sensitive_fields(lookup, self.config.sensitive_fields or [])
 
     async def _mongo_find(
         self, req: SearchRequest, versioned: bool = False

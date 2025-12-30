@@ -17,6 +17,7 @@ from eve.auth import BasicAuth
 import superdesk
 from superdesk.resource_fields import LINKS
 from superdesk.errors import SuperdeskApiError
+from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
 
 from .services import Service
 
@@ -321,27 +322,12 @@ class Resource:
         if request and request.args and "where" in request.args:
             try:
                 where = json.loads(request.args["where"])
-                self._validate_lookup_recursive(where)
+                validate_lookup_for_sensitive_fields(where, self.sensitive_fields)
             except (ValueError, TypeError):
                 # Let Eve handle invalid JSON
                 pass
 
-        self._validate_lookup_recursive(lookup)
-
-    def _validate_lookup_recursive(self, lookup):
-        if isinstance(lookup, dict):
-            for key, value in lookup.items():
-                if key in self.sensitive_fields:
-                    raise SuperdeskApiError.badRequestError(f"Filtering by {key} is not allowed")
-
-                for sensitive in self.sensitive_fields:
-                    if key.startswith(f"{sensitive}."):
-                        raise SuperdeskApiError.badRequestError(f"Filtering by {sensitive} is not allowed")
-
-                self._validate_lookup_recursive(value)
-        elif isinstance(lookup, list):
-            for item in lookup:
-                self._validate_lookup_recursive(item)
+        validate_lookup_for_sensitive_fields(lookup, self.sensitive_fields)
 
     @staticmethod
     def rel(resource, embeddable=True, required=False, type="objectid", nullable=False, readonly=False):

@@ -43,12 +43,4 @@ class SubscribersSecurityTestCase(TestCase):
             f"/api/{self.endpoint}", query_string={"where": json.dumps(where_clause)}, headers=self.headers
         )
 
-        # If vulnerable, it returns 200 OK and the item
-        # If fixed, it should return 400 Bad Request
-
-        if response.status_code == 200:
-            data = await response.get_json()
-            if data.get("_items") and len(data["_items"]) > 0:
-                self.fail("Vulnerability confirmed: Able to filter by destinations.config.password using regex")
-
         self.assertEqual(response.status_code, 400, "Should return 400 Bad Request when filtering by sensitive field")
