@@ -200,7 +200,7 @@ class RenderTemplateTestCase(TestCase):
         result = updates.get("headline", "")
         self.assertNotIn("root", result)
         self.assertNotIn("www-data", result)
-        self.assertTrue(result == "" or "access to attribute" not in result)
+        self.assertEqual("", result)
 
     async def test_ssti_safe_variable_access(self):
         """Test that sandbox allows safe variable access"""
