@@ -16,7 +16,7 @@ from eve.auth import BasicAuth
 
 import superdesk
 from superdesk.resource_fields import LINKS
-from superdesk.errors import SuperdeskApiError
+
 from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
 
 from .services import Service

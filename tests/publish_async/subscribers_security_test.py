@@ -1,12 +1,13 @@
 import json
 from superdesk.tests import TestCase, setup_db_user
 from superdesk.publish_async.resources.subscribers.service import SubscribersService
+from superdesk import get_resource_service
 
 
 class SubscribersSecurityTestCase(TestCase):
     def setUp(self):
         self.endpoint = "subscribers"
-        self.service = SubscribersService()
+        self.service = get_resource_service("subscribers")
         self.headers = [("Content-Type", "application/json")]
 
     async def test_nosql_injection_password_regex(self):
