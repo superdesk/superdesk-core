@@ -99,11 +99,11 @@ setup(
     license="GPLv3",
     platforms=["any"],
     packages=find_packages(exclude=["tests*", "features*"]),
-    package_data=package_data,
+    package_data=package_data,  # type: ignore[arg-type]
     include_package_data=True,
     # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
-    extras_require={
+    extras_require={  # type: ignore[arg-type]
         "exiv2": ["pyexiv2>=2.12.0,<2.16"],
     },
     python_requires=">=3.10",
