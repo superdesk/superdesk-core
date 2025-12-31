@@ -21,6 +21,7 @@ class SessionsResource(Resource):
     resource_methods = ["GET", "POST"]
     item_methods = ["GET", "DELETE", "PATCH"]
     embedded_fields = ["user"]
+    sensitive_fields = ["token"]
 
 
 class UserSessionClearResource(Resource):

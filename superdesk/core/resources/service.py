@@ -45,6 +45,7 @@ from superdesk.cache import cache
 from superdesk.errors import SuperdeskApiError
 from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
+from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
 
 from ..app import SuperdeskAsyncApp, get_current_async_app, get_config
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
@@ -788,6 +789,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return None
 
+    def _validate_lookup(self, lookup: dict | list | None):
+        validate_lookup_for_sensitive_fields(lookup, self.config.sensitive_fields or [])
+
     async def _mongo_find(
         self, req: SearchRequest, versioned: bool = False
     ) -> MongoResourceCursorAsync[ResourceModelType]:
@@ -813,6 +817,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 except ParseError:
                     raise SuperdeskApiError.badRequestError("Failed to parse the where filter")
 
+        self._validate_lookup(where)
         where = cast_item(where or {})
         kwargs["filter"] = where
         kwargs["collation"] = self._get_collation(req)
