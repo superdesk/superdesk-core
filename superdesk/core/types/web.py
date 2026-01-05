@@ -232,6 +232,9 @@ class Endpoint:
     #: Name of the endpoint (must be unique)
     name: str
 
+    #: Title of the endpoint (used for HATEOAS links)
+    title: str
+
     #: HTTP Methods allowed for this endpoint
     methods: list[HTTP_METHOD]
 
@@ -263,6 +266,7 @@ class Endpoint:
         func: EndpointFunction,
         methods: list[HTTP_METHOD] | None = None,
         name: str | None = None,
+        title: str | None = None,
         auth: AuthConfig = None,
         parent: Union["EndpointGroup", None] = None,
         cors: bool | None = None,
@@ -275,6 +279,7 @@ class Endpoint:
         self.func = func
         self.methods = methods or ["GET"]
         self.name = name or func.__name__
+        self.title = title or self.name
         self.auth = auth
         self.parent = parent
         self.cors = cors
@@ -316,6 +321,7 @@ class EndpointGroup(Endpoint):
         self,
         url: str,
         name: str | None = None,
+        title: str | None = None,
         methods: list[HTTP_METHOD] | None = None,
         auth: AuthConfig = None,
     ):
