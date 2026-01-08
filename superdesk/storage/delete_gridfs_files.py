@@ -74,7 +74,7 @@ class DeleteGridFSFiles(superdesk.Command):
             if not file_batch:
                 break
 
-            print(f"Deleting {len(file_batch)} files: ", end="" if dry_run else "", flush=True)
+            print(f"Deleting {len(file_batch)} files: ", end="\n" if dry_run else "", flush=True)
             for file in file_batch:
                 if self._delete_file(client, file, dry_run):
                     files_deleted += 1
