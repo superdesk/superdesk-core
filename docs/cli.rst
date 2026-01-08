@@ -280,3 +280,8 @@ Storage Dumps and Records
 ^^^^^^^^^^^^^^^^^^^
 
 .. autoclass:: superdesk.storage.fix_links.MediaFixLinksCommand()
+
+``storage:delete_gridfs_files``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: superdesk.storage.delete_gridfs_files.DeleteGridFSFiles()
