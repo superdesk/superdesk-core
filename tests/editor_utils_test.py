@@ -2175,3 +2175,59 @@ class Editor3TestCase(TestCase):
         editor = Editor3Content(item)
         html = editor.html
         assert html == "<p>first line<br>second line</p>"
+
+    def test_article_and_section_blocks_mixed(self):
+        """Check that article and section blocks can be mixed with other block types"""
+        draftjs_data = {
+            "blocks": [
+                {
+                    "key": "1",
+                    "text": "Regular paragraph",
+                    "type": "unstyled",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {},
+                },
+                {
+                    "key": "2",
+                    "text": "Article content",
+                    "type": "article",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {},
+                },
+                {
+                    "key": "3",
+                    "text": "Section content",
+                    "type": "section",
+                    "depth": 0,
+                    "inlineStyleRanges": [],
+                    "entityRanges": [],
+                    "data": {},
+                },
+            ],
+            "entityMap": {},
+        }
+
+        expected = "<p>Regular paragraph</p>\n<article>Article content</article>\n<section>Section content</section>"
+
+        item = self.build_item(draftjs_data)
+        editor = Editor3Content(item)
+        html = editor.html
+        self.assertEqual(html, expected)
+
+    def test_article_and_section_from_html(self):
+        """Check that article and section HTML elements are converted to blocks correctly"""
+        html = "<article>Article content</article><section>Section content</section>"
+
+        item = {"body_html": html, "fields_meta": {}}
+        editor = Editor3Content(item, field="body_html", is_html=True)
+
+        # Check that blocks were created
+        self.assertEqual(len(editor.content_state["blocks"]), 2)
+        self.assertEqual(editor.content_state["blocks"][0]["type"], "article")
+        self.assertEqual(editor.content_state["blocks"][0]["text"], "Article content")
+        self.assertEqual(editor.content_state["blocks"][1]["type"], "section")
+        self.assertEqual(editor.content_state["blocks"][1]["text"], "Section content")

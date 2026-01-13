@@ -300,6 +300,13 @@ class DraftJSHTMLExporter:
         self.exporter = HTML(
             {
                 "engine": DOM.LXML,
+                "block_map": dict(
+                    BLOCK_MAP,
+                    **{
+                        "article": "article",
+                        "section": "section",
+                    },
+                ),
                 "style_map": dict(
                     STYLE_MAP,
                     **{
@@ -596,13 +603,13 @@ class Editor3Content(EditorContent):
         if self.is_html:
             root = parse_html(value, "html")
             for i, elem in enumerate(root):
-                try:
-                    block_type = next((key for key, val in BLOCK_MAP.items() if val == elem.tag))
-                    depth = 0
-                except StopIteration:
-                    block_type = None
-                    depth = 0
-                    if elem.tag == "figure":
+                # Check for standard block types in BLOCK_MAP, then check for custom article/section types
+                block_type = next((key for key, val in BLOCK_MAP.items() if val == elem.tag), None)
+                depth = 0
+                if block_type is None:
+                    if elem.tag in ("article", "section"):
+                        block_type = elem.tag
+                    elif elem.tag == "figure":
                         try:
                             m = re.search(r'<!-- EMBED START (?:Image|Video) {id: "(.*)"}', str(root[i - 1]).strip())
                             media = self.item["associations"][m.group(1)]
