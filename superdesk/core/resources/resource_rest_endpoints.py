@@ -599,7 +599,8 @@ class ResourceRestEndpoints(RestEndpoints):
 
         if not original:
             raise SuperdeskApiError.notFoundError(
-                f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
+                f"{self.resource_config.name} resource not found",
+                extra={"item_id": args.item_id},
             )
 
         if_match = request.get_header("If-Match")

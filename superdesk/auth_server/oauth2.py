@@ -26,7 +26,7 @@ class SuperdeskOAuth2Server(OAuth2Server):
         try:
             client_data = AuthServerClientResource.get_service().mongo.find_one({"_id": ObjectId(client_id)})
         except InvalidId as e:
-            logger.error("Invalid 'client_id' was provided. Exception: {}".format(e))
+            logger.error("Invalid 'client_id' was provided.", exc_info=e)
             return None
 
         if client_data is None:

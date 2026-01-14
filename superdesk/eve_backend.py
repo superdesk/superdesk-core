@@ -478,7 +478,7 @@ class EveBackend:
                 if updated_fields:
                     self._push_resource_notification("updated", endpoint_name, _id=str(id), fields=updated_fields)
         except eve.io.base.DataLayer.OriginalChangedError:
-            if not backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
+            if search_backend and not backend.find_one(endpoint_name, req=None, _id=id):
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))
                 item = search_backend.find_one(endpoint_name, req=None, _id=id)
@@ -487,7 +487,7 @@ class EveBackend:
                 raise SuperdeskApiError.notFoundError()
             else:
                 # item is there, but no change was done
-                logger.error(
+                logger.warning(
                     "Item was not updated in mongo, it has changed from the original.",
                     extra=dict(
                         id=id,
