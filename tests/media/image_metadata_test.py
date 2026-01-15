@@ -117,3 +117,63 @@ def test_cp_sports_metadata_write(cp_sports_image_binary) -> None:
     metadata = read_metadata(next_image)
     assert metadata["Country"] == "Canada"
     assert metadata["City"] == "Toronto"
+
+
+def test_cp_sports_metadata_normalization(cp_sports_image_binary) -> None:
+    """Test that exiftool fallback metadata is normalized to image module field names."""
+    # Read metadata using exiftool fallback (since cp-sports.jpg triggers the fallback)
+    metadata = read_metadata(cp_sports_image_binary)
+
+    # Verify that metadata uses normalized field names (image module naming convention)
+    # not the video module naming convention
+    assert "DescriptionWriter" in metadata or metadata.get("DescriptionWriter") is None
+    assert "CaptionWriter" not in metadata  # Should be normalized to DescriptionWriter
+    assert "JobId" in metadata or metadata.get("JobId") is None
+    assert "TransmissionReference" not in metadata  # Should be normalized to JobId
+    assert "CreatorsJobtitle" in metadata or metadata.get("CreatorsJobtitle") is None
+    assert "AuthorsPosition" not in metadata  # Should be normalized to CreatorsJobtitle
+    assert "CopyrightNotice" in metadata or metadata.get("CopyrightNotice") is None
+    assert "Rights" not in metadata  # Should be normalized to CopyrightNotice
+    assert "ProvinceState" in metadata or metadata.get("ProvinceState") is None
+    assert "State" not in metadata  # Should be normalized to ProvinceState
+    assert "CreditLine" in metadata or metadata.get("CreditLine") is None
+    assert "Credit" not in metadata  # Should be normalized to CreditLine
+
+    # Verify actual metadata values
+    assert metadata.get("DescriptionWriter") == "AW"
+    assert metadata.get("JobId") == "RJB101_2022030616"
+    assert metadata.get("CreatorsJobtitle") == "STF"
+    assert metadata.get("CopyrightNotice") == "Copyright 2022 The Associated Press. All rights reserved"
+    assert metadata.get("CreditLine") == "THE CANADIAN PRESS"
+
+
+def test_metadata_field_mapping_consistency(cp_sports_image_binary) -> None:
+    """Test that metadata field mapping denormalization works correctly in write_metadata fallback."""
+    # Create metadata with image module field names
+    metadata_to_write = MediaMetadata(
+        Country="Canada",
+        City="Toronto",
+        DescriptionWriter="updated_writer",
+        JobId="updated_job_123",
+        CreatorsJobtitle="updated_photographer",
+        CopyrightNotice="Updated Copyright",
+        CreditLine="Updated Credit",
+        ProvinceState="ON",
+    )
+
+    # Use cp-sports.jpg which triggers the exiftool fallback for both read and write
+    # This tests that denormalization works correctly in the fallback path
+    updated_image = write_metadata(cp_sports_image_binary, metadata_to_write)
+
+    # Read it back
+    read_back = read_metadata(updated_image)
+
+    # Verify the mapped fields were written and read back correctly through the fallback
+    assert read_back.get("Country") == "Canada"
+    assert read_back.get("City") == "Toronto"
+    assert read_back.get("DescriptionWriter") == "updated_writer"
+    assert read_back.get("JobId") == "updated_job_123"
+    assert read_back.get("CreatorsJobtitle") == "updated_photographer"
+    assert read_back.get("CopyrightNotice") == "Updated Copyright"
+    assert read_back.get("CreditLine") == "Updated Credit"
+    assert read_back.get("ProvinceState") == "ON"

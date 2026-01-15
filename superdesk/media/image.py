@@ -174,13 +174,14 @@ def read_metadata(input: bytes) -> MediaMetadata:
     try:
         with pyexiv2.ImageData(input) as img:
             xmp = img.read_xmp()
-    except Exception as e:
+    except (RuntimeError, ValueError) as e:
         logger.warning(f"Failed to read image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
         # Try to use exiftool as fallback when pyexiv2 fails
         # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import read_metadata as read_metadata_video
 
-        return read_metadata_video(input)
+        # Normalize exiftool metadata to match image module field names
+        return _normalize_exiftool_metadata(read_metadata_video(input))
 
     return {
         "Description": get_xmp_lang_string(xmp.get("Xmp.dc.description")),
@@ -198,6 +199,57 @@ def read_metadata(input: bytes) -> MediaMetadata:
         "CreditLine": xmp.get("Xmp.photoshop.Credit", ""),
         "ProvinceState": xmp.get("Xmp.photoshop.State", ""),
     }
+
+
+# Field mappings between image module and video module field names
+# Keys are video module names, values are image module names
+_FIELD_MAPPING = {
+    "CaptionWriter": "DescriptionWriter",
+    "TransmissionReference": "JobId",
+    "AuthorsPosition": "CreatorsJobtitle",
+    "Rights": "CopyrightNotice",
+    "State": "ProvinceState",
+    "Credit": "CreditLine",
+}
+
+
+def _normalize_exiftool_metadata(metadata: MediaMetadata) -> MediaMetadata:
+    """Normalize exiftool metadata to match image module field names.
+
+    Maps video module field names to image module field names for consistency.
+
+    @param metadata: Metadata dict from exiftool fallback
+    @return: Normalized metadata with consistent field names
+    """
+    normalized: MediaMetadata = {}
+
+    for key, value in metadata.items():
+        # Use mapped name if available, otherwise keep original name
+        normalized_key = _FIELD_MAPPING.get(key, key)
+        normalized[normalized_key] = value
+
+    return normalized
+
+
+def _denormalize_for_video_module(metadata: MediaMetadata) -> MediaMetadata:
+    """Denormalize image module metadata to match video module field names.
+
+    Reverses the field mappings to convert image module field names back to
+    video module field names for compatibility with the video module's exiftool handler.
+
+    @param metadata: Metadata dict with image module field names
+    @return: Denormalized metadata with video module field names
+    """
+    denormalized: MediaMetadata = {}
+    # Create reverse mapping: image module field names to video module field names
+    reverse_mapping = {v: k for k, v in _FIELD_MAPPING.items()}
+
+    for key, value in metadata.items():
+        # Use reverse mapped name if available, otherwise keep original name
+        denormalized_key = reverse_mapping.get(key, key)
+        denormalized[denormalized_key] = value
+
+    return denormalized
 
 
 def get_xmp_lang_string(value, lang="x-default"):
@@ -242,10 +294,12 @@ def write_metadata(input: bytes, metadata: MediaMetadata) -> bytes:
             img.modify_xmp(xmp)
             img.modify_iptc(iptc)
             return img.get_bytes()
-    except Exception as e:
+    except (RuntimeError, ValueError) as e:
         logger.warning(f"Failed to write image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
         # Try to use exiftool as fallback when pyexiv2 fails
         # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import write_metadata as write_metadata_video
 
-        return write_metadata_video(input, metadata)
+        # Denormalize metadata to match video module's expected field names
+        denormalized_metadata = _denormalize_for_video_module(metadata)
+        return write_metadata_video(input, denormalized_metadata)
