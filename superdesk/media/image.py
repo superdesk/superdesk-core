@@ -159,10 +159,9 @@ def get_meta_iptc(file_stream: BinaryIO):
         except KeyError:
             continue
         if isinstance(value, list):
-            value = [decode(v) for v in value]
+            metadata[tag] = [decode(v) for v in value]
         elif isinstance(value, bytes):
-            value = decode(value)
-        metadata[tag] = value
+            metadata[tag] = decode(value)
     return metadata
 
 
@@ -171,8 +170,18 @@ def read_metadata(input: bytes) -> MediaMetadata:
 
     @param file_stream: stream
     """
-    with pyexiv2.ImageData(input) as img:
-        xmp = img.read_xmp()
+    try:
+        with pyexiv2.ImageData(input) as img:
+            xmp = img.read_xmp()
+    except (RuntimeError, ValueError) as e:
+        logger.warning(f"Failed to read image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
+        # Try to use exiftool as fallback when pyexiv2 fails
+        # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
+        from superdesk.media.video import read_metadata as read_metadata_video
+
+        # Map video module metadata to image module field names
+        return _map_video_to_image(read_metadata_video(input))
+
     return {
         "Description": get_xmp_lang_string(xmp.get("Xmp.dc.description")),
         "DescriptionWriter": xmp.get("Xmp.photoshop.CaptionWriter", ""),
@@ -189,6 +198,57 @@ def read_metadata(input: bytes) -> MediaMetadata:
         "CreditLine": xmp.get("Xmp.photoshop.Credit", ""),
         "ProvinceState": xmp.get("Xmp.photoshop.State", ""),
     }
+
+
+# Field mappings between image module and video module field names
+# Keys are video module names, values are image module names
+_FIELD_MAPPING: Dict[str, str] = {
+    "CaptionWriter": "DescriptionWriter",
+    "TransmissionReference": "JobId",
+    "AuthorsPosition": "CreatorsJobtitle",
+    "Rights": "CopyrightNotice",
+    "State": "ProvinceState",
+    "Credit": "CreditLine",
+}
+
+
+def _map_video_to_image(metadata: MediaMetadata) -> MediaMetadata:
+    """Map video module metadata field names to image module field names.
+
+    Converts video module field names to image module field names for consistency.
+
+    @param metadata: Metadata dict from exiftool fallback
+    @return: Metadata with image module field names
+    """
+    result: MediaMetadata = {}
+
+    for key, value in metadata.items():
+        # Use mapped name if available, otherwise keep original name
+        mapped_key = _FIELD_MAPPING.get(key, key)
+        result[mapped_key] = value  # type: ignore[literal-required]
+
+    return result
+
+
+def _map_image_to_video(metadata: MediaMetadata) -> MediaMetadata:
+    """Map image module metadata field names to video module field names.
+
+    Converts image module field names back to video module field names for
+    compatibility with the video module's exiftool handler.
+
+    @param metadata: Metadata dict with image module field names
+    @return: Metadata with video module field names
+    """
+    # Create reverse mapping: image module field names to video module field names
+    reverse_mapping = {v: k for k, v in _FIELD_MAPPING.items()}
+
+    result: MediaMetadata = {}
+    for key, value in metadata.items():
+        # Use reverse mapped name if available, otherwise keep original name
+        mapped_key = reverse_mapping.get(key, key)
+        result[mapped_key] = value  # type: ignore[literal-required]
+
+    return result
 
 
 def get_xmp_lang_string(value, lang="x-default"):
@@ -228,7 +288,17 @@ def write_metadata(input: bytes, metadata: MediaMetadata) -> bytes:
     xmp = {k: v for k, v in xmp.items() if v}
     iptc = convert_xmp_to_iptc(xmp)
 
-    with pyexiv2.ImageData(input) as img:
-        img.modify_xmp(xmp)
-        img.modify_iptc(iptc)
-        return img.get_bytes()
+    try:
+        with pyexiv2.ImageData(input) as img:
+            img.modify_xmp(xmp)
+            img.modify_iptc(iptc)
+            return img.get_bytes()
+    except (RuntimeError, ValueError) as e:
+        logger.warning(f"Failed to write image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
+        # Try to use exiftool as fallback when pyexiv2 fails
+        # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
+        from superdesk.media.video import write_metadata as write_metadata_video
+
+        # Map image module metadata to video module field names
+        mapped_metadata = _map_image_to_video(metadata)
+        return write_metadata_video(input, mapped_metadata)
