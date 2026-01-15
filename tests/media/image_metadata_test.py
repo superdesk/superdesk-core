@@ -124,22 +124,15 @@ def test_cp_sports_metadata_normalization(cp_sports_image_binary) -> None:
     # Read metadata using exiftool fallback (since cp-sports.jpg triggers the fallback)
     metadata = read_metadata(cp_sports_image_binary)
 
-    # Verify that metadata uses normalized field names (image module naming convention)
-    # not the video module naming convention
-    assert "DescriptionWriter" in metadata or metadata.get("DescriptionWriter") is None
+    # Verify that video module field names are NOT present (should be normalized to image module names)
     assert "CaptionWriter" not in metadata  # Should be normalized to DescriptionWriter
-    assert "JobId" in metadata or metadata.get("JobId") is None
     assert "TransmissionReference" not in metadata  # Should be normalized to JobId
-    assert "CreatorsJobtitle" in metadata or metadata.get("CreatorsJobtitle") is None
     assert "AuthorsPosition" not in metadata  # Should be normalized to CreatorsJobtitle
-    assert "CopyrightNotice" in metadata or metadata.get("CopyrightNotice") is None
     assert "Rights" not in metadata  # Should be normalized to CopyrightNotice
-    assert "ProvinceState" in metadata or metadata.get("ProvinceState") is None
     assert "State" not in metadata  # Should be normalized to ProvinceState
-    assert "CreditLine" in metadata or metadata.get("CreditLine") is None
     assert "Credit" not in metadata  # Should be normalized to CreditLine
 
-    # Verify actual metadata values
+    # Verify actual metadata values with image module field names
     assert metadata.get("DescriptionWriter") == "AW"
     assert metadata.get("JobId") == "RJB101_2022030616"
     assert metadata.get("CreatorsJobtitle") == "STF"
