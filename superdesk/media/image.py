@@ -174,9 +174,10 @@ def read_metadata(input: bytes) -> MediaMetadata:
     try:
         with pyexiv2.ImageData(input) as img:
             xmp = img.read_xmp()
-    except RuntimeError as e:
+    except Exception as e:
         logger.warning(f"Failed to read image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
-        # Try to use exiftool as fallback for corrupted metadata
+        # Try to use exiftool as fallback when pyexiv2 fails
+        # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import read_metadata as read_metadata_video
 
         return read_metadata_video(input)
@@ -241,9 +242,10 @@ def write_metadata(input: bytes, metadata: MediaMetadata) -> bytes:
             img.modify_xmp(xmp)
             img.modify_iptc(iptc)
             return img.get_bytes()
-    except RuntimeError as e:
+    except Exception as e:
         logger.warning(f"Failed to write image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
-        # Try to use exiftool as fallback for corrupted metadata
+        # Try to use exiftool as fallback when pyexiv2 fails
+        # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import write_metadata as write_metadata_video
 
         return write_metadata_video(input, metadata)
