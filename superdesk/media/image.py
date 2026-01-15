@@ -13,7 +13,7 @@
 import io
 import logging
 
-from typing import BinaryIO, Dict, List, Union, Any, cast, get_type_hints
+from typing import BinaryIO, Dict, List, Union, Any, get_type_hints
 
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
@@ -159,10 +159,9 @@ def get_meta_iptc(file_stream: BinaryIO):
         except KeyError:
             continue
         if isinstance(value, list):
-            value = [decode(v) for v in value]
+            metadata[tag] = [decode(v) for v in value]
         elif isinstance(value, bytes):
-            value = decode(value)
-        metadata[tag] = cast(Any, value)
+            metadata[tag] = decode(value)
     return metadata
 
 
