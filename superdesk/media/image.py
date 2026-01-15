@@ -13,7 +13,7 @@
 import io
 import logging
 
-from typing import BinaryIO, Dict, List, Union
+from typing import BinaryIO, Dict, List, Union, Any, cast, get_type_hints
 
 from superdesk.text_utils import decode
 from PIL import Image, ExifTags
@@ -162,7 +162,7 @@ def get_meta_iptc(file_stream: BinaryIO):
             value = [decode(v) for v in value]
         elif isinstance(value, bytes):
             value = decode(value)
-        metadata[tag] = value
+        metadata[tag] = cast(Any, value)
     return metadata
 
 
@@ -201,9 +201,12 @@ def read_metadata(input: bytes) -> MediaMetadata:
     }
 
 
+# Get all valid MediaMetadata field names from the TypedDict
+_MEDIA_METADATA_FIELDS = set(get_type_hints(MediaMetadata).keys())
+
 # Field mappings between image module and video module field names
 # Keys are video module names, values are image module names
-_FIELD_MAPPING = {
+_FIELD_MAPPING: Dict[str, str] = {
     "CaptionWriter": "DescriptionWriter",
     "TransmissionReference": "JobId",
     "AuthorsPosition": "CreatorsJobtitle",
@@ -221,14 +224,20 @@ def _map_video_to_image(metadata: MediaMetadata) -> MediaMetadata:
     @param metadata: Metadata dict from exiftool fallback
     @return: Metadata with image module field names
     """
-    mapped: MediaMetadata = {}
+    mapped: Dict[str, Any] = {}
 
     for key, value in metadata.items():
         # Use mapped name if available, otherwise keep original name
         mapped_key = _FIELD_MAPPING.get(key, key)
         mapped[mapped_key] = value
 
-    return mapped
+    # Build MediaMetadata with only valid fields
+    result: MediaMetadata = {}
+    for field in _MEDIA_METADATA_FIELDS:
+        if field in mapped:
+            result[field] = mapped[field]  # type: ignore[literal-required]
+
+    return result
 
 
 def _map_image_to_video(metadata: MediaMetadata) -> MediaMetadata:
@@ -240,16 +249,22 @@ def _map_image_to_video(metadata: MediaMetadata) -> MediaMetadata:
     @param metadata: Metadata dict with image module field names
     @return: Metadata with video module field names
     """
-    mapped: MediaMetadata = {}
     # Create reverse mapping: image module field names to video module field names
     reverse_mapping = {v: k for k, v in _FIELD_MAPPING.items()}
 
+    mapped: Dict[str, Any] = {}
     for key, value in metadata.items():
         # Use reverse mapped name if available, otherwise keep original name
         mapped_key = reverse_mapping.get(key, key)
         mapped[mapped_key] = value
 
-    return mapped
+    # Build MediaMetadata with only valid fields
+    result: MediaMetadata = {}
+    for field in _MEDIA_METADATA_FIELDS:
+        if field in mapped:
+            result[field] = mapped[field]  # type: ignore[literal-required]
+
+    return result
 
 
 def get_xmp_lang_string(value, lang="x-default"):
