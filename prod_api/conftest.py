@@ -32,68 +32,6 @@ def generate_random_string(length=6) -> str:
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
-class Task311(asyncio.tasks.Task):
-    """
-    This is backport of Task from CPython 3.11
-    It's needed to allow context passing
-    """
-
-    def __init__(self, coro, *, loop=None, name=None, context=None):
-        super(asyncio.tasks.Task, self).__init__(loop=loop)
-        if self._source_traceback:
-            del self._source_traceback[-1]
-        if not asyncio.coroutines.iscoroutine(coro):
-            # raise after Future.__init__(), attrs are required for __del__
-            # prevent logging for pending task in __del__
-            self._log_destroy_pending = False
-            raise TypeError(f"a coroutine was expected, got {coro!r}")
-
-        if name is None:
-            self._name = f"Task-{asyncio.tasks._task_name_counter()}"
-        else:
-            self._name = str(name)
-
-        self._num_cancels_requested = 0
-        self._must_cancel = False
-        self._fut_waiter = None
-        self._coro = coro
-        if context is None:
-            self._context = contextvars.copy_context()
-        else:
-            self._context = context
-
-        self._loop.call_soon(self._Task__step, context=self._context)
-        asyncio.tasks._register_task(self)
-
-
-class CustomEventLoopPolicy(asyncio.DefaultEventLoopPolicy):
-    def set_event_loop(self, loop):
-        if loop is not None:
-            context = contextvars.copy_context()
-            loop.set_task_factory(functools.partial(task_factory, context=context))
-        super().set_event_loop(loop)
-
-
-def task_factory(loop, coro, context=None):
-    stack = traceback.extract_stack()
-    for frame in stack[-2::-1]:
-        package_name = Path(frame.filename).parts[-2]
-        if package_name != "asyncio":
-            if package_name == "pytest_asyncio":
-                # This function was called from pytest_asyncio, use shared context
-                break
-            else:
-                # This function was called from somewhere else, create context copy
-                context = None
-            break
-    return Task311(coro, loop=loop, context=context)
-
-
-@pytest.fixture(scope="session")
-def event_loop_policy(request):
-    return CustomEventLoopPolicy()
-
-
 async def get_test_prodapi_app(extra_config=None):
     """
     Create and return configured test prod api flask app.
