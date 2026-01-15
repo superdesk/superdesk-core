@@ -171,8 +171,16 @@ def read_metadata(input: bytes) -> MediaMetadata:
 
     @param file_stream: stream
     """
-    with pyexiv2.ImageData(input) as img:
-        xmp = img.read_xmp()
+    try:
+        with pyexiv2.ImageData(input) as img:
+            xmp = img.read_xmp()
+    except RuntimeError as e:
+        logger.warning(f"Failed to read image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
+        # Try to use exiftool as fallback for corrupted metadata
+        from superdesk.media.video import read_metadata as read_metadata_video
+
+        return read_metadata_video(input)
+
     return {
         "Description": get_xmp_lang_string(xmp.get("Xmp.dc.description")),
         "DescriptionWriter": xmp.get("Xmp.photoshop.CaptionWriter", ""),
@@ -228,7 +236,14 @@ def write_metadata(input: bytes, metadata: MediaMetadata) -> bytes:
     xmp = {k: v for k, v in xmp.items() if v}
     iptc = convert_xmp_to_iptc(xmp)
 
-    with pyexiv2.ImageData(input) as img:
-        img.modify_xmp(xmp)
-        img.modify_iptc(iptc)
-        return img.get_bytes()
+    try:
+        with pyexiv2.ImageData(input) as img:
+            img.modify_xmp(xmp)
+            img.modify_iptc(iptc)
+            return img.get_bytes()
+    except RuntimeError as e:
+        logger.warning(f"Failed to write image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
+        # Try to use exiftool as fallback for corrupted metadata
+        from superdesk.media.video import write_metadata as write_metadata_video
+
+        return write_metadata_video(input, metadata)

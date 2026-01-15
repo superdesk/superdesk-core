@@ -21,6 +21,13 @@ def image_binary() -> bytes:
         return f.read()
 
 
+@fixture
+def cp_sports_image_binary() -> bytes:
+    image_path = fixture_path("cp-sports.jpg", "media")
+    with open(image_path, mode="rb") as f:
+        return f.read()
+
+
 def test_picture_metadata_read_write(image_binary) -> None:
     metadata = read_metadata(image_binary)
     assert metadata == MediaMetadata(
@@ -91,3 +98,22 @@ def test_get_metadata_from_item() -> None:
         Title="bar",
         JobId="baz",
     )
+
+
+def test_cp_sports_metadata_write(cp_sports_image_binary) -> None:
+    """Test updating metadata in cp-sports.jpg."""
+    metadata = read_metadata(cp_sports_image_binary)
+    assert metadata["Country"] == "CHN"
+
+    # Update the metadata
+    updated = MediaMetadata(
+        Country="Canada",
+        City="Toronto",
+    )
+
+    next_image = write_metadata(cp_sports_image_binary, updated)
+
+    # Read back and verify the changes
+    metadata = read_metadata(next_image)
+    assert metadata["Country"] == "Canada"
+    assert metadata["City"] == "Toronto"
