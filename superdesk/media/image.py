@@ -180,8 +180,8 @@ def read_metadata(input: bytes) -> MediaMetadata:
         # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import read_metadata as read_metadata_video
 
-        # Normalize exiftool metadata to match image module field names
-        return _normalize_exiftool_metadata(read_metadata_video(input))
+        # Map video module metadata to image module field names
+        return _map_video_to_image(read_metadata_video(input))
 
     return {
         "Description": get_xmp_lang_string(xmp.get("Xmp.dc.description")),
@@ -213,43 +213,43 @@ _FIELD_MAPPING = {
 }
 
 
-def _normalize_exiftool_metadata(metadata: MediaMetadata) -> MediaMetadata:
-    """Normalize exiftool metadata to match image module field names.
+def _map_video_to_image(metadata: MediaMetadata) -> MediaMetadata:
+    """Map video module metadata field names to image module field names.
 
-    Maps video module field names to image module field names for consistency.
+    Converts video module field names to image module field names for consistency.
 
     @param metadata: Metadata dict from exiftool fallback
-    @return: Normalized metadata with consistent field names
+    @return: Metadata with image module field names
     """
-    normalized: MediaMetadata = {}
+    mapped: MediaMetadata = {}
 
     for key, value in metadata.items():
         # Use mapped name if available, otherwise keep original name
-        normalized_key = _FIELD_MAPPING.get(key, key)
-        normalized[normalized_key] = value
+        mapped_key = _FIELD_MAPPING.get(key, key)
+        mapped[mapped_key] = value
 
-    return normalized
+    return mapped
 
 
-def _denormalize_for_video_module(metadata: MediaMetadata) -> MediaMetadata:
-    """Denormalize image module metadata to match video module field names.
+def _map_image_to_video(metadata: MediaMetadata) -> MediaMetadata:
+    """Map image module metadata field names to video module field names.
 
-    Reverses the field mappings to convert image module field names back to
-    video module field names for compatibility with the video module's exiftool handler.
+    Converts image module field names back to video module field names for
+    compatibility with the video module's exiftool handler.
 
     @param metadata: Metadata dict with image module field names
-    @return: Denormalized metadata with video module field names
+    @return: Metadata with video module field names
     """
-    denormalized: MediaMetadata = {}
+    mapped: MediaMetadata = {}
     # Create reverse mapping: image module field names to video module field names
     reverse_mapping = {v: k for k, v in _FIELD_MAPPING.items()}
 
     for key, value in metadata.items():
         # Use reverse mapped name if available, otherwise keep original name
-        denormalized_key = reverse_mapping.get(key, key)
-        denormalized[denormalized_key] = value
+        mapped_key = reverse_mapping.get(key, key)
+        mapped[mapped_key] = value
 
-    return denormalized
+    return mapped
 
 
 def get_xmp_lang_string(value, lang="x-default"):
@@ -300,6 +300,6 @@ def write_metadata(input: bytes, metadata: MediaMetadata) -> bytes:
         # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import write_metadata as write_metadata_video
 
-        # Denormalize metadata to match video module's expected field names
-        denormalized_metadata = _denormalize_for_video_module(metadata)
-        return write_metadata_video(input, denormalized_metadata)
+        # Map image module metadata to video module field names
+        mapped_metadata = _map_image_to_video(metadata)
+        return write_metadata_video(input, mapped_metadata)
