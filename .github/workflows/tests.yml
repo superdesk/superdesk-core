@@ -54,8 +54,8 @@ jobs:
         SKIP_SERVER_INSTALL: true
 
     - run: pip install -Ur dev-requirements.txt
-    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings tests/core
-    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings --ignore=tests/core
+    - run: pytest --log-level=ERROR --disable-warnings tests/core
+    - run: pytest --log-level=ERROR --disable-warnings --ignore=tests/core
 
   pip-compile:
     runs-on: ubuntu-latest
