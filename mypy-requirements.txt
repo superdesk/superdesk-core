@@ -1,4 +1,4 @@
-mypy==1.19.0
+mypy==1.19.1
 mypy-extensions==1.1.0
 types-aioboto3==15.5.0
 types-chardet~=5.0.4
