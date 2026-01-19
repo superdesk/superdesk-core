@@ -76,6 +76,7 @@ class BaseExchangeFormatterTestCase(TestCase):
         await self.formatter.get_tasks_for_subscriber(request, item, self.subscriber, PublishRequestResponse(), {})
 
         publish_queue = {queue.destination._id: queue async for queue in PublishQueueResource.get_service().get_all()}
+        self.assertEqual(len(publish_queue), 3)
 
         self.assertEqual(publish_queue["dest_1"].state, PublishQueueState.ERROR)
         self.assertEqual(publish_queue["dest_1"].error_message, "Mock formatter failed")
