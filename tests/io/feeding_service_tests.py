@@ -2,6 +2,7 @@ import pytz
 import warnings
 
 from datetime import datetime
+from inspect import isgenerator, isasyncgen
 from unittest.mock import patch
 from superdesk.tests import TestCase
 from superdesk.io.feeding_services import FeedingService
@@ -12,7 +13,14 @@ class TestFeedingService(FeedingService):
     Name = "test_feeding"
 
     def _update(self, provider, update):
-        pass
+        return []
+
+
+class TestAsyncFeedingService(FeedingService):
+    Name = "test_async_feeding"
+
+    async def _update(self, provider, update):
+        return []
 
 
 class FeedingServiceParserTestCase(TestCase):
@@ -39,3 +47,14 @@ class FeedingServiceParserTestCase(TestCase):
         feeding_service = TestFeedingService()
         feeding_service.localize_timestamps(item)
         self.assertEqual(pytz.utc, item["firstcreated"].tzinfo)
+
+    async def test_update_returns_async_generator(self):
+        items = await TestFeedingService().update({"_id": "abcd123", "name": "test"}, {})
+        self.assertFalse(isgenerator(items))
+        self.assertTrue(isasyncgen(items))
+        self.assertTrue(hasattr(items, "asend"))
+
+        items = await TestAsyncFeedingService().update({"_id": "abcd123", "name": "test"}, {})
+        self.assertFalse(isgenerator(items))
+        self.assertTrue(isasyncgen(items))
+        self.assertTrue(hasattr(items, "asend"))
