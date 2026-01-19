@@ -4,7 +4,7 @@ setuptools==80.9.0
 pip-tools==7.5.1
 black==23.12.1
 flake8==7.3.0
-flake8-bugbear==24.12.12
+flake8-bugbear==25.11.29
 flake8-docstrings==1.7.0
 pep8==1.7.1
 pyflakes==3.4.0
