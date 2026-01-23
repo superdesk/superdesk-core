@@ -106,6 +106,17 @@ class BaseElasticResourceClient:
             index=self.config.index,
             actions=actions,
             stats_only=False,
+            raise_on_error=False,
+        )
+
+    def _get_bulk_update_args(self, ids: set[str], updates: dict) -> dict:
+        return dict(
+            actions=[
+                dict(_op_type="update", _index=self.config.index, _id=str(item_id), doc=updates) for item_id in ids
+            ],
+            # chunk_size=500,
+            raise_on_error=False,
+            stats_only=False,
         )
 
     def _get_update_args(self, item_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:

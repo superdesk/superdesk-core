@@ -53,6 +53,15 @@ class ElasticResourceClient(BaseElasticResourceClient):
         # where as if `stats_only=True`, then `failed` is just a number
         return success, cast(List[Dict[str, Any]], failed)
 
+    def bulk_update(self, ids: set[str], updates: dict) -> tuple[int, list[Dict[str, Any]]]:
+        success, failed = bulk(self.elastic, **self._get_bulk_update_args(ids, updates))
+        if self.config.force_refresh:
+            self.elastic.indices.refresh(index=self.config.index)
+
+        # Cast `failed` to dict, because if we pass `stats_only=False`, then we get the full document
+        # where as if `stats_only=True`, then `failed` is just a number
+        return success, cast(list[dict], failed)
+
     def update(self, item_id: str, updates: Dict[str, Any]) -> Any:
         """Update a document in Elasticsearch
 
