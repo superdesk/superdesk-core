@@ -1,4 +1,4 @@
-from typing import Awaitable, Sequence
+from typing import Awaitable
 import asyncio
 
 from bson import ObjectId
@@ -108,7 +108,7 @@ class Resources(SignalGroup):
 
         :param jobs: A list of tuples, where each tuple contains:
             - The resource name as a string.
-            - A list of resource IDs (strings or ObjectId instances) to update.
+            - A set of resource IDs (strings or ObjectId instances) to update.
             - A dictionary containing the fields to update.
         """
 

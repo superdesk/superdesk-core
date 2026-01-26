@@ -317,7 +317,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         except ElasticNotConfiguredForResource:
             pass
 
-        projection_arg = None if projection is None else get_projection_arg(projection)
+        projection_arg = None if projection is None else self._get_mongo_projection_argument(projection)
 
         if projection_arg:
             response = self.mongo_async.find(lookup, projection=projection_arg)
@@ -780,9 +780,15 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return await self.mongo_async.count_documents(lookup or {})
 
-    def _get_mongo_projection_argument(self, req: SearchRequest) -> list[str] | dict[str, bool] | None:
-        projection_include, projection_fields = get_projection_from_request(req)
-        if projection_fields:
+    def _get_mongo_projection_argument(
+        self, req: SearchRequest | ProjectedFieldArg
+    ) -> list[str] | dict[str, bool] | None:
+        if isinstance(req, SearchRequest):
+            projection_include, projection_fields = get_projection_from_request(req)
+        else:
+            projection_include, projection_fields = get_projection_arg(req)
+
+        if projection_include is not None and projection_fields is not None:
             return projection_fields if projection_include else {field: False for field in projection_fields}
 
         return None
@@ -1038,9 +1044,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
         Errors are raised if the MongoDB operation is not acknowledged, while warnings are logged for any
         discrepancies between the number of IDs provided and the number of items updated.
 
+        :param ids: A set of IDs for the items to be updated. Each ID can either be a string or an ObjectId.
         :param updates: A dictionary containing the fields and values to update.
-        :param ids: A list of IDs for the items to be updated. Each ID can either be a string or an ObjectId.
-        :raises Exception: If the MongoDB update operation is not acknowledged.
+        :return: A tuple containing the result of the MongoDB update and Elasticsearch operations.
+        :raises SuperdeskApiError.badRequestError: If the MongoDB update operation is not acknowledged.
         """
 
         mongo_task = self.mongo_async.update_many({"_id": {"$in": list(ids)}}, {"$set": updates})

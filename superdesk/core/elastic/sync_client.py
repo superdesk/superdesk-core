@@ -10,6 +10,7 @@
 
 from typing import Optional, List, Dict, Any, Tuple, cast, overload
 
+from bson import ObjectId
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError, TransportError, RequestError
 from elasticsearch.helpers import bulk
@@ -53,7 +54,16 @@ class ElasticResourceClient(BaseElasticResourceClient):
         # where as if `stats_only=True`, then `failed` is just a number
         return success, cast(List[Dict[str, Any]], failed)
 
-    def bulk_update(self, ids: set[str], updates: dict) -> tuple[int, list[Dict[str, Any]]]:
+    def bulk_update(self, ids: set[str | ObjectId], updates: dict) -> tuple[int, list[Dict[str, Any]]]:
+        """
+        Handles the bulk update operation for the Elasticsearch index, applying updates to a list of
+        documents identified by their IDs.
+
+        :param ids: A set of IDs for the items to be updated. Each ID can either be a string or an ObjectId.
+        :param updates: A dictionary containing the fields and values to update.
+        :return: A tuple containing the number of updated documents and a list of failed update responses.
+        """
+
         success, failed = bulk(self.elastic, **self._get_bulk_update_args(ids, updates))
         if self.config.force_refresh:
             self.elastic.indices.refresh(index=self.config.index)
