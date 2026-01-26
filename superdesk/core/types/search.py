@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Any, Literal, TypeAlias
 from typing_extensions import TypedDict
 from enum import Enum, unique
 
@@ -9,7 +9,7 @@ from pydantic_core import PydanticCustomError
 
 #: The data type for projections, either a list of field names, or a dictionary containing
 #: the field and enable/disable state
-ProjectedFieldArg = (
+ProjectedFieldArg: TypeAlias = (
     list[str]
     | set[str]
     | dict[str, Literal[0]]
