@@ -45,8 +45,15 @@ class UserMetricsService(superdesk.Service):
 user_metrics_service = UserMetricsService(endpoint_name, backend=superdesk.get_backend())
 
 
-def incr(metric: str, user_id: bson.ObjectId) -> None:
+def incr(metric: str, user_id: str | bson.ObjectId) -> None:
     """
     Increment the metric for the user.
+
+    :param metric: metric name
+    :param user_id: user id (can be string or ObjectId)
     """
+    try:
+        user_id = bson.ObjectId(user_id)
+    except bson.errors.InvalidId:
+        pass
     user_metrics_service.incr(metric, user_id)
