@@ -136,12 +136,12 @@ class AsyncBaseService(BaseService):
         """
 
         last_id = None
-        if lookup is None:
-            lookup = {}
-        _lookup = lookup.copy()
+        base_lookup = lookup or {}
         for i in range(max_iterations):
+            _lookup = base_lookup.copy()
             if last_id is not None:
-                _lookup = {"_id": {"$gt": last_id}}
+                # keep original lookup while paging by _id
+                _lookup = {"$and": [_lookup, {"_id": {"$gt": last_id}}]} if _lookup else {"_id": {"$gt": last_id}}
 
             cursor = (await self.get_from_mongo_async(req=None, lookup=_lookup)).sort("_id").limit(size)
             # As the consumer might be doing something time-consuming, we consume the entire cursor now
