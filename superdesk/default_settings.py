@@ -533,6 +533,15 @@ PUBLISH_CHANNELS: list[PublishChannelConfig] = [
     },
     {
         "operations": ["correct"],
+        "filter": lambda item: not len(item.get("associations") or {}),
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content:corrected",
+            router="asyncio",
+        ),
+    },
+    {
+        "operations": ["correct"],
         "config": ExchangeConfig(
             exchange="content",
             filter="content:corrected",
