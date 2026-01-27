@@ -445,7 +445,6 @@ class BasePublishService(BaseService):
         if authors:
             for author in authors:
                 if isinstance(author, dict) and author.get("parent"):
-                    print("AUTHOR", author)
                     user_metrics.incr("published_articles", author["parent"])
         elif item.get("original_creator"):
             user_metrics.incr("published_articles", item["original_creator"])
