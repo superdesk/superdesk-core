@@ -147,10 +147,6 @@ class ArchiveRewriteService(AsyncBaseService):
         if not original:
             raise SuperdeskApiError.notFoundError(message=_("Cannot find the article"))
 
-        embargo = original.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(EMBARGO)) if original.get(EMBARGO) else None
-        if embargo is not None and embargo > utcnow():
-            raise SuperdeskApiError.badRequestError(_("Rewrite of an Item having embargo isn't possible"))
-
         if not original.get("event_id"):
             raise SuperdeskApiError.notFoundError(message=_("Event id does not exist"))
 
