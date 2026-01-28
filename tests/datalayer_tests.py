@@ -69,6 +69,26 @@ class DatalayerTestCase(TestCase):
             counter += 1
         assert counter == SIZE
 
+    async def test_get_all_batch_with_lookup(self):
+        SIZE = 20
+        matching = []
+        other = []
+        for i in range(SIZE):
+            matching.append({"_id": f"match-{i:04d}", "slugline": "keep"})
+            other.append({"_id": f"skip-{i:04d}", "slugline": "drop"})
+
+        service = superdesk.get_resource_service("archive")
+        service.create(matching + other)
+
+        seen = []
+        for item in service.get_all_batch(size=5, lookup={"slugline": "keep"}):
+            seen.append(item)
+
+        assert len(seen) == SIZE
+        assert all(doc["slugline"] == "keep" for doc in seen)
+        # ensure we did not accidentally yield items from the other slugline
+        assert all(not doc["_id"].startswith("skip-") for doc in seen)
+
     async def test_delete_chunks(self):
         items = []
         for i in range(5000):  # must be larger than 1k
