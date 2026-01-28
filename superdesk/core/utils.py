@@ -11,7 +11,7 @@
 from typing import TypeVar, cast, AsyncGenerator, Any
 from typing_extensions import Self
 from importlib import import_module
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 from .app import get_app_config
@@ -67,7 +67,7 @@ def str_to_date(value: str | datetime | None) -> datetime | None:
 
     if isinstance(value, str):
         date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
-        return datetime.strptime(value, date_format)
+        return datetime.strptime(value, date_format).replace(tzinfo=timezone.utc)
 
     return value
 

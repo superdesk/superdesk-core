@@ -25,13 +25,19 @@ SYSTEM_FIELDS = {"_id", "_type", "_resource", "_etag"}
 
 
 def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | tuple[None, None]:
-    """Convert request projection param into common format used by Mongo or Elastic
+    """
+    Extracts and parses projection fields from a given SearchRequest.
 
-    :param req: A SearchRequest with an optional projection param
-    :return: One of the following depending on expected projection:
-        tuple[None, None] If no projection is to be used
-        tuple[True, list[str]] When projection is to include fields
-        tuple[False, list[str]] When projection is to exclude fields
+    This function processes the search request to determine the projection
+    fields specified either in the request arguments or directly as a
+    projection attribute, if available. It returns the parsed projection
+    information in a standardized format for further use.
+
+    :param req: An instance of SearchRequest containing the client's query data including optional projection details.
+    :returns: One of the following depending on expected projection:
+        - (True, list): For inclusive projection, where specified fields are included in the output.
+        - (False, list): For exclusive projection, where specified fields are excluded from the output.
+        - (None, None): When no projection is applied.
     :raises SuperdeskApiError.badRequestError: If the projection param is of an unsupported type
     """
 
@@ -40,6 +46,29 @@ def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | 
         projection_data = json.loads(req.args["projections"])
     elif req.projection:
         projection_data = req.projection
+
+    return get_projection_arg(projection_data)
+
+
+def get_projection_arg(projection_data: ProjectedFieldArg | None) -> tuple[bool, list[str]] | tuple[None, None]:
+    """Get normalized projection argument from request
+
+    Processes the given projection data and determines the type of projection to apply
+    to a query. It supports inclusion or exclusion of fields based on the structure and
+    value of the provided data.
+
+    :param projection_data: Projection data used to determine field inclusion or exclusion. Acceptable types are:
+        - None: No projection is used.
+        - list or set: Specifies fields to include in the projection.
+        - dict: Specifies fields and their projection type. The values in the
+          dictionary are inspected to determine whether fields should be included
+          or excluded.
+    :returns: One of the following depending on expected projection:
+        - (True, list): For inclusive projection, where specified fields are included in the output.
+        - (False, list): For exclusive projection, where specified fields are excluded from the output.
+        - (None, None): When no projection is applied.
+    :raises SuperdeskApiError.badRequestError: If the projection param is of an unsupported type
+    """
 
     if not projection_data:
         # No projection will be used

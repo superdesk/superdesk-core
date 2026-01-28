@@ -28,10 +28,12 @@ import ast
 import simplejson as json
 from copy import deepcopy
 from hashlib import sha1
+import asyncio
 
 from bson import ObjectId, UuidRepresentation
 from bson.json_util import dumps, DEFAULT_JSON_OPTIONS
 from pymongo.collation import Collation
+from pymongo.results import UpdateResult
 from motor.motor_asyncio import AsyncIOMotorCursor
 
 # TODO-ASYNC: Replace Eve's parser with our own
@@ -49,7 +51,7 @@ from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
 
 from ..app import SuperdeskAsyncApp, get_current_async_app, get_config
 from .cursor import ElasticsearchResourceCursorAsync, MongoResourceCursorAsync, ResourceCursorAsync
-from .utils import get_projection_from_request, combine_projection_args
+from .utils import get_projection_from_request, get_projection_arg
 from .types import ResourceModelType
 
 logger = logging.getLogger(__name__)
@@ -296,24 +298,33 @@ class AsyncResourceService(Generic[ResourceModelType]):
         cursor = await self.find({ID_FIELD: {"$in": ids}}, use_mongo=True, projection=projection)
         return await cursor.to_list_raw()
 
-    async def search(self, lookup: Dict[str, Any], use_mongo=False) -> ResourceCursorAsync[ResourceModelType]:
+    async def search(
+        self, lookup: Dict[str, Any], use_mongo=False, projection: ProjectedFieldArg | None = None
+    ) -> ResourceCursorAsync[ResourceModelType]:
         """Search the resource using the provided ``lookup``
 
         Will use Elasticsearch if configured for this resource and ``use_mongo == False``.
 
         :param lookup: Dictionary to search
         :param use_mongo: Force to use MongoDB instead of Elasticsearch
+        :param projection: Optional projection to apply to the search results
         :return: A ``ResourceCursorAsync`` instance with the response
         """
 
         try:
             if not use_mongo:
-                response = await self.elastic.search(lookup)
+                response = await self.elastic.search(lookup, projection=projection)
                 return ElasticsearchResourceCursorAsync(cast(Type[ResourceModelType], self.config.data_class), response)
         except ElasticNotConfiguredForResource:
             pass
 
-        response = self.mongo_async.find(lookup)
+        projection_arg = None if projection is None else self._get_mongo_projection_argument(projection)
+
+        if projection_arg:
+            response = self.mongo_async.find(lookup, projection=projection_arg)
+        else:
+            response = self.mongo_async.find(lookup)
+
         return MongoResourceCursorAsync(
             cast(Type[ResourceModelType], self.config.data_class), self.mongo_async, response, lookup
         )
@@ -782,9 +793,15 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return await self.mongo_async.count_documents(lookup or {})
 
-    def _get_mongo_projection_argument(self, req: SearchRequest) -> list[str] | dict[str, bool] | None:
-        projection_include, projection_fields = get_projection_from_request(req)
-        if projection_fields:
+    def _get_mongo_projection_argument(
+        self, req: SearchRequest | ProjectedFieldArg
+    ) -> list[str] | dict[str, bool] | None:
+        if isinstance(req, SearchRequest):
+            projection_include, projection_fields = get_projection_from_request(req)
+        else:
+            projection_include, projection_fields = get_projection_arg(req)
+
+        if projection_include is not None and projection_fields is not None:
             return projection_fields if projection_include else {field: False for field in projection_fields}
 
         return None
@@ -1029,6 +1046,75 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if search_request.case_insensitive:
             return Collation(get_config(str, "MONGO_LOCALE", "en"), strength=2)
         return None
+
+    async def bulk_update(
+        self, ids: set[str | ObjectId], updates: dict
+    ) -> tuple[UpdateResult, tuple[int, list[dict]] | None]:
+        """
+        Asynchronously applies updates to multiple items in both MongoDB and Elasticsearch.
+
+        This method updates items in MongoDB and, if enabled, Elasticsearch. It ensures that the
+        updates performed on both databases match the provided IDs and logs any inconsistencies.
+
+        MongoDB and Elasticsearch updates are concurrently updated.
+
+        Errors are raised if the MongoDB operation is not acknowledged, while warnings are logged for any
+        discrepancies between the number of IDs provided and the number of items updated.
+
+        :param ids: A set of IDs for the items to be updated. Each ID can either be a string or an ObjectId.
+        :param updates: A dictionary containing the fields and values to update.
+        :return: A tuple containing the result of the MongoDB update and Elasticsearch operations.
+        :raises SuperdeskApiError.badRequestError: If the MongoDB update operation is not acknowledged.
+        """
+
+        mongo_task = self.mongo_async.update_many({"_id": {"$in": list(ids)}}, {"$set": updates})
+        mongo_result: UpdateResult
+        elastic_result: tuple[int, list[dict]] | None = None
+        if not self.app.elastic.elastic_is_enabled(self.resource_name):
+            # Only MongoDB is enabled
+            mongo_result = await mongo_task
+        else:
+            # MongoDB and Elasticsearch are enabled
+            elastic_task = self.elastic.bulk_update(ids, updates)
+            mongo_result, elastic_result = await asyncio.gather(mongo_task, elastic_task)
+
+        if not mongo_result.acknowledged:
+            raise SuperdeskApiError.badRequestError("Failed to bulk update items in MongoDB")
+
+        if mongo_result.modified_count != len(ids):
+            logger.warning(
+                "Number of items updated in MongoDB does not match the number of IDs provided",
+                extra={
+                    "resource": self.resource_name,
+                    "ids": ids,
+                    "updated_in_mongo": mongo_result.modified_count,
+                    "mongo_result": mongo_result.raw_result,
+                },
+            )
+
+        if elastic_result is not None:
+            if elastic_result[0] != len(ids):
+                logger.warning(
+                    "Number of items updated in Elasticsearch does not match the number of IDs provided",
+                    extra={
+                        "resource": self.resource_name,
+                        "ids": ids,
+                        "updated_in_elastic": elastic_result[0],
+                        "elastic_errors": elastic_result[1],
+                    },
+                )
+            elif len(elastic_result[1]):
+                logger.warning(
+                    "Errors occurred while updating items in Elasticsearch",
+                    extra={
+                        "resource": self.resource_name,
+                        "ids": ids,
+                        "updated_in_elastic": elastic_result[0],
+                        "elastic_errors": elastic_result[1],
+                    },
+                )
+
+        return mongo_result, elastic_result
 
 
 class AsyncCacheableService(AsyncResourceService[ResourceModelType]):

@@ -465,3 +465,22 @@ class TestResourceService(AsyncTestCase):
             await assert_es_find_called_with(SearchRequest(sort=custom_sort_query), expected=expected)
             expected.where = {}
             await assert_es_find_called_with({}, sort=custom_sort_query, expected=expected)
+
+    async def test_bulk_update(self):
+        users = all_users()
+        await self.service.create(users)
+        for index in range(len(users)):
+            self.assertEqual(users[index], await self.service.find_by_id(users[index].id))
+
+        await self.service.bulk_update({users[0].id, users[2].id}, {"score": 2, "token": "abcd123"})
+        users[0].score = users[2].score = 2
+        users[0].token = users[2].token = "abcd123"
+
+        for index in range(len(users)):
+            mongo_item = await self.service.mongo_async.find_one({"_id": users[index].id})
+            mongo_item.pop("_type", None)
+            self.assertEqual(users[index], User(**mongo_item))
+
+            es_item = await self.service.elastic.find_by_id(users[index].id)
+            es_item.pop("_type", None)
+            self.assertEqual(users[index], User(**es_item))

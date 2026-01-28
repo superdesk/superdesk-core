@@ -24,7 +24,7 @@ from superdesk.resource_fields import ID_FIELD, ITEM_TYPE, ASSOCIATIONS, VERSION
 from superdesk.metadata.item import PUBLISH_SCHEDULE, CONTENT_TYPE
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_GROUP
 from superdesk.publish import PUBLISHED_IN_PACKAGE
-from superdesk.errors import SuperdeskPublishError
+from superdesk.errors import SuperdeskPublishError, SuperdeskErrorWithNotifications
 from superdesk.publish_async.publish_cache import PublishCache
 from superdesk.publish_async.utils import generate_sequence_number, get_utc_schedule
 from superdesk.publish.formatters import Formatter, get_formatter
@@ -232,14 +232,36 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         else:
             # Either caching is not available for this formatter, or it's the first time that we format
             # this document.
-            # publish_queue_items = []
-            formatted_items = formatter.format(
-                self.filter_item_fields(item) if embed_package_items else item.copy(),
-                subscriber_dict,
-                list(response.subscriber_codes.get(subscriber.id) or set()),
-            )
-            if isawaitable(formatted_items):
-                formatted_items = await formatted_items
+
+            try:
+                formatted_items = formatter.format(
+                    self.filter_item_fields(item) if embed_package_items else item.copy(),
+                    subscriber_dict,
+                    list(response.subscriber_codes.get(subscriber.id) or set()),
+                )
+                if isawaitable(formatted_items):
+                    formatted_items = await formatted_items
+            except Exception as error:
+                logger.exception(
+                    "Failed to format item for subscriber destination",
+                    extra=dict(
+                        item_id=request.item_id,
+                        item_headline=item.get("headline"),
+                        subscriber_name=subscriber.name,
+                        destination_id=destination._id,
+                        destination_name=destination.name,
+                    ),
+                )
+                await self._create_publish_queue_item(
+                    request, item, subscriber, response, destination, "", PublishQueueState.ERROR, 0, None, str(error)
+                )
+
+                if isinstance(error, SuperdeskErrorWithNotifications):
+                    # Make sure to send email notifications if the error is designed for it
+                    # (Exception class makes sure that the email will only get sent once)
+                    await error.send_notifications()
+
+                return []
 
             for publish_data in formatted_items:
                 if isinstance(publish_data, tuple):
@@ -255,44 +277,77 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                 else:
                     raise RuntimeError("Invalid response from formatter")
 
-                publish_queue_item = PublishQueueResource(
-                    id=ObjectId(),
-                    state=PublishQueueState.SUCCESS
-                    if destination.delivery_type == "content_api"
-                    else PublishQueueState.ROUTING,
-                    is_content_api=destination.delivery_type == "content_api",
-                    item_id=request.item_id,
-                    publishing_action=request.published_state,
-                    item_version=item[VERSION],
-                    formatted_item=formatted_doc,
-                    published_in_package=item.get(PUBLISHED_IN_PACKAGE, None),
-                    publish_schedule=get_utc_schedule(item, PUBLISH_SCHEDULE) or None,
-                    unique_name=item.get("unique_name", None),
-                    content_type=item[ITEM_TYPE],
-                    headline=item.get("headline") or item.get("name") or item.get("slugline") or "",
-                    ingest_provider=ObjectId(item["ingest_provider"]) if item.get("ingest_provider") else None,
-                    associated_items=response.associations.get(subscriber.id, []),
-                    # The following fields are required by the model, and will be updated per subscriber & destination
-                    published_seq_num=pub_seq_num,
-                    subscriber_id=subscriber.id,  # Required by model, updated on push to queue
-                    priority=subscriber.priority,
-                    codes=list(response.subscriber_codes.get(subscriber.id) or set()),
-                    destination=destination,
-                    item=item if destination.delivery_type == "content_api" else None,
+                publish_queue_item = await self._create_publish_queue_item(
+                    request,
+                    item,
+                    subscriber,
+                    response,
+                    destination,
+                    formatted_doc,
+                    (
+                        PublishQueueState.SUCCESS
+                        if destination.delivery_type == "content_api"
+                        else PublishQueueState.ROUTING
+                    ),
+                    pub_seq_num,
+                    encoded_item,
                 )
 
-                if encoded_item:
-                    app = get_current_app()
-                    binary = BytesIO(encoded_item)
-                    publish_queue_item.encoded_item_id = app.storage.put(binary)
-
                 tasks.append(publish_queue_item)
-                await publish_queue_service.create([publish_queue_item])
 
             if use_cache:
                 task_cache[cache_id] = tasks
 
         return tasks
+
+    async def _create_publish_queue_item(
+        self,
+        request: PublishRequest,
+        item: dict,
+        subscriber: SubscribersResource,
+        response: PublishRequestResponse,
+        destination: SubscriberDestination,
+        formatted_doc: str,
+        queue_state: PublishQueueState,
+        pub_seq_num: int,
+        encoded_item: bytes | None = None,
+        error_message: str | None = None,
+    ) -> PublishQueueResource:
+        publish_queue_item = PublishQueueResource(
+            id=ObjectId(),
+            state=queue_state,
+            is_content_api=destination.delivery_type == "content_api",
+            item_id=request.item_id,
+            publishing_action=request.published_state,
+            item_version=item[VERSION],
+            formatted_item=formatted_doc,
+            published_in_package=item.get(PUBLISHED_IN_PACKAGE, None),
+            publish_schedule=get_utc_schedule(item, PUBLISH_SCHEDULE) or None,
+            unique_name=item.get("unique_name", None),
+            content_type=item[ITEM_TYPE],
+            headline=item.get("headline") or item.get("name") or item.get("slugline") or "",
+            ingest_provider=ObjectId(item["ingest_provider"]) if item.get("ingest_provider") else None,
+            associated_items=response.associations.get(subscriber.id, []),
+            # The following fields are required by the model, and will be updated per subscriber & destination
+            published_seq_num=pub_seq_num,
+            subscriber_id=subscriber.id,  # Required by model, updated on push to queue
+            priority=subscriber.priority,
+            codes=list(response.subscriber_codes.get(subscriber.id) or set()),
+            destination=destination,
+            item=item if destination.delivery_type == "content_api" else None,
+        )
+
+        if encoded_item:
+            app = get_current_app()
+            binary = BytesIO(encoded_item)
+            publish_queue_item.encoded_item_id = app.storage.put(binary)
+
+        if error_message:
+            publish_queue_item.error_message = error_message
+
+        await PublishQueueResource.get_service().create([publish_queue_item])
+
+        return publish_queue_item
 
     def filter_item_fields(self, item: dict) -> dict:
         """
