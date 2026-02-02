@@ -64,7 +64,7 @@ class ElasticClientTestCase(AsyncTestCase):
         self.assertTrue(error["_index"].startswith("sptest_users_async"))
         self.assertEqual(error["_id"], "user_5")
         self.assertEqual(error["status"], 400)
-        self.assertEqual(error["error"]["type"], "mapper_parsing_exception")
+        self.assertIn(error["error"]["type"], ["mapper_parsing_exception", "document_parsing_exception"])
         self.assertIn("last_name", error["error"]["reason"])
         self.assertIn("'{test=true}'", error["error"]["reason"])
 
@@ -94,7 +94,7 @@ class ElasticClientTestCase(AsyncTestCase):
         self.assertTrue(error["_index"].startswith("sptest_users_async"))
         self.assertIn(error["_id"], {"user_3", "user_4"})
         self.assertEqual(error["status"], 400)
-        self.assertEqual(error["error"]["type"], "mapper_parsing_exception")
+        self.assertIn(error["error"]["type"], ["mapper_parsing_exception", "document_parsing_exception"])
         self.assertIn("token", error["error"]["reason"])
         self.assertIn("'{foo_bar=1234}'", error["error"]["reason"])
 
