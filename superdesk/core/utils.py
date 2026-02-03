@@ -14,6 +14,8 @@ from importlib import import_module
 from datetime import datetime, timezone
 from uuid import uuid4
 
+import arrow
+
 from .app import get_app_config
 from .types import DefaultNoValue
 
@@ -66,8 +68,8 @@ def str_to_date(value: str | datetime | None) -> datetime | None:
     """Convert a string to a datetime instance"""
 
     if isinstance(value, str):
-        date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
-        return datetime.strptime(value, date_format).replace(tzinfo=timezone.utc)
+        value_dt = arrow.get(value).datetime
+        return value_dt if value_dt.tzinfo == timezone.utc else value_dt.astimezone(timezone.utc)
 
     return value
 
