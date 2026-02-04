@@ -81,14 +81,16 @@ async def handle_item_published(item, after_scheduled):
             item[SCHEDULE_SETTINGS] = {}
 
         new_item = deepcopy(item)
-        new_item["_internal_destination"] = {"desk": dest.get("desk"), "stage": dest.get("stage")}
 
         try:
-            await send_to(new_item, desk_id=dest["desk"], stage_id=dest.get("stage"))
+            await send_to(
+                new_item,
+                desk_id=dest["desk"],
+                stage_id=dest.get("stage"),
+                macro_kwargs={"internal_destination": dest},
+            )
         except StopDuplication:
             continue
-        finally:
-            new_item.pop("_internal_destination", None)
 
         if dest.get("macro"):
             macro = macros_service.get_macro_by_name(dest["macro"])

@@ -70,7 +70,9 @@ def compare_dictionaries(original, updates):
     return modified
 
 
-async def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, default_stage="incoming_stage"):
+async def send_to(
+    doc, update=None, desk_id=None, stage_id=None, user_id=None, default_stage="incoming_stage", macro_kwargs=None
+):
     """Send item to given desk and stage.
 
     Applies the outgoing and incoming macros of current and destination stages
@@ -91,7 +93,7 @@ async def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, d
     task = {"desk": desk_id, "stage": stage_id, "user": original_task.get("user") if user_id is None else user_id}
 
     if current_stage:
-        await apply_stage_rule(doc, update, current_stage, MACRO_OUTGOING)
+        await apply_stage_rule(doc, update, current_stage, MACRO_OUTGOING, macro_kwargs=macro_kwargs)
 
     if desk_id:
         # TODO-ASYNC[desks]: Use DesksResourceModel async service where when upgrading this module
@@ -128,7 +130,9 @@ async def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, d
         doc["expiry"] = get_item_expiry(desk=desk, stage=destination_stage)
 
     if destination_stage:
-        await apply_stage_rule(doc, update, destination_stage, MACRO_INCOMING, desk=desk, task=task)
+        await apply_stage_rule(
+            doc, update, destination_stage, MACRO_INCOMING, desk=desk, task=task, macro_kwargs=macro_kwargs
+        )
         if destination_stage.get("task_status"):
             if update:
                 update["task"]["status"] = destination_stage["task_status"]
@@ -136,7 +140,7 @@ async def send_to(doc, update=None, desk_id=None, stage_id=None, user_id=None, d
                 doc["task"]["status"] = destination_stage["task_status"]
 
 
-async def apply_stage_rule(doc, update, stage, rule_type, desk=None, task=None):
+async def apply_stage_rule(doc, update, stage, rule_type, desk=None, task=None, macro_kwargs=None):
     macro_type = "{}_macro".format(rule_type)
 
     if stage.get(macro_type):
@@ -147,7 +151,7 @@ async def apply_stage_rule(doc, update, stage, rule_type, desk=None, task=None):
                 logger.warning("macro %s is missing", stage.get(macro_type))
                 return
 
-            await macro["callback"](doc, desk=desk, stage=stage, task=task)
+            await macro["callback"](doc, desk=desk, stage=stage, task=task, **(macro_kwargs or {}))
             if update:
                 modified = compare_dictionaries(original_doc, doc)
                 for i in modified:
