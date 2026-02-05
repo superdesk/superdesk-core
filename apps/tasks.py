@@ -71,8 +71,14 @@ def compare_dictionaries(original, updates):
 
 
 async def send_to(
-    doc, update=None, desk_id=None, stage_id=None, user_id=None, default_stage="incoming_stage", macro_kwargs=None
-):
+    doc,
+    update=None,
+    desk_id=None,
+    stage_id=None,
+    user_id=None,
+    default_stage="incoming_stage",
+    macro_kwargs=None,
+) -> None:
     """Send item to given desk and stage.
 
     Applies the outgoing and incoming macros of current and destination stages
