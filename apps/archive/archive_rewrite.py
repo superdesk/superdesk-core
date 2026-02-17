@@ -219,6 +219,7 @@ class ArchiveRewriteService(AsyncBaseService):
             "organisation",
             "person",
             "uri",
+            "embargo",
         ]
         existing_item_preserve_fields = (ASSOCIATIONS, "flags", "extra")
 
