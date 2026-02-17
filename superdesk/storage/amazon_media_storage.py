@@ -136,9 +136,8 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             extension = str(guess_media_extension(content_type)) if content_type else ""
 
         if version is True:
-            # automatic version is set on 15mins granularity.
-            mins_granularity = int(int(time.strftime("%M")) / 4) * 4
-            version = "%s%s/" % (time.strftime("%Y%m%d%H%m"), mins_granularity)
+            # automatic version is set on hourly granularity.
+            version = "%s/" % time.strftime("%Y%m%d%H")
         elif version is False:
             version = ""
         else:
