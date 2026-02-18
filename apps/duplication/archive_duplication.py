@@ -39,6 +39,7 @@ class DuplicateResource(Resource):
         "stage": Resource.rel("stages", False, required=False),
         "type": {"type": "string", "required": True},
         "item_id": {"type": "string", "required": False},
+        "preserve_embargo_and_schedule": {"type": "boolean", "required": False},
     }
 
     url = "archive/<{0}:guid>/duplicate".format(item_url)
@@ -100,9 +101,14 @@ class DuplicateService(AsyncBaseService):
             if not doc.get("desk"):  # item copied to personal space
                 archived_doc["state"] = CONTENT_STATE.PROGRESS
                 new_guid = await archive_service.duplicate_content(archived_doc)
-            else:  # item copied to desk - preserve embargo and schedule fields
-                extra_fields = [EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
-                new_guid = await archive_service.duplicate_content(archived_doc, extra_fields=extra_fields)
+            else:  # item copied to desk
+                # Check request parameter for preserving embargo and schedule fields
+                preserve_embargo_and_schedule = doc.get("preserve_embargo_and_schedule", False)
+                if preserve_embargo_and_schedule:
+                    extra_fields = [EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
+                    new_guid = await archive_service.duplicate_content(archived_doc, extra_fields=extra_fields)
+                else:
+                    new_guid = await archive_service.duplicate_content(archived_doc)
 
             guid_of_duplicated_items.append(new_guid)
 
