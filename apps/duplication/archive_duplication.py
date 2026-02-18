@@ -13,7 +13,7 @@ from eve.utils import ParsedRequest
 
 from superdesk.core import get_app_config
 from superdesk.eve_async.service import AsyncBaseService
-from superdesk.resource_fields import ID_FIELD
+from superdesk.resource_fields import ID_FIELD, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS
 from superdesk.flask import request
 import superdesk
 from apps.archive.archive import SOURCE as ARCHIVE, remove_is_queued
@@ -22,7 +22,7 @@ from apps.content import push_content_notification
 from apps.tasks import send_to
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
-from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE
+from superdesk.metadata.item import CONTENT_STATE, ITEM_STATE, EMBARGO
 from superdesk.metadata.utils import item_url
 from superdesk.resource import Resource
 from superdesk.workflow import is_workflow_state_transition_valid
@@ -99,8 +99,11 @@ class DuplicateService(AsyncBaseService):
 
             if not doc.get("desk"):  # item copied to personal space
                 archived_doc["state"] = CONTENT_STATE.PROGRESS
+                new_guid = await archive_service.duplicate_content(archived_doc)
+            else:  # item copied to desk - preserve embargo and schedule fields
+                extra_fields = [EMBARGO, PUBLISH_SCHEDULE, SCHEDULE_SETTINGS]
+                new_guid = await archive_service.duplicate_content(archived_doc, extra_fields=extra_fields)
 
-            new_guid = await archive_service.duplicate_content(archived_doc)
             guid_of_duplicated_items.append(new_guid)
 
         if kwargs.get("notify", True):

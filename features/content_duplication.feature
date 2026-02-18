@@ -356,7 +356,10 @@ Feature: Duplication of Content
       {"desk": "#desks._id#","type": "archive"}
       """
       And we get "/archive/#duplicate._id#"
-      Then there is no "publish_schedule" in response
+      Then we get existing resource
+      """
+      {"publish_schedule": "#DATE+1#"}
+      """
 
     @auth
     Scenario: Duplicate a published item and original item's ID is present in the duplicated item
