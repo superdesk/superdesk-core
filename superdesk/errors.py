@@ -115,7 +115,8 @@ class SuperdeskApiError(SuperdeskError):
     status_code = 400
 
     def __init__(self, message=None, status_code=None, payload=None, exception=None, extra=None):
-        super().__init__(message, status_code, payload, exception, extra)
+        code = status_code or self.status_code
+        super().__init__(code, message, code, payload, exception, extra)
 
         #: a human readable error description
         self.message = message
@@ -806,8 +807,8 @@ class StopDuplication(Exception):
 
 
 class SuperdeskValidationError(HTTPException):
-    def __init__(self, errors, fields, message=None):
-        super().__init__(errors, fields, message)
+    def __init__(self, errors, fields, message=None):  # noqa: B042
+        super().__init__(message)
         self.errors = errors
         self.fields = fields
 

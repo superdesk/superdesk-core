@@ -36,10 +36,7 @@ class CredentialsAuthError(SuperdeskApiError):
     """Credentials Not Match Auth Exception"""
 
     def __init__(self, credentials, message=None, error=None):
-        super().__init__(credentials, message, error)
-        self.message = message
-        self.status_code = 401
-        self.payload = {"credentials": 1}
+        super().__init__(message, 401, {"credentials": 1}, error, credentials)
         # pop the password so that it doesn't get logged
         credentials.pop("password", None)
         logger.warning("Login failure: %s" % json.dumps(credentials))
