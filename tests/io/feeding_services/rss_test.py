@@ -48,6 +48,7 @@ class RssResponse:
 
 class RssError(Exception):
     def __init__(self, name, orig_ex, provider):
+        super().__init__(name, orig_ex, provider)
         self.name = name
         self.orig_ex = orig_ex
         self.provider = provider

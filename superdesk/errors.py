@@ -80,7 +80,9 @@ class SuperdeskError(DocumentError):
     _codes = {}
     system_exception = None
 
-    def __init__(self, code, desc=None, status_code=400):
+    def __init__(self, code, desc=None, status_code=400, *args):
+        super().__init__(code, desc, status_code, *args)
+
         #: numeric error code
         self.code = code
 
@@ -113,7 +115,7 @@ class SuperdeskApiError(SuperdeskError):
     status_code = 400
 
     def __init__(self, message=None, status_code=None, payload=None, exception=None, extra=None):
-        Exception.__init__(self)
+        super().__init__(message, status_code, payload, exception, extra)
 
         #: a human readable error description
         self.message = message
@@ -126,7 +128,7 @@ class SuperdeskApiError(SuperdeskError):
 
         if exception:
             logger.exception(message or exception, extra=extra)
-        elif message:
+        elif isinstance(message, str) and message:
             logger.error("HTTP Exception {} has been raised: {}".format(status_code, message), extra=extra)
 
     def to_dict(self) -> dict:
@@ -205,7 +207,11 @@ class BulkIndexError(SuperdeskError):
     """Exception raised when bulk index operation fails.."""
 
     def __init__(self, resource=None, errors=None):
-        super().__init__("Failed to bulk index resource {} errors: {}".format(resource, errors), payload={})
+        super().__init__(resource, errors)
+        self.code = "Failed to bulk index resource {} errors: {}".format(resource, errors)
+        self.desc = None
+        self.message = self._codes.get(self.code, "Unknown error")
+        self.status_code = 400
 
 
 class PrivilegeNameError(Exception):
@@ -247,7 +253,10 @@ class SuperdeskIngestError(SuperdeskErrorWithNotifications):
     }
 
     def __init__(self, code, exception, provider=None, data=None, extra=None, item=None):
-        super().__init__(code)
+        super().__init__(code, exception, provider, data, extra, item)
+        self.desc = None
+        self.message = self._codes.get(code, "Unknown error")
+        self.status_code = 400
         self.system_exception = exception
         provider = provider or {}
         self.provider_name = provider.get("name", "Unknown provider") if provider else "Unknown provider"
@@ -553,7 +562,10 @@ class IngestTwitterError(SuperdeskIngestError):
 
 class SuperdeskPublishError(SuperdeskErrorWithNotifications):
     def __init__(self, code, exception, destination=None):
-        super().__init__(code)
+        super().__init__(code, exception, destination)
+        self.desc = None
+        self.message = self._codes.get(code, "Unknown error")
+        self.status_code = 400
         self.system_exception = exception
         destination = destination or {}
         self.destination_name = destination.get("name", "Unknown destination") if destination else "Unknown destination"
@@ -795,7 +807,7 @@ class StopDuplication(Exception):
 
 class SuperdeskValidationError(HTTPException):
     def __init__(self, errors, fields, message=None):
-        Exception.__init__(self)
+        super().__init__(errors, fields, message)
         self.errors = errors
         self.fields = fields
 

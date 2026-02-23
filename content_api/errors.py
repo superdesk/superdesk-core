@@ -25,8 +25,11 @@ class PublicApiError(SuperdeskApiError):
     """A mapping of error codes to error messages."""
 
     def __init__(self, error_code=10000, desc=None):
-        message = self._codes.get(error_code, "Unknown error")
-        super().__init__(status_code=error_code, message=message, payload=desc)
+        super().__init__(error_code, desc)
+        self.message = self._codes.get(error_code, "Unknown error")
+        self.status_code = error_code
+        if desc:
+            self.payload = desc
 
 
 class UnexpectedParameterError(PublicApiError):

@@ -11,6 +11,7 @@
 
 class InvalidFilter(Exception):
     def __init__(self, filter, operation):
+        super().__init__(filter, operation)
         self.filter = filter
         self.operation = operation
 
