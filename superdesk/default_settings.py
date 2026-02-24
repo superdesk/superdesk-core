@@ -1161,3 +1161,16 @@ PICTURE_METADATA_MAPPING = {}
 #: .. versionadded:: 2.8
 #:
 BROADCAST_ENABLED = strtobool(env("BROADCAST_ENABLED", "true"))
+CORRECTIONS_WORKFLOW = False
+
+#: Default tab shown in the authoring actions side panel
+#:
+#: .. versionadded:: 3.1
+#:
+AUTHORING_ACTIONS_DEFAULT_TAB = env("AUTHORING_ACTIONS_DEFAULT_TAB", "publish")
+if AUTHORING_ACTIONS_DEFAULT_TAB not in ("publish", "send_to"):
+    logger.warning(
+        "Invalid value for AUTHORING_ACTIONS_DEFAULT_TAB '%s'. Defaulting to 'publish'.",
+        AUTHORING_ACTIONS_DEFAULT_TAB,
+    )
+    AUTHORING_ACTIONS_DEFAULT_TAB = "publish"
