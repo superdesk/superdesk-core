@@ -13,7 +13,7 @@ from setuptools import setup, find_packages
 LONG_DESCRIPTION = "Superdesk Server Core"
 
 install_requires = [
-    "urllib3>=1.26,<3",
+    "urllib3>=2.6.3,<3",
     "elasticsearch[async]<7.18",  # we are using oss version on test server
     "flask-mail>=0.9,<0.11",
     "arrow>=0.4,<=1.4.0",
