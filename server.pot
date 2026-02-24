@@ -1,15 +1,15 @@
 # Translations template for Superdesk-Core.
-# Copyright (C) 2025 ORGANIZATION
+# Copyright (C) 2026 ORGANIZATION
 # This file is distributed under the same license as the Superdesk-Core
 # project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: Superdesk-Core 3.2.0.dev0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-10-21 12:25+0200\n"
+"POT-Creation-Date: 2026-01-13 11:28+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -178,6 +178,14 @@ msgstr ""
 msgid "Can't kill as one of Take(s) is part of a Package"
 msgstr ""
 
+#: superdesk/auth_server/module.py:61
+msgid "Auth Server Clients"
+msgstr ""
+
+#: superdesk/auth_server/module.py:62
+msgid "User can manage auth server clients"
+msgstr ""
+
 #: apps/content_types/content_types.py:162
 #: superdesk/content_types_async/service.py:87
 #, python-brace-format
@@ -202,7 +210,7 @@ msgstr ""
 msgid "Insufficient privileges for the requested operation."
 msgstr ""
 
-#: superdesk/core/resources/resource_rest_endpoints.py:399
+#: superdesk/core/resources/resource_rest_endpoints.py:400
 msgid "Invalid ID format"
 msgstr ""
 
@@ -253,6 +261,10 @@ msgstr ""
 
 #: superdesk/core/resources/validators.py:298
 msgid "Field is required"
+msgstr ""
+
+#: superdesk/core/resources/validators.py:304
+msgid "Value is too short"
 msgstr ""
 
 #: superdesk/io/__init__.py:57
@@ -440,11 +452,11 @@ msgstr ""
 msgid "User can manage subscribers"
 msgstr ""
 
-#: superdesk/publish_async/views.py:76
+#: superdesk/publish_async/views.py:80
 msgid "Content filter not found"
 msgstr ""
 
-#: superdesk/publish_async/views.py:85
+#: superdesk/publish_async/views.py:89 superdesk/publish_async/views.py:129
 msgid "Article not found"
 msgstr ""
 
@@ -1128,12 +1140,12 @@ msgstr ""
 msgid "View Contacts"
 msgstr ""
 
-#: apps/contacts/service.py:134
+#: apps/contacts/service.py:138
 #, python-brace-format
 msgid "Contacts of type \"{contact_type}\" must have an email address"
 msgstr ""
 
-#: apps/content_filters/filter_condition/filter_condition_field.py:73
+#: apps/content_filters/filter_condition/filter_condition_field.py:74
 #, python-brace-format
 msgid "Invalid filter conditions field {field}"
 msgstr ""
@@ -1886,29 +1898,29 @@ msgstr ""
 msgid "Manage other user personal template"
 msgstr ""
 
-#: apps/templates/content_templates.py:234
+#: apps/templates/content_templates.py:265
 #, python-brace-format
 msgid "Invalid kill template. {fields} are not allowed"
 msgstr ""
 
-#: apps/templates/content_templates.py:297
+#: apps/templates/content_templates.py:328
 msgid "Kill templates can not be deleted."
 msgstr ""
 
-#: apps/templates/content_templates.py:399
+#: apps/templates/content_templates.py:430
 msgid "Kill templates must be public"
 msgstr ""
 
-#: apps/templates/content_templates.py:415
+#: apps/templates/content_templates.py:446
 msgid "Templates that are not create type can only be assigned to one desk!"
 msgstr ""
 
-#: apps/templates/content_templates.py:446
+#: apps/templates/content_templates.py:477
 #, python-brace-format
 msgid "You dont have the privilege to {action} another user personal template"
 msgstr ""
 
-#: apps/templates/content_templates.py:450
+#: apps/templates/content_templates.py:481
 #, python-brace-format
 msgid "You dont have the privilege to {action} the public template"
 msgstr ""

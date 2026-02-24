@@ -146,7 +146,7 @@ class BaseService:
     def find_and_modify(self, query, update, **kwargs):
         return self.backend.find_and_modify(self.datasource, filter=query, update=update, **kwargs)
 
-    def get_all_batch(self, size=500, max_iterations=10000, lookup=None):
+    def get_all_batch(self, size=500, max_iterations=10000, lookup: dict | None = None):
         """Gets all items using multiple queries.
 
         When processing big collection and doing something time consuming you might get
@@ -154,12 +154,12 @@ class BaseService:
         and closing the cursor in between.
         """
         last_id = None
-        if lookup is None:
-            lookup = {}
-        _lookup = lookup.copy()
+        base_lookup = lookup or {}
         for i in range(max_iterations):
+            _lookup = base_lookup.copy()
             if last_id is not None:
-                _lookup = {"_id": {"$gt": last_id}}
+                # keep original lookup while paging by _id
+                _lookup = {"$and": [_lookup, {"_id": {"$gt": last_id}}]} if _lookup else {"_id": {"$gt": last_id}}
             items = list(self.get_from_mongo(req=None, lookup=_lookup).sort("_id").limit(size))
             if not len(items):
                 break

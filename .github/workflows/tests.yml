@@ -4,16 +4,43 @@ on: [push, pull_request]
 
 jobs:
   pytest:
+    env:
+      ELASTIC_CLIENT_APIVERSIONING: 1
+
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-22.04
             python-version: '3.10'
+            elastic: '7.17.29'
+          - os: ubuntu-22.04
+            python-version: '3.10'
+            elastic: '8.19.6'
           - os: ubuntu-24.04
             python-version: '3.12'
+            elastic: '7.17.29'
 
     runs-on: ${{ matrix.os }}
+
+    services:
+      redis:
+        image: redis:alpine
+        ports:
+            - "6379:6379"
+
+      mongo:
+        image: mongo:6
+        ports:
+            - "27017:27017"
+
+      elastic:
+        image: docker.elastic.co/elasticsearch/elasticsearch:${{ matrix.elastic }}
+        ports:
+            - "9200:9200"
+        env:
+            discovery.type: single-node
+            xpack.security.enabled: false
 
     steps:
     - uses: actions/checkout@v6
@@ -23,16 +50,19 @@ jobs:
         cache: 'pip'
 
     - run: ./scripts/tests_setup
+      env:
+        SKIP_SERVER_INSTALL: true
+
     - run: pip install -Ur dev-requirements.txt
-    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings tests/core
-    - run: pytest -p no:asyncio --log-level=ERROR --disable-warnings --ignore=tests/core
+    - run: pytest --log-level=ERROR --disable-warnings tests/core
+    - run: pytest --log-level=ERROR --disable-warnings --ignore=tests/core
 
   pip-compile:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ['3.10', '3.12']
 
     steps:
     - uses: actions/checkout@v6
@@ -45,16 +75,43 @@ jobs:
     - run: pip-compile -U setup.py
 
   behave:
+    env:
+      ELASTIC_CLIENT_APIVERSIONING: 1
+
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-22.04
             python-version: '3.10'
+            elastic: '7.17.29'
+          - os: ubuntu-22.04
+            python-version: '3.10'
+            elastic: '8.19.6'
           - os: ubuntu-24.04
             python-version: '3.12'
+            elastic: '7.17.29'
 
     runs-on: ${{ matrix.os }}
+
+    services:
+      redis:
+        image: redis:alpine
+        ports:
+            - "6379:6379"
+
+      mongo:
+        image: mongo:6
+        ports:
+            - "27017:27017"
+
+      elastic:
+        image: docker.elastic.co/elasticsearch/elasticsearch:${{ matrix.elastic }}
+        ports:
+            - "9200:9200"
+        env:
+            discovery.type: single-node
+            xpack.security.enabled: false
 
     steps:
     - uses: actions/checkout@v6
@@ -65,6 +122,8 @@ jobs:
         cache: 'pip'
 
     - run: ./scripts/tests_setup
+      env: 
+        SKIP_SERVER_INSTALL: true
     - run: pip install -Ur dev-requirements.txt
 
     - run: behave --tags=-sams --format progress2 --logging-level=ERROR

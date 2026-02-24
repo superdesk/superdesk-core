@@ -283,8 +283,6 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
         consumer_name: str
         if subscriber.id == ContentApiSubscriber.id:
             consumer_name = ContentApiPublishConsumer.name
-        elif subscriber.is_async:
-            consumer_name = AsyncioPublishConsumer.name
         else:
             consumer_name = CeleryPublishConsumer.name
 

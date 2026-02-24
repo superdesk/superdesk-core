@@ -105,6 +105,9 @@ class ElasticResources:
             source_name, client_config, resource_config
         )
 
+    def elastic_is_enabled(self, resource_name: str) -> bool:
+        return resource_name in self._resource_clients
+
     def get_elastic_index_name(self, resource_name: str) -> str:
         try:
             return self._resource_clients[resource_name].config.index

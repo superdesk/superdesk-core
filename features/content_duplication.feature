@@ -638,3 +638,21 @@ Feature: Duplication of Content
       """
       When we get "/archive/#duplicate._id#"
       Then we get "auto_publish" does not exist
+
+    @auth
+    Scenario: Duplicate preserves embargo and schedule when preserve flag is set
+      When we patch "/archive/123"
+      """
+      {"embargo": "#DATE+2#", "publish_schedule": "#DATE+1#", "schedule_settings": {"time_zone": "Europe/Helsinki"}}
+      """
+      Then we get response code 200
+      And we store response in "archive_with_schedule"
+      When we post to "/archive/123/duplicate" with success
+      """
+      {"desk": "#desks._id#","type": "archive", "preserve_embargo_and_schedule": true}
+      """
+      And we get "/archive/#duplicate._id#"
+      Then we get existing resource
+      """
+      {"embargo": "#archive_with_schedule.embargo#", "publish_schedule": "#archive_with_schedule.publish_schedule#", "schedule_settings": {"time_zone": "#archive_with_schedule.schedule_settings.time_zone#"}}
+      """

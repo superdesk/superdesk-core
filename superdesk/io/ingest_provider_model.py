@@ -156,7 +156,7 @@ class IngestProviderResource(Resource):
         self.item_methods = ["GET", "PATCH", "DELETE"]
         self.privileges = {"POST": "ingest_providers", "PATCH": "ingest_providers", "DELETE": "ingest_providers"}
         self.etag_ignore_fields = ["last_updated", "last_item_update", "last_closed", "last_opened"]
-
+        self.sensitive_fields = ["tokens", "config"]
         super().__init__(endpoint_name, app, service, endpoint_schema=endpoint_schema)
 
 

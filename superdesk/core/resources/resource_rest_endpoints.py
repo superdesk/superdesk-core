@@ -599,7 +599,8 @@ class ResourceRestEndpoints(RestEndpoints):
 
         if not original:
             raise SuperdeskApiError.notFoundError(
-                f"{self.resource_config.name} resource with ID '{args.item_id}' not found"
+                f"{self.resource_config.name} resource not found",
+                extra={"item_id": args.item_id},
             )
 
         if_match = request.get_header("If-Match")
@@ -709,9 +710,10 @@ class ResourceRestEndpoints(RestEndpoints):
             "projection",
             "version",
         ]
-        other_params: MultiDict = MultiDict(
+        args_dict = cast(dict, req.args or {})
+        other_params = MultiDict(
             (key, value)
-            for key, values in MultiDict(req.args or {}).items()
+            for key, values in MultiDict(args_dict).items()
             for value in values
             if key not in default_params
         )

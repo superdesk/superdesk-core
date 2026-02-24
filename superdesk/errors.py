@@ -112,7 +112,7 @@ class SuperdeskApiError(SuperdeskError):
     #: error status code
     status_code = 400
 
-    def __init__(self, message=None, status_code=None, payload=None, exception=None):
+    def __init__(self, message=None, status_code=None, payload=None, exception=None, extra=None):
         Exception.__init__(self)
 
         #: a human readable error description
@@ -125,9 +125,9 @@ class SuperdeskApiError(SuperdeskError):
             self.payload = payload
 
         if exception:
-            logger.exception(message or exception)
+            logger.exception(message or exception, extra=extra)
         elif message:
-            logger.error("HTTP Exception {} has been raised: {}".format(status_code, message))
+            logger.error("HTTP Exception {} has been raised: {}".format(status_code, message), extra=extra)
 
     def to_dict(self) -> dict:
         """Create dict for json response."""
@@ -156,8 +156,8 @@ class SuperdeskApiError(SuperdeskError):
         return SuperdeskApiError(status_code=403, message=message, payload=payload, exception=exception)
 
     @classmethod
-    def notFoundError(cls, message=None, payload=None, exception=None):
-        return SuperdeskApiError(status_code=404, message=message, payload=payload, exception=exception)
+    def notFoundError(cls, message=None, payload=None, exception=None, extra=None):
+        return SuperdeskApiError(status_code=404, message=message, payload=payload, exception=exception, extra=extra)
 
     @classmethod
     def preconditionFailedError(cls, message=None, payload=None, exception=None):

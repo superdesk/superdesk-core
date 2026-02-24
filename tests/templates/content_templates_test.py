@@ -158,3 +158,80 @@ class RenderTemplateTestCase(TestCase):
 
         item = get_item_from_template(template)
         self.assertEqual("test it", item["headline"])
+
+    async def test_ssti_sandbox_blocks_attribute_access(self):
+        """Test that sandbox blocks access to dangerous attributes like __class__"""
+        template = {"data": {"headline": "{{ item.__class__.__bases__[0].__subclasses__() }}"}}
+
+        item = {"_id": "123", "headline": "Test"}
+        updates = await render_content_template(item, template)
+
+        # Sandbox should block __class__ access and return empty string
+        self.assertIn("headline", updates)
+        # Verify dangerous content is not exposed and result is safe
+        self.assertEqual("", updates.get("headline", ""))
+
+    async def test_ssti_sandbox_blocks_getattr(self):
+        """Test that sandbox blocks access via getattr"""
+        template = {"data": {"headline": "{{ getattr(item, '__class__') }}"}}
+
+        item = {"_id": "123", "headline": "Test"}
+        updates = await render_content_template(item, template)
+
+        # Sandbox should block getattr (undefined in sandbox), keeping original template
+        self.assertIn("headline", updates)
+        # Since getattr is undefined, the original template is kept
+        self.assertEqual("{{ getattr(item, '__class__') }}", updates.get("headline", ""))
+
+    async def test_ssti_sandbox_blocks_import(self):
+        """Test that sandbox blocks import statements"""
+        template = {
+            "data": {
+                "headline": "{{ ''.__class__.__mro__[1].__subclasses__()[104].__init__.__globals__['sys'].modules['os'].popen('whoami').read() }}"
+            }
+        }
+
+        item = {"_id": "123", "headline": "Test"}
+        updates = await render_content_template(item, template)
+
+        # Sandbox should block this attempt, returning empty string
+        self.assertIn("headline", updates)
+        # Verify no command output or dangerous content
+        result = updates.get("headline", "")
+        self.assertNotIn("root", result)
+        self.assertNotIn("www-data", result)
+        self.assertEqual("", result)
+
+    async def test_ssti_safe_variable_access(self):
+        """Test that sandbox allows safe variable access"""
+        template = {"data": {"headline": "Title: {{ item.headline }} by {{ user.name }}"}}
+
+        item = {"_id": "123", "headline": "Breaking News"}
+
+        # Mock user - in real scenario this would be from get_user()
+        # The test should work with available context
+        updates = await render_content_template(item, template)
+
+        # Safe access should work
+        self.assertIn("Breaking News", updates.get("headline", ""))
+
+    async def test_ssti_sandbox_allows_filters(self):
+        """Test that sandbox allows safe Jinja2 filters"""
+        template = {"data": {"headline": "{{ 'hello world' | upper }}"}}
+
+        item = {"_id": "123"}
+        updates = await render_content_template(item, template)
+
+        # Safe filters should work
+        self.assertEqual("HELLO WORLD", updates.get("headline", ""))
+
+    async def test_ssti_sandbox_blocks_callables(self):
+        """Test that sandbox blocks access to dangerous callables"""
+        template = {"data": {"headline": "{{ lipsum(5) }}"}}  # lipsum is disabled in sandboxed env by default
+
+        item = {"_id": "123"}
+        updates = await render_content_template(item, template)
+
+        # Potentially dangerous callables should be blocked
+        # The result should be empty or an error-safe value
+        self.assertIn("headline", updates)

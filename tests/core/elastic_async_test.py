@@ -30,9 +30,11 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(await client.count(), 1)
         self.assertFalse(await client.is_empty())
 
-    async def test_bulk_insert(self):
+    async def test_bulk_operations(self):
         self.app.elastic.init_index("users_async")
         client = self.app.elastic.get_client_async("users_async")
+
+        # Test inserting documents
         count, errors = await client.bulk_insert(
             [
                 User(id="user_1", first_name="John", last_name="Doe").to_dict(),
@@ -43,6 +45,58 @@ class ElasticAsyncClientTestCase(AsyncTestCase):
         self.assertEqual(count, 3)
         self.assertEqual(errors, [])
         self.assertEqual(await client.count(), 3)
+
+        # Test inserting documents, 1 with errors
+        user_5 = User(id="user_4", first_name="John", last_name="Doe").to_dict()
+        user_5.update({"_id": "user_5", "last_name": {"test": True}})
+        count, errors = await client.bulk_insert(
+            [
+                User(id="user_4", first_name="John", last_name="Doe").to_dict(),
+                user_5,
+                User(id="user_6", first_name="Jane", last_name="Doe").to_dict(),
+            ]
+        )
+        self.assertEqual(count, 2)
+        self.assertEqual(await client.count(), 5)
+
+        self.assertEqual(len(errors), 1)
+        error = errors[0]["index"]
+        self.assertTrue(error["_index"].startswith("sptest_users_async"))
+        self.assertEqual(error["_id"], "user_5")
+        self.assertEqual(error["status"], 400)
+        self.assertIn(error["error"]["type"], ["mapper_parsing_exception", "document_parsing_exception"])
+        self.assertIn("last_name", error["error"]["reason"])
+        self.assertIn("'{test=true}'", error["error"]["reason"])
+
+        # Test updating documents
+        count, errors = await client.bulk_update({"user_1", "user_2", "user_6"}, {"score": 1, "token": "abcd123"})
+        self.assertEqual(count, 3)
+        self.assertEqual(errors, [])
+
+        response = await client.search({})
+        items = {item["_id"]: item["_source"] for item in response.get("hits").get("hits")}
+        # Assert matched items were updated
+        self.assertDictContains(items["user_1"], {"score": 1, "token": "abcd123"})
+        self.assertDictContains(items["user_2"], {"score": 1, "token": "abcd123"})
+        self.assertDictContains(items["user_6"], {"score": 1, "token": "abcd123"})
+        # Assert unmatched items were not updated
+        self.assertNotIn("score", items["user_3"])
+        self.assertNotIn("token", items["user_3"])
+        self.assertNotIn("score", items["user_4"])
+        self.assertNotIn("token", items["user_4"])
+
+        # Test updating documents, 1 with errors
+        count, errors = await client.bulk_update({"user_3", "user_4"}, {"score": 25, "token": {"foo_bar": 1234}})
+        self.assertEqual(count, 0)
+        self.assertEqual(len(errors), 2)
+
+        error = errors[0]["update"]
+        self.assertTrue(error["_index"].startswith("sptest_users_async"))
+        self.assertIn(error["_id"], {"user_3", "user_4"})
+        self.assertEqual(error["status"], 400)
+        self.assertIn(error["error"]["type"], ["mapper_parsing_exception", "document_parsing_exception"])
+        self.assertIn("token", error["error"]["reason"])
+        self.assertIn("'{foo_bar=1234}'", error["error"]["reason"])
 
     async def test_update(self):
         self.app.elastic.init_index("users_async")

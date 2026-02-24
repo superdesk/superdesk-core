@@ -11,7 +11,7 @@
 from typing import AsyncGenerator
 import logging
 import warnings
-from inspect import isawaitable
+from inspect import isawaitable, isgenerator
 from abc import ABCMeta, abstractmethod
 from datetime import timedelta, datetime
 from pytz import utc
@@ -182,7 +182,7 @@ class FeedingService(metaclass=ABCMeta):
 
             if items is None:
                 return None
-            elif isinstance(items, list):
+            elif isinstance(items, list) or isgenerator(items):
                 return list_to_async_generator(items)
             else:
                 return items

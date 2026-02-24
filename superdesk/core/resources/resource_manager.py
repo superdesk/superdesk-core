@@ -1,3 +1,9 @@
+from typing import Awaitable
+import asyncio
+
+from bson import ObjectId
+from pymongo.results import UpdateResult
+
 from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.signals import SignalGroup, Signal
 
@@ -86,3 +92,32 @@ class Resources(SignalGroup):
         for service in self._resource_services:
             if hasattr(service, "_instance"):
                 del service._instance
+
+    async def bulk_update_resources(
+        self, jobs: list[tuple[str, set[str | ObjectId], dict]]
+    ) -> list[tuple[UpdateResult, tuple[int, list[dict]] | None]]:
+        """
+        Performs bulk updates on a list of resources.
+
+        This asynchronous method processes a series of update jobs, where each job specifies
+        a resource type, a list of resource identifiers, and the updates to be applied.
+        For each job, it retrieves the appropriate resource service, prepares updates, and
+        applies updates in bulk asynchronously.
+
+        The function skips jobs with missing identifiers or updates.
+
+        :param jobs: A list of tuples, where each tuple contains:
+            - The resource name as a string.
+            - A set of resource IDs (strings or ObjectId instances) to update.
+            - A dictionary containing the fields to update.
+        """
+
+        tasks: list[Awaitable[tuple[UpdateResult, tuple[int, list[dict]] | None]]] = []
+        for resource, ids, updates in jobs:
+            if not ids or not updates:
+                continue
+
+            service = self.get_resource_service(resource)
+            tasks.append(service.bulk_update(ids, updates))
+
+        return list(await asyncio.gather(*tasks))

@@ -12,6 +12,7 @@ subscribers_resource_config = ResourceConfig(
     name="subscribers",
     data_class=SubscribersResource,
     service=SubscribersService,
+    sensitive_fields=["destinations.config"],
     mongo=MongoResourceConfig(
         indexes=[
             MongoIndexOptions(

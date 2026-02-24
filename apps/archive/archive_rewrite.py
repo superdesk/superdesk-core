@@ -148,7 +148,7 @@ class ArchiveRewriteService(AsyncBaseService):
             raise SuperdeskApiError.notFoundError(message=_("Cannot find the article"))
 
         embargo = original.get(SCHEDULE_SETTINGS, {}).get("utc_{}".format(EMBARGO)) if original.get(EMBARGO) else None
-        if embargo is not None and embargo > utcnow():
+        if embargo is not None and embargo > utcnow() and not get_app_config("ALLOW_UPDATING_EMBARGOED_ITEMS"):
             raise SuperdeskApiError.badRequestError(_("Rewrite of an Item having embargo isn't possible"))
 
         if not original.get("event_id"):
@@ -219,7 +219,47 @@ class ArchiveRewriteService(AsyncBaseService):
             "organisation",
             "person",
             "uri",
+            "embargo",
+            "schedule_settings",
         ]
+
+        # Sanitize embargo and schedule settings before copying.
+        # - Only preserve embargo if the original utc_embargo is in the future.
+        # - Strip unrelated schedule_settings keys (e.g., publish schedule), and only
+        #   carry over embargo-related entries like time_zone and utc_embargo.
+        schedule_settings = (original.get(SCHEDULE_SETTINGS) or {}).copy()
+        utc_embargo = schedule_settings.get("utc_embargo")
+        time_zone = schedule_settings.get("time_zone")
+
+        sanitized_schedule_settings = None
+
+        if utc_embargo:
+            # Keep embargo only if it is still in the future; otherwise clear it.
+            if utc_embargo > utcnow():
+                sanitized_schedule_settings = {}
+                if time_zone:
+                    sanitized_schedule_settings["time_zone"] = time_zone
+                sanitized_schedule_settings["utc_embargo"] = utc_embargo
+                # Preserve EMBARGO field as-is when utc_embargo is valid/future.
+                # (If EMBARGO is not present, this is a no-op.)
+            else:
+                # Past or invalid embargo: clear EMBARGO and utc_embargo.
+                original.pop(EMBARGO, None)
+                sanitized_schedule_settings = {}
+                if time_zone:
+                    sanitized_schedule_settings["time_zone"] = time_zone
+        elif schedule_settings:
+            # No utc_embargo set; keep only non-embargo schedule settings that are benign,
+            # currently only time_zone is explicitly preserved.
+            if time_zone:
+                sanitized_schedule_settings = {"time_zone": time_zone}
+
+        # Apply sanitized schedule_settings back onto original.
+        if sanitized_schedule_settings:
+            original[SCHEDULE_SETTINGS] = sanitized_schedule_settings
+        else:
+            # Remove schedule_settings altogether if nothing should be copied.
+            original.pop(SCHEDULE_SETTINGS, None)
         existing_item_preserve_fields = (ASSOCIATIONS, "flags", "extra")
 
         if get_app_config("COPY_ON_REWRITE_FIELDS"):

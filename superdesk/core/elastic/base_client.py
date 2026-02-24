@@ -13,6 +13,7 @@ import ast
 
 import simplejson as json
 from eve.io.mongo.parser import parse
+from bson import ObjectId
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.types import SearchRequest, SortParam, ElasticResourceConfig, ElasticClientConfig, ProjectedFieldArg
@@ -105,6 +106,16 @@ class BaseElasticResourceClient:
         return dict(
             index=self.config.index,
             actions=actions,
+            stats_only=False,
+            raise_on_error=False,
+        )
+
+    def _get_bulk_update_args(self, ids: set[str | ObjectId], updates: dict) -> dict:
+        return dict(
+            actions=[
+                dict(_op_type="update", _index=self.config.index, _id=str(item_id), doc=updates) for item_id in ids
+            ],
+            raise_on_error=False,
             stats_only=False,
         )
 
