@@ -1384,6 +1384,6 @@ if AUTHORING_ACTIONS_DEFAULT_TAB not in ("publish", "send_to"):
 
 #: Maximum allowed content length for file uploads (in bytes)
 #:
-#: .. versionadded: 3.1
+#: .. versionadded:: 3.1
 #:
-MAX_CONTENT_LENGTH = int(os.environ.get("MAX_CONTENT_LENGTH", 1024 * 1024 * 1000))  # 1GB
+MAX_CONTENT_LENGTH = int(env("MAX_CONTENT_LENGTH", 1_000_000_000))  # 1GB
