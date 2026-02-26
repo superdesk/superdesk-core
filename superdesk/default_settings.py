@@ -566,6 +566,8 @@ AMAZON_SECRET_ACCESS_KEY = env("AMAZON_SECRET_ACCESS_KEY", "")
 AMAZON_REGION = env("AMAZON_REGION", "us-east-1")
 #: amazon bucket name
 AMAZON_CONTAINER_NAME = env("AMAZON_CONTAINER_NAME", "")
+#: time-based prefix for generated Amazon media IDs (hourly, daily, none)
+AMAZON_MEDIA_ID_TIME_PREFIX = env("AMAZON_MEDIA_ID_TIME_PREFIX", "hourly")
 #: use subfolder in bucket to store files
 AMAZON_S3_SUBFOLDER = env("AMAZON_S3_SUBFOLDER", "")
 #: adds ACL when putting to S3, can be set to ``public-read``, etc.

@@ -47,6 +47,21 @@ class AmazonMediaStorageTestCase(TestCase):
                 self.assertTrue(s3.get_object.called)
                 self.assertEqual(s3.get_object.call_args[1], dict(Bucket="acname", Key=path))
 
+    def test_media_id_time_prefix(self):
+        filename = "test"
+
+        with patch.dict(self.app.config, {"AMAZON_MEDIA_ID_TIME_PREFIX": "none"}):
+            media_id = self.amazon.media_id(filename)
+            self.assertEqual(filename, media_id)
+
+        with patch.dict(self.app.config, {"AMAZON_MEDIA_ID_TIME_PREFIX": "daily"}):
+            media_id = self.amazon.media_id(filename)
+            self.assertEqual("%s/%s" % (time.strftime("%Y%m%d"), filename), media_id)
+
+        with patch.dict(self.app.config, {"AMAZON_MEDIA_ID_TIME_PREFIX": "hourly"}):
+            media_id = self.amazon.media_id(filename)
+            self.assertEqual("%s/%s" % (time.strftime("%Y%m%d%H"), filename), media_id)
+
     def test_put_and_delete(self):
         """Test amazon if configured.
 
