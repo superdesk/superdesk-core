@@ -392,6 +392,14 @@ Default: ``'us-east-1'``
 
 Default: ``''``
 
+``AMAZON_MEDIA_ID_TIME_PREFIX``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'hourly'``
+
+Controls the auto-generated prefix folder for Amazon media IDs.
+Supported values are ``'hourly'`` (``YYYYMMDDHH/``), ``'daily'`` (``YYYYMMDD/``), and ``'none'``.
+
 ``AMAZON_S3_SUBFOLDER``
 ^^^^^^^^^^^^^^^^^^^^^^^
 
