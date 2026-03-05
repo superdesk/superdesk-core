@@ -21,5 +21,5 @@ class ContentListItemsEndpoints(ResourceRestEndpoints):
     async def bulk_patch_items(self, request: Request) -> Response:
         list_id = ObjectId(request.get_view_args("list_id"))
         data = await request.get_json()
-        result = await self.service.bulk_update(list_id, data)
+        result = await self.service.bulk_patch(list_id, data)
         return Response(body=result.to_dict(), status_code=200)

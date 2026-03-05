@@ -1,3 +1,5 @@
+from quart_babel import lazy_gettext as _
+
 from superdesk.core.module import Module
 from superdesk.core.privileges import Privilege
 from superdesk.core.resources import (
@@ -50,5 +52,5 @@ content_list_items_config = ResourceConfig(
 module = Module(
     name="apps.content_lists",
     resources=[content_lists_config, content_list_items_config],
-    privileges=[Privilege(name="content_lists", label="Content Lists", description="Manage content lists")],
+    privileges=[Privilege(name="content_lists", label=_("Content Lists"), description=_("Manage content lists"))],
 )

@@ -21,7 +21,7 @@ class ContentListsService(AsyncResourceService[ContentList]):
 
 
 class ContentListItemsService(AsyncResourceService[ContentListItem]):
-    async def bulk_update(self, list_id: ObjectId, data: dict) -> ContentList:
+    async def bulk_patch(self, list_id: ObjectId, data: dict) -> ContentList:
         """Process a batch of add/move/delete actions on a content list's items.
 
         Uses ``updatedAt`` in the payload for optimistic concurrency control instead of
@@ -74,4 +74,6 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
             {"_id": list_id},
             {"$set": {"content_list_items_updated_at": utcnow()}},
         )
-        return await lists_service.find_by_id(list_id)
+        result = await lists_service.find_by_id(list_id)
+        assert result is not None
+        return result
