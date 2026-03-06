@@ -83,7 +83,12 @@ async def handle_item_published(item, after_scheduled):
         new_item = deepcopy(item)
 
         try:
-            await send_to(new_item, desk_id=dest["desk"], stage_id=dest.get("stage"))
+            await send_to(
+                new_item,
+                desk_id=dest["desk"],
+                stage_id=dest.get("stage"),
+                macro_kwargs={"internal_destination": dest},
+            )
         except StopDuplication:
             continue
 

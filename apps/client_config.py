@@ -41,6 +41,7 @@ def init_app(app) -> None:
             "workflow_allow_duplicate_non_members": app.config.get("WORKFLOW_ALLOW_DUPLICATE_NON_MEMBERS"),
             "disallowed_characters": app.config.get("DISALLOWED_CHARACTERS"),
             "allow_updating_scheduled_items": app.config.get("ALLOW_UPDATING_SCHEDULED_ITEMS"),
+            "allow_updating_embargoed_items": app.config.get("ALLOW_UPDATING_EMBARGOED_ITEMS"),
             "corrections_workflow": app.config.get("CORRECTIONS_WORKFLOW"),
             "default_timezone": app.config.get("DEFAULT_TIMEZONE"),
             "authoring_actions_default_tab": app.config.get("AUTHORING_ACTIONS_DEFAULT_TAB", "publish"),

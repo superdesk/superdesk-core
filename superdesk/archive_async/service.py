@@ -945,7 +945,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
                     ) and embargo <= utcnow():
                         raise SuperdeskApiError.badRequestError(_("Embargo cannot be earlier than now"))
 
-                    if item.rewrite_of:
+                    if item.rewrite_of and not superdesk.get_app_config("ALLOW_UPDATING_EMBARGOED_ITEMS"):
                         raise SuperdeskApiError.badRequestError(_("Rewrites doesn't support Embargo"))
 
                     if not isinstance(embargo, datetime.date) or not embargo.time():

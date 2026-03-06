@@ -28,6 +28,13 @@ logger = logging.getLogger(__name__)
 USER_FIELDS_NAMES = {"username", "email", "password", "first_name", "last_name", "sign_off", "role"}
 
 
+def remove_sensitive(userdata):
+    """Return a shallow copy of the dict with sensitive fields removed."""
+    copy = dict(userdata)
+    copy.pop("password", None)  # remove password if it exists, to avoid logging it
+    return copy
+
+
 @cli.command("users:create")
 @click.option("--username", "-u", required=True, help="Username for the new user.")
 @click.option("--password", "-p", required=True, help="Password for the new user.")
@@ -147,11 +154,11 @@ async def create_user_command_handler(username: str, password: str, email: str, 
         users_service = UsersResourceModel.get_service()
 
         if await users_service.count({"username": userdata.get("username")}):
-            logger.info("user already exists %s" % (userdata))
+            logger.info("user already exists %s" % (remove_sensitive(userdata)))
         else:
-            logger.info("creating user %s" % (userdata))
+            logger.info("creating user %s" % (remove_sensitive(userdata)))
             await users_service.create([userdata])
-            logger.info("user saved %s" % (userdata))
+            logger.info("user saved %s" % (remove_sensitive(userdata)))
 
         return userdata
 

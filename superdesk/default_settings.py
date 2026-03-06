@@ -1382,3 +1382,9 @@ if AUTHORING_ACTIONS_DEFAULT_TAB not in ("publish", "send_to"):
         AUTHORING_ACTIONS_DEFAULT_TAB,
     )
     AUTHORING_ACTIONS_DEFAULT_TAB = "publish"
+
+#: Maximum allowed content length for file uploads (in bytes)
+#:
+#: .. versionadded:: 3.1
+#:
+MAX_CONTENT_LENGTH = int(env("MAX_CONTENT_LENGTH", 1_000_000_000))  # 1GB
