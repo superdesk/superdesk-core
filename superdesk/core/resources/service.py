@@ -18,6 +18,7 @@ from typing import (
     Dict,
     Any,
     AsyncIterable,
+    AsyncGenerator,
     Union,
     cast,
     overload,
@@ -705,6 +706,69 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 break
         else:
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
+
+    async def get_all_batch_elastic_raw(
+        self,
+        query: dict | None = None,
+        size: int = 500,
+        max_iterations: int = 10000,
+        projection: ProjectedFieldArg | None = None,
+    ) -> AsyncGenerator[dict, None]:
+        """Helper function to get all items from this resource, in batches
+
+        The default arguments allow iterating over 5 million documents.
+        If more is needed, then consider increasing ``size`` and/or ``max_iterations``
+
+        :param query: An optional elasticsearch query used to filter items for
+        :param size: The number of items to fetch on each iteration
+        :param max_iterations: Maximum number of iterations to run, before returning gracefully
+        :param projection: Optional projection to apply to the search results
+        :return: An async generator yielding a dictionary of the document
+        """
+
+        es_query = query.copy() if query else {}
+        es_query["size"] = size
+        es_query.setdefault("sort", [{"_created": "asc"}, {"_updated": "asc"}])
+        for i in range(max_iterations):
+            response = await self.elastic.search(es_query, projection=projection)
+            cursor = ElasticsearchResourceCursorAsync(cast(Type[ResourceModelType], self.config.data_class), response)
+
+            last_hit = await cursor.next_raw(as_hit=True)
+            while last_hit is not None:
+                yield last_hit["_source"]
+                last_hit = await cursor.next_raw(as_hit=True)
+
+            if last_hit is None:
+                break
+            elif not last_hit.get("sort"):
+                logger.warning(f"No sort value found in es hit for resource {self.resource_name}")
+                break
+
+            es_query["search_after"] = last_hit["sort"]
+        else:
+            logger.warning(f"Not enough iterations for resource {self.resource_name}")
+
+    async def get_all_batch_elastic(
+        self,
+        query: dict | None = None,
+        size: int = 500,
+        max_iterations: int = 10000,
+        projection: ProjectedFieldArg | None = None,
+    ) -> AsyncGenerator[ResourceModelType, None]:
+        """Helper function to get all items from this resource, in batches
+
+        The default arguments allow iterating over 5 million documents.
+        If more is needed, then consider increasing ``size`` and/or ``max_iterations``
+
+        :param query: An optional elasticsearch query used to filter items for
+        :param size: The number of items to fetch on each iteration
+        :param max_iterations: Maximum number of iterations to run, before returning gracefully
+        :param projection: Optional projection to apply to the search results
+        :return: An async generator with ``ResourceModel`` instances
+        """
+
+        async for data in self.get_all_batch_elastic_raw(query, size, max_iterations, projection):
+            yield self.get_model_instance_from_dict(data)
 
     @overload
     async def find(
