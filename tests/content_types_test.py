@@ -126,3 +126,36 @@ class ContentTypesTestCase(TestCase):
 
             result = service.get_output_name("text")
             self.assertEqual(result, "Article")
+
+    @mock.patch.object(content_types, "get_fields_map_and_names", lambda: ({}, {}))
+    async def test_unknown_editor_attributes_preserved(self):
+        """Test that unknown editor attributes survive being saved and fetched.
+
+        Previously, only attributes in EDITOR_ATTRIBUTES whitelist were allowed.
+        Now any attribute sent by the client should be preserved.
+        """
+        original = {
+            "_id": "test-profile",
+            "editor": {
+                "body_html": {
+                    "order": 1,
+                    "enabled": True,
+                    "showFloatingCount": True,
+                    "customNewFeature": "test-value",
+                    "maxSoftLength": 800,
+                }
+            },
+            "schema": {"body_html": {"type": "string", "required": True}},
+        }
+
+        updates = copy.deepcopy(original)
+        updates["editor"]["body_html"]["anotherUnknownAttr"] = 123
+        content_types.prepare_for_save_content_type(original, updates)
+
+        # Verify all attributes are preserved, including unknown ones
+        editor_field = updates["editor"]["body_html"]
+        self.assertTrue(editor_field.get("showFloatingCount"))
+        self.assertEqual(editor_field.get("customNewFeature"), "test-value")
+        self.assertEqual(editor_field.get("maxSoftLength"), 800)
+        self.assertEqual(editor_field.get("anotherUnknownAttr"), 123)
+        self.assertTrue(editor_field.get("enabled"))
