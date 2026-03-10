@@ -28,29 +28,6 @@ REQUIRED_FIELDS = (
     "embargoed",
 )
 
-# Valid editor keys
-EDITOR_ATTRIBUTES = (
-    "order",
-    "sdWidth",
-    "required",
-    "readonly",
-    "hideDate",
-    "showCrops",
-    "formatOptions",
-    "editor3",
-    "default",
-    "cleanPastedHTML",
-    "imageTitle",
-    "sourceField",
-    "section",
-    "preview",
-    "enabled",
-    "field_name",
-    "allow_toggling",
-    "maxSoftLength",
-    "showFloatingCount",
-)
-
 # cvs hardcoded in the app wich special use
 # and not supposed to be added to content profile
 HARDCODED_CVS = ("languages",)
@@ -487,7 +464,6 @@ def prepare_for_save_content_type(original, updates):
     concatenate_dictionary(original["schema"], schema)
     delete_disabled_fields(editor, schema)
     fields_map, _ = get_fields_map_and_names()
-    clean_editor(editor)
     init_schema_for_custom_fields(schema, fields_map)
     compose_subject_schema(schema, fields_map)
     if not editor.get("subject"):
@@ -512,15 +488,6 @@ def delete_disabled_fields(editor, schema):
         if value is None or not value.get("enabled", False):
             editor[field] = None
             schema[field] = None
-
-
-def clean_editor(editor):
-    for field_value in editor.values():
-        if not field_value:
-            continue
-        for attribute in list(field_value.keys()):
-            if attribute not in EDITOR_ATTRIBUTES:
-                del field_value[attribute]
 
 
 def compose_subject_schema(schema, fields_map):
