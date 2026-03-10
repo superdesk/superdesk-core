@@ -48,7 +48,7 @@ EDITOR_ATTRIBUTES = (
     "field_name",
     "allow_toggling",
     "maxSoftLength",
-    "show_floating_count",
+    "showFloatingCount",
 )
 
 # cvs hardcoded in the app wich special use
