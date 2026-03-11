@@ -1204,3 +1204,46 @@ Feature: Content Profile
             "schema": {"language": {"type": "string"}}
         }
         """
+
+    @auth
+    Scenario: Unknown editor attributes are preserved in content profile
+        Given "content_types"
+        """
+        [{"_id": "test-passthrough", "label": "Test Passthrough"}]
+        """
+        When we patch "content_types/test-passthrough"
+        """
+        {
+            "editor": {
+                "body_html": {
+                    "order": 1,
+                    "enabled": true,
+                    "showFloatingCount": true,
+                    "customNewFeature": "test-value",
+                    "maxSoftLength": 800
+                }
+            },
+            "schema": {
+                "body_html": {"type": "string", "required": true}
+            }
+        }
+        """
+        Then we get updated response
+        """
+        {"updated_by": "#CONTEXT_USER_ID#"}
+        """
+
+        When we get "content_types/test-passthrough"
+        Then we get existing resource
+        """
+        {
+            "editor": {
+                "body_html": {
+                    "enabled": true,
+                    "showFloatingCount": true,
+                    "customNewFeature": "test-value",
+                    "maxSoftLength": 800
+                }
+            }
+        }
+        """

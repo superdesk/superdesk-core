@@ -36,27 +36,6 @@ DO_NOT_SHOW_SELECTION = "do not show"
 # Fields that might not be in the schema but should be still available in formatter/output
 REQUIRED_FIELDS = ("language", "embargoed")
 
-# Valid editor keys
-EDITOR_ATTRIBUTES = (
-    "order",
-    "sdWidth",
-    "required",
-    "readonly",
-    "hideDate",
-    "showCrops",
-    "formatOptions",
-    "editor3",
-    "default",
-    "cleanPastedHTML",
-    "imageTitle",
-    "sourceField",
-    "section",
-    "preview",
-    "enabled",
-    "field_name",
-    "allow_toggling",
-)
-
 # cvs hardcoded in the app wich special use
 # and not supposed to be added to content profile
 HARDCODED_CVS = ("languages",)
@@ -416,7 +395,6 @@ async def prepare_for_save_content_type(original: ContentTypesResourceModel, upd
     concatenate_dictionary(original.content_schema, schema)
     delete_disabled_fields(editor, schema)
     fields_map, _ = await get_fields_map_and_names()
-    clean_editor(editor)
     init_schema_for_custom_fields(schema, fields_map)
     compose_subject_schema(schema, fields_map)
     if not editor.get("subject"):
@@ -441,15 +419,6 @@ def delete_disabled_fields(editor: dict[str, Any], schema: dict[str, Any]) -> No
         if value is None or not value.get("enabled", False):
             editor[field] = None
             schema[field] = None
-
-
-def clean_editor(editor: dict[str, Any]) -> None:
-    for field_value in editor.values():
-        if not field_value:
-            continue
-        for attribute in list(field_value.keys()):
-            if attribute not in EDITOR_ATTRIBUTES:
-                del field_value[attribute]
 
 
 def compose_subject_schema(schema: dict[str, Any], fields_map: dict[str, str]) -> None:
