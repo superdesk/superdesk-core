@@ -184,7 +184,7 @@ class AmazonMediaStorageTestCase(TestCase):
             "Body": data,
             "Bucket": "acname",
             "ContentType": content_type,
-            "Metadata": {"filename": filename},
+            "Metadata": {"filename": "DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1).pdf"},
         }
         self.amazon.client.put_object.assert_called_once_with(**kwargs)
 
