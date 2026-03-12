@@ -29,18 +29,18 @@ class AmazonMediaStorageTestCase(TestCase):
         p.start()
         self.addCleanup(p.stop)
 
-    def test_media_url(self):
-        filename = "test"
+    @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
+    def test_media_url(self, _mock_object_id):
         # automatic version is set on hourly granularity.
         time_id = time.strftime("%Y%m%d%H")
-        media_id = self.amazon.media_id(filename)
-        self.assertEqual("%s/%s" % (time_id, filename), media_id)
+        media_id = self.amazon.media_id()
+        self.assertEqual(f"{time_id}/507f1f77bcf86cd799439011", media_id)
         self.assertEqual(self.amazon.url_for_media(media_id), "https://acname.s3-us-east-1.amazonaws.com/%s" % media_id)
         sub = "test-sub"
         settings = {"AMAZON_S3_SUBFOLDER": sub, "MEDIA_PREFIX": "https://acname.s3-us-east-1.amazonaws.com/" + sub}
         with patch.dict(self.app.config, settings):
-            media_id = self.amazon.media_id(filename)
-            self.assertEqual("%s/%s" % (time_id, filename), media_id)
+            media_id = self.amazon.media_id()
+            self.assertEqual(f"{time_id}/507f1f77bcf86cd799439011", media_id)
             path = "%s/%s" % (sub, media_id)
             self.assertEqual(self.amazon.url_for_media(media_id), "https://acname.s3-us-east-1.amazonaws.com/%s" % path)
             with patch.object(self.amazon, "client") as s3:
@@ -48,22 +48,21 @@ class AmazonMediaStorageTestCase(TestCase):
                 self.assertTrue(s3.get_object.called)
                 self.assertEqual(s3.get_object.call_args[1], dict(Bucket="acname", Key=path))
 
-    def test_media_id_time_prefix(self):
-        filename = "test"
-
+    @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
+    def test_media_id_time_prefix(self, _mock_object_id):
         with patch.dict(self.app.config, {"AMAZON_MEDIA_ID_TIME_PREFIX": "none"}):
-            media_id = self.amazon.media_id(filename)
-            self.assertEqual(filename, media_id)
+            media_id = self.amazon.media_id()
+            self.assertEqual("507f1f77bcf86cd799439011", media_id)
 
         with patch("superdesk.storage.amazon_media_storage.time.strftime", return_value="20260102"):
             with patch.dict(self.app.config, {"AMAZON_MEDIA_ID_TIME_PREFIX": "daily"}):
-                media_id = self.amazon.media_id(filename)
-                self.assertEqual("20260102/%s" % filename, media_id)
+                media_id = self.amazon.media_id()
+                self.assertEqual("20260102/507f1f77bcf86cd799439011", media_id)
 
         with patch("superdesk.storage.amazon_media_storage.time.strftime", return_value="2026010215"):
             with patch.dict(self.app.config, {"AMAZON_MEDIA_ID_TIME_PREFIX": "hourly"}):
-                media_id = self.amazon.media_id(filename)
-                self.assertEqual("2026010215/%s" % filename, media_id)
+                media_id = self.amazon.media_id()
+                self.assertEqual("2026010215/507f1f77bcf86cd799439011", media_id)
 
     def test_put_and_delete(self):
         """Test amazon if configured.
@@ -84,22 +83,24 @@ class AmazonMediaStorageTestCase(TestCase):
         else:
             self.assertTrue(True)
 
-    def test_put_into_folder(self):
+    @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
+    @patch("superdesk.storage.amazon_media_storage.time.strftime", return_value="2026010215")
+    def test_put_into_folder(self, mock_time_strftime, _mock_object_id):
         data = b"test data"
         folder = "s3test"
         filename = "abc123.zip"
         content_type = "application/zip"
         self.amazon.client.put_object = Mock()
-        self.amazon.media_id = Mock(return_value=filename)
         self.amazon._check_exists = Mock(return_value=False)
 
         self.amazon.put(data, filename, content_type, folder=folder)
 
         kwargs = {
-            "Key": "{}/{}".format(folder, filename),
+            "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
             "Body": data,
             "Bucket": "acname",
             "ContentType": content_type,
+            "Metadata": {"filename": filename},
         }
         self.amazon.client.put_object.assert_called_once_with(**kwargs)
 
@@ -148,22 +149,19 @@ class AmazonMediaStorageTestCase(TestCase):
         # leave empty when there is no extension
         self.assertEqual("", guess_media_extension("audio/foo"))
 
-    def test_media_url_none_utf8(self):
+    @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
+    def test_media_url_none_utf8(self, _mock_object_id):
         filename = "[DIARY NOTE] – Victory In The Pacific Day Commemoration - Thursday (1)"
         # automatic version is set on hourly granularity.
         time_id = time.strftime("%Y%m%d%H")
-        media_id = self.amazon.media_id(filename)
-        self.assertEqual(
-            "%s/%s" % (time_id, "DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1)"), media_id
-        )
+        media_id = self.amazon.media_id()
+        self.assertEqual(f"{time_id}/507f1f77bcf86cd799439011", media_id)
         self.assertEqual(self.amazon.url_for_media(media_id), "https://acname.s3-us-east-1.amazonaws.com/%s" % media_id)
         sub = "test-sub"
         settings = {"AMAZON_S3_SUBFOLDER": sub, "MEDIA_PREFIX": "https://acname.s3-us-east-1.amazonaws.com/" + sub}
         with patch.dict(self.app.config, settings):
-            media_id = self.amazon.media_id(filename)
-            self.assertEqual(
-                "%s/%s" % (time_id, "DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1)"), media_id
-            )
+            media_id = self.amazon.media_id()
+            self.assertEqual(f"{time_id}/507f1f77bcf86cd799439011", media_id)
             path = "%s/%s" % (sub, media_id)
             self.assertEqual(self.amazon.url_for_media(media_id), "https://acname.s3-us-east-1.amazonaws.com/%s" % path)
             with patch.object(self.amazon, "client") as s3:
@@ -171,7 +169,8 @@ class AmazonMediaStorageTestCase(TestCase):
                 self.assertTrue(s3.get_object.called)
                 self.assertEqual(s3.get_object.call_args[1], dict(Bucket="acname", Key=path))
 
-    def test_put_into_folder_none_utf8(self):
+    @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
+    def test_put_into_folder_none_utf8(self, _mock_object_id):
         data = b"test data"
         folder = "s3test"
         filename = "[DIARY NOTE] – Victory In The Pacific Day Commemoration - Thursday (1).pdf"
@@ -182,10 +181,11 @@ class AmazonMediaStorageTestCase(TestCase):
         self.amazon.put(data, filename, content_type, folder=folder, version=False)
 
         kwargs = {
-            "Key": "{}/{}".format(folder, "DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1).pdf"),
+            "Key": f"{folder}/507f1f77bcf86cd799439011",
             "Body": data,
             "Bucket": "acname",
             "ContentType": content_type,
+            "Metadata": {"filename": "DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1).pdf"},
         }
         self.amazon.client.put_object.assert_called_once_with(**kwargs)
 
@@ -198,7 +198,9 @@ class AmazonMediaStorageTestCase(TestCase):
         kwargs = {"Bucket": "acname", "Key": "DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1).pdf"}
         self.amazon.client.get_object.assert_called_once_with(**kwargs)
 
-    def test_mimetype_detect(self):
+    @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
+    @patch("superdesk.storage.amazon_media_storage.time.strftime", return_value="2026010215")
+    def test_mimetype_detect(self, mock_time_strftime, _mock_object_id):
         # keep default mimetype
         content = b"bytes are here"
         filename = "extensionless"
@@ -206,14 +208,14 @@ class AmazonMediaStorageTestCase(TestCase):
         folder = "f1"
         self.amazon.client.put_object = Mock()
         self.amazon._check_exists = Mock(return_value=False)
-        self.amazon.media_id = Mock(return_value=filename)
         self.amazon.put(content, filename, content_type, folder=folder)
         self.amazon.client.put_object.assert_called_once_with(
             **{
-                "Key": "{}/{}".format(folder, filename),
+                "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
                 "Body": content,
                 "Bucket": "acname",
                 "ContentType": content_type,
+                "Metadata": {"filename": filename},
             }
         )
 
@@ -224,14 +226,14 @@ class AmazonMediaStorageTestCase(TestCase):
         folder = "f1"
         self.amazon.client.put_object = Mock()
         self.amazon._check_exists = Mock(return_value=False)
-        self.amazon.media_id = Mock(return_value=filename)
         self.amazon.put(content, filename, content_type, folder=folder)
         self.amazon.client.put_object.assert_called_once_with(
             **{
-                "Key": "{}/{}".format(folder, filename),
+                "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
                 "Body": b"bytes are here",
                 "Bucket": "acname",
                 "ContentType": "text/css",
+                "Metadata": {"filename": filename},
             }
         )
 
@@ -241,14 +243,14 @@ class AmazonMediaStorageTestCase(TestCase):
         folder = "f1"
         self.amazon.client.put_object = Mock()
         self.amazon._check_exists = Mock(return_value=False)
-        self.amazon.media_id = Mock(return_value=filename)
         self.amazon.put(content, filename, content_type, folder=folder)
         self.amazon.client.put_object.assert_called_once_with(
             **{
-                "Key": "{}/{}".format(folder, filename),
+                "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
                 "Body": b"bytes are here",
                 "Bucket": "acname",
                 "ContentType": "image/jpeg",
+                "Metadata": {"filename": filename},
             }
         )
 
@@ -261,14 +263,14 @@ class AmazonMediaStorageTestCase(TestCase):
             folder = "f1"
             self.amazon.client.put_object = Mock()
             self.amazon._check_exists = Mock(return_value=False)
-            self.amazon.media_id = Mock(return_value=filename)
             self.amazon.put(content, filename, content_type, folder=folder)
             self.amazon.client.put_object.assert_called_once_with(
                 **{
-                    "Key": "{}/{}".format(folder, filename),
+                    "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
                     "Body": content,
                     "Bucket": "acname",
                     "ContentType": "image/jpeg",
+                    "Metadata": {"filename": filename},
                 }
             )
 
@@ -278,14 +280,14 @@ class AmazonMediaStorageTestCase(TestCase):
                 folder = "f1"
                 self.amazon.client.put_object = Mock()
                 self.amazon._check_exists = Mock(return_value=False)
-                self.amazon.media_id = Mock(return_value=filename)
                 self.amazon.put(content, filename, content_type, folder=folder)
                 self.amazon.client.put_object.assert_called_once_with(
                     **{
-                        "Key": "{}/{}".format(folder, filename),
+                        "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
                         "Body": content,
                         "Bucket": "acname",
                         "ContentType": "application/vnd.ms-excel",
+                        "Metadata": {"filename": filename},
                     }
                 )
 
@@ -295,14 +297,14 @@ class AmazonMediaStorageTestCase(TestCase):
                 folder = "f1"
                 self.amazon.client.put_object = Mock()
                 self.amazon._check_exists = Mock(return_value=False)
-                self.amazon.media_id = Mock(return_value=filename)
                 self.amazon.put(content, filename, content_type, folder=folder)
                 self.amazon.client.put_object.assert_called_once_with(
                     **{
-                        "Key": "{}/{}".format(folder, filename),
+                        "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
                         "Body": content,
                         "Bucket": "acname",
                         "ContentType": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        "Metadata": {"filename": filename},
                     }
                 )
 
@@ -312,13 +314,13 @@ class AmazonMediaStorageTestCase(TestCase):
                 folder = "f1"
                 self.amazon.client.put_object = Mock()
                 self.amazon._check_exists = Mock(return_value=False)
-                self.amazon.media_id = Mock(return_value=filename)
                 self.amazon.put(content, filename, content_type, folder=folder)
                 self.amazon.client.put_object.assert_called_once_with(
                     **{
-                        "Key": "{}/{}".format(folder, filename),
+                        "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
                         "Body": content,
                         "Bucket": "acname",
                         "ContentType": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                        "Metadata": {"filename": filename},
                     }
                 )
