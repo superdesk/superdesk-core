@@ -31,9 +31,8 @@ class AmazonMediaStorageTestCase(TestCase):
 
     def test_media_url(self):
         filename = "test"
-        # automatic version is set on 15mins granularity.
-        mins_granularity = int(int(time.strftime("%M")) / 4) * 4
-        time_id = "%s%s" % (time.strftime("%Y%m%d%H%m"), mins_granularity)
+        # automatic version is set on hourly granularity.
+        time_id = time.strftime("%Y%m%d%H")
         media_id = self.amazon.media_id(filename)
         self.assertEqual("%s/%s" % (time_id, filename), media_id)
         self.assertEqual(self.amazon.url_for_media(media_id), "https://acname.s3-us-east-1.amazonaws.com/%s" % media_id)
@@ -151,9 +150,8 @@ class AmazonMediaStorageTestCase(TestCase):
 
     def test_media_url_none_utf8(self):
         filename = "[DIARY NOTE] – Victory In The Pacific Day Commemoration - Thursday (1)"
-        # automatic version is set on 15mins granularity.
-        mins_granularity = int(int(time.strftime("%M")) / 4) * 4
-        time_id = "%s%s" % (time.strftime("%Y%m%d%H%m"), mins_granularity)
+        # automatic version is set on hourly granularity.
+        time_id = time.strftime("%Y%m%d%H")
         media_id = self.amazon.media_id(filename)
         self.assertEqual(
             "%s/%s" % (time_id, "DIARY NOTE - Victory In The Pacific Day Commemoration - Thursday (1)"), media_id
