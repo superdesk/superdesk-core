@@ -119,12 +119,20 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
 
         return unidecode.unidecode(str(_id)).translate(get_translation_table())
 
-    def media_id(self, version: bool | str = True):
-        """Get the ``media_id`` path for the given ``filename``.
+    def media_id(self, version: bool | str = True) -> str:
+        """
+        Generates a media ID string using a configurable time-based prefix and a unique identifier.
 
-        if filename doesn't have an extension one is guessed,
-        and additional *version* option to have automatic version or not to have,
-        or to send a `string` one.
+        This method generates a media ID based on a configurable time granularity or provided
+        custom version. The time granularity settings can be 'hourly', 'daily', or 'none'. A unique
+        identifier is appended to the generated string, ensuring a unique media ID is produced
+        each time the method is called.
+
+        :param version: Determines the versioning format. If True, an automatic time-based
+                        version is generated based on the 'AMAZON_MEDIA_ID_TIME_PREFIX' configuration
+                        from the application. If False, no version prefix is included. If a string is
+                        provided, it is used as a custom prefix after stripping any surrounding slashes.
+        :returns: A unique media ID string composed of the specified versioning format and a unique identifier.
         """
 
         if version is True:
@@ -267,8 +275,9 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             # probably better to turn on/off public-read on the bucket instead
             kwargs["ACL"] = acl
 
-        kwargs.setdefault("Metadata", {})
-        kwargs["Metadata"]["filename"] = filename
+        if filename:
+            kwargs.setdefault("Metadata", {})
+            kwargs["Metadata"]["filename"] = self._make_s3_safe(filename)
 
         try:
             self.call("put_object", Key=_id, Body=content, ContentType=content_type, **kwargs)

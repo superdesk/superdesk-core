@@ -84,7 +84,7 @@ class AmazonMediaStorageTestCase(TestCase):
 
     @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
     @patch("superdesk.storage.amazon_media_storage.time.strftime", return_value="2026010215")
-    def test_put_into_folder(self, _mock_object_id, mock_time_strftime):
+    def test_put_into_folder(self, mock_time_strftime, _mock_object_id):
         data = b"test data"
         folder = "s3test"
         filename = "abc123.zip"
@@ -199,7 +199,7 @@ class AmazonMediaStorageTestCase(TestCase):
 
     @patch("superdesk.storage.amazon_media_storage.ObjectId", return_value="507f1f77bcf86cd799439011")
     @patch("superdesk.storage.amazon_media_storage.time.strftime", return_value="2026010215")
-    def test_mimetype_detect(self, _mock_object_id, mock_time_strftime):
+    def test_mimetype_detect(self, mock_time_strftime, _mock_object_id):
         # keep default mimetype
         content = b"bytes are here"
         filename = "extensionless"
