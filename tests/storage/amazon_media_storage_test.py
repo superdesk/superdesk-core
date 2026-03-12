@@ -90,14 +90,12 @@ class AmazonMediaStorageTestCase(TestCase):
         filename = "abc123.zip"
         content_type = "application/zip"
         self.amazon.client.put_object = Mock()
-        # self.amazon.media_id = Mock(return_value=filename)
         self.amazon._check_exists = Mock(return_value=False)
 
         self.amazon.put(data, filename, content_type, folder=folder)
 
         kwargs = {
             "Key": f"{folder}/2026010215/507f1f77bcf86cd799439011",
-            # "Key": "{}/{}".format(folder, filename),
             "Body": data,
             "Bucket": "acname",
             "ContentType": content_type,
