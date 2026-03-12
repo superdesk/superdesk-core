@@ -169,9 +169,15 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         """
 
         if version is True:
-            # automatic version is set on 15mins granularity.
-            mins_granularity = int(int(time.strftime("%M")) / 4) * 4
-            version = "%s%s/" % (time.strftime("%Y%m%d%H%m"), mins_granularity)
+            folder_granularity = str(self.app.config.get("AMAZON_MEDIA_ID_TIME_PREFIX", "hourly")).lower()
+
+            if folder_granularity == "daily":
+                version = "%s/" % time.strftime("%Y%m%d")
+            elif folder_granularity == "none":
+                version = ""
+            else:
+                # default automatic version is set on hourly granularity.
+                version = "%s/" % time.strftime("%Y%m%d%H")
         elif version is False:
             version = ""
         else:
