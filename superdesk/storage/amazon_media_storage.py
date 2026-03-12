@@ -18,11 +18,10 @@ import logging
 import time
 import unidecode
 
-from os.path import splitext
-from urllib.parse import urlparse
 from botocore.client import Config
+from bson import ObjectId
 
-from superdesk.media.media_operations import download_file_from_url, guess_media_extension
+from superdesk.media.media_operations import download_file_from_url
 from .superdesk_file import SuperdeskFile
 from superdesk.utc import query_datetime
 from . import SuperdeskMediaStorage
@@ -35,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 
 class AmazonObjectWrapper(SuperdeskFile):
-    def __init__(self, s3_object, name, metadata):
+    def __init__(self, s3_object, key, metadata):
         super().__init__()
 
         s3_body = s3_object["Body"]
@@ -48,12 +47,11 @@ class AmazonObjectWrapper(SuperdeskFile):
         self.seek(0)
         self.content_type = s3_object["ContentType"]
         self.length = int(s3_object["ContentLength"])
-        self._name = name
-        self.filename = name
-        self.metadata = metadata
+        self.metadata = metadata or {}
+        self._name = self.filename = self.metadata.get("filename") or key
         self.upload_date = s3_object["LastModified"]
         self.md5 = s3_object["ETag"][1:-1]
-        self._id = name
+        self._id = key
 
 
 class AmazonMediaStorage(SuperdeskMediaStorage):
@@ -121,19 +119,13 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
 
         return unidecode.unidecode(str(_id)).translate(get_translation_table())
 
-    def media_id(self, filename, content_type=None, version=True):
+    def media_id(self, version: bool | str = True):
         """Get the ``media_id`` path for the given ``filename``.
 
         if filename doesn't have an extension one is guessed,
         and additional *version* option to have automatic version or not to have,
         or to send a `string` one.
         """
-        path = urlparse(filename).path.split("/")[-1]
-        file_extension = splitext(path)[1]
-
-        extension = ""
-        if not file_extension:
-            extension = str(guess_media_extension(content_type)) if content_type else ""
 
         if version is True:
             folder_granularity = str(self.app.config.get("AMAZON_MEDIA_ID_TIME_PREFIX", "hourly")).lower()
@@ -150,7 +142,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         else:
             version = "%s/" % version.strip("/")
 
-        return "%s%s%s" % (version, self._make_s3_safe(filename), extension)
+        return f"{version}{ObjectId()}"
 
     def fetch_rendition(self, rendition):
         stream, name, mime = download_file_from_url(rendition.get("href"))
@@ -211,7 +203,9 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
     def extract_metadata_from_headers(self, request_headers):
         headers = {}
         for key, value in request_headers.items():
-            if self.user_metadata_header in key:
+            if key == "filename":
+                headers["filename"] = value
+            elif self.user_metadata_header in key:
                 new_key = key.split(self.user_metadata_header)[1]
                 if value:
                     try:
@@ -258,7 +252,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         content_type = self._get_mimetype(content, filename, content_type)
 
         if not _id:
-            _id = self.media_id(filename, content_type=content_type, version=version)
+            _id = self.media_id(version)
 
         if folder:
             _id = "%s/%s" % (folder.rstrip("/"), _id)
@@ -272,6 +266,9 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             # not sure it's really needed here,
             # probably better to turn on/off public-read on the bucket instead
             kwargs["ACL"] = acl
+
+        kwargs.setdefault("Metadata", {})
+        kwargs["Metadata"]["filename"] = filename
 
         try:
             self.call("put_object", Key=_id, Body=content, ContentType=content_type, **kwargs)
