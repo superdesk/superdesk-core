@@ -43,18 +43,8 @@ class CeleryPublishConsumer(AsyncioPublishConsumer):
         :param tasks: A list of tasks to be processed and transmitted.
         """
 
-        # We assume all tasks come from the same subscriber
-        lock_name = get_lock_id("Subscriber", "Transmit", str(subscriber.id))
-        if not lock(lock_name, expire=610):
-            logger.info(f"Task: {lock_name} is already running.")
-            return
-
-        try:
-            for task in tasks:
-                await transmit_item.apply_async(args=[task.id], queue=get_high_priority_celery_queue(task.priority))
-        finally:
-            logger.debug(f"unlock {lock_name}")
-            unlock(lock_name)
+        for task in tasks:
+            await transmit_item.apply_async(args=[task.id], queue=get_high_priority_celery_queue(task.priority))
 
 
 @celery.task(soft_time_limit=600, expires=10)
