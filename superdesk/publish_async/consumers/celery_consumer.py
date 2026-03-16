@@ -20,9 +20,8 @@ class CeleryPublishConsumer(AsyncioPublishConsumer):
     publishing consumer.
 
     This class is responsible for coordinating and ensuring the transmission of tasks
-    utilizing Celery's asynchronous task queue system. It ensures no concurrent task
-    execution for the same subscriber while managing the process lifecycle, including
-    locking and unlocking resources.
+    utilizing Celery's asynchronous task queue system. It submits tasks for background
+    processing via Celery, integrating with its asynchronous execution model.
 
     Attributes:
         Inherits all attributes from AsyncioPublishConsumer.
@@ -32,12 +31,10 @@ class CeleryPublishConsumer(AsyncioPublishConsumer):
 
     async def process_tasks(self, subscriber: SubscribersResource, tasks: list[PublishQueueResource]) -> None:
         """
-        An asynchronous method to process and transmit tasks for a given subscriber.
+        Asynchronously process and transmit tasks for a given subscriber.
 
-        This method processes the provided tasks by acquiring a lock to ensure that
-        multiple tasks for the same subscriber do not overlap. For each task, it
-        schedules its execution in a high-priority Celery queue based on the task's
-        priority. After processing, the lock is released.
+        This method iterates over the provided tasks and schedules each one for
+        execution in a high-priority Celery queue based on the task's priority.
 
         :param subscriber: The subscriber resource for which the tasks are being processed.
         :param tasks: A list of tasks to be processed and transmitted.
