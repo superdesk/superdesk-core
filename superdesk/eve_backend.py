@@ -129,6 +129,7 @@ class EveBackend:
             return search_backend.search(source, endpoint_name)
         else:
             logger.warn("there is no search backend for %s" % endpoint_name)
+            return None
 
     def get(self, endpoint_name, req, lookup, **kwargs):
         """Get list of items.
