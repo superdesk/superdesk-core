@@ -14,6 +14,7 @@ import superdesk
 from bson import ObjectId
 from superdesk.tests import TestCase
 from superdesk.datalayer import SuperdeskJSONEncoder
+from superdesk.errors import SuperdeskApiError
 
 
 class DatalayerTestCase(TestCase):
@@ -96,6 +97,14 @@ class DatalayerTestCase(TestCase):
             assert item["_id"] == "test-{:04d}".format(counter)
             counter += 1
         assert counter == expected_item_count
+
+    def test_get_all_batch_elastic_required_sort_field(self):
+        service = superdesk.get_resource_service("archive")
+
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            service.get_all_batch_elastic({}).send(None)
+
+        self.assertEqual(ctx.exception.status_code, 400)  # bad request error
 
     def test_get_all_batch_elastic_with_lookup(self):
         expected_item_count = 20

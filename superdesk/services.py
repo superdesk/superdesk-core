@@ -12,7 +12,7 @@ import random
 import pymongo
 import logging
 
-from typing import Dict, Any, List, Optional, Union, Generator
+from typing import Dict, Any, List, Optional, Union, Generator, Literal
 from flask import current_app as app, json, g
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
@@ -167,7 +167,7 @@ class BaseService:
 
     def get_all_batch_elastic(
         self,
-        query: dict | None = None,
+        query: dict,
         size: int = 500,
         max_iterations: int = 10000,
     ) -> Generator[dict, None, None]:
@@ -181,15 +181,23 @@ class BaseService:
             pagination can become inconsistent. If this is an issue, consider using a more
             stable unique tiebreaker (e.g. a combination of ``_created`` ``_updated`` and ``_id``).
 
-        :param query: An optional elasticsearch query used to filter items for
+        .. note::
+            This helper uses ``search_after`` without an Elasticsearch point-in-time (PIT) or
+            snapshot. As a result, if the underlying index is updated while iteration is in
+            progress, documents may move between pages, be skipped, or be returned more than
+            once. It should therefore only be relied upon against a quiescent index, or in
+            contexts where such inconsistencies are acceptable.
+
+        :param query: An Elasticsearch query used to filter items returned by this resource
         :param size: The number of items to fetch on each iteration
         :param max_iterations: Maximum number of iterations to run, before returning gracefully
-        :return: An generator yielding a dictionary of documents
+        :return: A generator yielding a dictionary of documents
         """
 
         es_query = query.copy() if query else {}
         es_query["size"] = size
-        es_query.setdefault("sort", [{"_created": "asc"}, {"_updated": "asc"}])
+        if not es_query.get("sort"):
+            raise SuperdeskApiError.badRequestError("Running `get_all_batch_elastic` without a sort is not supported")
 
         for _ in range(max_iterations):
             cursor = self.backend.search_raw(self.datasource, es_query)
@@ -197,12 +205,13 @@ class BaseService:
                 logger.warning("No cursor returned for search", extra={"resource": self.datasource})
                 break
 
-            items = list(cursor)
+            items_yielded = False
+            for item in cursor:
+                items_yielded = True
+                yield item
 
-            if not len(items):
+            if not items_yielded:
                 break
-
-            yield from items
 
             try:
                 last_hit = cursor.hits["hits"]["hits"][-1]

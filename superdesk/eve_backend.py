@@ -115,7 +115,7 @@ class EveBackend:
         if search_backend:
             return search_backend.find(endpoint_name, req, {})[0]
         else:
-            logger.warn("there is no search backend for %s" % endpoint_name)
+            logger.warning("there is no search backend for %s" % endpoint_name)
 
     def search_raw(self, endpoint_name: str, source: dict) -> ElasticCursor | None:
         """Search for items using search backend, without applying resource-specific filters.
@@ -128,7 +128,7 @@ class EveBackend:
         if search_backend := self._lookup_backend(endpoint_name):
             return search_backend.search(source, endpoint_name)
         else:
-            logger.warn("there is no search backend for %s" % endpoint_name)
+            logger.warning("there is no search backend for %s" % endpoint_name)
             return None
 
     def get(self, endpoint_name, req, lookup, **kwargs):
