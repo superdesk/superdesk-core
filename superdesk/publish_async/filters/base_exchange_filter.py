@@ -2,7 +2,6 @@ import logging
 from itertools import chain
 
 from bson import ObjectId
-import elasticapm
 from quart_babel import gettext
 
 from superdesk.types import (
@@ -507,13 +506,12 @@ class BasePublishExchangeFilter(PublishExchangeFilter):
         if not product_ids:
             return []
 
-        with elasticapm.capture_span("check products"):
-            cache = PublishCache.get()
-            return [
-                cache.products[product_id]
-                for product_id in product_ids
-                if cache.products.get(product_id) and self.product_matches_item(request, cache.products[product_id])
-            ]
+        cache = PublishCache.get()
+        return [
+            cache.products[product_id]
+            for product_id in product_ids
+            if cache.products.get(product_id) and self.product_matches_item(request, cache.products[product_id])
+        ]
 
     def product_matches_item(self, request: PublishRequest, product: ProductsResource) -> bool:
         """

@@ -48,7 +48,6 @@ install_requires = [
     "draftjs-exporter[lxml]<5.3",
     "regex>=2020.7.14,<=2026.1.15",
     "flask-oidc-ex>=0.5.5,<0.7",
-    "elastic-apm[flask]>=6.15.1,<7.0",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe>2.1",
     "reportlab>=3.6.11,<4.5",

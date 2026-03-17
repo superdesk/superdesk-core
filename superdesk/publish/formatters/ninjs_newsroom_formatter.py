@@ -8,8 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import elasticapm
-
 import superdesk
 from superdesk.publish_async.publish_cache import PublishCache
 from superdesk.publish_async.utils import test_products_against_item
@@ -26,7 +24,6 @@ class NewsroomNinjsFormatter(NINJSFormatter):
         self.can_export = False
         self.internal_renditions = ["original", "viewImage", "baseImage"]
 
-    @elasticapm.capture_span()
     async def _format_products(self, article):
         """
         Return a list of API product id's that the article matches.
@@ -39,7 +36,6 @@ class NewsroomNinjsFormatter(NINJSFormatter):
 
         return [{"code": p["product_id"], "name": p["name"]} for p in matches if p["matched"]]
 
-    @elasticapm.capture_span()
     async def _transform_to_ninjs(self, article, subscriber, recursive=True):
         ninjs = await super()._transform_to_ninjs(article, subscriber, recursive)
 

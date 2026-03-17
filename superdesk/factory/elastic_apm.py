@@ -1,7 +1,6 @@
 import re
 
 from typing import Literal
-from elasticapm.contrib.flask import ElasticAPM
 from superdesk.flask import Flask
 
 
@@ -18,7 +17,10 @@ def setup_apm(app: Flask, service="Core API") -> None:
             ),
         }
 
-        app.apm = ElasticAPM(app)  # type: ignore
+        # disable apm, doesn't support quart
+        #
+        # from elasticapm.contrib.flask import ElasticAPM
+        # app.apm = ElasticAPM(app)  # type: ignore
 
 
 def get_environment(app: Flask) -> Literal["testing", "staging", "production"]:
