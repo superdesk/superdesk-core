@@ -80,10 +80,12 @@ class DatalayerTestCase(TestCase):
         expected_item_count = 500
         items = []
         for i in range(expected_item_count):
-            items.append({
-                "_id": "test-{:04d}".format(i),
-                "guid": "test-{:04d}".format(i),
-            })
+            items.append(
+                {
+                    "_id": "test-{:04d}".format(i),
+                    "guid": "test-{:04d}".format(i),
+                }
+            )
         service = superdesk.get_resource_service("archive")
         service.create(items)
 
