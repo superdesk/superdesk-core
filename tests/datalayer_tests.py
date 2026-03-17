@@ -75,3 +75,19 @@ class DatalayerTestCase(TestCase):
         service.create(items)
         service.delete({})
         assert 0 == service.find({}).count()
+
+    def test_get_all_batch_elastic(self):
+        expected_item_count = 500
+        items = []
+        for i in range(expected_item_count):
+            items.append({"_id": "test-{:04d}".format(i)})
+        service = superdesk.get_resource_service("archive")
+        service.create(items)
+
+        # Use custom sort, as all items would have the same ``_created`` and ``_updated`` values
+        query = {"sort": [{"_created": "asc"}, {"_updated": "asc"}, {"_id": "asc"}]}
+        counter = 0
+        for item in service.get_all_batch_elastic(query, size=5):
+            assert item["_id"] == "test-{:04d}".format(counter)
+            counter += 1
+        assert counter == expected_item_count

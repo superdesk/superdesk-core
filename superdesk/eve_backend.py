@@ -19,6 +19,7 @@ from pymongo.collation import Collation
 from flask import current_app as app, json
 from eve.utils import document_etag, config, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
+from eve_elastic.elastic import ElasticCursor
 from superdesk.utc import utcnow
 from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
@@ -113,6 +114,19 @@ class EveBackend:
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
             return search_backend.find(endpoint_name, req, {})[0]
+        else:
+            logger.warn("there is no search backend for %s" % endpoint_name)
+
+    def search_raw(self, endpoint_name: str, source: dict) -> ElasticCursor | None:
+        """Search for items using search backend, without applying resource-specific filters.
+
+        :param endpoint_name: The name of the endpoint to perform the search on.
+        :param source: A dictionary containing the data to be used for the search
+        :return: An instance of ElasticCursor if the search is successful, or None if no backend is found.
+        """
+
+        if search_backend := self._lookup_backend(endpoint_name):
+            return search_backend.search(source, endpoint_name)
         else:
             logger.warn("there is no search backend for %s" % endpoint_name)
 

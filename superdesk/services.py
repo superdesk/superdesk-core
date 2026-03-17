@@ -12,7 +12,7 @@ import random
 import pymongo
 import logging
 
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional, Union, Generator
 from flask import current_app as app, json, g
 from eve.utils import ParsedRequest, config
 from eve.methods.common import resolve_document_etag
@@ -164,6 +164,58 @@ class BaseService:
                 last_id = item["_id"]
         else:
             logger.warning("Not enough iterations for resource %s", self.datasource)
+
+    def get_all_batch_elastic(
+        self,
+        query: dict | None = None,
+        size: int = 500,
+        max_iterations: int = 10000,
+    ) -> Generator[dict, None, None]:
+        """Helper function to get all items from this resource, in batches
+
+        The default arguments allow iterating over 5 million documents.
+        If more is needed, then consider increasing ``size`` and/or ``max_iterations``
+
+        .. note::
+            If multiple documents share the same ``_created`` and ``_updated`` values,
+            pagination can become inconsistent. If this is an issue, consider using a more
+            stable unique tiebreaker (e.g. a combination of ``_created`` ``_updated`` and ``_id``).
+
+        :param query: An optional elasticsearch query used to filter items for
+        :param size: The number of items to fetch on each iteration
+        :param max_iterations: Maximum number of iterations to run, before returning gracefully
+        :return: An generator yielding a dictionary of documents
+        """
+
+        es_query = query.copy() if query else {}
+        es_query["size"] = size
+        es_query.setdefault("sort", [{"_created": "asc"}, {"_updated": "asc"}])
+
+        for _ in range(max_iterations):
+            cursor = self.backend.search_raw(self.datasource, es_query)
+            if not cursor:
+                logger.warning("No cursor returned for search", extra={"resource": self.datasource})
+                break
+
+            items = list(cursor)
+
+            if not len(items):
+                break
+
+            yield from items
+
+            try:
+                last_hit = cursor.hits["hits"]["hits"][-1]
+            except (KeyError, IndexError, TypeError):
+                last_hit = None
+
+            if not last_hit or not last_hit.get("sort"):
+                logger.warning("No sort value found in es hit for resource", extra={"resource": self.datasource})
+                break
+
+            es_query["search_after"] = last_hit["sort"]
+        else:
+            logger.warning("Not enough iterations for resource", extra={"resource": self.datasource})
 
     def _validator(self, skip_validation=False):
         resource_def = app.config["DOMAIN"][self.datasource]
