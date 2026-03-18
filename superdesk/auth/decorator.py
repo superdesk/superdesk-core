@@ -42,6 +42,7 @@ def blueprint_auth_or_token(resource: Optional[str] = None):
     """Decorator that allows authentication via JWT token query param or session.
 
     Token takes precedence if provided.
+    Token must contain '_url_path' matching the current request path.
 
     See Also:
         superdesk.auth.utils.generate_url_with_token: Helper to generate URLs with token.
@@ -53,12 +54,14 @@ def blueprint_auth_or_token(resource: Optional[str] = None):
             from superdesk.utils import jwt_decode
             from superdesk.errors import SuperdeskApiError
 
-            token = request.args.get("token")
-            if token:
-                payload = jwt_decode(token)
-                if payload:
-                    return await _call_and_await(f, *args, **kwargs)
-                raise SuperdeskApiError.unauthorizedError("Invalid or expired token")
+            if token := request.args.get("token"):
+                if not (payload := jwt_decode(token)):
+                    raise SuperdeskApiError.unauthorizedError("Invalid or expired token")
+
+                if payload.get("_url_path") != request.path:
+                    raise SuperdeskApiError.unauthorizedError("Token not valid for this URL")
+
+                return await _call_and_await(f, *args, **kwargs)
 
             auth_response = await _check_session_auth(resource)
             if auth_response:
