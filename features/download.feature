@@ -1,17 +1,11 @@
 Feature: Download with JWT Token Authentication
 
-    @auth
-    Scenario: Download file with session authentication
-        Given "download"
-        """
-        [{"_id": "test123"}]
-        """
-        When we get "/download/test123"
-        Then we get error 404
-
-    Scenario: Download file without authentication returns 401
+    Scenario: Download without token returns 401
         When we get "/download/test123"
         Then we get error 401
+        """
+        {"_message": "Token required"}
+        """
 
     @auth
     Scenario: Export creates download URL with JWT token
