@@ -6,6 +6,20 @@ from superdesk.core import get_current_app
 from superdesk.flask import request
 
 
+async def _call_and_await(f, *args, **kwargs):
+    response = f(*args, **kwargs)
+    if isawaitable(response):
+        response = await response
+    return response
+
+
+async def _check_session_auth(resource: Optional[str] = None):
+    auth = get_current_app().auth
+    if not await auth.authorized([], resource or "_blueprint", request.method):
+        return auth.authenticate()
+    return None
+
+
 def blueprint_auth(resource: Optional[str] = None):
     """
     This decorator is used to add authentication to a Flask Blueprint
@@ -14,13 +28,42 @@ def blueprint_auth(resource: Optional[str] = None):
     def fdec(f):
         @wraps(f)
         async def decorated(*args, **kwargs):
-            auth = get_current_app().auth
-            if not await auth.authorized([], resource or "_blueprint", request.method):
-                return auth.authenticate()
-            response = f(*args, **kwargs)
-            if isawaitable(response):
-                response = await response
-            return response
+            auth_response = await _check_session_auth(resource)
+            if auth_response:
+                return auth_response
+            return await _call_and_await(f, *args, **kwargs)
+
+        return decorated
+
+    return fdec
+
+
+def blueprint_auth_or_token(resource: Optional[str] = None):
+    """Decorator that allows authentication via JWT token query param or session.
+
+    Token takes precedence if provided.
+
+    See Also:
+        superdesk.auth.utils.generate_url_with_token: Helper to generate URLs with token.
+    """
+
+    def fdec(f):
+        @wraps(f)
+        async def decorated(*args, **kwargs):
+            from superdesk.utils import jwt_decode
+            from superdesk.errors import SuperdeskApiError
+
+            token = request.args.get("token")
+            if token:
+                payload = jwt_decode(token)
+                if payload:
+                    return await _call_and_await(f, *args, **kwargs)
+                raise SuperdeskApiError.unauthorizedError("Invalid or expired token")
+
+            auth_response = await _check_session_auth(resource)
+            if auth_response:
+                return auth_response
+            return await _call_and_await(f, *args, **kwargs)
 
         return decorated
 
