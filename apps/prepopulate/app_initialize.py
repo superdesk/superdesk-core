@@ -353,9 +353,19 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 service = superdesk.get_resource_service(entity_name)
                 json_data = json.loads(app_prepopulation.read())
                 data = [fillEnvironmentVariables(item) for item in json_data]
-                data = [app.data.mongo._mongotize(item, service.datasource) for item in data if item]
-                existing_data = []
+                deleted_ids = [item["_id"] for item in data if item and item.get("_deleted") and item.get("_id")]
+                data = [item for item in data if item and not item.get("_deleted")]
+                data = [app.data.mongo._mongotize(item, service.datasource) for item in data]
+
+                for deleted_id in deleted_ids:
+                    if service.find_one(None, _id=deleted_id):
+                        service.delete({"_id": deleted_id})
+                        logger.info(" - deleted tombstone record: %s", deleted_id)
+                    else:
+                        logger.info(" - record marked for deletion already missing: %s", deleted_id)
+
                 existing = service.get_from_mongo(None, {})
+                existing_data = []
                 update_data = True
                 if not do_patch and existing.count() > 0:
                     logger.info(" - data already exists none will be loaded")
