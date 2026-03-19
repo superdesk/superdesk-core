@@ -15,6 +15,7 @@ import logging
 import asyncio
 import signal
 import sentry_sdk
+import socket
 
 from uuid import UUID, uuid1
 from urllib.parse import urlparse, parse_qs
@@ -31,13 +32,12 @@ from kombu.pools import producers
 
 from superdesk.core import json
 
-from kombu.common import Broadcast
 from kombu.utils.debug import setup_logging
 
 
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string, json_serialize_datetime_objectId
-from superdesk.default_settings import WS_HEART_BEAT
+from superdesk.default_settings import WS_HEART_BEAT, env
 
 
 logging.basicConfig(level=logging.INFO)
@@ -76,7 +76,30 @@ class SocketBrokerClient:
     def connect(self):
         self._close()
         logger.info("Connecting to broker {}".format(self.url))
-        self.connection = Connection(self.url, heartbeat=WS_HEART_BEAT)
+
+        self.connection = Connection(
+            self.url,
+            heartbeat=WS_HEART_BEAT,
+            transport_options={
+                "socket_connect_timeout": env("WS_REDIS_CONNECT_TIMEOUT", 2),
+
+                # If no message has been consumed in 10 minutes, allow health check to run
+                # otherwise consumer loop hangs indefinitely on read timeout
+                "socket_timeout": env("WS_REDIS_TIMEOUT", 600),
+                "retry_on_timeout": True,
+
+                # Enable TCP keepalive
+                "socket_keepalive": True,
+                "socket_keepalive_options": {
+                    # Start probing after 30s idle
+                    socket.TCP_KEEPIDLE: env("WS_REDIS_KEEPALIVE_IDLE", 30),
+                    # Probe every 10s after that
+                    socket.TCP_KEEPINTVL: env("WS_REDIS_KEEPALIVE_INTERVAL", 10),
+                    # Kill connection after 3 failed probes
+                    socket.TCP_KEEPCNT: env("WS_REDIS_KEEPALIVE_COUNT", 3),
+                }
+            }
+        )
         logger.info("Connected to broker {}".format(self.url))
 
     def _close(self):
