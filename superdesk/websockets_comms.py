@@ -82,12 +82,10 @@ class SocketBrokerClient:
             heartbeat=WS_HEART_BEAT,
             transport_options={
                 "socket_connect_timeout": env("WS_REDIS_CONNECT_TIMEOUT", 2),
-
                 # If no message has been consumed in 10 minutes, allow health check to run
                 # otherwise consumer loop hangs indefinitely on read timeout
                 "socket_timeout": env("WS_REDIS_TIMEOUT", 600),
                 "retry_on_timeout": True,
-
                 # Enable TCP keepalive
                 "socket_keepalive": True,
                 "socket_keepalive_options": {
@@ -97,8 +95,8 @@ class SocketBrokerClient:
                     socket.TCP_KEEPINTVL: env("WS_REDIS_KEEPALIVE_INTERVAL", 10),
                     # Kill connection after 3 failed probes
                     socket.TCP_KEEPCNT: env("WS_REDIS_KEEPALIVE_COUNT", 3),
-                }
-            }
+                },
+            },
         )
         logger.info("Connected to broker {}".format(self.url))
 
