@@ -357,12 +357,22 @@ class AppInitializeWithDataCommand(superdesk.Command):
                 data = [item for item in data if item and not item.get("_deleted")]
                 data = [app.data.mongo._mongotize(item, service.datasource) for item in data]
 
-                for deleted_id in deleted_ids:
-                    if service.find_one(None, _id=deleted_id):
-                        service.delete({"_id": deleted_id})
-                        logger.info(" - deleted tombstone record: %s", deleted_id)
-                    else:
-                        logger.info(" - record marked for deletion already missing: %s", deleted_id)
+                if deleted_ids:
+                    delete_lookup = {"_id": {"$in": deleted_ids}}
+                    delete_lookup = app.data.mongo._mongotize(delete_lookup, service.datasource)
+                    deleted_result = service.delete(delete_lookup)
+                    deleted_id_set = set()
+                    for item in deleted_result or []:
+                        if isinstance(item, dict) and "_id" in item:
+                            deleted_id_set.add(str(item["_id"]))
+                        else:
+                            deleted_id_set.add(str(item))
+
+                    for deleted_id in deleted_ids:
+                        if str(deleted_id) in deleted_id_set:
+                            logger.info(" - deleted tombstone record: %s", deleted_id)
+                        else:
+                            logger.info(" - record marked for deletion already missing: %s", deleted_id)
 
                 existing = service.get_from_mongo(None, {})
                 existing_data = []
