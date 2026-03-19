@@ -44,8 +44,8 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-logging.getLogger("websockets").setLevel(logging.WARNING)
-setup_logging(logging.WARNING)
+logging.getLogger("websockets").setLevel(logging.INFO)
+setup_logging(logging.INFO)
 
 
 class SocketBrokerClient:
@@ -225,6 +225,30 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         self.should_stop = True
         super().close()
         logger.info("consumer terminated successfully")
+
+    def on_connection_revived(self):
+        """Handler called as soon as the connection is re-established after connection failure."""
+
+        super().on_connection_revived()
+        logger.info("Consumer connection re-established after previous failure")
+
+    def on_consume_ready(self, connection, channel, consumers, **kwargs):
+        """Handler called when the consumer is ready to accept messages."""
+
+        super().on_consume_ready(connection, channel, consumers, **kwargs)
+        logger.info("Consumer ready to accept messages")
+
+    def on_consume_end(self, connection, channel):
+        """Handler called after the consumers are canceled."""
+
+        super().on_consume_end(connection, channel)
+        logger.info("Consumers canceled")
+
+    def on_iteration(self):
+        """Handler called for every iteration while draining events."""
+
+        super().on_iteration()
+        logger.debug("Consumer iterating")
 
 
 class SocketCommunication:
