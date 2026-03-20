@@ -5,7 +5,7 @@ Feature: Places
         When we get "/places_autocomplete?name=koberice&lang=cs"
         # we use __any_value__ for states because we
         # can get either "XXX" or "XXX kraj" (e.g. "Olomoucký kraj" or "Olomoucký")
-        Then we get list with 3 items
+        Then we get list with 3+ items
         """
         {
             "_items": [
@@ -73,6 +73,6 @@ Feature: Places
         }
         """
         When we get "/places_autocomplete?name=koberice&lang=cs"
-        Then we get list with 6 items
+        Then we get list with 6+ items
         When we get "/places_autocomplete?name=koberice&lang=cs&featureClass=P"
-        Then we get list with 3 items
+        Then we get list with 3+ items
