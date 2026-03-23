@@ -323,6 +323,9 @@ def json_match(context_data, response_data, json_fields=None, parent=None):
                 return False
         return True
     elif isinstance(context_data, list):
+        if len(context_data) == 0 and len(response_data) > 0:
+            print("expected empty list, but got {}".format(response_data))
+            return False
         for item_context in context_data:
             found = False
             for item_response in response_data:
