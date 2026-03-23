@@ -959,6 +959,7 @@ Feature: Rundowns
                 {
                     "title": "Rundown Title",
                     "matching_items": [
+                        {"title": "sample"}
                     ]
                 }
             ]
