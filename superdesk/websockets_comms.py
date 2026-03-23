@@ -19,8 +19,8 @@ import socket
 
 from uuid import UUID, uuid1
 from urllib.parse import urlparse, parse_qs
-from websockets.asyncio.server import ServerConnection, broadcast, serve
-from typing import Dict, Set, Optional, Union
+from websockets.asyncio.server import ServerConnection, broadcast, serve, Server
+from typing import Dict, Set, Optional, Union, Callable
 from superdesk.types import WebsocketMessageData, WebsocketMessageFilterConditions
 from sentry_sdk.consts import SPANSTATUS
 from sentry_sdk.integrations.asyncio import AsyncioIntegration
@@ -54,13 +54,17 @@ class SocketBrokerClient:
     """
 
     url: str
-    exchange_name: str
-    connection: Connection
+    exchange_name: str | None
+    connection: Connection | None
     socket_exchange: Exchange
 
-    def __init__(self, url, exchange_name):
+    def __init__(self, url: str, exchange_name: str | None, auto_connect: bool = True):
         self.url = url
-        self.connect()
+        self.connection = None
+
+        if auto_connect:
+            self.connect()
+
         self.exchange_name = exchange_name
         self.socket_exchange = Exchange(self.exchange_name, type="fanout")
 
@@ -163,28 +167,40 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
     Consumer of the message.
     """
 
-    queue: Queue
+    callback: Callable[[str], None]
+    queue: Queue | None
+    queue_name: str
+    loop: asyncio.AbstractEventLoop
+    kombu_thread_heartbeat: asyncio.Event
 
-    def __init__(self, url, callback, exchange_name):
+    def __init__(
+        self,
+        url: str,
+        callback: Callable[[str], None],
+        exchange_name: str | None,
+        loop: asyncio.AbstractEventLoop,
+        kombu_thread_heartbeat: asyncio.Event,
+    ):
         """Create consumer.
 
-        :param string url: Broker URL
-        :param string host: host name running the websocket server
+        :param url: Broker URL
         :param callback: callback function to call on message arrival
+        :param exchange_name: Kombu exchange name
+        :param loop: asyncio event loop
+        :param kombu_thread_heartbeat: asyncio event to signal heartbeat from kombu thread
         """
-        super().__init__(url, exchange_name)
+
+        super().__init__(url, exchange_name, auto_connect=False)
         self.callback = callback
+        self.queue = None
         self.queue_name = "websocket_queue_{}".format(get_random_string())
-        self.queue = Queue(
-            self.queue_name,
-            exchange=self.socket_exchange,
-            message_ttl=10,
-            expires=60,
-            channel=self.connection.channel(),
-            exclusive=True,
-        )
+        self.loop = loop
+        self.kombu_thread_heartbeat = kombu_thread_heartbeat
 
     def get_consumers(self, Consumer, channel):
+        if not self.queue:
+            raise RuntimeError("Queue is not initialized, was ``connect`` called?")
+
         return [Consumer(queues=[self.queue], callbacks=[self.on_message])]
 
     def on_message(self, body, message):
@@ -200,7 +216,7 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
             name="queue_consumer_transaction",
         )
         with sentry_sdk.start_transaction(transaction):
-            logger.debug("Queue: {}. Broadcasting message {}".format(self.queue.name, body))
+            logger.debug("Queue: {}. Broadcasting message {}".format(self.queue_name, body))
             with sentry_sdk.start_span(op="queue.process", name="queue_consumer") as span:
                 span.set_data("messaging.message.id", message.headers.get("message-id", ""))
                 span.set_data("messaging.destination.name", self.exchange_name)
@@ -249,6 +265,22 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
 
         super().on_iteration()
         logger.debug("Consumer iterating")
+        self.loop.call_soon_threadsafe(self.kombu_thread_heartbeat.set)
+
+    def connect(self):
+        super().connect()
+        self.queue = Queue(
+            self.queue_name,
+            exchange=self.socket_exchange,
+            message_ttl=10,
+            expires=60,
+            channel=self.connection.channel(),
+            exclusive=True,
+        )
+
+    def run(self, *args, **kwargs):
+        self.connect()
+        super().run(*args, **kwargs)
 
 
 class SocketCommunication:
@@ -257,13 +289,17 @@ class SocketCommunication:
     """
 
     clients: Set[ServerConnection]
+    consumer: SocketMessageConsumer | None
+    server: Server | None
+    should_stop: bool
+    kombu_thread_heartbeat: asyncio.Event | None
 
     def __init__(
         self,
         host: str,
         port: Union[int, str],
         broker_url: str,
-        exchange_name: Optional[str] = None,
+        exchange_name: str | None = None,
         subscribe_prefix: str = "/subscribe?",
         *,
         sentry_dsn: Optional[str] = None,
@@ -287,6 +323,10 @@ class SocketCommunication:
         self.sentry_dsn = sentry_dsn
         self.sentry_traces_sample_rate = sentry_traces_sample_rate
         self.debug = debug
+        self.should_stop = False
+        self.server = None
+        self.consumer = None
+        self.kombu_thread_heartbeat = None
 
     def _add_client(self, websocket: ServerConnection):
         self.clients.add(websocket)
@@ -405,9 +445,89 @@ class SocketCommunication:
             self._remove_client(websocket)
             self._log("client done", websocket)
 
+    async def run_consumer_thread_loop(self, loop: asyncio.AbstractEventLoop) -> None:
+        """Runs the consumer in a separate thread loop and manages its lifecycle.
+
+        This asynchronous method starts a message consumer thread using a
+        SocketMessageConsumer instance, monitors its heartbeat through an asyncio
+        event, and handles its restart as needed. The loop keeps the consumer operational
+        and stops it gracefully when the `should_stop` flag is set to True.
+
+        :param loop: The asyncio event loop within which the consumer thread is executed.
+        """
+
+        started: bool = False
+        while not self.should_stop:
+            logger.info(f"{'Starting' if not started else 'Restarting'} message consumer")
+            started = True
+
+            # create socket message consumer and run it in a thread
+            self.kombu_thread_heartbeat = asyncio.Event()
+            self.consumer = SocketMessageConsumer(
+                self.broker_url, self.broadcast, self.exchange_name, loop, self.kombu_thread_heartbeat
+            )
+            loop.run_in_executor(None, self.consumer.run)
+
+            # Run the heartbeat checker (Kombu thread -> main thread heartbeat)
+            await self._run_kombu_thread_heartbeat_checker()
+
+            logger.info("Stopping message consumer")
+            if self.consumer:
+                # It could have been cleared aready
+                self.consumer.close()
+                self.consumer = None
+
+    async def _run_kombu_thread_heartbeat_checker(self) -> None:
+        """Runs a periodic checker for the Kombu thread heartbeat.
+
+        This method repeatedly waits for the Kombu thread heartbeat event to be set,
+        with a specified timeout defined by the WS_CONSUMER_THREAD_TIMEOUT environment
+        variable. If the event does not occur within the timeout period, a warning is
+        logged, and the loop terminates. The heartbeat event is cleared after each
+        check.
+        """
+
+        if self.kombu_thread_heartbeat is None:
+            raise RuntimeError("Kombu thread heartbeat is not set.")
+
+        while not self.should_stop:
+            try:
+                await asyncio.wait_for(
+                    self.kombu_thread_heartbeat.wait(), timeout=int(env("WS_CONSUMER_THREAD_TIMEOUT", 60))
+                )
+            except asyncio.TimeoutError:
+                logger.warning("wait_for_iteration: Timed out....")
+                break
+            finally:
+                if self.kombu_thread_heartbeat:
+                    # It could have been cleared before this is run
+                    self.kombu_thread_heartbeat.clear()
+
     def run_server(self):
         """Run websocket server."""
         asyncio.run(self.main())
+
+    def stop(self) -> None:
+        """Stops the websocket server and cleans up associated resources.
+
+        This method stops the running websocket server and cleans up the
+        consumer, if active. It also signals the kombu thread heartbeat so it
+        can be terminated.
+        """
+
+        logger.info("Stopping websocket server")
+        self.should_stop = True
+        if self.server:
+            self.server.close()
+            self.server = None
+
+        if self.kombu_thread_heartbeat:
+            self.kombu_thread_heartbeat.set()
+            self.kombu_thread_heartbeat = None
+
+        if self.consumer:
+            self.consumer.close()
+            self.consumer = None
 
     async def main(self):
         """Create websocket server and run it until it gets Ctrl+C or SIGTERM."""
@@ -418,18 +538,12 @@ class SocketCommunication:
                 traces_sample_rate=self.sentry_traces_sample_rate,
             )
         try:
-            consumer = None
             async with serve(self._connection_handler, self.host, self.port) as server:
+                self.server = server
                 loop = asyncio.get_event_loop()
-                loop.add_signal_handler(signal.SIGTERM, server.close)
-                # create socket message consumer
-                consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
-                # kombu is blocking so needs to run in executor
-                loop.run_in_executor(None, consumer.run)
-                await server.wait_closed()
+                loop.add_signal_handler(signal.SIGTERM, self.stop)
+                await self.run_consumer_thread_loop(loop)
         except KeyboardInterrupt:
             pass
         finally:
-            logger.info("closing server")
-            if consumer:
-                consumer.close()
+            self.stop()
