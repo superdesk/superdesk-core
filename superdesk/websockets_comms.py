@@ -104,9 +104,8 @@ class SocketBrokerClient:
             heartbeat=WS_HEART_BEAT,
             transport_options={
                 "socket_connect_timeout": float(env("WS_REDIS_CONNECT_TIMEOUT", 2)),
-                # If no message has been consumed in 10 minutes, allow health check to run
-                # otherwise consumer loop hangs indefinitely on read timeout
-                "socket_timeout": float(env("WS_REDIS_TIMEOUT", 600)),
+                # Set a read timeout of 2 minutes, and to retry upon said timeout
+                "socket_timeout": float(env("WS_REDIS_TIMEOUT", 120)),
                 "retry_on_timeout": True,
                 # Enable TCP keepalive
                 "socket_keepalive": True,
