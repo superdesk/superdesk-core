@@ -300,6 +300,47 @@ This should be only enabled when you have dedicated worker running::
 
     $ celery -A worker worker -Q publish_priority
 
+
+.. _settings.ws:
+
+Websocket Server Settings
+-------------------------
+
+``WS_HOST``
+^^^^^^^^^^^
+
+Default: ``'0.0.0.0'``
+
+``WS_PORT``
+^^^^^^^^^^^
+
+Default: ``5100``
+
+``WS_REDIS_CONNECT_TIMEOUT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``2``
+
+``WS_REDIS_TIMEOUT``
+^^^^^^^^^^^^^^^^^^^^
+
+Default: ``120``
+
+``WS_REDIS_KEEPALIVE_IDLE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``30``
+
+``WS_REDIS_KEEPALIVE_INTERVAL``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``10``
+
+``WS_REDIS_KEEPALIVE_COUNT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``3``
+
 .. _settings.monitoring:
 
 Monitoring settings

@@ -37,7 +37,14 @@ from kombu.utils.debug import setup_logging
 
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string, json_serialize_datetime_objectId
-from superdesk.default_settings import WS_HEART_BEAT, env
+from superdesk.default_settings import (
+    WS_HEART_BEAT,
+    WS_REDIS_KEEPALIVE_IDLE,
+    WS_REDIS_KEEPALIVE_INTERVAL,
+    WS_REDIS_KEEPALIVE_COUNT,
+    WS_REDIS_CONNECT_TIMEOUT,
+    WS_REDIS_TIMEOUT,
+)
 
 
 logging.basicConfig(level=logging.INFO)
@@ -73,41 +80,39 @@ class SocketBrokerClient:
         """
         return self.connection and self.connection.connected
 
-    def connect(self):
-        self._close()
-        logger.info("Connecting to broker {}".format(self.url))
-
+    def _get_transport_options(self) -> dict:
         keepalive_options = {}
 
         # Start probing after 30s idle
-        if tcp_keepidle := getattr(socket, "TCP_KEEPIDLE", None) is not None:
+        if (tcp_keepidle := getattr(socket, "TCP_KEEPIDLE", None)) is not None:
             # Start probing after 30s idle (Linux)
-            keepalive_options[tcp_keepidle] = env("WS_REDIS_KEEPALIVE_IDLE", 30)
-        elif tcp_keepalive := getattr(socket, "TCP_KEEPALIVE", None) is not None:
+            keepalive_options[tcp_keepidle] = WS_REDIS_KEEPALIVE_IDLE
+        elif (tcp_keepalive := getattr(socket, "TCP_KEEPALIVE", None)) is not None:
             # Start probing after 30s idle (MacOS)
-            keepalive_options[tcp_keepalive] = env("WS_REDIS_KEEPALIVE_IDLE", 30)
+            keepalive_options[tcp_keepalive] = WS_REDIS_KEEPALIVE_IDLE
 
-        if tcp_keepintvl := getattr(socket, "TCP_KEEPINTVL", None) is not None:
+        if (tcp_keepintvl := getattr(socket, "TCP_KEEPINTVL", None)) is not None:
             # Probe every 10s after that
-            keepalive_options[tcp_keepintvl] = env("WS_REDIS_KEEPALIVE_INTERVAL", 10)
+            keepalive_options[tcp_keepintvl] = WS_REDIS_KEEPALIVE_INTERVAL
 
-        if tcp_keepcnt := getattr(socket, "TCP_KEEPCNT", None) is not None:
+        if (tcp_keepcnt := getattr(socket, "TCP_KEEPCNT", None)) is not None:
             # Kill connection after 3 failed probes
-            keepalive_options[tcp_keepcnt] = env("WS_REDIS_KEEPALIVE_COUNT", 3)
+            keepalive_options[tcp_keepcnt] = WS_REDIS_KEEPALIVE_COUNT
 
-        self.connection = Connection(
-            self.url,
-            heartbeat=WS_HEART_BEAT,
-            transport_options={
-                "socket_connect_timeout": float(env("WS_REDIS_CONNECT_TIMEOUT", 2)),
-                # Set a read timeout of 2 minutes, and to retry upon said timeout
-                "socket_timeout": float(env("WS_REDIS_TIMEOUT", 120)),
-                "retry_on_timeout": True,
-                # Enable TCP keepalive
-                "socket_keepalive": True,
-                "socket_keepalive_options": keepalive_options,
-            },
-        )
+        return {
+            "socket_connect_timeout": WS_REDIS_CONNECT_TIMEOUT,
+            # Set a read timeout of 2 minutes, and to retry upon said timeout
+            "socket_timeout": WS_REDIS_TIMEOUT,
+            "retry_on_timeout": True,
+            # Enable TCP keepalive
+            "socket_keepalive": True,
+            "socket_keepalive_options": keepalive_options,
+        }
+
+    def connect(self):
+        self._close()
+        logger.info("Connecting to broker {}".format(self.url))
+        self.connection = Connection(self.url, heartbeat=WS_HEART_BEAT, transport_options=self._get_transport_options())
         logger.info("Connected to broker {}".format(self.url))
 
     def _close(self):

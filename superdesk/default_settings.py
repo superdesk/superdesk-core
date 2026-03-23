@@ -903,8 +903,38 @@ MACROS_MODULE = env("MACROS_MODULE", "superdesk.macros")
 WS_HOST = env("WSHOST", "0.0.0.0")
 WS_PORT = env("WSPORT", "5100")
 
-# Used by the  Kombu Connection. Only valid for the AMQP protocol
+# Used by the Kombu Connection. Only valid for the AMQP protocol
 WS_HEART_BEAT = int(env("WS_HEARTBEAT", "0"))
+
+#: Websocket Redis connection timeout
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_CONNECT_TIMEOUT = float(env("WS_REDIS_CONNECT_TIMEOUT", 2))
+
+#: Websocket Redis read/write timeout
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_TIMEOUT = float(env("WS_REDIS_TIMEOUT", 120))
+
+#: Websocket Redis TCP Keepalive Idle param
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_KEEPALIVE_IDLE = int(env("WS_REDIS_KEEPALIVE_IDLE", 30))
+
+#: Websocket Redis TCP Keepalive Interval param
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_KEEPALIVE_INTERVAL = int(env("WS_REDIS_KEEPALIVE_INTERVAL", 10))
+
+#: Websocket Redis TCP Keepalive Count param
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_KEEPALIVE_COUNT = int(env("WS_REDIS_KEEPALIVE_COUNT", 3))
 
 #: Defines the maximum value of Publish Sequence Number after which the value will start from 1
 MAX_VALUE_OF_PUBLISH_SEQUENCE = int(env("MAX_VALUE_OF_PUBLISH_SEQUENCE", 9999))
