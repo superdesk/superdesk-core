@@ -37,7 +37,21 @@ Feature: Places
             "GEONAMES_FEATURE_CLASSES": ["P", "A"]
         }
         """
-        When we get "/places_autocomplete?name=brno&lang=cs"
-        Then we get list with 10+ items
-        When we get "/places_autocomplete?name=brno&lang=cs&featureClass=P"
-        Then we get list with 5+ items
+        When we get "/places_autocomplete?name=jihomoravsky&lang=cs"
+        Then we get list with 1+ items
+        """
+        {
+            "_items": [
+                {
+                    "code": "3339536",
+                    "country_code": "CZ",
+                    "feature_class": "A",
+                    "name": "Jihomoravsk\u00fd",
+                    "scheme": "geonames",
+                    "state_code": "78"
+                }
+            ]
+        }
+        """
+        When we get "/places_autocomplete?name=jihomoravsky&lang=cs&featureClass=P"
+        Then we get list with 0 items
