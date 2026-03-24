@@ -341,6 +341,11 @@ Default: ``10``
 
 Default: ``3``
 
+``WS_DEBUG``
+^^^^^^^^^^^^
+
+Default: ``False``
+
 .. _settings.monitoring:
 
 Monitoring settings

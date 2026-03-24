@@ -44,6 +44,7 @@ from superdesk.default_settings import (
     WS_REDIS_KEEPALIVE_COUNT,
     WS_REDIS_CONNECT_TIMEOUT,
     WS_REDIS_TIMEOUT,
+    WS_DEBUG,
 )
 
 
@@ -51,8 +52,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-logging.getLogger("websockets").setLevel(logging.INFO)
-setup_logging(logging.INFO)
+if WS_DEBUG:
+    logging.getLogger("websockets").setLevel(logging.INFO)
+    setup_logging(logging.INFO)
+else:
+    logging.getLogger("websockets").setLevel(logging.WARNING)
+    setup_logging(logging.WARNING)
 
 
 class SocketBrokerClient:
@@ -272,7 +277,7 @@ class SocketCommunication:
         *,
         sentry_dsn: Optional[str] = None,
         sentry_traces_sample_rate: Optional[float] = None,
-        debug: bool = False,
+        debug: bool | None = None,
     ):
         self.host = host
         self.port = int(port)
@@ -290,7 +295,7 @@ class SocketCommunication:
         }
         self.sentry_dsn = sentry_dsn
         self.sentry_traces_sample_rate = sentry_traces_sample_rate
-        self.debug = debug
+        self.debug = WS_DEBUG if debug is None else debug
 
     def _add_client(self, websocket: ServerConnection):
         self.clients.add(websocket)

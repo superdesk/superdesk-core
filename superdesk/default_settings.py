@@ -936,6 +936,12 @@ WS_REDIS_KEEPALIVE_INTERVAL = int(env("WS_REDIS_KEEPALIVE_INTERVAL", 10))
 #:
 WS_REDIS_KEEPALIVE_COUNT = int(env("WS_REDIS_KEEPALIVE_COUNT", 3))
 
+#: Set Websocket server to run in debug mode
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_DEBUG = strtobool(env("WS_DEBUG", "False"))
+
 #: Defines the maximum value of Publish Sequence Number after which the value will start from 1
 MAX_VALUE_OF_PUBLISH_SEQUENCE = int(env("MAX_VALUE_OF_PUBLISH_SEQUENCE", 9999))
 
