@@ -175,7 +175,7 @@ class WebsocketsTestCase(unittest.TestCase):
             client._get_transport_options(),
             {
                 "socket_connect_timeout": 2,
-                "socket_timeout": 120,
+                "socket_timeout": 10,
                 "retry_on_timeout": True,
                 "socket_keepalive": True,
                 "socket_keepalive_options": {

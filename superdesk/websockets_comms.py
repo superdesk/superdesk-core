@@ -106,7 +106,7 @@ class SocketBrokerClient:
 
         return {
             "socket_connect_timeout": WS_REDIS_CONNECT_TIMEOUT,
-            # Set a read timeout of 2 minutes, and to retry upon said timeout
+            # Set a read timeout of 10 seconds, and to retry upon said timeout
             "socket_timeout": WS_REDIS_TIMEOUT,
             "retry_on_timeout": True,
             # Enable TCP keepalive

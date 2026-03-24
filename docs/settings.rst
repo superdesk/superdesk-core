@@ -324,7 +324,7 @@ Default: ``2``
 ``WS_REDIS_TIMEOUT``
 ^^^^^^^^^^^^^^^^^^^^
 
-Default: ``120``
+Default: ``10``
 
 ``WS_REDIS_KEEPALIVE_IDLE``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^

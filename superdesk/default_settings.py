@@ -916,7 +916,7 @@ WS_REDIS_CONNECT_TIMEOUT = float(env("WS_REDIS_CONNECT_TIMEOUT", 2))
 #:
 #: .. versionadded:: 2.11, 3.1, 3.4
 #:
-WS_REDIS_TIMEOUT = float(env("WS_REDIS_TIMEOUT", 120))
+WS_REDIS_TIMEOUT = float(env("WS_REDIS_TIMEOUT", 10))
 
 #: Websocket Redis TCP Keepalive Idle param
 #:
