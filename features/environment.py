@@ -9,27 +9,32 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from superdesk.tests.environment import *  # noqa
-from superdesk.tests import environment as _base_env
-
 import json
 import os
 import re
 import responses as responses_lib
+
+from typing import Any
 from urllib.parse import urlparse, parse_qs
+from superdesk.tests import environment as _base_env
+
+setup_before_all = _base_env.setup_before_all
+before_all = _base_env.before_all
+before_feature = _base_env.before_feature
+before_step = _base_env.before_step
 
 _FIXTURES_DIR = os.path.join(os.path.dirname(__file__), "steps", "fixtures")
 
 
-def _load_fixture(filename):
-    with open(os.path.join(_FIXTURES_DIR, filename)) as f:
+def _load_fixture(filename: str) -> list[dict[str, Any]]:
+    with open(os.path.join(_FIXTURES_DIR, filename), encoding="utf-8") as f:
         return json.load(f)
 
 
-def _geonames_search_callback(request):
+def _geonames_search_callback(request: Any) -> tuple[int, dict[str, str], str]:
     params = parse_qs(urlparse(request.url).query)
     feature_classes = {fc.upper() for fc in params.get("featureClass", [])}
-    items = []
+    items: list[dict[str, Any]] = []
     if "P" in feature_classes:
         items.extend(_load_fixture("geonames_search_P.json"))
     if "A" in feature_classes:
