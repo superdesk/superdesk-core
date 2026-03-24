@@ -15,6 +15,7 @@ import logging
 import asyncio
 import signal
 import sentry_sdk
+import socket
 
 from uuid import UUID, uuid1
 from urllib.parse import urlparse, parse_qs
@@ -31,21 +32,32 @@ from kombu.pools import producers
 
 from superdesk.core import json
 
-from kombu.common import Broadcast
 from kombu.utils.debug import setup_logging
 
 
 from superdesk.utc import utcnow
 from superdesk.utils import get_random_string, json_serialize_datetime_objectId
-from superdesk.default_settings import WS_HEART_BEAT
+from superdesk.default_settings import (
+    WS_HEART_BEAT,
+    WS_REDIS_KEEPALIVE_IDLE,
+    WS_REDIS_KEEPALIVE_INTERVAL,
+    WS_REDIS_KEEPALIVE_COUNT,
+    WS_REDIS_CONNECT_TIMEOUT,
+    WS_REDIS_TIMEOUT,
+    WS_DEBUG,
+)
 
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-logging.getLogger("websockets").setLevel(logging.WARNING)
-setup_logging(logging.WARNING)
+if WS_DEBUG:
+    logging.getLogger("websockets").setLevel(logging.INFO)
+    setup_logging(logging.INFO)
+else:
+    logging.getLogger("websockets").setLevel(logging.WARNING)
+    setup_logging(logging.WARNING)
 
 
 class SocketBrokerClient:
@@ -73,10 +85,39 @@ class SocketBrokerClient:
         """
         return self.connection and self.connection.connected
 
+    def _get_transport_options(self) -> dict:
+        keepalive_options = {}
+
+        # Start probing after 30s idle
+        if (tcp_keepidle := getattr(socket, "TCP_KEEPIDLE", None)) is not None:
+            # Start probing after 30s idle (Linux)
+            keepalive_options[tcp_keepidle] = WS_REDIS_KEEPALIVE_IDLE
+        elif (tcp_keepalive := getattr(socket, "TCP_KEEPALIVE", None)) is not None:
+            # Start probing after 30s idle (MacOS)
+            keepalive_options[tcp_keepalive] = WS_REDIS_KEEPALIVE_IDLE
+
+        if (tcp_keepintvl := getattr(socket, "TCP_KEEPINTVL", None)) is not None:
+            # Probe every 10s after that
+            keepalive_options[tcp_keepintvl] = WS_REDIS_KEEPALIVE_INTERVAL
+
+        if (tcp_keepcnt := getattr(socket, "TCP_KEEPCNT", None)) is not None:
+            # Kill connection after 3 failed probes
+            keepalive_options[tcp_keepcnt] = WS_REDIS_KEEPALIVE_COUNT
+
+        return {
+            "socket_connect_timeout": WS_REDIS_CONNECT_TIMEOUT,
+            # Set a read timeout of 10 seconds, and to retry upon said timeout
+            "socket_timeout": WS_REDIS_TIMEOUT,
+            "retry_on_timeout": True,
+            # Enable TCP keepalive
+            "socket_keepalive": True,
+            "socket_keepalive_options": keepalive_options,
+        }
+
     def connect(self):
         self._close()
         logger.info("Connecting to broker {}".format(self.url))
-        self.connection = Connection(self.url, heartbeat=WS_HEART_BEAT)
+        self.connection = Connection(self.url, heartbeat=WS_HEART_BEAT, transport_options=self._get_transport_options())
         logger.info("Connected to broker {}".format(self.url))
 
     def _close(self):
@@ -194,6 +235,30 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         super().close()
         logger.info("consumer terminated successfully")
 
+    def on_connection_revived(self):
+        """Handler called as soon as the connection is re-established after connection failure."""
+
+        super().on_connection_revived()
+        logger.info("Consumer connection re-established after previous failure")
+
+    def on_consume_ready(self, connection, channel, consumers, **kwargs):
+        """Handler called when the consumer is ready to accept messages."""
+
+        super().on_consume_ready(connection, channel, consumers, **kwargs)
+        logger.info("Consumer ready to accept messages")
+
+    def on_consume_end(self, connection, channel):
+        """Handler called after the consumers are canceled."""
+
+        super().on_consume_end(connection, channel)
+        logger.info("Consumers canceled")
+
+    def on_iteration(self):
+        """Handler called for every iteration while draining events."""
+
+        super().on_iteration()
+        logger.debug("Consumer iterating")
+
 
 class SocketCommunication:
     """
@@ -212,7 +277,7 @@ class SocketCommunication:
         *,
         sentry_dsn: Optional[str] = None,
         sentry_traces_sample_rate: Optional[float] = None,
-        debug: bool = False,
+        debug: bool | None = None,
     ):
         self.host = host
         self.port = int(port)
@@ -230,7 +295,7 @@ class SocketCommunication:
         }
         self.sentry_dsn = sentry_dsn
         self.sentry_traces_sample_rate = sentry_traces_sample_rate
-        self.debug = debug
+        self.debug = WS_DEBUG if debug is None else debug
 
     def _add_client(self, websocket: ServerConnection):
         self.clients.add(websocket)
