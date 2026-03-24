@@ -1,14 +1,17 @@
-from typing import List
-import asyncio
 import unittest
 from unittest.mock import MagicMock, patch, ANY
 from json import dumps
 from datetime import datetime, timedelta
 from uuid import uuid4
-from superdesk.websockets_comms import SocketCommunication
+import socket
+import importlib
+
+from superdesk import default_settings
+from superdesk import websockets_comms
+
+# from superdesk.websockets_comms import SocketCommunication, SocketBrokerClient
 from superdesk.types import WebsocketMessageData
-from websockets import ServerConnection, ServerProtocol
-from websockets.protocol import OPEN
+from websockets import ServerConnection
 
 
 class TestClient(ServerConnection):
@@ -22,7 +25,7 @@ class WebsocketsTestCase(unittest.TestCase):
     @patch("superdesk.websockets_comms.broadcast")
     def test_broadcast(self, broadcast_mock):
         client = TestClient("")
-        com = SocketCommunication("host", "1", "url")
+        com = websockets_comms.SocketCommunication("host", "1", "url")
         com.clients.add(client)
 
         com.broadcast(dumps({"event": "ingest:update", "_created": datetime.now().isoformat()}))
@@ -49,7 +52,7 @@ class WebsocketsTestCase(unittest.TestCase):
         client_user_abc123_sess_67890 = TestClient("/ws/subscribe?user=abc123&session=67890")
         client_user_def456 = TestClient("/ws/subscribe?user=def456")
 
-        com = SocketCommunication("host", "1", "url")
+        com = websockets_comms.SocketCommunication("host", "1", "url")
         com._add_client(client_no_user)
         com._add_client(client_user_abc123_sess_12345)
         com._add_client(client_user_abc123_sess_67890)
@@ -165,3 +168,50 @@ class WebsocketsTestCase(unittest.TestCase):
             ),
             ANY,
         )
+
+    def test_client_transport_options(self):
+        client = websockets_comms.SocketBrokerClient("redis://localhost:6379", "superdesk_notification")
+        self.assertEqual(
+            client._get_transport_options(),
+            {
+                "socket_connect_timeout": 2,
+                "socket_timeout": 10,
+                "retry_on_timeout": True,
+                "socket_keepalive": True,
+                "socket_keepalive_options": {
+                    socket.TCP_KEEPIDLE: 30,
+                    socket.TCP_KEEPINTVL: 10,
+                    socket.TCP_KEEPCNT: 3,
+                },
+            },
+        )
+
+    def test_client_transport_options_with_env_vars(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "WS_REDIS_CONNECT_TIMEOUT": "5",
+                "WS_REDIS_TIMEOUT": "240",
+                "WS_REDIS_KEEPALIVE_IDLE": "60",
+                "WS_REDIS_KEEPALIVE_INTERVAL": "30",
+                "WS_REDIS_KEEPALIVE_COUNT": "6",
+            },
+            clear=False,
+        ):
+            importlib.reload(default_settings)
+            importlib.reload(websockets_comms)
+            client = websockets_comms.SocketBrokerClient("redis://localhost:6379", "superdesk_notification")
+            self.assertEqual(
+                client._get_transport_options(),
+                {
+                    "socket_connect_timeout": 5,
+                    "socket_timeout": 240,
+                    "retry_on_timeout": True,
+                    "socket_keepalive": True,
+                    "socket_keepalive_options": {
+                        socket.TCP_KEEPIDLE: 60,
+                        socket.TCP_KEEPINTVL: 30,
+                        socket.TCP_KEEPCNT: 6,
+                    },
+                },
+            )
