@@ -54,7 +54,7 @@ class PublishQueueResource(ResourceModelWithObjectId):
     moved_to_legal: bool = False
     retry_attempt: int = 0
     next_retry_attempt_at: datetime | None = None
-    ingest_provider: Annotated[fields.ObjectId | None, validate_data_relation_async("ingest_providers")] = None
+    ingest_provider: fields.ObjectId | None = None
     associated_items: list[str] | None = None
     priority: bool | None = None
 
