@@ -1,0 +1,44 @@
+[
+    {
+        "geonameId": 3073490,
+        "name": "Kobe\u0159ice",
+        "lat": "49.98548",
+        "lng": "18.05212",
+        "fcl": "A",
+        "countryCode": "CZ",
+        "countryName": "\u010cesko",
+        "adminCode1": "85",
+        "adminName1": "Moravskoslezsk\u00fd kraj",
+        "adminCode2": "",
+        "adminName2": "",
+        "continentCode": ""
+    },
+    {
+        "geonameId": 3073491,
+        "name": "Kobe\u0159ice",
+        "lat": "49.3719",
+        "lng": "17.11262",
+        "fcl": "A",
+        "countryCode": "CZ",
+        "countryName": "\u010cesko",
+        "adminCode1": "84",
+        "adminName1": "Olomouck\u00fd kraj",
+        "adminCode2": "",
+        "adminName2": "",
+        "continentCode": ""
+    },
+    {
+        "geonameId": 3073492,
+        "name": "Kobe\u0159ice",
+        "lat": "49.08713",
+        "lng": "16.88324",
+        "fcl": "A",
+        "countryCode": "CZ",
+        "countryName": "\u010cesko",
+        "adminCode1": "78",
+        "adminName1": "Jihomoravsk\u00fd kraj",
+        "adminCode2": "",
+        "adminName2": "",
+        "continentCode": ""
+    }
+]
