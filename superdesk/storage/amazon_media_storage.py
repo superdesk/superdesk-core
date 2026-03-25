@@ -22,6 +22,7 @@ from io import BytesIO
 
 from os.path import splitext
 from urllib.parse import urlparse
+from botocore.exceptions import ClientError
 from botocore.client import Config
 from werkzeug.datastructures import Range, FileStorage
 
@@ -482,17 +483,25 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         try:
             self.call("head_object", Key=id_or_filename)
             return True
-        except Exception:
-            # File not found
-            return False
+        except ClientError as error:
+            try:
+                if error.response["Error"]["Code"] == "404":
+                    return False
+            except (KeyError, TypeError, IndexError):
+                pass
+            raise
 
     async def _check_exists_async(self, id_or_filename):
         try:
             await self.call_async("head_object", Key=id_or_filename)
             return True
-        except Exception:
-            # File not found
-            return False
+        except ClientError as error:
+            try:
+                if error.response["Error"]["Code"] == "404":
+                    return False
+            except (KeyError, TypeError, IndexError):
+                pass
+            raise
 
     def remove_unreferenced_files(self, existing_files, resource=None):
         """Get the files from S3 and compare against existing and delete the orphans."""
