@@ -26,6 +26,7 @@ from botocore.exceptions import ClientError
 from botocore.client import Config
 from werkzeug.datastructures import Range, FileStorage
 
+from superdesk.core import get_config
 from superdesk.core.types import SuperdeskFile, SuperdeskAsyncFile
 from superdesk.media.media_operations import download_file_from_url, download_file_from_url_async, guess_media_extension
 from superdesk.utc import query_datetime
@@ -483,25 +484,35 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         try:
             self.call("head_object", Key=id_or_filename)
             return True
-        except ClientError as error:
+        except Exception as error:
             try:
-                if error.response["Error"]["Code"] == "404":
+                if isinstance(error, ClientError) and error.response["Error"]["Code"] == "404":
                     return False
             except (KeyError, TypeError, IndexError):
                 pass
-            raise
+
+            if get_config(bool, "SUPERDESK_DEBUG", False):
+                raise
+
+            logger.exception(error)
+            return False
 
     async def _check_exists_async(self, id_or_filename):
         try:
             await self.call_async("head_object", Key=id_or_filename)
             return True
-        except ClientError as error:
+        except Exception as error:
             try:
-                if error.response["Error"]["Code"] == "404":
+                if isinstance(error, ClientError) and error.response["Error"]["Code"] == "404":
                     return False
             except (KeyError, TypeError, IndexError):
                 pass
-            raise
+
+            if get_config(bool, "SUPERDESK_DEBUG", False):
+                raise
+
+            logger.exception(error)
+            return False
 
     def remove_unreferenced_files(self, existing_files, resource=None):
         """Get the files from S3 and compare against existing and delete the orphans."""
