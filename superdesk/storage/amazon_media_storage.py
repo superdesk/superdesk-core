@@ -24,6 +24,7 @@ from os.path import splitext
 from urllib.parse import urlparse
 from botocore.exceptions import ClientError
 from botocore.client import Config
+from aiobotocore.config import AioConfig
 from werkzeug.datastructures import Range, FileStorage
 
 from superdesk.core import get_config
@@ -88,17 +89,41 @@ class AmazonObjectAsyncWrapper(SuperdeskAsyncFile):
 class AmazonMediaStorage(SuperdeskMediaStorage):
     def __init__(self, app=None):
         super().__init__(app)
-        self.connection_kwargs = dict(
+        self.client = boto3.client("s3", **self._get_connection_kwargs(False))
+        self.session_async = aioboto3.Session()
+        self.user_metadata_header = "x-amz-meta-"
+
+    def _get_connection_kwargs(self, for_async: bool) -> dict:
+        """Generates a dictionary of connection keyword arguments for Amazon S3.
+
+        This method constructs and returns a dictionary of parameters required
+        for establishing a connection to Amazon S3. The parameters include
+        authorization credentials, timeouts, retry policies, and other settings.
+
+        .. note::
+            Even though ``tcp_keepalive`` is set to ``True``, the connection will use the OS default settings.
+            For Linux this is usually set to 2 hours, which is not suitable for production environments,
+            and can lead to the connection being dropped before the keepalive packets are sent.
+            See: https://github.com/boto/botocore/issues/2916
+
+        :param for_async: Indicates whether the connection will be used in an asynchronous context
+        :return: dict: A dictionary containing the connection configuration parameters for S3.
+        """
+
+        config_kwargs = dict(
+            connect_timeout=self.app.config.get("AMAZON_S3_CONNECT_TIMEOUT", 2),
+            read_timeout=self.app.config.get("AMAZON_S3_READ_TIMEOUT", 30),
+            retries={"mode": "standard", "max_attempts": self.app.config.get("AMAZON_S3_MAX_RETRIES", 3)},
+            signature_version="s3v4",
+            tcp_keepalive=True,
+        )
+        return dict(
             aws_access_key_id=self.app.config["AMAZON_ACCESS_KEY_ID"],
             aws_secret_access_key=self.app.config["AMAZON_SECRET_ACCESS_KEY"],
             region_name=self.app.config.get("AMAZON_REGION"),
-            config=Config(signature_version="s3v4"),
             endpoint_url=self.app.config["AMAZON_ENDPOINT_URL"] or None,
+            config=AioConfig(**config_kwargs) if for_async else Config(**config_kwargs),
         )
-        self.client = boto3.client("s3", **self.connection_kwargs)
-        self.session_async = aioboto3.Session()
-        self.client_async = None
-        self.user_metadata_header = "x-amz-meta-"
 
     def url_for_media(self, media_id, content_type=None):
         return self.app.upload_url(str(media_id))
@@ -196,10 +221,8 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         if "Key" in kw:
             kw["Key"] = self.get_key(kw["Key"])
 
-        if not self.client_async:
-            self.client_async = await self.session_async.client("s3", **self.connection_kwargs).__aenter__()
-
-        return await getattr(self.client_async, method)(**kw)
+        async with self.session_async.client("s3", **self._get_connection_kwargs(True)):
+            return await getattr(boto3.client, method)(**kw)
 
     def get_key(self, key):
         subfolder = self.app.config.get("AMAZON_S3_SUBFOLDER", "false")
@@ -220,6 +243,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
                 metadata = self.extract_metadata_from_headers(obj["Metadata"])
                 return AmazonObjectWrapper(obj, id_or_filename, metadata)
         except Exception:
+            logger.exception("Exception while getting object from S3")
             return None
         return None
 
