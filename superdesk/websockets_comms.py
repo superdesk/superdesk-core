@@ -182,11 +182,11 @@ class SocketMessageConsumer(SocketBrokerClient, ConsumerMixin):
         self.queue_name = "websocket_queue_{}".format(get_random_string())
         self.queue = Queue(
             self.queue_name,
-            exchange = self.socket_exchange,
-            message_ttl = 10,
-            expires = 60,
-            channel = self.connection.channel(),
-            exclusive = True,
+            exchange=self.socket_exchange,
+            message_ttl=10,
+            expires=60,
+            channel=self.connection.channel(),
+            exclusive=True,
         )
         logger.info("Websocket queue created %s", self.queue.name)
 
