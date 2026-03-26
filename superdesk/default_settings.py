@@ -606,6 +606,12 @@ AMAZON_S3_SUBFOLDER = env("AMAZON_S3_SUBFOLDER", "")
 AMAZON_OBJECT_ACL = env("AMAZON_OBJECT_ACL", "")
 #: amazon endpoint. This can be used with third-party s3-compatible servers
 AMAZON_ENDPOINT_URL = env("AMAZON_ENDPOINT_URL", "")
+#: Amazon S3 connect timeout
+AMAZON_S3_CONNECT_TIMEOUT = int(env("AMAZON_S3_CONNECT_TIMEOUT", 2))
+#: Amazon S3 read timeout
+AMAZON_S3_READ_TIMEOUT = int(env("AMAZON_S3_READ_TIMEOUT", 30))
+#: Amazon S3 max retries
+AMAZON_S3_MAX_RETRIES = int(env("AMAZON_S3_MAX_RETRIES", 3))
 
 RENDITIONS = {
     "picture": {
