@@ -91,8 +91,6 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         super().__init__(app)
         self.client = boto3.client("s3", **self._get_connection_kwargs(False))
         self.session_async = aioboto3.Session()
-        self._client_async_context = None
-        self.client_async = None
         self.user_metadata_header = "x-amz-meta-"
 
     def _get_connection_kwargs(self, for_async: bool) -> dict:
@@ -223,11 +221,8 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         if "Key" in kw:
             kw["Key"] = self.get_key(kw["Key"])
 
-        if self._client_async_context is None:
-            self._client_async_context = self.session_async.client("s3", **self._get_connection_kwargs(True))
-            self.client_async = await self._client_async_context.__aenter__()
-
-        return await getattr(self.client_async, method)(**kw)
+        async with self.session_async.client("s3", **self._get_connection_kwargs(True)):
+            return await getattr(boto3.client, method)(**kw)
 
     def get_key(self, key):
         subfolder = self.app.config.get("AMAZON_S3_SUBFOLDER", "false")
