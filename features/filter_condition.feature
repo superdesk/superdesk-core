@@ -134,6 +134,6 @@ Feature: Filter Condition
     Then we get list with 20+ items
     """
     {"_items": [
-      {"field": "urgency", "label": "Urgency", "operators": [], "values": [], "value_field": "qcode"}
+      {"field": "urgency", "label": "Urgency", "operators": "__any_value__", "values": "__any_value__", "value_field": "qcode"}
     ]}
     """
