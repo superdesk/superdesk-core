@@ -1,9 +1,11 @@
 from superdesk.factory.app import SuperdeskEve
 from quart_babel import Babel
+import pytest
 
 from .validate import ValidateService
 
 
+@pytest.mark.asyncio
 async def test_validate_service_get_error_field_name():
     settings = {"DOMAIN": {}}
     app = SuperdeskEve(settings=settings)
