@@ -221,8 +221,8 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         if "Key" in kw:
             kw["Key"] = self.get_key(kw["Key"])
 
-        async with self.session_async.client("s3", **self._get_connection_kwargs(True)):
-            return await getattr(boto3.client, method)(**kw)
+        async with self.session_async.client("s3", **self._get_connection_kwargs(True)) as client:
+            return await getattr(client, method)(**kw)
 
     def get_key(self, key):
         subfolder = self.app.config.get("AMAZON_S3_SUBFOLDER", "false")
