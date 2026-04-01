@@ -10,12 +10,14 @@
 
 """Amazon media storage module."""
 
+from contextlib import asynccontextmanager
 from typing import Optional
 import re
 import boto3
 import aioboto3
 import json
 import logging
+import sys
 import time
 import unidecode
 from io import BytesIO
@@ -63,13 +65,23 @@ class AmazonObjectWrapper(SuperdeskFile):
 
 
 class AmazonObjectAsyncWrapper(SuperdeskAsyncFile):
-    def __init__(self, s3_object, name, metadata, begin: int = 0, end: int | None = None):
+    def __init__(
+        self,
+        s3_object,
+        name,
+        metadata,
+        begin: int = 0,
+        end: int | None = None,
+        client_context=None,
+    ):
         if s3_object.get("ContentRange"):
             # We're using a range to get partial data
             # Get the total size of the file from the range header
             length = int(s3_object["ContentRange"].rsplit("/", 1)[-1])
         else:
             length = int(s3_object["ContentLength"])
+
+        self.client_context = client_context
 
         super().__init__(
             buffer=s3_object["Body"],
@@ -84,6 +96,13 @@ class AmazonObjectAsyncWrapper(SuperdeskAsyncFile):
             begin=begin,
             end=end,
         )
+
+    async def __aenter__(self):
+        return await super().__aenter__()
+
+    async def __aexit__(self, exc_type, exc_value, tb):
+        if self.client_context is not None:
+            await self.client_context.__aexit__(exc_type, exc_value, tb)
 
 
 class AmazonMediaStorage(SuperdeskMediaStorage):
@@ -216,13 +235,22 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             kw["Key"] = self.get_key(kw["Key"])
         return getattr(self.client, method)(**kw)
 
-    async def call_async(self, method, **kw):
+    async def call_async(self, method, client=None, **kw):
         kw.setdefault("Bucket", self.app.config["AMAZON_CONTAINER_NAME"])
         if "Key" in kw:
             kw["Key"] = self.get_key(kw["Key"])
 
-        async with self.session_async.client("s3", **self._get_connection_kwargs(True)) as client:
+        if client is not None:
             return await getattr(client, method)(**kw)
+
+        async with self.async_client() as context_client:
+            return await getattr(context_client, method)(**kw)
+
+    @asynccontextmanager
+    async def async_client(self):
+        """Get an asynchronous S3 client."""
+        async with self.session_async.client("s3", **self._get_connection_kwargs(True)) as client:
+            yield client
 
     def get_key(self, key):
         subfolder = self.app.config.get("AMAZON_S3_SUBFOLDER", "false")
@@ -254,17 +282,32 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         it might actually be some subclass. Returns None if no file was found.
         """
         id_or_filename = self._make_s3_safe(id_or_filename)
+        client_context = self.async_client()
+        client = None
         try:
+            client = await client_context.__aenter__()
             obj = await self.call_async(
-                "get_object", Key=id_or_filename, Range=Range("bytes", [(begin, end)]).to_header()
+                "get_object", client=client, Key=id_or_filename, Range=Range("bytes", [(begin, end)]).to_header()
             )
-            if obj:
-                metadata = self.extract_metadata_from_headers(obj["Metadata"])
-                return AmazonObjectAsyncWrapper(obj, id_or_filename, metadata, begin=begin, end=end)
         except Exception:
+            if client is not None:
+                await client_context.__aexit__(*sys.exc_info())
             logger.exception("Exception while getting object from S3")
             return None
-        return None
+        else:
+            if obj:
+                metadata = self.extract_metadata_from_headers(obj["Metadata"])
+                return AmazonObjectAsyncWrapper(
+                    obj,
+                    id_or_filename,
+                    metadata,
+                    begin=begin,
+                    end=end,
+                    client_context=client_context,
+                )
+
+            await client_context.__aexit__(None, None, None)
+            return None
 
     def get_all_keys(self):
         """Return the list of all keys from the bucket."""
