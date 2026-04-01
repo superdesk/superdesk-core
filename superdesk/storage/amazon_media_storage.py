@@ -17,6 +17,7 @@ import boto3
 import aioboto3
 import json
 import logging
+import sys
 import time
 import unidecode
 from io import BytesIO
@@ -239,11 +240,11 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         if "Key" in kw:
             kw["Key"] = self.get_key(kw["Key"])
 
-        if client:
+        if client is not None:
             return await getattr(client, method)(**kw)
 
-        async with self.async_client() as client:
-            return await getattr(client, method)(**kw)
+        async with self.async_client() as context_client:
+            return await getattr(context_client, method)(**kw)
 
     @asynccontextmanager
     async def async_client(self):
@@ -281,13 +282,19 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         it might actually be some subclass. Returns None if no file was found.
         """
         id_or_filename = self._make_s3_safe(id_or_filename)
-        client_context = None
+        client_context = self.async_client()
+        client = None
         try:
-            client_context = self.async_client()
             client = await client_context.__aenter__()
             obj = await self.call_async(
                 "get_object", client=client, Key=id_or_filename, Range=Range("bytes", [(begin, end)]).to_header()
             )
+        except Exception:
+            if client is not None:
+                await client_context.__aexit__(*sys.exc_info())
+            logger.exception("Exception while getting object from S3")
+            return None
+        else:
             if obj:
                 metadata = self.extract_metadata_from_headers(obj["Metadata"])
                 return AmazonObjectAsyncWrapper(
@@ -300,12 +307,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
                 )
 
             await client_context.__aexit__(None, None, None)
-        except Exception:
-            if client_context is not None:
-                await client_context.__aexit__(None, None, None)
-            logger.exception("Exception while getting object from S3")
             return None
-        return None
 
     def get_all_keys(self):
         """Return the list of all keys from the bucket."""
