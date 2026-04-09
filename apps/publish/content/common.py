@@ -10,9 +10,7 @@
 
 from copy import copy, deepcopy
 import logging
-from asyncio import gather
 
-from bson import ObjectId
 from eve.versioning import resolve_document_version
 from eve.methods.common import resolve_document_etag
 from quart_babel import gettext as _
@@ -47,7 +45,7 @@ from apps.common.components.utils import get_component
 from apps.content import push_content_notification
 from apps.content_types.content_types import DEFAULT_SCHEMA
 from apps.item_autosave.components.item_autosave import ItemAutosave
-from apps.item_lock.components.item_lock import set_unlock_updates, LOCK_USER, LOCK_SESSION, LOCK_ACTION, LOCK_TIME
+from apps.item_lock.components.item_lock import set_unlock_updates
 from apps.legal_archive.commands import is_legal_archive_enabled
 from apps.packages.package_service import PackageService
 from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED, PUBLISHED_IN_PACKAGE
@@ -315,51 +313,12 @@ class BasePublishService(AsyncBaseService):
 
         return updated
 
-    async def _revert_resource_updates(self, original: dict) -> None:
-        """
-        Reverts resource updates to their original state in case of a failure during a publish operation.
-
-        This method performs the following steps:
-        1. Restores specific fields of the resource (state, publication status, operation, lock-related fields)
-           based on the original data to revert the state before the publish request.
-        2. Deletes any published document that was created during the failed operation.
-        3. Marks the previously successfully published version of the resource with a flag indicating it
-           as the last published version.
-
-        :param original: A dictionary containing the original resource data
-        """
-
-        # First up change the state of the failed items, to make sure they roll back to pre-publish request
-        item_id = original[ID_FIELD]
-        archive_reverts = {
-            field: original.get(field)
-            for field in {"state", "pubstatus", "operation", LOCK_USER, LOCK_SESSION, LOCK_ACTION, LOCK_TIME}
-        }
-        self.backend.update_async(self.datasource, item_id, archive_reverts, original)
-
-        # Then remove the ``published`` document that was created
-        published_service = get_resource_service(PUBLISHED)
-        await published_service.delete_async({"_id": original[ID_FIELD]})
-
-        # Next set the ``LAST_PUBLISHED_VERSION`` to True for the previous successfully published item
-        last_published = await published_service.get_last_published_version(item_id)
-        if last_published:
-            updates = {LAST_PUBLISHED_VERSION: True}
-            try:
-                await published_service.system_update_async(ObjectId(item_id), updates, last_published)
-            except Exception:
-                await published_service.system_update_async(item_id, updates, last_published)
-
     async def update_async(self, id, updates, original, raise_errors: bool = False):
         """
         Handles workflow of each Publish, Corrected, Killed and TakeDown.
         """
         try:
-            try:
-                updated = await self._process_item_updates_and_associations(original, updates)
-            except Exception:
-                await self._revert_resource_updates(original)
-                raise
+            updated = await self._process_item_updates_and_associations(original, updates)
 
             response = await publish_item(
                 PublishRequest(
@@ -703,17 +662,16 @@ class BasePublishService(AsyncBaseService):
                 publish_to_content_api=True,
             )
 
-    async def update_published_collection(self, doc: dict):
+    async def update_published_collection(self, doc: dict) -> None:
         """Updates the published collection with the published item.
 
         Set the last_published_version to false for previous versions of the published items.
 
-        :param: str published_item_id: _id of the document.
+        :param doc: The document to be used for updating and posting a new published collection.
         """
-        await gather(
-            get_resource_service(PUBLISHED).update_published_items(doc[ID_FIELD], LAST_PUBLISHED_VERSION, False),
-            get_resource_service(PUBLISHED).post_async([doc]),
-        )
+
+        await get_resource_service(PUBLISHED).update_published_items(doc[ID_FIELD], LAST_PUBLISHED_VERSION, False)
+        await get_resource_service(PUBLISHED).post_async([doc.copy()])
 
     def set_state(self, original, updates):
         """Set the state of the document based on the action (publish, correction, kill, recalled)
