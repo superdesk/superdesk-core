@@ -293,6 +293,7 @@ class BasePublishService(AsyncBaseService):
             updated.update(deepcopy(updates))
         else:
             await self._publish_associated_items(original, updates)
+            updated = deepcopy(original)
             updated.update(deepcopy(updates))
 
             if updates.get(ASSOCIATIONS):
