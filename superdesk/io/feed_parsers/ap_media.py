@@ -275,7 +275,10 @@ class APMediaFeedParser(FeedParser):
         if related_id:
             item["associations"] = {}
             for key, raw in associations.items():
-                item["associations"]["{}--{}".format(related_id, key)] = self.parse(raw, provider)
+                try:
+                    item["associations"]["{}--{}".format(related_id, key)] = self.parse(raw, provider)
+                except Exception as exc:
+                    logger.warning("Failed to parse association '%s': %s", key, exc, exc_info=True)
 
     def _parse_renditions(self, renditions, item):
         try:
