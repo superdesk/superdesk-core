@@ -286,14 +286,13 @@ class BasePublishService(AsyncBaseService):
 
         auto_publish = updates.get("auto_publish", False)
         updated = deepcopy(original)
-        updated.update(deepcopy(updates))
 
         if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
             await self._publish_package_items(original, updates)
             await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
+            updated.update(deepcopy(updates))
         else:
             await self._publish_associated_items(original, updates)
-            updated = deepcopy(original)
             updated.update(deepcopy(updates))
 
             if updates.get(ASSOCIATIONS):
@@ -308,6 +307,7 @@ class BasePublishService(AsyncBaseService):
             signals.item_publish.send(self, item=updated, updates=updates)
             await signals.item_publish_async.send(updated, updates)
 
+            updated.update(deepcopy(updates))
             await self.update_published_collection(updated)
             await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
 
