@@ -33,3 +33,42 @@ class SimpleTestCase(APMediaTestCase):
 
     def test_headline(self):
         self.assertEqual(self.item.get("headline"), "US Paul Simon Poets Society")
+
+
+class AssociationsErrorHandlingTest(TestCase):
+    def test_parse_associations_ignores_invalid_association_items(self):
+        parser = APMediaFeedParser()
+        parser.RELATED_ID = "related"
+
+        parsed = parser.parse(
+            {
+                "data": {
+                    "item": {
+                        "altids": {"itemid": "main"},
+                        "version": 1,
+                        "type": "text",
+                        "slugline": "MAIN-SLUG",
+                    }
+                },
+                "api_version": "1.0",
+                "associations": {
+                    "good": {
+                        "data": {
+                            "item": {
+                                "altids": {"itemid": "assoc"},
+                                "version": 1,
+                                "type": "text",
+                                "slugline": "ASSOC-SLUG",
+                            }
+                        },
+                        "api_version": "1.0",
+                    },
+                    "bad": {"data": {}},
+                },
+            },
+            {"source": "Test"},
+        )
+
+        self.assertIn("associations", parsed)
+        self.assertIn("related--good", parsed["associations"])
+        self.assertNotIn("related--bad", parsed["associations"])
