@@ -294,6 +294,7 @@ class Service(BaseService):
 class CacheableService(BaseService):
     """Handles caching for the resource, will invalidate on any changes to the resource."""
 
+    uses_cache = True
     datasource: str
     cache_lookup = {}
 
