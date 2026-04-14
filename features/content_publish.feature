@@ -2741,7 +2741,7 @@ Feature: Content Publishing
           "related--1": {
             "_id": "text",
             "type": "text",
-            "state": "__no_value__"
+            "state": "published"
           }
         }
       }]}
@@ -2759,7 +2759,7 @@ Feature: Content Publishing
           "related--1": {
             "_id": "text",
             "type": "text",
-            "state": "__no_value__"
+            "state": "published"
           }
         }
       }
