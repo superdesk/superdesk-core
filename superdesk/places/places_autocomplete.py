@@ -33,9 +33,11 @@ class PlacesAutocompleteResource(superdesk.Resource):
 
 class PlacesAutocompleteService(superdesk.Service):
     def get(self, req, lookup):
-        assert req.args.get("name"), {"name": 1}
+        search_param = app.config.get("GEONAMES_SEARCH_PARAM", "name")
+        name_value = req.args.get("name")
+        assert name_value, {"name": 1}
         params = [
-            ("name", req.args.get("name")),
+            (search_param, name_value),
             ("lang", req.args.get("lang", "en").split("-")[0]),
             ("style", req.args.get("style", app.config["GEONAMES_SEARCH_STYLE"])),
         ]
