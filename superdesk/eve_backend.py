@@ -898,8 +898,7 @@ class EveBackend:
 
     def _clean_cache(self, endpoint_name: str) -> None:
         if getattr(superdesk.get_resource_service(endpoint_name), "uses_cache", False):
-            cache.clean([endpoint_name])
-        #     cache.clean_in_thread([endpoint_name])
+            cache.clean_in_thread([endpoint_name])
 
     def set_default_dates(self, doc):
         """Helper to populate ``_created`` and ``_updated`` timestamps."""

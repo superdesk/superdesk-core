@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 from superdesk import json_utils
 from superdesk.logging import logger
 from superdesk.flask import Flask
+from superdesk.core import get_current_app
 from superdesk.core.tasks import run_in_thread
 
 
@@ -115,7 +116,7 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
 
 class SuperdeskCache(hermes.Hermes):
     def clean_in_thread(self, tags: list[str]) -> None:
-        run_in_thread(self.clean, tags)
+        get_current_app().add_background_task(self.clean, tags)
 
 
 cache_backend = SuperdeskCacheBackend(SuperdeskMangler())

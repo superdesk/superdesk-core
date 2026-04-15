@@ -71,7 +71,6 @@ from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.resources import ResourceRestEndpoints, ResourceConfig
 from superdesk.core.resources.validators import convert_pydantic_validation_error_for_response
 from superdesk.core.web import NullEndpoint
-from superdesk.core.tasks import wait_thread_tasks_to_complete
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -254,9 +253,6 @@ class SuperdeskEve(eve.Eve):
         self.teardown_request(self._after_each_request)
 
         self.on_get_api_root += self.extend_eve_home_endpoint
-
-        # Wait for background tasks to complete when gracefully shutting down
-        self.after_serving_funcs.append(wait_thread_tasks_to_complete)
 
     def __getattr__(self, name):
         """Only use events for on_* methods."""
