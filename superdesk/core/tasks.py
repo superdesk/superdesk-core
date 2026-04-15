@@ -27,22 +27,22 @@ async def wait_thread_tasks_to_complete(timeout: float = 10) -> None:
     if not _thread_tasks:
         return
 
-    # 1. Signal cancellation to all tasks
-    for task in _thread_tasks:
-        task.cancel()
+    # Use a copy of the current tasks, as tasks remove themselves automatically from ``_thread_tasks``
+    tasks = _thread_tasks.copy()
 
     try:
-        # 2. Wrap the gather in a wait_for to enforce the timeout
+        # 1. Wrap the gather in a wait_for to enforce the timeout
+        #    If a task is not finished by ``timeout`` seconds, it will be cancelled.
         await asyncio.wait_for(
-            asyncio.gather(*_thread_tasks, return_exceptions=True),
+            asyncio.gather(*tasks, return_exceptions=True),
             timeout,
         )
     except asyncio.TimeoutError:
-        # 3. Handle tasks that refused to stop in time
-        still_running = [t for t in _thread_tasks if not t.done()]
-        logger.warning(f"Background threads shutdown timed out. {len(still_running)} tasks still active.")
+        # 2. Handle tasks that refused to stop in time
+        cancelled_tasks = [t for t in tasks if t.cancelled()]
+        logger.warning(f"Background threads shutdown timed out. {len(cancelled_tasks)} task(s) cancelled.")
     finally:
-        # 4. Clear the set to release references
+        # 3. Clear the set to release references
         _thread_tasks.clear()
 
 

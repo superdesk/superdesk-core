@@ -41,18 +41,25 @@ class TasksTestCase(AsyncTestCase):
             time.sleep(5)
             raise Exception("This should not be reached")
 
+        def short_running_func():
+            return "Short function"
+
         with patch("superdesk.core.tasks.logger") as mock_logger:
-            task = tasks.run_in_thread(long_running_func)
-            self.assertIn(task, tasks._thread_tasks)
+            long_task = tasks.run_in_thread(long_running_func)
+            short_task = tasks.run_in_thread(short_running_func)
+            self.assertIn(long_task, tasks._thread_tasks)
+            self.assertIn(short_task, tasks._thread_tasks)
 
             await tasks.wait_thread_tasks_to_complete(timeout=1)
 
-            mock_logger.warning.assert_called_with(
-                "Background task was cancelled", extra={"task_name": task.get_name()}
-            )
+            mock_logger.warning.assert_called_with("Background threads shutdown timed out. 1 task(s) cancelled.")
 
-            self.assertTrue(task.done())
-            self.assertTrue(task.cancelled())
+            self.assertTrue(long_task.done())
+            self.assertTrue(long_task.cancelled())
+
+            self.assertTrue(short_task.done())
+            self.assertFalse(short_task.cancelled())
+
             self.assertEqual(len(tasks._thread_tasks), 0)
 
     async def test_handle_background_task_result_exception(self):
