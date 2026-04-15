@@ -1,3 +1,4 @@
+.
 # Superdesk Core library
 [![Test](https://github.com/superdesk/superdesk-core/actions/workflows/tests.yml/badge.svg)](https://github.com/superdesk/superdesk-core/actions/workflows/tests.yml)
 [![Lint](https://github.com/superdesk/superdesk-core/actions/workflows/lint.yml/badge.svg)](https://github.com/superdesk/superdesk-core/actions/workflows/lint.yml)
