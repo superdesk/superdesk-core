@@ -281,6 +281,18 @@ CACHE_URL = env("SUPERDESK_CACHE_URL", REDIS_URL)
 #: cache type - set explicit cache type if it wouldn't get it right from url
 CACHE_TYPE = env("SUPERDESK_CACHE_TYPE")
 
+#: Cache Redis socket timeout
+#:
+#: .. versionadded:: 3.5
+#:
+CACHE_REDIS_TIMEOUT = float(env("CACHE_REDIS_TIMEOUT", 10))
+
+#: Cache Redis socket connection timeout
+#:
+#: .. versionadded:: 3.5
+#:
+CACHE_REDIS_CONNECT_TIMEOUT = float(env("CACHE_REDIS_CONNECT_TIMEOUT", 2))
+
 #: celery broker
 BROKER_URL = env("CELERY_BROKER_URL", REDIS_URL)
 CELERY_BROKER_URL = BROKER_URL

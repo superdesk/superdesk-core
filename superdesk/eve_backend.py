@@ -23,6 +23,7 @@ from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
 
+import superdesk
 from superdesk.core import json, get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD, ETAG, LAST_UPDATED, DATE_CREATED
 from superdesk.errors import SuperdeskApiError
@@ -254,7 +255,7 @@ class EveBackend:
             kwargs["query"] = backend._mongotize(kwargs["query"], endpoint_name)
 
         result = backend.driver.db[endpoint_name].find_one_and_update(**kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return result
 
     async def find_and_modify_async(self, endpoint_name, **kwargs):
@@ -269,7 +270,7 @@ class EveBackend:
             kwargs["query"] = backend._mongotize(kwargs["query"], endpoint_name)
 
         result = await backend.driver.db[endpoint_name].find_one_and_update(**kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return result
 
     def create(self, endpoint_name, docs, **kwargs):
@@ -282,7 +283,7 @@ class EveBackend:
             doc.pop("_type", None)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
 
         for doc in docs:
             self._push_resource_notification("created", endpoint_name, _id=str(doc["_id"]))
@@ -299,7 +300,7 @@ class EveBackend:
             doc.pop("_type", None)
         ids = await self.create_in_mongo_async(endpoint_name, docs, **kwargs)
         await self.create_in_search_async(endpoint_name, docs, **kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
 
         for doc in docs:
             self._push_resource_notification("created", endpoint_name, _id=str(doc["_id"]))
@@ -484,7 +485,7 @@ class EveBackend:
                 logger.warning("Item is missing in elastic resource=%s id=%s", endpoint_name, id)
                 search_backend.insert(endpoint_name, [doc])
 
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return updates
 
     async def _change_request_async(
@@ -541,7 +542,7 @@ class EveBackend:
                 # TODO-ASYNC: Use elastic async
                 search_backend.insert(endpoint_name, [doc])
 
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return updates
 
     def replace(self, endpoint_name, id, document, original):
@@ -554,7 +555,7 @@ class EveBackend:
         """
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return res
 
     async def replace_async(self, endpoint_name, id, document, original):
@@ -567,7 +568,7 @@ class EveBackend:
         """
         res = await self.replace_in_mongo_async(endpoint_name, id, document, original)
         await self.replace_in_search_async(endpoint_name, id, document, original)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return res
 
     def update_in_mongo(self, endpoint_name, id, updates, original):
@@ -659,7 +660,7 @@ class EveBackend:
                 removed_ids = [lookup["_id"]]
             except NotFoundError:
                 pass  # not found in elastic and not in mongo
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return removed_ids
 
     async def delete_async(self, endpoint_name, lookup):
@@ -685,7 +686,7 @@ class EveBackend:
                 removed_ids = [lookup["_id"]]
             except NotFoundError:
                 pass  # not found in elastic and not in mongo
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return removed_ids
 
     def delete_docs(self, endpoint_name, docs):
@@ -835,6 +836,10 @@ class EveBackend:
         if backend is None and fallback:
             backend = app.data._backend(endpoint_name, use_async)
         return backend
+
+    def _clean_cache(self, endpoint_name: str) -> None:
+        if getattr(superdesk.get_resource_service(endpoint_name), "uses_cache", False):
+            cache.clean_in_thread([endpoint_name])
 
     def set_default_dates(self, doc):
         """Helper to populate ``_created`` and ``_updated`` timestamps."""
