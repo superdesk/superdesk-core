@@ -208,7 +208,7 @@ class MongoResources:
                 # Duplicate key for unique indexes are generally caused by invalid documents in the collection
                 # such as multiple documents not having a value for the attribute used for the index
                 # Log the error so it can be diagnosed and fixed
-                logger.exception(err)
+                logger.error(err)
 
                 if not ignore_duplicate_keys:
                     raise
@@ -219,8 +219,25 @@ class MongoResources:
 
                     # by default, drop the old index with old configuration and
                     # create the index again with the new configuration.
-                    collection.drop_index(index_details.name)
-                    collection.create_index(keys, **kwargs)
+                    logger.warning(
+                        "Index '%s' on collection '%s' has changed options, dropping and recreating it.",
+                        index_details.name,
+                        collection.name,
+                    )
+                    try:
+                        collection.drop_index(index_details.name)
+                        collection.create_index(keys, **kwargs)
+                    except OperationFailure as recreate_err:
+                        logger.error(
+                            "Failed to recreate index '%s' on collection '%s': %s. "
+                            "Please create it manually with: keys=%s, options=%s",
+                            index_details.name,
+                            collection.name,
+                            recreate_err,
+                            keys,
+                            kwargs,
+                        )
+                        raise
                 else:
                     raise
 
