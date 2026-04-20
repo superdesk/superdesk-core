@@ -2,6 +2,7 @@
  * Remove stale archive items and related records.
  *
  * Collections affected:
+ * - published (source by _id/ObjectId date and item_id)
  * - archive (by _id)
  * - archive_versions (by _id_document)
  * - archive_history (by item_id)
@@ -26,6 +27,7 @@ var MAX_BATCHES = typeof MAX_BATCHES === "number" && MAX_BATCHES > 0 ? Math.floo
 var EXECUTE_DELETE = typeof EXECUTE_DELETE === "boolean" ? EXECUTE_DELETE : false;
 
 var cutoffDate = new Date(CUTOFF_ISO);
+var cutoffObjectId = ObjectId.fromDate(cutoffDate);
 
 if (isNaN(cutoffDate.getTime())) {
     throw new Error("Invalid CUTOFF_ISO value: " + CUTOFF_ISO);
@@ -36,11 +38,12 @@ if (!EXECUTE_DELETE) {
 }
 
 print("Cutoff date: " + cutoffDate.toISOString());
+print("Cutoff ObjectId: " + cutoffObjectId);
 print("Batch size: " + BATCH_SIZE);
 print("Max batches: " + (MAX_BATCHES > 0 ? MAX_BATCHES : "unlimited"));
 
 var summary = {
-    archiveCandidates: 0,
+    publishedCandidates: 0,
     archiveDeleted: 0,
     archiveVersionsDeleted: 0,
     archiveHistoryDeleted: 0,
@@ -73,32 +76,50 @@ while (true) {
         break;
     }
 
-    var lookup = {
-        _updated: { $lt: cutoffDate },
-    };
+    var idLookup = { $lt: cutoffObjectId };
 
     if (lastSeenId !== null) {
-        lookup._id = { $gt: lastSeenId };
+        idLookup.$gt = lastSeenId;
     }
 
-    var archiveDocs = db
-        .getCollection("archive")
-        .find(lookup, { _id: 1 })
+    var lookup = {
+        _id: idLookup,
+        item_id: { $exists: true, $ne: null },
+        last_published_version: true,
+    };
+
+    var publishedDocs = db
+        .getCollection("published")
+        .find(lookup, { _id: 1, item_id: 1 })
         .sort({ _id: 1 })
         .limit(BATCH_SIZE)
         .toArray();
 
-    if (!archiveDocs.length) {
+    if (!publishedDocs.length) {
         break;
     }
 
-    var itemIds = archiveDocs.map(function (doc) {
-        return doc._id;
-    });
-    lastSeenId = itemIds[itemIds.length - 1];
+    lastSeenId = publishedDocs[publishedDocs.length - 1]._id;
+
+    var itemIds = [];
+    var seenItemIds = {};
+    for (var i = 0; i < publishedDocs.length; i++) {
+        var publishedItemId = publishedDocs[i].item_id;
+
+        if (!publishedItemId || seenItemIds[publishedItemId]) {
+            continue;
+        }
+
+        seenItemIds[publishedItemId] = true;
+        itemIds.push(publishedItemId);
+    }
+
+    if (!itemIds.length) {
+        continue;
+    }
 
     summary.batches += 1;
-    summary.archiveCandidates += itemIds.length;
+    summary.publishedCandidates += itemIds.length;
 
     var batchArchiveVersions = countOrDelete("archive_versions", { _id_document: { $in: itemIds } });
     var batchArchiveHistory = countOrDelete("archive_history", { item_id: { $in: itemIds } });
@@ -119,7 +140,7 @@ while (true) {
     print(
         [
             "Batch " + summary.batches,
-            "candidates=" + itemIds.length,
+            "published_candidates=" + itemIds.length,
             "archive_versions=" + batchArchiveVersions,
             "archive_history=" + batchArchiveHistory,
             "published=" + batchPublished,
@@ -133,7 +154,7 @@ while (true) {
 
 print("\nSummary");
 print("mode=" + (EXECUTE_DELETE ? "DELETE" : "DRY_RUN"));
-print("archive candidates scanned=" + summary.archiveCandidates);
+print("published candidates scanned=" + summary.publishedCandidates);
 print("archive_versions " + (EXECUTE_DELETE ? "deleted" : "matched") + "=" + summary.archiveVersionsDeleted);
 print("archive_history " + (EXECUTE_DELETE ? "deleted" : "matched") + "=" + summary.archiveHistoryDeleted);
 print("published " + (EXECUTE_DELETE ? "deleted" : "matched") + "=" + summary.publishedDeleted);
