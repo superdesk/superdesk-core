@@ -19,6 +19,8 @@ from superdesk.eve_async import AsyncBaseService
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, metadata_schema
 from superdesk.resource import Resource
 from apps.archive.common import ARCHIVE, ITEM_CANCEL_CORRECTION, ITEM_CORRECTION
+from superdesk.publish_async.utils import SCHEDULE_SETTINGS
+from superdesk.metadata.item import EMBARGO
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -87,9 +89,25 @@ class ArchiveCorrectionService(AsyncBaseService):
         else:
             published_item_updates = {ITEM_STATE: CONTENT_STATE.PUBLISHED, "operation": ITEM_CANCEL_CORRECTION}
 
-        # clear publishing schedule when we create correction
+        # Clear publish schedule when creating a correction, but keep embargo timezone metadata.
+        # Otherwise a later correction publish can reinterpret embargo in UTC and shift it by timezone.
         if archive_item.get("publish_schedule"):
-            archive_item_updates.update({"publish_schedule": None, "schedule_settings": {}})
+            schedule_settings = archive_item.get(SCHEDULE_SETTINGS, {}) or {}
+            correction_schedule_settings = {}
+
+            if archive_item.get(EMBARGO):
+                if "utc_embargo" in schedule_settings:
+                    correction_schedule_settings["utc_embargo"] = schedule_settings.get("utc_embargo")
+
+                if "time_zone" in schedule_settings:
+                    correction_schedule_settings["time_zone"] = schedule_settings.get("time_zone")
+
+            archive_item_updates.update(
+                {
+                    "publish_schedule": None,
+                    SCHEDULE_SETTINGS: correction_schedule_settings,
+                }
+            )
 
         # set working stage when we create correction
         if archive_item.get("task", {}).get("desk"):
