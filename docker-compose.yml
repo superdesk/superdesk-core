@@ -11,7 +11,6 @@ services:
             - "9200:9200"
         environment:
             - discovery.type=single-node
-            - bootstrap.memory_lock=true
             - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
         tmpfs:
             - /usr/share/elasticsearch/data
