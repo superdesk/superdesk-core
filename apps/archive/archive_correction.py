@@ -16,11 +16,9 @@ from superdesk.resource_fields import ID_FIELD
 from superdesk.flask import request
 from superdesk import get_resource_service
 from superdesk.eve_async import AsyncBaseService
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, metadata_schema
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, metadata_schema, SCHEDULE_SETTINGS, EMBARGO
 from superdesk.resource import Resource
 from apps.archive.common import ARCHIVE, ITEM_CANCEL_CORRECTION, ITEM_CORRECTION
-from superdesk.publish_async.utils import SCHEDULE_SETTINGS
-from superdesk.metadata.item import EMBARGO
 from superdesk.metadata.utils import item_url
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
@@ -96,11 +94,13 @@ class ArchiveCorrectionService(AsyncBaseService):
             correction_schedule_settings = {}
 
             if archive_item.get(EMBARGO):
-                if "utc_embargo" in schedule_settings:
-                    correction_schedule_settings["utc_embargo"] = schedule_settings.get("utc_embargo")
+                utc_embargo = schedule_settings.get(f"utc_{EMBARGO}")
+                if utc_embargo is not None:
+                    correction_schedule_settings[f"utc_{EMBARGO}"] = utc_embargo
 
-                if "time_zone" in schedule_settings:
-                    correction_schedule_settings["time_zone"] = schedule_settings.get("time_zone")
+                time_zone = schedule_settings.get("time_zone")
+                if time_zone is not None:
+                    correction_schedule_settings["time_zone"] = time_zone
 
             archive_item_updates.update(
                 {

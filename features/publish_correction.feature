@@ -162,7 +162,7 @@ Feature: Content Correction
     Scenario: Correcting a story preserves embargo timezone metadata
         # Regression test: correcting an item that has both publish_schedule and embargo
         # must not wipe schedule_settings.time_zone, otherwise the embargo shifts by the
-        # UTC offset (e.g. 10:00 EET would display as 13:00 EET after correction).
+        # UTC offset (e.g. a 10:00 local embargo can shift to 13:00 local after correction).
         When we post to "/products" with success
         """
         {"name": "prod-embargo", "codes": "abc,xyz", "product_type": "both"}
