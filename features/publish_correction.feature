@@ -159,6 +159,75 @@ Feature: Content Correction
     """
 
     @auth
+    Scenario: Correcting a story preserves embargo timezone metadata
+        # Regression test: correcting an item that has both publish_schedule and embargo
+        # must not wipe schedule_settings.time_zone, otherwise the embargo shifts by the
+        # UTC offset (e.g. a 10:00 local embargo can shift to 13:00 local after correction).
+        When we post to "/products" with success
+        """
+        {"name": "prod-embargo", "codes": "abc,xyz", "product_type": "both"}
+        """
+        When we post to "/subscribers" with "sub1" and success
+        """
+        {
+            "name": "Embargo Channel", "media_type": "media", "subscriber_type": "wire",
+            "sequence_num_settings": {"min": 1, "max": 10}, "email": "embargo@test.com",
+            "products": ["#products._id#"], "is_active": true,
+            "destinations": [
+                {"name": "Test", "format": "nitf", "delivery_type": "email", "config": {"recipients": "embargo@test.com"}}
+            ]
+        }
+        """
+        Given "desks"
+        """
+        [{"name": "News", "members":[{"user":"#CONTEXT_USER_ID#"}]}]
+        """
+        And "archive"
+        """
+        [{
+            "guid": "embargo-tz-test",
+            "_id": "embargo-tz-test",
+            "type": "text",
+            "headline": "Embargo TZ test",
+            "state": "in_progress",
+            "slugline": "embargo-tz",
+            "body_html": "body",
+            "subject": [{"qcode": "17004000", "name": "Statistics"}],
+            "anpa_category": [{"qcode": "a"}],
+            "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+            "publish_schedule": "2030-04-01T10:00:00+0000",
+            "embargo": "2030-04-01T10:00:00+0000",
+            "schedule_settings": {
+                "time_zone": "Europe/Helsinki",
+                "utc_publish_schedule": "2030-04-01T07:00:00+0000",
+                "utc_embargo": "2030-04-01T07:00:00+0000"
+            }
+        }]
+        """
+
+        When we publish "embargo-tz-test" with "publish" type and "published" state
+        Then we get OK response
+
+        When we publish "embargo-tz-test" with "correct" type and "corrected" state
+        """
+        {"headline": "Embargo TZ test - corrected"}
+        """
+        Then we get OK response
+
+        When we get "/archive/embargo-tz-test"
+        Then we get existing resource
+        """
+        {
+            "headline": "Embargo TZ test - corrected",
+            "embargo": "2030-04-01T10:00:00+0000",
+            "schedule_settings": {
+                "time_zone": "Europe/Helsinki",
+                "utc_embargo": "2030-04-01T07:00:00+0000"
+            }
+        }
+        """
+
+    @auth
     Scenario: Publish new article with both published and corrected associated items
 
         # Step 1: Setup publishing product and subscriber
