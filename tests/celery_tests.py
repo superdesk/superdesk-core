@@ -12,6 +12,7 @@ from datetime import datetime
 
 from bson import ObjectId
 from eve.utils import date_to_str
+from kombu.utils.json import dumps as kombu_dumps, loads as kombu_loads
 
 from superdesk.tests import TestCase
 from superdesk.celery_app import try_cast, loads
@@ -19,6 +20,13 @@ from superdesk.celery_app import try_cast, loads
 
 class CeleryTestCase(TestCase):
     _id = ObjectId("528de7b03b80a13eefc5e610")
+
+    def test_kombu_json_roundtrip_objectid(self):
+        payload = {"_id": self._id}
+        decoded = kombu_loads(kombu_dumps(payload))
+
+        self.assertEqual(decoded["_id"], self._id)
+        self.assertIsInstance(decoded["_id"], ObjectId)
 
     def test_cast_objectid(self):
         self.assertEqual(try_cast(str(self._id)), self._id)
