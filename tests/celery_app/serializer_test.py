@@ -69,7 +69,7 @@ class TestContextAwareSerializerFactory(AsyncFlaskTestCase):
         self.assertEqual([{"foo": False, "bar": True}], result)
 
     def test_kombu_json_roundtrip_objectid(self):
-        """kombu's own encoder must handle ObjectId without raising EncodeError (regression for #3204)"""
+        """Kombu's own encoder must handle ObjectId without raising EncodeError (regression for #3204)"""
         obj_id = ObjectId()
         payload = {"_id": obj_id}
         decoded = kombu_loads(kombu_dumps(payload))
