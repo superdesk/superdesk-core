@@ -4,6 +4,7 @@ from typing import Any, Callable
 
 from eve.io.mongo import MongoJSONEncoder
 from kombu.serialization import register
+from kombu.utils.json import register_type
 
 from superdesk.core import json
 from superdesk.core.types import WSGIApp
@@ -11,6 +12,9 @@ from superdesk.core.utils import str_to_date
 
 
 CELERY_SERIALIZER_NAME = "context-aware/json"
+
+# Allow kombu's own JSON encoder to handle ObjectId (e.g. in celery inspection commands)
+register_type(ObjectId, "objectid", str, ObjectId)
 
 
 class ContextAwareSerializerFactory:
