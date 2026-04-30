@@ -21,6 +21,7 @@ import superdesk
 from bson import ObjectId
 from celery import Celery
 from kombu.serialization import register
+from kombu.utils.json import register_type
 from eve.io.mongo import MongoJSONEncoder
 from eve.utils import str_to_date
 from flask import json, current_app as app
@@ -30,6 +31,9 @@ from superdesk.logging import logger
 
 celery = Celery(__name__)
 TaskBase = celery.Task
+
+
+register_type(ObjectId, "objectid", str, ObjectId)
 
 
 def try_cast(v):
