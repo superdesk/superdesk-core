@@ -10,7 +10,9 @@
 
 import redis
 from sys import argv
+from bson import ObjectId
 from celery import Celery
+from kombu.utils.json import register_type
 from typing import TYPE_CHECKING
 
 from .context_task import HybridAppContextTask, HybridAppContextWorkerTask, celery_wsgi_instance
@@ -44,6 +46,10 @@ def init_celery(app: "SuperdeskEve") -> None:
     2. Sets up Redis connection
     3. Sets up proper app context for the celery task
     """
+
+    # Allow kombu's own JSON encoder to handle ObjectId (e.g. in celery inspection commands)
+    # Registered here rather than at module level to keep startup ordering explicit.
+    register_type(ObjectId, "bson.objectid", str, ObjectId)
 
     celery_wsgi_instance.set(app)
     celery.config_from_object(app.config, namespace="CELERY")

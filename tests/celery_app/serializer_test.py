@@ -1,6 +1,7 @@
 from bson import ObjectId
 from datetime import datetime
 from unittest.mock import MagicMock
+from kombu.utils.json import dumps as kombu_dumps, loads as kombu_loads
 
 from superdesk.celery_app.serializer import ContextAwareSerializerFactory
 from superdesk.tests import AsyncFlaskTestCase
@@ -66,3 +67,11 @@ class TestContextAwareSerializerFactory(AsyncFlaskTestCase):
         obj = b"""[{"foo": false, "bar": true}]"""
         result = self.factory.loads(obj)
         self.assertEqual([{"foo": False, "bar": True}], result)
+
+    def test_kombu_json_roundtrip_objectid(self):
+        """Kombu's own encoder must handle ObjectId without raising EncodeError (regression for #3204)"""
+        obj_id = ObjectId()
+        payload = {"_id": obj_id}
+        decoded = kombu_loads(kombu_dumps(payload))
+        self.assertEqual(decoded["_id"], obj_id)
+        self.assertIsInstance(decoded["_id"], ObjectId)
