@@ -1,4 +1,4 @@
-pip<26.1  # https://github.com/jazzband/pip-tools/issues/2252
+pip<26.2  # https://github.com/jazzband/pip-tools/issues/2252
 setuptools==82.0.1
 pip-tools==7.5.3
 black==23.12.1
