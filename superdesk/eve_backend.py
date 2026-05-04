@@ -20,6 +20,7 @@ from pymongo.collation import Collation
 from motor.motor_asyncio import AsyncIOMotorCursor, AsyncIOMotorCollection
 from eve.utils import document_etag, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
+from eve_elastic.elastic import ElasticCursor
 from superdesk.utc import utcnow
 from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
@@ -32,6 +33,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification as _push_notification
 from superdesk.cache import cache
 from superdesk.utils import get_list_chunks
+from superdesk.eve_async import ElasticAsyncEveCursor
 
 
 SYSTEM_KEYS = set(
@@ -163,7 +165,7 @@ class EveBackend:
             return search_backend.find(endpoint_name, req, {})[0]
         else:
             # Should we raise an exception here?
-            logger.warn("there is no search backend for %s" % endpoint_name)
+            logger.warning("there is no search backend for %s" % endpoint_name)
 
     async def search_async(self, endpoint_name, source):
         """Search for items using search backend
@@ -178,7 +180,35 @@ class EveBackend:
             return (await search_backend.find(endpoint_name, req, {}))[0]
         else:
             # Should we raise an exception here?
-            logger.warn("there is no search backend for %s" % endpoint_name)
+            logger.warning("there is no search backend for %s" % endpoint_name)
+
+    def search_raw(self, endpoint_name: str, source: dict) -> ElasticCursor | None:
+        """Search for items using search backend, without applying resource-specific filters.
+
+        :param endpoint_name: The name of the endpoint to perform the search on.
+        :param source: A dictionary containing the data to be used for the search
+        :return: An instance of ElasticCursor if the search is successful, or None if no backend is found.
+        """
+
+        if search_backend := self._lookup_backend(endpoint_name):
+            return search_backend.search(source, endpoint_name)
+        else:
+            logger.warning("there is no search backend for %s" % endpoint_name)
+            return None
+
+    async def search_raw_async(self, endpoint_name: str, source: dict) -> ElasticAsyncEveCursor | None:
+        """Search for items using async search backend, without applying resource-specific filters.
+
+        :param endpoint_name: The name of the endpoint to perform the search on.
+        :param source: A dictionary containing the data to be used for the search
+        :return: An instance of ElasticAsyncEveCursor if the search is successful, or None if no backend is found.
+        """
+
+        if search_backend := self._lookup_backend(endpoint_name, use_async=True):
+            return await search_backend.search(source, endpoint_name)
+        else:
+            logger.warning("there is no search backend for %s" % endpoint_name)
+            return None
 
     def get(self, endpoint_name, req, lookup, **kwargs):
         """Get list of items.

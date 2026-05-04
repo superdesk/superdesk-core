@@ -1,6 +1,6 @@
 import superdesk
 
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from superdesk.utils import ListCursor
 from superdesk.geonames import geonames_request, format_geoname_item
 
@@ -33,17 +33,19 @@ class PlacesAutocompleteResource(superdesk.Resource):
 
 class PlacesAutocompleteService(superdesk.Service):
     def get(self, req, lookup):
-        assert req.args.get("name"), {"name": 1}
+        search_param = get_config(str, "GEONAMES_SEARCH_PARAM", "name")
+        name_value = req.args.get("name")
+        assert name_value, {"name": 1}
         params = [
-            ("name", req.args.get("name")),
+            (search_param, name_value),
             ("lang", req.args.get("lang", "en").split("-")[0]),
-            ("style", req.args.get("style", get_app_config("GEONAMES_SEARCH_STYLE"))),
+            ("style", req.args.get("style", get_config(str, "GEONAMES_SEARCH_STYLE"))),
         ]
 
         if req.args.get("featureClass"):
             params.append(("featureClass", req.args.get("featureClass")))
         else:
-            for feature_class in get_app_config("GEONAMES_FEATURE_CLASSES"):
+            for feature_class in get_config(list[str], "GEONAMES_FEATURE_CLASSES"):
                 params.append(("featureClass", feature_class.upper()))
 
         json_data = geonames_request("search", params)
@@ -55,7 +57,7 @@ class PlacesAutocompleteService(superdesk.Service):
         params = [
             ("geonameId", geoname_id),
             ("lang", language),
-            ("style", get_app_config("GEONAMES_SEARCH_STYLE", "full")),
+            ("style", get_config(str, "GEONAMES_SEARCH_STYLE", "full")),
         ]
 
         json_data = geonames_request("getJSON", params)

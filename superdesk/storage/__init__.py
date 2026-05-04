@@ -94,5 +94,6 @@ from .desk_media_storage import SuperdeskGridFSMediaStorage  # noqa
 from .amazon_media_storage import AmazonMediaStorage  # noqa
 
 from .migrate import cli_media_migrate  # noqa
+from .delete_gridfs_files import cli_delete_gridfs_files  # noqa
 
 import superdesk.storage.fix_links  # noqa

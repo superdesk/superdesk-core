@@ -237,8 +237,7 @@ class BasePublishService(AsyncBaseService):
         signals.item_published.send(self, item=original, after_scheduled=False)
         await signals.item_published_async.send(original, False)
 
-        if original.get("original_creator"):
-            user_metrics.incr("published_articles", original["original_creator"])
+        self._track_published_articles(original)
 
         packages = await self.package_service.get_packages_async(original[ID_FIELD])
         if packages and (await packages.count()) > 0:
@@ -543,6 +542,22 @@ class BasePublishService(AsyncBaseService):
             )
         updates["pubstatus"] = PUB_STATUS.CANCELED if self.publish_type == ITEM_KILL else PUB_STATUS.USABLE
         await self._set_item_expiry(updates, original)
+
+    def _track_published_articles(self, item):
+        """Track published articles by author(s), with fallback to original_creator.
+
+        Increments the published articles metric for each author with a user ID.
+        If no authors are present, falls back to the original_creator.
+
+        :param dict item: article item to track
+        """
+        authors = item.get("authors", [])
+        if authors:
+            for author in authors:
+                if isinstance(author, dict) and author.get("parent"):
+                    user_metrics.incr("published_articles", author["parent"])
+        elif item.get("original_creator"):
+            user_metrics.incr("published_articles", item["original_creator"])
 
     async def _set_item_expiry(self, updates, original):
         """Set the expiry for the item.

@@ -1142,11 +1142,15 @@ AUTO_PUBLISH_CONTENT_PROFILE = True
 #: controll error notifications globally
 ERROR_NOTIFICATIONS = strtobool(env("SUPERDESK_ERROR_NOTIFICATIONS", "true"))
 
+
 #: geonames config
 GEONAMES_USERNAME = env("GEONAMES_USERNAME")
 GEONAMES_TOKEN = env("GEONAMES_TOKEN")
 GEONAMES_URL = env("GEONAMES_URL", "http://api.geonames.org/")
 GEONAMES_FEATURE_CLASSES = ["P"]
+#: Which param to use for geonames search (e.g. 'name', 'name_startsWith')
+#: .. versionadded:: 2.11
+GEONAMES_SEARCH_PARAM = env("GEONAMES_SEARCH_PARAM", "name")
 #: Set how much metadata should be returned
 #:
 #: .. versionadded:: 1.33

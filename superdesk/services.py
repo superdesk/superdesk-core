@@ -12,7 +12,7 @@ import random
 import pymongo
 import logging
 
-from typing import Dict, Any, List, Optional, Union
+from typing import Dict, Any, List, Optional, Union, Generator
 from eve.utils import ParsedRequest
 from eve.methods.common import resolve_document_etag
 
@@ -168,6 +168,67 @@ class BaseService:
                 last_id = item["_id"]
         else:
             logger.warning("Not enough iterations for resource %s", self.datasource)
+
+    def get_all_batch_elastic(
+        self,
+        query: dict,
+        size: int = 500,
+        max_iterations: int = 10000,
+    ) -> Generator[dict, None, None]:
+        """Helper function to get all items from this resource, in batches
+
+        The default arguments allow iterating over 5 million documents.
+        If more is needed, then consider increasing ``size`` and/or ``max_iterations``
+
+        .. note::
+            If multiple documents share the same ``_created`` and ``_updated`` values,
+            pagination can become inconsistent. If this is an issue, consider using a more
+            stable unique tiebreaker (e.g. a combination of ``_created`` ``_updated`` and ``_id``).
+
+        .. note::
+            This helper uses ``search_after`` without an Elasticsearch point-in-time (PIT) or
+            snapshot. As a result, if the underlying index is updated while iteration is in
+            progress, documents may move between pages, be skipped, or be returned more than
+            once. It should therefore only be relied upon against a quiescent index, or in
+            contexts where such inconsistencies are acceptable.
+
+        :param query: An Elasticsearch query used to filter items returned by this resource
+        :param size: The number of items to fetch on each iteration
+        :param max_iterations: Maximum number of iterations to run, before returning gracefully
+        :return: A generator yielding a dictionary of documents
+        """
+
+        es_query = query.copy() if query else {}
+        es_query["size"] = size
+        if not es_query.get("sort"):
+            raise SuperdeskApiError.badRequestError("Running `get_all_batch_elastic` without a sort is not supported")
+
+        for _ in range(max_iterations):
+            cursor = self.backend.search_raw(self.datasource, es_query)
+            if not cursor:
+                logger.warning("No cursor returned for search", extra={"resource": self.datasource})
+                break
+
+            items_yielded = False
+            for item in cursor:
+                items_yielded = True
+                yield item
+
+            if not items_yielded:
+                break
+
+            try:
+                last_hit = cursor.hits["hits"]["hits"][-1]
+            except (KeyError, IndexError, TypeError):
+                last_hit = None
+
+            if not last_hit or not last_hit.get("sort"):
+                logger.warning("No sort value found in es hit for resource", extra={"resource": self.datasource})
+                break
+
+            es_query["search_after"] = last_hit["sort"]
+        else:
+            logger.warning("Not enough iterations for resource", extra={"resource": self.datasource})
 
     def _validator(self, skip_validation=False):
         from superdesk.core import get_app_config, get_current_app
