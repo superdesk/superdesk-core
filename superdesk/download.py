@@ -11,13 +11,15 @@
 """Download module"""
 import logging
 import superdesk
+
 from superdesk.errors import SuperdeskApiError
-from superdesk.auth.decorator import blueprint_auth
-from .resource import Resource
+from superdesk.auth.decorator import blueprint_token
 from superdesk.eve_async import AsyncBaseService
 from superdesk.core import get_current_app, get_config
 from superdesk.flask import request, Blueprint, url_for
 from superdesk.storage.superdesk_file import generate_response_for_file, get_file_request_range
+
+from .resource import Resource
 
 bp = Blueprint("download_raw", __name__)
 logger = logging.getLogger(__name__)
@@ -25,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 @bp.route("/download/<id>", methods=["GET"], defaults={"folder": None})
 @bp.route("/download/<path:folder>/<id>", methods=["GET"])
-@blueprint_auth()
+@blueprint_token()
 async def download_file(id, folder=None):
     filename = "{}/{}".format(folder, id) if folder else id
     app = get_current_app()

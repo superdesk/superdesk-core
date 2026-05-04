@@ -3214,3 +3214,22 @@ async def check_audit_logs(context):
 
         audit_logs = await find_many("audit")
         assert json_match(context_data, audit_logs), str(context_data) + "\n != \n" + str(audit_logs)
+
+
+@then("we get download URL with token")
+@async_run_until_complete
+async def step_impl_download_url_with_token(context):
+    data = await get_json_data(context.response)
+    url = data.get("url", "")
+    assert "token=" in url, f"Expected URL to contain 'token=' but got: {url}"
+    context.download_url = url
+
+
+@when("we download the export URL with token")
+@async_run_until_complete
+async def step_impl_download_export_url_with_token(context):
+    assert hasattr(context, "download_url"), "No download URL saved from previous step"
+    url = context.download_url
+    parsed = urlparse(url)
+    path_with_query = parsed.path + ("?" + parsed.query if parsed.query else "")
+    context.response = await context.client.get(path_with_query, headers=context.headers)
