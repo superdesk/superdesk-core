@@ -48,7 +48,7 @@ install_requires = [
     "flask-oidc-ex>=0.5.5,<0.7",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe>2.1",
-    "reportlab>=3.6.11,<4.5",
+    "reportlab>=3.6.11,<4.6",
     "pyjwt>=2.4.0,<2.11",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
