@@ -11,6 +11,7 @@
 import os
 import logging
 import requests
+from quart_babel import gettext as _
 from superdesk.errors import SuperdeskApiError
 from superdesk.text_checkers.spellcheckers import CAP_SPELLING
 from superdesk.text_checkers.spellcheckers.base import SpellcheckerBase
@@ -47,7 +48,7 @@ class LeuvenDutch(SpellcheckerBase):
         }
         r = requests.post(check_url, data=data, timeout=self.CHECK_TIMEOUT)
         if r.status_code != 200:
-            raise SuperdeskApiError.internalError("Unexpected return code from {}".format(self.name))
+            raise SuperdeskApiError.internalError(_("Unexpected return code from {}").format(self.name))
 
         data = r.json()
 
@@ -79,7 +80,7 @@ class LeuvenDutch(SpellcheckerBase):
         }
         r = requests.post(check_url, data=data, timeout=self.SUGGEST_TIMEOUT)
         if r.status_code != 200:
-            raise SuperdeskApiError.internalError("Unexpected return code from {}".format(self.name))
+            raise SuperdeskApiError.internalError(_("Unexpected return code from {}").format(self.name))
         return {"suggestions": self.list2suggestions(r.json()["suggesties"]["output"].get("suggesties", []))}
 
     def available(self):

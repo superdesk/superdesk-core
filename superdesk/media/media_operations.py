@@ -30,6 +30,8 @@ from PIL import Image, ImageEnhance
 from .image import get_meta
 from .video import get_meta as video_meta
 
+from quart_babel import gettext as _
+
 from superdesk.core import json, get_app_config
 from superdesk.flask import url_for
 from superdesk.errors import SuperdeskApiError
@@ -108,7 +110,7 @@ def download_file_from_url(
 
     rv = session.get(_get_url_for_request(url), **request_kwargs)
     if rv.status_code not in (200, 201):
-        raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
+        raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: %s") % url)
     content = BytesIO(rv.content)
     name, content_type = _get_name_and_content_type_from_response(content, rv.headers)
     return content, name, content_type
@@ -140,7 +142,7 @@ async def download_file_from_url_async(
     try:
         async with session.get(_get_url_for_request(url), **request_kwargs) as response:
             if response.status not in (200, 201):
-                raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
+                raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: %s") % url)
 
             content = BytesIO(await response.read())
             name, content_type = _get_name_and_content_type_from_response(content, response.headers)
@@ -167,7 +169,7 @@ def process_file_from_stream(content, content_type=None):
     try:
         metadata = process_file(content, file_type)
     except OSError:  # error from PIL when image is supposed to be an image but is not.
-        raise SuperdeskApiError.internalError("Failed to process file")
+        raise SuperdeskApiError.internalError(_("Failed to process file"))
     file_name = get_file_name(content)
     content.seek(0)
     metadata = encode_metadata(metadata)

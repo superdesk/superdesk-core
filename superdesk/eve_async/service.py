@@ -235,7 +235,9 @@ class AsyncBaseService(BaseService):
                 if res:
                     success.append(res)
             except Exception as ex:
-                raise SuperdeskApiError.badRequestError("Uploaded file is invalid, Error occured:{}.".format(str(ex)))
+                raise SuperdeskApiError.badRequestError(
+                    gettext("Uploaded file is invalid, Error occured:{}.").format(str(ex))
+                )
 
         if success:
             return {

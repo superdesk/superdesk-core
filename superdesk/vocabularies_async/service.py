@@ -125,7 +125,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
         Overriding to validate vocabulary deletion
         """
         if not doc.field_type:
-            raise SuperdeskApiError.badRequestError("Default vocabularies cannot be deleted")
+            raise SuperdeskApiError.badRequestError(gettext("Default vocabularies cannot be deleted"))
 
     def _check_uniqueness(self, items: list[dict[str, Any]], unique_field: str) -> None:
         """Checks the uniqueness if a unique field is defined

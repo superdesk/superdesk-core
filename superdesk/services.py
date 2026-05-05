@@ -16,6 +16,8 @@ from typing import Dict, Any, List, Optional, Union, Generator
 from eve.utils import ParsedRequest
 from eve.methods.common import resolve_document_etag
 
+from quart_babel import gettext as _
+
 from superdesk.resource_fields import ETAG
 from superdesk.flask import g
 from superdesk.errors import SuperdeskApiError
@@ -201,7 +203,9 @@ class BaseService:
         es_query = query.copy() if query else {}
         es_query["size"] = size
         if not es_query.get("sort"):
-            raise SuperdeskApiError.badRequestError("Running `get_all_batch_elastic` without a sort is not supported")
+            raise SuperdeskApiError.badRequestError(
+                _("Running `get_all_batch_elastic` without a sort is not supported")
+            )
 
         for _ in range(max_iterations):
             cursor = self.backend.search_raw(self.datasource, es_query)
@@ -329,7 +333,9 @@ class BaseService:
                 if res:
                     success.append(res)
             except Exception as ex:
-                raise SuperdeskApiError.badRequestError("Uploaded file is invalid, Error occured:{}.".format(str(ex)))
+                raise SuperdeskApiError.badRequestError(
+                    _("Uploaded file is invalid, Error occured:{}.").format(str(ex))
+                )
 
         if success:
             return {

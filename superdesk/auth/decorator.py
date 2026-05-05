@@ -2,6 +2,8 @@ from typing import Optional
 from inspect import isawaitable
 from functools import wraps
 
+from quart_babel import gettext as _
+
 from superdesk.core import get_current_app
 from superdesk.flask import request
 
@@ -54,13 +56,13 @@ def blueprint_token():
             from superdesk.errors import SuperdeskApiError
 
             if not (token := request.args.get("token")):
-                raise SuperdeskApiError.unauthorizedError("Token required")
+                raise SuperdeskApiError.unauthorizedError(_("Token required"))
 
             if not (payload := jwt_decode(token)):
-                raise SuperdeskApiError.unauthorizedError("Invalid or expired token")
+                raise SuperdeskApiError.unauthorizedError(_("Invalid or expired token"))
 
             if payload.get("_url_path") != request.path:
-                raise SuperdeskApiError.unauthorizedError("Token not valid for this URL")
+                raise SuperdeskApiError.unauthorizedError(_("Token not valid for this URL"))
 
             return await _call_and_await(f, *args, **kwargs)
 

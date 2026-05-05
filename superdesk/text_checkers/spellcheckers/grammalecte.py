@@ -17,6 +17,7 @@ import json
 from urllib.parse import urljoin
 import requests
 from os.path import abspath, expanduser
+from quart_babel import gettext as _
 from superdesk.errors import SuperdeskApiError
 from superdesk.text_checkers.spellcheckers import CAP_SPELLING, CAP_GRAMMAR
 from superdesk.text_checkers.spellcheckers.base import SpellcheckerBase
@@ -218,7 +219,7 @@ class Grammalecte(SpellcheckerBase):
             check_url, data={"text": text, "options": json.dumps(self.grammalecte_config)}, timeout=self.CHECK_TIMEOUT
         )
         if r.status_code != 200:
-            raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
+            raise SuperdeskApiError.internalError(_("Unexpected return code from Grammalecte"))
         return self.grammalecte2superdesk(text, r.json())
 
     def check(self, text, language=None):
@@ -243,7 +244,7 @@ class Grammalecte(SpellcheckerBase):
         check_url = urljoin(self.base_url, PATH_SUGGEST)
         r = requests.post(check_url, data={"token": text}, timeout=self.SUGGEST_TIMEOUT)
         if r.status_code != 200:
-            raise SuperdeskApiError.internalError("Unexpected return code from Grammalecte")
+            raise SuperdeskApiError.internalError(_("Unexpected return code from Grammalecte"))
 
         suggestions = r.json().get("suggestions", [])
         return {"suggestions": self.list2suggestions(suggestions)}

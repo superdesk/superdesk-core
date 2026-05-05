@@ -10,6 +10,7 @@
 import json
 
 from eve.utils import ParsedRequest
+from quart_babel import gettext as _
 
 import logging
 from copy import deepcopy
@@ -46,21 +47,21 @@ class CropService:
         """
         # Check if type is picture
         if original[ITEM_TYPE] != CONTENT_TYPE.PICTURE:
-            raise SuperdeskApiError.badRequestError(message="Only images can be cropped!")
+            raise SuperdeskApiError.badRequestError(message=_("Only images can be cropped!"))
 
         # Check if the renditions exists
         if not original.get("renditions"):
-            raise SuperdeskApiError.badRequestError(message="Missing renditions!")
+            raise SuperdeskApiError.badRequestError(message=_("Missing renditions!"))
 
         # Check if the original rendition exists
         if not original.get("renditions").get("original"):
-            raise SuperdeskApiError.badRequestError(message="Missing original rendition!")
+            raise SuperdeskApiError.badRequestError(message=_("Missing original rendition!"))
 
         # Check if the crop name is valid
         crop = self.get_crop_by_name(crop_name)
         crop_data = updates.get("renditions", {}).get(crop_name, {})
         if not crop and "CropLeft" in crop_data:
-            raise SuperdeskApiError.badRequestError(message="Unknown crop name! (name=%s)" % crop_name)
+            raise SuperdeskApiError.badRequestError(message=_("Unknown crop name! (name=%s)") % crop_name)
 
         self._validate_values(crop_data)
         self._validate_poi(original, updates, crop_name)
@@ -73,7 +74,7 @@ class CropService:
                 try:
                     crop[field] = int(crop[field])
                 except (TypeError, ValueError):
-                    raise SuperdeskApiError.badRequestError("Invalid value for %s in renditions" % field)
+                    raise SuperdeskApiError.badRequestError(_("Invalid value for %s in renditions") % field)
 
     def _validate_poi(self, original, updates, crop_name):
         """Validate the crop point of interest in the renditions dictionary for the given crop
@@ -123,19 +124,19 @@ class CropService:
         height = doc["CropBottom"] - doc["CropTop"]
         if not (crop.get("width") or crop.get("height") or crop.get("ratio")):
             raise SuperdeskApiError.badRequestError(
-                message="Crop data are missing. width, height or ratio need to be defined"
+                message=_("Crop data are missing. width, height or ratio need to be defined")
             )
         if crop.get("width") and crop.get("height"):
             expected_crop_width = int(crop["width"])
             expected_crop_height = int(crop["height"])
             if width < expected_crop_width or height < expected_crop_height:
                 raise SuperdeskApiError.badRequestError(
-                    message="Wrong crop size. Minimum crop size is {}x{}.".format(crop["width"], crop["height"])
+                    message=_("Wrong crop size. Minimum crop size is {}x{}.").format(crop["width"], crop["height"])
                 )
                 doc_ratio = round(width / height, 1)
                 spec_ratio = round(expected_crop_width / expected_crop_height, 1)
                 if doc_ratio != spec_ratio:
-                    raise SuperdeskApiError.badRequestError(message="Wrong aspect ratio!")
+                    raise SuperdeskApiError.badRequestError(message=_("Wrong aspect ratio!"))
         elif crop.get("ratio"):
             ratio = crop.get("ratio")
             if type(ratio) not in [int, float]:
@@ -143,7 +144,7 @@ class CropService:
                 ratio = int(ratio[0]) / int(ratio[1])
             if abs((width / height) - ratio) > 0.1:
                 raise SuperdeskApiError.badRequestError(
-                    message="Ratio %s is not respected. We got %f" % (crop.get("ratio"), abs((width / height)))
+                    message=_("Ratio %s is not respected. We got %f") % (crop.get("ratio"), abs((width / height)))
                 )
 
     def get_crop_by_name(self, crop_name):
@@ -162,7 +163,7 @@ class CropService:
             self.crop_sizes = custom_crops.get("items")
 
         if not self.crop_sizes:
-            raise SuperdeskApiError.badRequestError(message="Crops sizes couldn't be loaded!")
+            raise SuperdeskApiError.badRequestError(message=_("Crops sizes couldn't be loaded!"))
 
         return next((c for c in self.crop_sizes if c.get("name", "").lower() == crop_name.lower()), None)
 
@@ -177,12 +178,12 @@ class CropService:
         """
         original_file = get_current_app().media.fetch_rendition(original_image)
         if not original_file:
-            raise SuperdeskApiError.badRequestError("Original file couldn't be found")
+            raise SuperdeskApiError.badRequestError(_("Original file couldn't be found"))
         try:
             cropped, out = crop_image(original_file, crop_name, crop_data)
             crop = self.get_crop_by_name(crop_name)
             if not cropped:
-                raise SuperdeskApiError.badRequestError("Saving crop failed.")
+                raise SuperdeskApiError.badRequestError(_("Saving crop failed."))
             # resize if needed
             if crop.get("width") or crop.get("height"):
                 out, width, height = _resize_image(
@@ -197,7 +198,7 @@ class CropService:
         except SuperdeskApiError:
             raise
         except Exception as ex:
-            raise SuperdeskApiError.badRequestError("Generating crop failed: {}".format(str(ex)))
+            raise SuperdeskApiError.badRequestError(_("Generating crop failed: {}").format(str(ex)))
 
     def _save_cropped_image(self, file_stream, original, doc):
         """Saves the cropped image and returns the crop dictionary
@@ -231,7 +232,7 @@ class CropService:
                 app.media.delete(file_id)
             except Exception:
                 pass
-            raise SuperdeskApiError.internalError("Generating crop failed: {}".format(str(ex)), exception=ex)
+            raise SuperdeskApiError.internalError(_("Generating crop failed: {}").format(str(ex)), exception=ex)
 
     def _delete_crop_file(self, file_id):
         """Delete the crop file

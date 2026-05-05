@@ -1,4 +1,5 @@
 from eve.auth import TokenAuth
+from quart_babel import gettext as _
 
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -44,12 +45,12 @@ class SubscriberTokenAuth(TokenAuthorization):
         token_id = self._get_auth_token_from_request(request)
 
         if token_id is None:
-            raise SuperdeskApiError.forbiddenError(message="Authorization token missing.")
+            raise SuperdeskApiError.forbiddenError(message=_("Authorization token missing."))
 
         token = await token_service.find_by_id(token_id)
         if token is None:
             await self.stop_session(request)
-            raise SuperdeskApiError.forbiddenError(message="Authorization token missing.")
+            raise SuperdeskApiError.forbiddenError(message=_("Authorization token missing."))
 
         await self.check_token_validity(token)
         await self.start_session(request, token)
@@ -61,7 +62,7 @@ class SubscriberTokenAuth(TokenAuthorization):
 
         if token.expiry and token.expiry < utcnow():
             await SubscriberTokenService().delete(token)
-            raise SuperdeskApiError.forbiddenError(message="Authorization token expired.")
+            raise SuperdeskApiError.forbiddenError(message=_("Authorization token expired."))
 
     async def start_session(self, request: Request, token: SubscriberToken) -> None:  # type: ignore[override]
         """

@@ -40,6 +40,8 @@ from motor.motor_asyncio import AsyncIOMotorCursor
 # TODO-ASYNC: Replace Eve's parser with our own
 from eve.io.mongo.parser import parse, ParseError
 
+from quart_babel import gettext as _
+
 from superdesk.core.types import SearchRequest, SortListParam, SortParam, ProjectedFieldArg
 from superdesk.core.errors import ElasticNotConfiguredForResource
 from superdesk.flask import g
@@ -896,7 +898,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 try:
                     where = parse(req.where)
                 except ParseError:
-                    raise SuperdeskApiError.badRequestError("Failed to parse the where filter")
+                    raise SuperdeskApiError.badRequestError(_("Failed to parse the where filter"))
 
         self._validate_lookup(where)
         where = cast_item(where or {})
@@ -964,7 +966,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         etag = etag.replace('"', "")
 
         if etag != original.etag:
-            raise SuperdeskApiError.preconditionFailedError("Client and server etags don't match")
+            raise SuperdeskApiError.preconditionFailedError(_("Client and server etags don't match"))
 
     def generate_etag(self, value: dict[str, Any], ignore_fields: list[str] | None = None) -> str:
         if ignore_fields is not None:
@@ -1020,7 +1022,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         if not self.config.versioning:
-            raise SuperdeskApiError.badRequestError("Resource does not support versioning")
+            raise SuperdeskApiError.badRequestError(_("Resource does not support versioning"))
 
         item: dict | None = await self.mongo_async.find_one({ID_FIELD: item_id}, projection=projection)
         if not item:
@@ -1055,7 +1057,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         if not self.config.versioning:
-            raise SuperdeskApiError.badRequestError("Resource does not support versioning")
+            raise SuperdeskApiError.badRequestError(_("Resource does not support versioning"))
 
         versioned_item: dict | None = await self.mongo_versioned_async.find_one(
             {
@@ -1143,7 +1145,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             mongo_result, elastic_result = await asyncio.gather(mongo_task, elastic_task)
 
         if not mongo_result.acknowledged:
-            raise SuperdeskApiError.badRequestError("Failed to bulk update items in MongoDB")
+            raise SuperdeskApiError.badRequestError(_("Failed to bulk update items in MongoDB"))
 
         if mongo_result.modified_count != len(ids):
             logger.warning(

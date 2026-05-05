@@ -27,6 +27,8 @@ from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
 
 import superdesk
+from quart_babel import gettext as _
+
 from superdesk.core import json, get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD, ETAG, LAST_UPDATED, DATE_CREATED
 from superdesk.errors import SuperdeskApiError
@@ -870,7 +872,7 @@ class EveBackend:
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
-            raise SuperdeskApiError.forbiddenError(message="Can not remove from endpoint with a defined search")
+            raise SuperdeskApiError.forbiddenError(message=_("Can not remove from endpoint with a defined search"))
         backend.remove(endpoint_name, lookup)
 
     async def delete_from_mongo_async(self, endpoint_name: str, lookup: Dict[str, Any]):
@@ -886,7 +888,7 @@ class EveBackend:
         backend = self._backend(endpoint_name, use_async=True)
         search_backend = self._lookup_backend(endpoint_name, use_async=True)
         if search_backend:
-            raise SuperdeskApiError.forbiddenError(message="Can not remove from endpoint with a defined search")
+            raise SuperdeskApiError.forbiddenError(message=_("Can not remove from endpoint with a defined search"))
         await backend.remove(endpoint_name, lookup)
 
     def remove_from_search(self, endpoint_name, doc):

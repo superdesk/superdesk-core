@@ -281,7 +281,7 @@ class VocabulariesService(CachableAsyncBaseService):
         Overriding to validate vocabulary deletion
         """
         if "field_type" not in doc:
-            raise SuperdeskApiError.badRequestError("Default vocabularies cannot be deleted")
+            raise SuperdeskApiError.badRequestError(_("Default vocabularies cannot be deleted"))
 
     def _check_uniqueness(self, items, unique_field):
         """Checks the uniqueness if a unique field is defined
@@ -296,7 +296,7 @@ class VocabulariesService(CachableAsyncBaseService):
                 continue
 
             if not item.get(unique_field):
-                raise SuperdeskApiError.badRequestError("{} cannot be empty".format(unique_field))
+                raise SuperdeskApiError.badRequestError(_("{} cannot be empty").format(unique_field))
 
             unique_value = str(item.get(unique_field)).upper()
 
