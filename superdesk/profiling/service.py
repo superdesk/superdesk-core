@@ -75,5 +75,5 @@ class ProfilingService(BaseService):
         sort_fields = req.sort.split(",")
         for field in sort_fields:
             if field not in self.SORT_FIELDS:
-                raise SuperdeskApiError.badRequestError(_("Invalid sort field %s") % field)
+                raise SuperdeskApiError.badRequestError(_("Invalid sort field {field}").format(field=field))
         return sort_fields

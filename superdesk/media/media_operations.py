@@ -110,7 +110,7 @@ def download_file_from_url(
 
     rv = session.get(_get_url_for_request(url), **request_kwargs)
     if rv.status_code not in (200, 201):
-        raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: %s") % url)
+        raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: {url}").format(url=url))
     content = BytesIO(rv.content)
     name, content_type = _get_name_and_content_type_from_response(content, rv.headers)
     return content, name, content_type
@@ -142,7 +142,7 @@ async def download_file_from_url_async(
     try:
         async with session.get(_get_url_for_request(url), **request_kwargs) as response:
             if response.status not in (200, 201):
-                raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: %s") % url)
+                raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: {url}").format(url=url))
 
             content = BytesIO(await response.read())
             name, content_type = _get_name_and_content_type_from_response(content, response.headers)

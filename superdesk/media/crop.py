@@ -61,7 +61,9 @@ class CropService:
         crop = self.get_crop_by_name(crop_name)
         crop_data = updates.get("renditions", {}).get(crop_name, {})
         if not crop and "CropLeft" in crop_data:
-            raise SuperdeskApiError.badRequestError(message=_("Unknown crop name! (name=%s)") % crop_name)
+            raise SuperdeskApiError.badRequestError(
+                message=_("Unknown crop name! (name={name})").format(name=crop_name)
+            )
 
         self._validate_values(crop_data)
         self._validate_poi(original, updates, crop_name)
@@ -74,7 +76,9 @@ class CropService:
                 try:
                     crop[field] = int(crop[field])
                 except (TypeError, ValueError):
-                    raise SuperdeskApiError.badRequestError(_("Invalid value for %s in renditions") % field)
+                    raise SuperdeskApiError.badRequestError(
+                        _("Invalid value for {field} in renditions").format(field=field)
+                    )
 
     def _validate_poi(self, original, updates, crop_name):
         """Validate the crop point of interest in the renditions dictionary for the given crop
@@ -144,7 +148,9 @@ class CropService:
                 ratio = int(ratio[0]) / int(ratio[1])
             if abs((width / height) - ratio) > 0.1:
                 raise SuperdeskApiError.badRequestError(
-                    message=_("Ratio %s is not respected. We got %f") % (crop.get("ratio"), abs((width / height)))
+                    message=_("Ratio {ratio} is not respected. We got {actual}").format(
+                        ratio=crop.get("ratio"), actual=abs((width / height))
+                    )
                 )
 
     def get_crop_by_name(self, crop_name):
