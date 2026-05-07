@@ -1,3 +1,5 @@
+from quart_babel import gettext as _
+
 from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD, GUID_FIELD
 from superdesk.errors import SuperdeskApiError
@@ -35,7 +37,7 @@ async def publish_doc_to_content_api(item_dict: dict) -> str:
             return create_response[0].id
 
         # This should never happen, as exceptions would be raised by ``service.create``
-        raise SuperdeskApiError.badRequestError("Failed to create item in Content API")
+        raise SuperdeskApiError.badRequestError(_("Failed to create item in Content API"))
 
 
 def process_associations(updates: ContentAPIItem, original: ContentAPIItem | None) -> None:

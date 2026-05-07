@@ -12,6 +12,8 @@
 import logging
 import superdesk
 
+from quart_babel import gettext as _
+
 from superdesk.errors import SuperdeskApiError
 from superdesk.auth.decorator import blueprint_token
 from superdesk.eve_async import AsyncBaseService
@@ -36,7 +38,7 @@ async def download_file(id, folder=None):
     file = await app.media.get_async(filename, "download", begin=begin, end=end)
     if file:
         return await generate_response_for_file(file, content_disposition='attachment; filename="export.zip"')
-    raise SuperdeskApiError.notFoundError("File not found on media storage.")
+    raise SuperdeskApiError.notFoundError(_("File not found on media storage."))
 
 
 def download_url(media_id):

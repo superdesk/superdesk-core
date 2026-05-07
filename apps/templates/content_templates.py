@@ -425,7 +425,7 @@ class ContentTemplatesService(AsyncBaseService):
             return
 
         if doc.get("template_desks"):
-            raise SuperdeskApiError.badRequestError("Kill templates can not be assigned to desks")
+            raise SuperdeskApiError.badRequestError(_("Kill templates can not be assigned to desks"))
         if "is_public" in doc and doc["is_public"] is False:
             raise SuperdeskApiError.badRequestError(_("Kill templates must be public"))
         doc["is_public"] = True
@@ -509,14 +509,14 @@ class ContentTemplatesApplyService(AsyncBaseService):
         item["desk_name"] = await DesksResourceModel.get_desk_name(item.get("task", {}).get("desk"))
 
         if not template_name:
-            SuperdeskApiError.badRequestError(message="Invalid Template Name")
+            SuperdeskApiError.badRequestError(message=_("Invalid Template Name"))
 
         if not item:
-            SuperdeskApiError.badRequestError(message="Invalid Item")
+            SuperdeskApiError.badRequestError(message=_("Invalid Item"))
 
         template = await superdesk.get_resource_service("content_templates").get_template_by_name(template_name)
         if not template:
-            SuperdeskApiError.badRequestError(message="Invalid Template")
+            SuperdeskApiError.badRequestError(message=_("Invalid Template"))
 
         updates = await render_content_template(item, template)
         item.update(updates)
@@ -544,7 +544,7 @@ async def render_content_template_by_name(item, template_name):
     # get the kill template
     template = await superdesk.get_resource_service("content_templates").get_template_by_name(template_name)
     if not template:
-        SuperdeskApiError.badRequestError(message="{} Template missing.".format(template_name))
+        SuperdeskApiError.badRequestError(message=_("{} Template missing.").format(template_name))
 
     # apply the kill template
     return await render_content_template(item, template)
@@ -561,7 +561,7 @@ async def render_content_template_by_id(item, template_id, update=False):
     # get the kill template
     template = await superdesk.get_resource_service("content_templates").find_one_async(req=None, _id=template_id)
     if not template:
-        SuperdeskApiError.badRequestError(message="{} Template missing.".format(template_id))
+        SuperdeskApiError.badRequestError(message=_("{} Template missing.").format(template_id))
 
     return await render_content_template(item, template, update)
 

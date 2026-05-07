@@ -10,6 +10,7 @@
 
 import logging
 import superdesk
+from quart_babel import gettext as _
 
 from superdesk.core import get_current_app
 from superdesk.activity import add_activity, ACTIVITY_UPDATE
@@ -71,11 +72,11 @@ class RolesService(AsyncBaseService):
 
     async def on_delete_async(self, docs):
         if docs.get("is_default"):
-            raise SuperdeskApiError.forbiddenError("Cannot delete the default role")
+            raise SuperdeskApiError.forbiddenError(_("Cannot delete the default role"))
         # check if there are any users in the role
         user = await UsersResourceModel.get_service().find_one(role=docs.get("_id"))
         if user:
-            raise SuperdeskApiError.forbiddenError("Cannot delete the role, it still has users in it!")
+            raise SuperdeskApiError.forbiddenError(_("Cannot delete the role, it still has users in it!"))
 
     async def remove_old_default(self):
         # see if there is already a default role and set it to no longer default

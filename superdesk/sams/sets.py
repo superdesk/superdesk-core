@@ -22,6 +22,7 @@
 
 import logging
 import superdesk
+from quart_babel import gettext as _
 
 from superdesk.core import get_current_app
 from superdesk.flask import Blueprint, request
@@ -80,7 +81,7 @@ def delete(item_id):
     try:
         etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+        raise SuperdeskApiError.badRequestError(_("If-Match field missing in header"))
 
     delete_response = get_sams_client().sets.delete(item_id=item_id, headers={"If-Match": etag})
     if delete_response.status_code != 204:
@@ -122,7 +123,7 @@ def update(item_id):
     try:
         etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+        raise SuperdeskApiError.badRequestError(_("If-Match field missing in header"))
 
     updates = request.get_json()
     update_response = get_sams_client().sets.update(item_id=item_id, updates=updates, headers={"If-Match": etag})

@@ -136,7 +136,7 @@ def delete(item_id):
     try:
         etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+        raise SuperdeskApiError.badRequestError(_("If-Match field missing in header"))
 
     if get_attachments_from_asset_id(item_id).count():
         raise SuperdeskApiError.badRequestError(_("Asset is attached to a news item, cannot delete"))
@@ -163,7 +163,7 @@ async def update(item_id):
     try:
         etag = request.headers["If-Match"]
     except KeyError:
-        raise SuperdeskApiError.badRequestError("If-Match field missing in header")
+        raise SuperdeskApiError.badRequestError(_("If-Match field missing in header"))
 
     if (await request.files).get("binary"):
         # The binary data was supplied so this must be a multipart request

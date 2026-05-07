@@ -1298,7 +1298,7 @@ class AutoSaveResource(Resource):
 class ArchiveSaveService(AsyncBaseService):
     async def create_async(self, docs, **kwargs):
         if not docs:
-            raise SuperdeskApiError.notFoundError("Content is missing")
+            raise SuperdeskApiError.notFoundError(_("Content is missing"))
 
         for doc in docs:
             editor_utils.generate_fields(doc)

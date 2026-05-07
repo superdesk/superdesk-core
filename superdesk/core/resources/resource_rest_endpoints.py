@@ -269,7 +269,7 @@ class ResourceRestEndpoints(RestEndpoints):
             service = get_current_async_app().resources.get_resource_service(parent_link.resource_name)
             item_id: str | ObjectId | None = request.get_view_args(parent_link.get_url_arg_name())
             if not item_id:
-                raise SuperdeskApiError.badRequestError("Parent resource ID not provided in URL")
+                raise SuperdeskApiError.badRequestError(gettext("Parent resource ID not provided in URL"))
             elif service.id_uses_objectid():
                 item_id = ObjectId(item_id)
 
@@ -413,7 +413,7 @@ class ResourceRestEndpoints(RestEndpoints):
         payload: dict | list[dict] | None = await request.get_json()
 
         if payload is None:
-            raise SuperdeskApiError.badRequestError("Empty payload")
+            raise SuperdeskApiError.badRequestError(gettext("Empty payload"))
 
         if isinstance(payload, dict):
             payload = [payload]
@@ -536,7 +536,7 @@ class ResourceRestEndpoints(RestEndpoints):
         payload = await request.get_json()
 
         if not payload:
-            raise SuperdeskApiError.badRequestError("Empty payload")
+            raise SuperdeskApiError.badRequestError(gettext("Empty payload"))
 
         original = await self.service.find_by_id(args.item_id)
         if original is None:

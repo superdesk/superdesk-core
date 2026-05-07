@@ -16,6 +16,8 @@ from abc import ABCMeta, abstractmethod
 from datetime import timedelta, datetime
 from pytz import utc
 
+from quart_babel import gettext as _
+
 from superdesk.core import get_app_config
 from superdesk.core.utils import list_to_async_generator
 from superdesk.resource_fields import ID_FIELD
@@ -167,7 +169,7 @@ class FeedingService(metaclass=ABCMeta):
         :raises SuperdeskIngestError if failed to get items from provider
         """
         if self._is_closed(provider):
-            raise SuperdeskApiError.internalError("Ingest Provider is closed")
+            raise SuperdeskApiError.internalError(_("Ingest Provider is closed"))
 
         try:
             self._provider = provider

@@ -14,6 +14,7 @@ import ast
 import simplejson as json
 from eve.io.mongo.parser import parse
 from bson import ObjectId
+from quart_babel import gettext as _
 
 from superdesk.errors import SuperdeskApiError
 from superdesk.core.types import SearchRequest, SortParam, ElasticResourceConfig, ElasticClientConfig, ProjectedFieldArg
@@ -233,7 +234,7 @@ class BaseElasticResourceClient:
                 try:
                     filters.append({"term": parse(req.where)})
                 except ValueError as e:
-                    raise SuperdeskApiError.badRequestError("Invalid where argument") from e
+                    raise SuperdeskApiError.badRequestError(_("Invalid where argument")) from e
 
         _set_filters(query, filters)
 
