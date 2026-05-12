@@ -14,6 +14,7 @@ from superdesk.tests import TestCase
 from superdesk.media.crop import CropService
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.media_operations import crop_image
+from superdesk.media.image import get_meta
 from superdesk.media.renditions import _resize_image, get_renditions_spec, can_generate_custom_crop_from_original
 from apps.prepopulate.app_populate import populate_table_json
 
@@ -159,6 +160,32 @@ class CropTestCase(TestCase):
         with open(img, "rb") as imgfile:
             resized, width, height = _resize_image(imgfile, ("200", None), "jpeg")
             self.assertEqual(150, height)
+
+    def test_resize_image_preserves_exif_metadata(self):
+        img = get_picture_fixture()
+        with open(img, "rb") as imgfile:
+            original_meta = get_meta(imgfile)
+            imgfile.seek(0)
+            resized, width, height = _resize_image(imgfile, ("200", None), "jpeg")
+            meta = get_meta(resized)
+
+        self.assertEqual(original_meta.get("Make"), meta.get("Make"))
+        self.assertEqual(original_meta.get("Model"), meta.get("Model"))
+
+    def test_crop_image_preserves_exif_metadata(self):
+        img = get_picture_fixture()
+        crop = {"CropTop": "0", "CropRight": "300", "CropBottom": "200", "CropLeft": "0"}
+        size = {"width": "300", "height": "200"}
+
+        with open(img, "rb") as imgfile:
+            original_meta = get_meta(imgfile)
+            imgfile.seek(0)
+            status, output = crop_image(imgfile, img, crop, size)
+            self.assertTrue(status)
+            meta = get_meta(output)
+
+        self.assertEqual(original_meta.get("Make"), meta.get("Make"))
+        self.assertEqual(original_meta.get("Model"), meta.get("Model"))
 
     def test_get_rendition_spec_no_custom_crop(self):
         renditions = get_renditions_spec(no_custom_crops=True)

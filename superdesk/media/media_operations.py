@@ -203,11 +203,23 @@ def crop_image(content, file_name, cropping_data, exact_size=None, image_format=
         logger.debug("Opened image {} from stream, going to crop it".format(file_name))
         content.seek(0)
         img = Image.open(content)
+        exif = img.getexif() if hasattr(img, "getexif") else None
+        exif_bytes = exif.tobytes() if exif else None
         cropped = img.crop(cropping_data)
         if exact_size and "width" in exact_size and "height" in exact_size:
             cropped = cropped.resize((int(exact_size["width"]), int(exact_size["height"])), Image.LANCZOS)
         logger.debug("Cropped image {} from stream, going to save it".format(file_name))
         try:
+            out = BytesIO()
+            save_kwargs = {}
+            if exif_bytes:
+                save_kwargs["exif"] = exif_bytes
+            cropped.save(out, image_format or img.format, **save_kwargs)
+            out.seek(0)
+            setattr(out, "width", cropped.size[0])
+            setattr(out, "height", cropped.size[1])
+            return True, out
+        except (TypeError, ValueError):
             out = BytesIO()
             cropped.save(out, image_format or img.format)
             out.seek(0)

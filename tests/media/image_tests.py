@@ -10,8 +10,11 @@
 
 
 import os
+from io import BytesIO
 from unittest import TestCase
+from PIL import Image
 from superdesk.media.image import get_meta
+from superdesk.media.image import fix_orientation
 from superdesk.media.media_operations import crop_image
 
 
@@ -88,3 +91,22 @@ class MediaOperationsTestCase(TestCase):
             self.assertEqual(True, status)
             self.assertEqual(4, output.width)
             self.assertEqual(3, output.height)
+
+
+class ImageOrientationTestCase(TestCase):
+    def test_fix_orientation_normalizes_exif(self):
+        # Build a synthetic portrait JPEG with EXIF orientation=6 (rotate 90deg CW on display).
+        image = Image.new("RGB", (10, 20), color="white")
+        exif = image.getexif()
+        exif[274] = 6
+
+        original = BytesIO()
+        image.save(original, "JPEG", exif=exif.tobytes())
+        original.seek(0)
+
+        fixed = fix_orientation(original)
+        fixed_image = Image.open(fixed)
+
+        # After normalization, pixel data is physically rotated and EXIF orientation is reset to 1.
+        self.assertEqual((20, 10), fixed_image.size)
+        self.assertEqual(1, fixed_image.getexif().get(274))
