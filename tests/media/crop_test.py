@@ -8,7 +8,10 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from io import BytesIO
 from unittest import mock
+
+from PIL import Image
 
 from superdesk.tests import TestCase
 from superdesk.media.crop import CropService
@@ -171,6 +174,22 @@ class CropTestCase(TestCase):
 
         self.assertEqual(original_meta.get("Make"), meta.get("Make"))
         self.assertEqual(original_meta.get("Model"), meta.get("Model"))
+
+    def test_resize_image_preserves_exif_metadata_after_rgb_fallback(self):
+        image = Image.new("RGBA", (20, 10), color=(255, 255, 255, 255))
+        exif = image.getexif()
+        exif[271] = "Synthetic"
+        exif[272] = "RGBA Camera"
+
+        original = BytesIO()
+        image.save(original, "PNG", exif=exif.tobytes())
+        original.seek(0)
+
+        resized, width, height = _resize_image(original, ("10", None), "jpeg")
+        meta = get_meta(resized)
+
+        self.assertEqual("Synthetic", meta.get("Make"))
+        self.assertEqual("RGBA Camera", meta.get("Model"))
 
     def test_crop_image_preserves_exif_metadata(self):
         img = get_picture_fixture()

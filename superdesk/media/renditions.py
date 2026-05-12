@@ -318,10 +318,14 @@ def _resize_image(content, size, format=None, keepProportions=True):
     try:
         resized.save(out, format, **save_kwargs)
     except (IOError, TypeError, ValueError):
-        out = BytesIO()
-        save_kwargs.pop("exif", None)
         resized = resized.convert("RGB")
-        resized.save(out, format, **save_kwargs)
+        out = BytesIO()
+        try:
+            resized.save(out, format, **save_kwargs)
+        except (IOError, TypeError, ValueError):
+            out = BytesIO()
+            save_kwargs.pop("exif", None)
+            resized.save(out, format, **save_kwargs)
     out.seek(0)
     return out, new_width, new_height
 

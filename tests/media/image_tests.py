@@ -110,3 +110,19 @@ class ImageOrientationTestCase(TestCase):
         # After normalization, pixel data is physically rotated and EXIF orientation is reset to 1.
         self.assertEqual((20, 10), fixed_image.size)
         self.assertEqual(1, fixed_image.getexif().get(274))
+        self.assertEqual(20, fixed.width)
+        self.assertEqual(10, fixed.height)
+
+    def test_fix_orientation_rewinds_when_returning_original_stream(self):
+        image = Image.new("RGB", (10, 20), color="white")
+        exif = image.getexif()
+        exif[274] = 1
+
+        original = BytesIO()
+        image.save(original, "JPEG", exif=exif.tobytes())
+        original.seek(5)
+
+        fixed = fix_orientation(original)
+
+        self.assertIs(fixed, original)
+        self.assertEqual(0, fixed.tell())
