@@ -49,12 +49,15 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
             content_id = str(item_data["contentId"])
 
             if action == "add":
+                new_position = item_data.get("position")
+                if new_position is not None:
+                    await self._shift_positions_up(list_id, new_position)
                 await self.create(
                     [
                         {
                             "list_id": list_id,
                             "content": content_id,
-                            "position": item_data.get("position"),
+                            "position": new_position,
                             "sticky": item_data.get("sticky", False),
                             "sticky_position": item_data.get("stickyPosition"),
                             "enabled": True,
@@ -64,11 +67,16 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
             elif action == "move":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
-                    await self.update(existing.id, {"position": item_data.get("position")})
+                    new_position = item_data.get("position")
+                    await self._shift_positions_for_move(list_id, existing.id, existing.position, new_position)
+                    await self.update(existing.id, {"position": new_position})
             elif action == "delete":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
+                    old_position = existing.position
                     await self.delete(existing)
+                    if old_position is not None:
+                        await self._shift_positions_down(list_id, old_position)
 
         await lists_service.mongo_async.update_one(
             {"_id": list_id},
@@ -77,3 +85,54 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         result = await lists_service.find_by_id(list_id)
         assert result is not None
         return result
+
+    async def _shift_positions_up(self, list_id: ObjectId, position: int) -> None:
+        """Make room at ``position`` by incrementing the position of every item at or after it."""
+        await self.mongo_async.update_many(
+            {"list_id": list_id, "sticky": {"$ne": True}, "position": {"$gte": position}},
+            {"$inc": {"position": 1}},
+        )
+
+    async def _shift_positions_down(self, list_id: ObjectId, position: int) -> None:
+        """Close the gap at ``position`` by decrementing the position of every item after it."""
+        await self.mongo_async.update_many(
+            {"list_id": list_id, "sticky": {"$ne": True}, "position": {"$gt": position}},
+            {"$inc": {"position": -1}},
+        )
+
+    async def _shift_positions_for_move(
+        self,
+        list_id: ObjectId,
+        item_id: ObjectId,
+        old_position: int | None,
+        new_position: int | None,
+    ) -> None:
+        """Reorder items affected by moving a single item from ``old_position`` to ``new_position``."""
+        if new_position == old_position:
+            return
+        if old_position is None:
+            await self._shift_positions_up(list_id, new_position)  # type: ignore[arg-type]
+            return
+        if new_position is None:
+            await self._shift_positions_down(list_id, old_position)
+            return
+        if new_position < old_position:
+            await self.mongo_async.update_many(
+                {
+                    "list_id": list_id,
+                    "sticky": {"$ne": True},
+                    "_id": {"$ne": item_id},
+                    "position": {"$gte": new_position, "$lt": old_position},
+                },
+                {"$inc": {"position": 1}},
+            )
+        else:
+            await self.mongo_async.update_many(
+                {
+                    "list_id": list_id,
+                    "sticky": {"$ne": True},
+                    "_id": {"$ne": item_id},
+                    "position": {"$gt": old_position, "$lte": new_position},
+                },
+                {"$inc": {"position": -1}},
+            )
