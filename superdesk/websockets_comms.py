@@ -296,6 +296,7 @@ class SocketCommunication:
         self.sentry_dsn = sentry_dsn
         self.sentry_traces_sample_rate = sentry_traces_sample_rate
         self.debug = WS_DEBUG if debug is None else debug
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
 
     def _add_client(self, websocket: ServerConnection):
         self.clients.add(websocket)
@@ -388,6 +389,19 @@ class SocketCommunication:
         clients = self.get_message_recipients(message_data)
         broadcast(clients, json.dumps(message_data, default=json_serialize_datetime_objectId))
 
+    def _broadcast_threadsafe(self, message):
+        """Schedule 'broadcast' on the event loop thread."""
+        loop = self.loop
+
+        if loop is None or loop.is_closed():
+            logger.warning("Dropping websocket message because the event loop is not available")
+            return
+
+        try:
+            loop.call_soon_threadsafe(self.broadcast, message)
+        except RuntimeError:
+            logger.warning("Dropping websocket message because the event loop is closed")
+
     def _log(self, message: str, websocket: ServerConnection):
         """Log message with some websocket data like address.
 
@@ -426,16 +440,22 @@ class SocketCommunication:
                 integrations=[AsyncioIntegration()],
                 traces_sample_rate=self.sentry_traces_sample_rate,
             )
+
         try:
             consumer = None
+            self.loop = asyncio.get_running_loop()
             async with serve(self._connection_handler, self.host, self.port) as server:
-                loop = asyncio.get_event_loop()
-                loop.add_signal_handler(signal.SIGTERM, server.close)
+                self.loop.add_signal_handler(signal.SIGTERM, server.close)
                 # create socket message consumer
-                consumer = SocketMessageConsumer(self.broker_url, self.broadcast, self.exchange_name)
+                consumer = SocketMessageConsumer(
+                    self.broker_url,
+                    self._broadcast_threadsafe,
+                    self.exchange_name,
+                )
                 # kombu is blocking so needs to run in executor
-                loop.run_in_executor(None, consumer.run)
+                self.loop.run_in_executor(None, consumer.run)
                 await server.wait_closed()
+
         except KeyboardInterrupt:
             pass
         finally:
