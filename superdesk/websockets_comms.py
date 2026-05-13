@@ -388,8 +388,16 @@ class SocketCommunication:
 
     def _broadcast_threadsafe(self, message):
         """Schedule 'broadcast' on the event loop thread."""
-        if self.loop is not None:
-            self.loop.call_soon_threadsafe(self.broadcast, message)
+        loop = self.loop
+
+        if loop is None or loop.is_closed():
+            logger.warning("Dropping websocket message because the event loop is not available")
+            return
+
+        try:
+            loop.call_soon_threadsafe(self.broadcast, message)
+        except RuntimeError:
+            logger.warning("Dropping websocket message because the event loop is closed")
 
     def _log(self, message: str, websocket: ServerConnection):
         """Log message with some websocket data like address.
