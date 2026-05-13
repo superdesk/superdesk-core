@@ -173,6 +173,34 @@ entity_metadata = {
     },
 }
 
+lifecycle_timing_schema = {
+    "type": "dict",
+    "nullable": True,
+    "schema": {
+        # Unified lifecycle start
+        "lifecycle_started_at": {"type": "datetime", "nullable": True},
+        "lifecycle_started_ms": {"type": "integer", "nullable": True, "mapping": {"type": "long"}},
+        # Processing milestones
+        "ingest_finished_at": {"type": "datetime", "nullable": True},
+        "ingest_finished_ms": {"type": "integer", "nullable": True, "mapping": {"type": "long"}},
+        "routing_finished_at": {"type": "datetime", "nullable": True},
+        "routing_finished_ms": {"type": "integer", "nullable": True, "mapping": {"type": "long"}},
+        "formatting_finished_at": {"type": "datetime", "nullable": True},
+        "formatting_finished_ms": {"type": "integer", "nullable": True, "mapping": {"type": "long"}},
+        "transmission_finished_at": {"type": "datetime", "nullable": True},
+        "transmission_finished_ms": {"type": "integer", "nullable": True, "mapping": {"type": "long"}},
+        "ingest_processing_ms": {"type": "integer", "nullable": True, "mapping": {"type": "long"}},
+        # Publishing pipeline
+        "first_published_at": {"type": "datetime", "nullable": True},
+        "first_published_ms": {"type": "integer", "nullable": True, "mapping": {"type": "long"}},
+        "lifecycle_to_first_publish_ms": {
+            "type": "integer",
+            "nullable": True,
+            "mapping": {"type": "long"},
+        },
+    },
+}
+
 metadata_schema = {
     ID_FIELD: {"type": "string", "unique": True},
     #: Identifiers
@@ -204,6 +232,7 @@ metadata_schema = {
         "required": False,
         "nullable": True,
     },
+    "lifecycle_timing": lifecycle_timing_schema,
     # Ingest Details
     "ingest_provider": Resource.rel("ingest_providers"),
     "source": {"type": "string", "mapping": not_analyzed},  # The value is copied from the ingest_providers vocabulary

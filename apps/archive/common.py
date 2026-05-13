@@ -29,6 +29,7 @@ from superdesk.utc import utcnow, get_expiry_date, local_to_utc, get_date
 from superdesk import get_resource_service
 from superdesk.metadata.item import (
     metadata_schema,
+    lifecycle_timing_schema,
     ITEM_STATE,
     CONTENT_STATE,
     LINKED_IN_PACKAGES,
@@ -131,6 +132,7 @@ ARCHIVE_SCHEMA_FIELDS = {
     },
     "expiry_status": {"type": "string", "mapping": not_analyzed, "nullable": True},
     "original_id": {"type": "string", "mapping": not_analyzed},
+    "lifecycle_timing": lifecycle_timing_schema,
 }
 
 

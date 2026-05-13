@@ -18,14 +18,14 @@ from pytz import utc, timezone  # flake8: noqa
 tzinfo = getattr(datetime, "tzinfo", object)
 
 
-def utcnow():
+def utcnow(microseconds=False):
     """Get tz aware datetime object.
 
     Remove microseconds which can't be persisted by mongo so we have
     the values consistent in both mongo and elastic.
     """
     now = datetime.datetime.now(tz=utc)
-    return now.replace(microsecond=0)
+    return now if microseconds else now.replace(microsecond=0)
 
 
 def get_date(date_or_string) -> Optional[datetime.datetime]:

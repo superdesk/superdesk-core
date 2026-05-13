@@ -50,6 +50,7 @@ from superdesk.workflow import set_default_state
 from superdesk.errors import IngestFileError
 from superdesk.dates import get_naive_utc
 from copy import deepcopy
+from superdesk.lifecycle_timing import set_ingest_started_at, set_ingest_finished_at
 
 UPDATE_SCHEDULE_DEFAULT = {"minutes": 5}
 LAST_UPDATED = "last_updated"
@@ -589,6 +590,9 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
         ingest_collection = get_ingest_collection(feeding_service, item)
         ingest_service = superdesk.get_resource_service(ingest_collection)
 
+        # Initialize lifecycle timing if not already set by parser
+        set_ingest_started_at(item)
+
         try:
             _is_new_version = ingest_service.is_new_version
         except AttributeError:
@@ -717,6 +721,9 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             new_version = _is_new_version(item, old_item)
             updates = deepcopy(item)
             if new_version:
+                # Set ingest_finished_at before storing
+                set_ingest_finished_at(updates)
+
                 await ingest_service.patch_in_mongo(old_item[ID_FIELD], updates, old_item)
                 item.update(old_item)
                 item.update(updates)
@@ -724,6 +731,9 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             else:
                 item.update(old_item)
         else:
+            # New item - set finished time before saving
+            set_ingest_finished_at(item)
+
             if item.get("ingest_provider_sequence") is None:
                 if hasattr(ingest_service, "set_ingest_provider_sequence_async"):
                     await ingest_service.set_ingest_provider_sequence_async(item, provider)
@@ -742,6 +752,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             )
 
     except Exception as ex:
+        logger.exception(ex)
         await ProviderError.ingestItemError(ex, provider, item=item).send_notifications()
         return False, []
     return True, items_ids

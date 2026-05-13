@@ -21,13 +21,15 @@ from superdesk.types import (
 )
 from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD, ITEM_TYPE, ASSOCIATIONS, VERSION
-from superdesk.metadata.item import PUBLISH_SCHEDULE, CONTENT_TYPE
+from superdesk.metadata.item import PUBLISH_SCHEDULE, CONTENT_TYPE, INGEST_ID
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_GROUP
 from superdesk.publish import PUBLISHED_IN_PACKAGE
 from superdesk.errors import SuperdeskPublishError, SuperdeskErrorWithNotifications
 from superdesk.publish_async.publish_cache import PublishCache
 from superdesk.publish_async.utils import generate_sequence_number, get_utc_schedule
 from superdesk.publish.formatters import Formatter, get_formatter
+from superdesk.utc import utcnow
+from superdesk.lifecycle_timing import duration_ms, to_epoch_ms, duration_ms_from_epoch
 
 from apps.content_types import apply_schema
 
@@ -313,6 +315,26 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         encoded_item: bytes | None = None,
         error_message: str | None = None,
     ) -> PublishQueueResource:
+        # `item` may be filtered by content profile and can lose internal fields
+        # like `lifecycle_timing`; prefer original request payload as source.
+        lifecycle_timing = (request.item or {}).get("lifecycle_timing") or item.get("lifecycle_timing") or {}
+        lifecycle_started_at = lifecycle_timing.get("lifecycle_started_at")
+        lifecycle_started_ms = lifecycle_timing.get("lifecycle_started_ms")
+
+        if not lifecycle_started_at:
+            ingest_id = (request.item or {}).get(INGEST_ID) or item.get(INGEST_ID)
+            if ingest_id:
+                ingest_service = get_resource_service("ingest")
+                ingest_doc = await ingest_service.find_one_async(req=None, _id=ingest_id)
+                if ingest_doc is None:
+                    ingest_doc = await ingest_service.find_one_async(req=None, guid=ingest_id)
+                ingest_lifecycle_timing = (ingest_doc or {}).get("lifecycle_timing", {})
+                lifecycle_started_at = ingest_lifecycle_timing.get("lifecycle_started_at")
+                lifecycle_started_ms = ingest_lifecycle_timing.get("lifecycle_started_ms")
+
+        if lifecycle_started_ms is None and lifecycle_started_at:
+            lifecycle_started_ms = to_epoch_ms(lifecycle_started_at)
+
         publish_queue_item = PublishQueueResource(
             id=ObjectId(),
             state=queue_state,
@@ -326,6 +348,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             unique_name=item.get("unique_name", None),
             content_type=item[ITEM_TYPE],
             headline=item.get("headline") or item.get("name") or item.get("slugline") or "",
+            lifecycle_started_at=lifecycle_started_at,
+            lifecycle_started_ms=lifecycle_started_ms,
             ingest_provider=ObjectId(item["ingest_provider"]) if item.get("ingest_provider") else None,
             associated_items=response.associations.get(subscriber.id, []),
             # The following fields are required by the model, and will be updated per subscriber & destination
@@ -344,6 +368,19 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
 
         if error_message:
             publish_queue_item.error_message = error_message
+
+        # Content API items are considered completed at queue creation time,
+        # so lifecycle transmission timing must be populated here.
+        if destination.delivery_type == "content_api" and queue_state == PublishQueueState.SUCCESS:
+            completed_at = utcnow()
+            publish_queue_item.completed_at = completed_at
+            publish_queue_item.completed_ms = to_epoch_ms(completed_at)
+            if isinstance(lifecycle_started_ms, int):
+                publish_queue_item.lifecycle_to_transmit_ms = duration_ms_from_epoch(
+                    lifecycle_started_ms, publish_queue_item.completed_ms
+                )
+            elif lifecycle_started_at:
+                publish_queue_item.lifecycle_to_transmit_ms = duration_ms(lifecycle_started_at, completed_at)
 
         await PublishQueueResource.get_service().create([publish_queue_item])
 
