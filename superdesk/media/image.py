@@ -53,27 +53,26 @@ def fix_orientation(file_stream):
     """
     file_stream.seek(0)
     img = Image.open(file_stream)
+    file_stream.seek(0)
 
-    try:
-        exif = img.getexif()
-    except AttributeError:
-        file_stream.seek(0)
+    getexif = getattr(img, "getexif", None)
+    if not getexif:
         return file_stream
 
-    orientation = exif.get(EXIF_ORIENTATION_TAG) if exif else None
-    if not orientation or orientation == 1:
-        file_stream.seek(0)
+    exif = getexif()
+    if not exif or exif.get(EXIF_ORIENTATION_TAG) == 1:
         return file_stream
 
     normalized = ImageOps.exif_transpose(img)
-    normalized_exif = normalized.getexif()
-    normalized_exif[EXIF_ORIENTATION_TAG] = 1
+    exif = normalized.getexif()
+    exif[EXIF_ORIENTATION_TAG] = 1
 
-    output = io.BytesIO()
     image_format = img.format or "JPEG"
     if image_format == "JPEG" and normalized.mode not in ("RGB", "L"):
         normalized = normalized.convert("RGB")
-    normalized.save(output, image_format, exif=normalized_exif.tobytes())
+
+    output = io.BytesIO()
+    normalized.save(output, image_format, exif=exif.tobytes())
     output.seek(0)
     setattr(output, "width", normalized.size[0])
     setattr(output, "height", normalized.size[1])

@@ -209,26 +209,24 @@ def crop_image(content, file_name, cropping_data, exact_size=None, image_format=
         if exact_size and "width" in exact_size and "height" in exact_size:
             cropped = cropped.resize((int(exact_size["width"]), int(exact_size["height"])), Image.LANCZOS)
         logger.debug("Cropped image {} from stream, going to save it".format(file_name))
+        output_format = image_format or img.format
         try:
             out = BytesIO()
             save_kwargs = {}
             if exif_bytes:
                 save_kwargs["exif"] = exif_bytes
-            cropped.save(out, image_format or img.format, **save_kwargs)
-            out.seek(0)
-            setattr(out, "width", cropped.size[0])
-            setattr(out, "height", cropped.size[1])
-            return True, out
+            cropped.save(out, output_format, **save_kwargs)
         except (TypeError, ValueError):
             out = BytesIO()
-            cropped.save(out, image_format or img.format)
-            out.seek(0)
-            setattr(out, "width", cropped.size[0])
-            setattr(out, "height", cropped.size[1])
-            return True, out
+            cropped.save(out, output_format)
         except Exception as io:
             logger.exception("Failed to generate crop for filename: {}. Crop: {}".format(file_name, cropping_data))
             return False, io
+
+        out.seek(0)
+        setattr(out, "width", cropped.size[0])
+        setattr(out, "height", cropped.size[1])
+        return True, out
     return False, content
 
 
