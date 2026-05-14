@@ -287,6 +287,8 @@ def _resize_image(content, size, format=None, keepProportions=True):
     img = Image.open(content)
     if not format:
         format = img.format
+    exif = img.getexif() if hasattr(img, "getexif") else None
+    exif_bytes = exif.tobytes() if exif else None
     width, height = img.size
     new_width, new_height = [to_int(x) for x in size]
     if keepProportions:
@@ -310,12 +312,20 @@ def _resize_image(content, size, format=None, keepProportions=True):
                 new_width = int(new_height * original_ratio)
     resized = img.resize((new_width, new_height), Image.LANCZOS)
     out = BytesIO()
+    save_kwargs = {"quality": 85}
+    if exif_bytes:
+        save_kwargs["exif"] = exif_bytes
     try:
-        resized.save(out, format, quality=85)
-    except IOError:
-        out = BytesIO()
+        resized.save(out, format, **save_kwargs)
+    except (IOError, TypeError, ValueError):
         resized = resized.convert("RGB")
-        resized.save(out, format, quality=85)
+        out = BytesIO()
+        try:
+            resized.save(out, format, **save_kwargs)
+        except (IOError, TypeError, ValueError):
+            out = BytesIO()
+            save_kwargs.pop("exif", None)
+            resized.save(out, format, **save_kwargs)
     out.seek(0)
     return out, new_width, new_height
 

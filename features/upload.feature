@@ -14,7 +14,7 @@ Feature: Upload
         Then we get a file reference
         Then we get file metadata
         And we get "avatar" renditions
-        And we get cropped data smaller than "25000"
+        And we get cropped data smaller than "30000"
         And we can fetch a data_uri
         And we can delete that file
  
@@ -52,6 +52,6 @@ Feature: Upload
         When we upload a binary file with cropping
         Then we get a file reference
         Then we get file metadata
-        And we get cropped data smaller than "25000"
+        And we get cropped data smaller than "30000"
         And we can fetch a data_uri
         And we can delete that file

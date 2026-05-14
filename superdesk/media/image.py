@@ -16,7 +16,7 @@ import logging
 from typing import BinaryIO, Dict, List, Union
 
 from superdesk.text_utils import decode
-from PIL import Image, ExifTags
+from PIL import Image, ExifTags, ImageOps
 from PIL import IptcImagePlugin
 from PIL.TiffImagePlugin import IFDRational
 from flask import json
@@ -52,26 +52,31 @@ def fix_orientation(file_stream):
     @param file_stream: stream
     """
     file_stream.seek(0)
-
-    # For PNG image we are getting mode RGBA so fix it while croping png image
-    img = Image.open(file_stream).convert("RGB")
+    img = Image.open(file_stream)
     file_stream.seek(0)
-    if not hasattr(img, "_getexif"):
+
+    getexif = getattr(img, "getexif", None)
+    if not getexif:
         return file_stream
-    rv = img._getexif()
-    if not rv:
+
+    exif = getexif()
+    if not exif or exif.get(EXIF_ORIENTATION_TAG) == 1:
         return file_stream
-    exif = dict(rv)
-    if exif.get(EXIF_ORIENTATION_TAG, None):
-        orientation = exif.get(EXIF_ORIENTATION_TAG)
-        if orientation in [3, 6, 8]:
-            degrees = ORIENTATIONS[orientation][1]
-            img2 = img.rotate(degrees)
-            output = io.BytesIO()
-            img2.save(output, "jpeg")
-            output.seek(0)
-            return output
-    return file_stream
+
+    normalized = ImageOps.exif_transpose(img)
+    exif = normalized.getexif()
+    exif[EXIF_ORIENTATION_TAG] = 1
+
+    image_format = img.format or "JPEG"
+    if image_format == "JPEG" and normalized.mode not in ("RGB", "L"):
+        normalized = normalized.convert("RGB")
+
+    output = io.BytesIO()
+    normalized.save(output, image_format, exif=exif.tobytes())
+    output.seek(0)
+    setattr(output, "width", normalized.size[0])
+    setattr(output, "height", normalized.size[1])
+    return output
 
 
 def get_meta(file_stream):
