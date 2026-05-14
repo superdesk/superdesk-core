@@ -63,19 +63,19 @@ class NewsMLTwoFeedParser(XMLFeedParser):
             header = self.parse_header(xml)
             for item_set in xml.findall(self.qname("itemSet")):
                 for item_tree in item_set:
-                    item = self.parse_item(item_tree)
+                    item = await self.parse_item(item_tree)
                     item["priority"] = header["priority"]
                     items.append(item)
             else:
                 if xml.tag.endswith("newsItem") or xml.tag.endswith("packageItem"):
-                    item = self.parse_item(xml)
+                    item = await self.parse_item(xml)
                     item.setdefault("priority", header["priority"])
                     items.append(item)
             return items
         except Exception as ex:
             raise await ParserError.newsmlTwoParserError(ex, provider).send_notifications()
 
-    def parse_item(self, tree):
+    async def parse_item(self, tree):
         # config is not accessible during __init__, so we check it here
         if self.__class__.missing_voc is None:
             self.__class__.missing_voc = get_app_config("QCODE_MISSING_VOC", "continue")
@@ -91,7 +91,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         item["version"] = tree.attrib["version"]
 
         self.parse_item_meta(tree, item)
-        self.parse_content_meta(tree, item)
+        await self.parse_content_meta(tree, item)
         self.parse_rights_info(tree, item)
 
         if is_normal_package(item):
@@ -151,7 +151,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                 if signal.get("qcode")
             ]
 
-    def parse_content_meta(self, tree, item):
+    async def parse_content_meta(self, tree, item):
         """Parse contentMeta tag"""
         meta = tree.find(self.qname("contentMeta"))
 
@@ -190,7 +190,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         except AttributeError:
             pass
 
-        self.parse_content_subject(meta, item)
+        await self.parse_content_subject(meta, item)
         self.parse_content_place(meta, item)
 
         for info_source in meta.findall(self.qname("infoSource")):
@@ -217,7 +217,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
         return meta
 
-    def parse_content_subject(self, tree, item):
+    async def parse_content_subject(self, tree, item):
         """Parse subj type subjects into subject list."""
         item["subject"] = []
         app = get_current_app()
@@ -237,7 +237,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                     name_elt = subject_elt.find(self.qname("name"))
                     name = name_elt.text if name_elt is not None and name_elt.text else ""
                     try:
-                        name = self.getVocabulary(scheme, qcode_parts[1], name)
+                        name = await self.getVocabulary(scheme, qcode_parts[1], name)
                     except ValueError:
                         logger.info('Subject element rejected for "{code}"'.format(code=qcode_parts[1]))
                         continue
@@ -387,7 +387,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
                     }
                 )
 
-    def getVocabulary(self, voc_id, qcode, name):
+    async def getVocabulary(self, voc_id, qcode, name):
         """Retrieve vocabulary and accept or reject it
 
         The vocabulary will be kept if it exists in local vocabularies.
@@ -403,8 +403,7 @@ class NewsMLTwoFeedParser(XMLFeedParser):
         :raise ValueError: value is rejected
         """
         vocabularies_service = get_resource_service("vocabularies")
-        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
-        voc = vocabularies_service.find_one(req=None, _id=voc_id)
+        voc = await vocabularies_service.find_one_async(req=None, _id=voc_id)
         create = False
         if voc is None:
             create = True
@@ -441,11 +440,9 @@ class NewsMLTwoFeedParser(XMLFeedParser):
 
         items.append({"is_active": True, "name": name, "qcode": qcode})
         if create:
-            # TODO-ASYNC: Convert to use ``post_async``, when upgrading this module
-            vocabularies_service.post([voc])
+            await vocabularies_service.post_async([voc])
         else:
-            # TODO-ASYNC: Convert to use ``put_async``, when upgrading this module
-            vocabularies_service.put(voc_id, voc)
+            await vocabularies_service.put_async(voc_id, voc)
         return name
 
 

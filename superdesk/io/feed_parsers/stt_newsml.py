@@ -49,7 +49,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
     async def parse(self, xml, provider=None):
         self.root = xml
         try:
-            item = self.parse_item(xml)
+            item = await self.parse_item(xml)
             if not item.get("headline"):
                 item["headline"] = text_utils.get_text(item.get("body_html", "") or "", "html")[:100]
 
@@ -75,7 +75,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
                     name_elt = genre_elt.find(self.qname("name"))
                     name = name_elt.text if name_elt is not None and name_elt.text else ""
                     try:
-                        name = self.getVocabulary("genre", qcode, name)
+                        name = await self.getVocabulary("genre", qcode, name)
                     except ValueError:
                         continue
                     else:
@@ -87,7 +87,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
                     name_elt = genre_elt.find(self.qname("name"))
                     name = name_elt.text if name_elt is not None and name_elt.text else ""
                     try:
-                        name = self.getVocabulary("sttgenre", qcode, name)
+                        name = await self.getVocabulary("sttgenre", qcode, name)
                     except ValueError:
                         continue
                     else:
@@ -119,7 +119,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
                             except AttributeError:
                                 name = ""
                             try:
-                                name = self.getVocabulary(key, qcode, name)
+                                name = await self.getVocabulary(key, qcode, name)
                             except ValueError:
                                 continue
                             else:
@@ -181,8 +181,8 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
             return local_to_utc(TIMEZONE, parsed)
         return parsed
 
-    def parse_content_meta(self, tree, item):
-        meta = super().parse_content_meta(tree, item)
+    async def parse_content_meta(self, tree, item):
+        meta = await super().parse_content_meta(tree, item)
         creditline = meta.find(self.qname("creditline"))
         if creditline is not None:
             item["source"] = creditline.text.replace("–", "-").rstrip("-")  # replace endash with dash

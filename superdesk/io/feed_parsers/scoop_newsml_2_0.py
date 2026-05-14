@@ -48,7 +48,7 @@ class ScoopNewsMLTwoFeedParser(NewsMLTwoFeedParser):
                 for item_tree in item_set:
                     # Ignore the packageItem, it has no guid
                     if "guid" in item_tree.attrib:
-                        item = self.parse_item(item_tree)
+                        item = await self.parse_item(item_tree)
                         item["priority"] = 6
                         item["anpa_category"] = [{"qcode": "f"}]
                         item["subject"] = [{"qcode": "04000000", "name": subject_codes["04000000"]}]

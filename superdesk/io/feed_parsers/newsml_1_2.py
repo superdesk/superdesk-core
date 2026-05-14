@@ -48,7 +48,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
             item["priority"] = self.map_priority(parsed_el.text if parsed_el is not None else None)
 
             self.parse_news_identifier(item, xml)
-            self.parse_newslines(item, xml)
+            await self.parse_newslines(item, xml)
             self.parse_news_management(item, xml)
 
             parsed_el = xml.findall("NewsItem/NewsComponent/DescriptiveMetadata/Language")
@@ -63,7 +63,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
             subjects += xml.findall("NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/SubjectMatter")
             subjects += xml.findall("NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/Subject")
 
-            item["subject"] = self.format_subjects(subjects)
+            item["subject"] = await self.format_subjects(subjects)
 
             # item['ContentItem'] = self.parse_attributes_as_dictionary(
             #    tree.find('NewsItem/NewsComponent/ContentItem'))
@@ -160,7 +160,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
         # if parsed_el['NewsItemType']['FormalName'] == 'Alert':
         #    parsed_el['headline'] = 'Alert'
 
-    def parse_newslines(self, item, tree):
+    async def parse_newslines(self, item, tree):
         parsed_el = self.parse_elements(tree.find("NewsItem/NewsComponent/NewsLines"))
 
         self.set_dateline(item, text=parsed_el.get("DateLine", ""))
@@ -171,7 +171,7 @@ class NewsMLOneFeedParser(XMLFeedParser):
 
         return True
 
-    def format_subjects(self, subjects):
+    async def format_subjects(self, subjects):
         """Map the ingested Subject Codes to their corresponding names as per IPTC Specification.
 
         :param subjects: list of dicts where each dict gives the category the article is mapped to.
