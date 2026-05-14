@@ -68,8 +68,9 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
                     new_position = item_data.get("position")
+                    new_sticky = item_data.get("sticky", existing.sticky)
                     await self._shift_positions_for_move(list_id, existing.id, existing.position, new_position)
-                    await self.update(existing.id, {"position": new_position})
+                    await self.update(existing.id, {"position": new_position, "sticky": new_sticky})
             elif action == "delete":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
