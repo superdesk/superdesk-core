@@ -111,7 +111,7 @@ class AsyncioPublishConsumer(PublishConsumer):
                     task.lifecycle_started_ms, completed_ms
                 )
             elif task.lifecycle_started_at:
-                success_update["lifecycle_to_transmit_ms"] = duration_ms(task.lifecycle_started_at, completed_ms)
+                success_update["lifecycle_to_transmit_ms"] = duration_ms(task.lifecycle_started_at, completed_now)
 
             await PublishQueueResource.get_service().update(task.id, success_update, task.etag, task)
             logger.info(f"Transmit completed for queue item {log_msg}")
