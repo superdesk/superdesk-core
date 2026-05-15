@@ -1,5 +1,3 @@
-# -*- coding: utf-8; -*-
-#
 # This file is part of Superdesk.
 #
 # Copyright 2013, 2014 Sourcefabric z.u. and contributors.

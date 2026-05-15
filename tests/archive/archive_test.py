@@ -357,7 +357,7 @@ class ArchiveTestCase(TestCase):
             "headline": "foo",
         }
         await archive_service.create_async([item])
-        with mock.patch.object(publish, "utcnow", lambda: NOW):
+        with mock.patch.object(publish, "utcnow", lambda **kwargs: NOW):
             await publish_service.patch_async("foo", {"body_html": "original"})
         created = await publish_service.find_one_async(None, _id="foo")
         self.assertEqual(NOW, created["firstpublished"])
@@ -387,7 +387,7 @@ class ArchiveTestCase(TestCase):
         await archive_service.create_async([item])
 
         first_publish_at = utcnow() + timedelta(seconds=30)
-        with mock.patch.object(publish, "utcnow", lambda: first_publish_at):
+        with mock.patch.object(publish, "utcnow", lambda **kwargs: first_publish_at):
             await publish_service.patch_async("foo-manual", {"body_html": "manual"})
 
         published = self.app.data.find_one("archive", req=None, _id="foo-manual")
@@ -425,7 +425,7 @@ class ArchiveTestCase(TestCase):
         await archive_service.create_async([item])
 
         first_publish_at = ingest_finished_at + timedelta(seconds=3)
-        with mock.patch.object(publish, "utcnow", lambda: first_publish_at):
+        with mock.patch.object(publish, "utcnow", lambda **kwargs: first_publish_at):
             await publish_service.patch_async("foo-ingest", {"body_html": "auto"})
 
         published = self.app.data.find_one("archive", req=None, _id="foo-ingest")
@@ -439,6 +439,45 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(2000, lifecycle_timing["ingest_processing_ms"])
         self.assertEqual(first_publish_at, lifecycle_timing["first_published_at"])
         self.assertEqual(5000, lifecycle_timing["lifecycle_to_first_publish_ms"])
+
+    async def test_first_publish_populates_lifecycle_timing_for_explicit_firstpublished(self):
+        await test_utils.post_items("products", fixtures.products.all_products())
+        await test_utils.post_items("subscribers", [fixtures.subscribers.sub5_subscriber()])
+
+        archive_service = superdesk.get_resource_service("archive")
+        publish_service = superdesk.get_resource_service("archive_publish")
+
+        item = {
+            "_id": "foo-explicit-firstpublished",
+            "guid": "foo-explicit-firstpublished",
+            "unique_name": "foo-explicit-firstpublished",
+            "type": "text",
+            "state": CONTENT_STATE.SUBMITTED,
+            "_current_version": 1,
+            "headline": "foo-explicit-firstpublished",
+        }
+
+        await archive_service.create_async([item])
+
+        requested_first_publish_at = utcnow() + timedelta(seconds=30)
+        stored_first_publish_at = (utcnow() + timedelta(seconds=10)).replace(microsecond=0)
+        with mock.patch.object(publish, "utcnow", lambda **kwargs: stored_first_publish_at):
+            await publish_service.patch_async(
+                "foo-explicit-firstpublished",
+                {"body_html": "manual", "firstpublished": requested_first_publish_at},
+            )
+
+        published = self.app.data.find_one("archive", req=None, _id="foo-explicit-firstpublished")
+        first_publish_at = published["firstpublished"]
+        self.assertEqual(stored_first_publish_at, first_publish_at)
+        self.assertNotEqual(requested_first_publish_at, first_publish_at)
+
+        lifecycle_timing = published["lifecycle_timing"]
+        self.assertEqual(first_publish_at, lifecycle_timing["first_published_at"])
+        self.assertEqual(first_publish_at, lifecycle_timing["lifecycle_started_at"])
+        self.assertEqual(to_epoch_ms(first_publish_at), lifecycle_timing["first_published_ms"])
+        self.assertEqual(to_epoch_ms(first_publish_at), lifecycle_timing["lifecycle_started_ms"])
+        self.assertEqual(0, lifecycle_timing["lifecycle_to_first_publish_ms"])
 
     async def test_update_signals(self):
         def handler(sender, **kwargs):

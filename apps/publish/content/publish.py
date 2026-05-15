@@ -116,7 +116,7 @@ class ArchivePublishService(BasePublishService):
         updates[ITEM_OPERATION] = self.item_operation
         await super().on_update_async(updates, original)
 
-        is_first_publish = not original.get("firstpublished") and not updates.get("firstpublished")
+        is_first_publish = not original.get("firstpublished")
         first_published_dt = self._set_first_published(updates, original)
 
         if is_first_publish and updates.get("firstpublished"):

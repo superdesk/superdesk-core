@@ -752,7 +752,6 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             )
 
     except Exception as ex:
-        logger.exception(ex)
         await ProviderError.ingestItemError(ex, provider, item=item).send_notifications()
         return False, []
     return True, items_ids
