@@ -119,8 +119,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         subscriber: SubscribersResource,
         response: PublishRequestResponse,
         task_cache: dict[str, list[PublishQueueResource]],
-        lifecycle_started_at: datetime | None,
-        lifecycle_started_ms: int | None,
+        lifecycle_started_at: datetime | None = None,
+        lifecycle_started_ms: int | None = None,
     ):
         """
         Retrieves publishing tasks for the provided subscriber and their destinations.
@@ -143,6 +143,9 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         """
 
         no_formatters: list[str] = []
+        if lifecycle_started_at is None and lifecycle_started_ms is None:
+            lifecycle_started_at, lifecycle_started_ms = await self._resolve_lifecycle_timing(request)
+
         subscriber_dict = subscriber.to_dict()
         content_api_enabled = subscriber.id in response.content_api_subscribers
         tasks: list[PublishQueueResource] = []
@@ -241,6 +244,11 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                 publish_queue_item.destination = destination
                 publish_queue_item.published_seq_num = await generate_sequence_number(subscriber)
                 publish_queue_item.priority = subscriber.priority
+                self._populate_content_api_completion_timing(
+                    publish_queue_item,
+                    lifecycle_started_at=lifecycle_started_at,
+                    lifecycle_started_ms=lifecycle_started_ms,
+                )
                 tasks.append(publish_queue_item)
 
                 await publish_queue_service.create([publish_queue_item])
@@ -382,22 +390,37 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         if error_message:
             publish_queue_item.error_message = error_message
 
-        # Content API items are considered completed at queue creation time,
-        # so lifecycle transmission timing must be populated here.
-        if destination.delivery_type == "content_api" and queue_state == PublishQueueState.SUCCESS:
-            completed_at_ms = utcnow(microseconds=True)
-            publish_queue_item.completed_at = completed_at_ms.replace(microsecond=0)
-            publish_queue_item.completed_ms = to_epoch_ms(completed_at_ms)
-            if isinstance(lifecycle_started_ms, int):
-                publish_queue_item.lifecycle_to_transmit_ms = duration_ms_from_epoch(
-                    lifecycle_started_ms, publish_queue_item.completed_ms
-                )
-            elif lifecycle_started_at:
-                publish_queue_item.lifecycle_to_transmit_ms = duration_ms(lifecycle_started_at, completed_at_ms)
+        self._populate_content_api_completion_timing(
+            publish_queue_item,
+            lifecycle_started_at=lifecycle_started_at,
+            lifecycle_started_ms=lifecycle_started_ms,
+        )
 
         await PublishQueueResource.get_service().create([publish_queue_item])
 
         return publish_queue_item
+
+    def _populate_content_api_completion_timing(
+        self,
+        publish_queue_item: PublishQueueResource,
+        lifecycle_started_at: datetime | None = None,
+        lifecycle_started_ms: int | None = None,
+    ) -> None:
+        # Content API items are considered completed at queue creation time,
+        # so lifecycle transmission timing must be populated immediately.
+        if not (publish_queue_item.is_content_api and publish_queue_item.state == PublishQueueState.SUCCESS):
+            return
+
+        completed_at_ms = utcnow(microseconds=True)
+        publish_queue_item.completed_at = completed_at_ms.replace(microsecond=0)
+        publish_queue_item.completed_ms = to_epoch_ms(completed_at_ms)
+
+        if isinstance(lifecycle_started_ms, int):
+            publish_queue_item.lifecycle_to_transmit_ms = duration_ms_from_epoch(
+                lifecycle_started_ms, publish_queue_item.completed_ms
+            )
+        elif lifecycle_started_at:
+            publish_queue_item.lifecycle_to_transmit_ms = duration_ms(lifecycle_started_at, completed_at_ms)
 
     async def _resolve_lifecycle_timing(self, request: PublishRequest) -> tuple[datetime | None, int | None]:
         lifecycle_timing = (request.item or {}).get("lifecycle_timing") or {}
