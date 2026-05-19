@@ -1,6 +1,7 @@
 from typing import Any
 
 from bson import ObjectId
+from pymongo import UpdateOne
 
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -44,6 +45,7 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         if list_items_updated_at and list_items_updated_at.strftime(DATE_FORMAT) != data["updatedAt"]:
             raise SuperdeskApiError.conflictError("Content list items have been modified")
 
+        touched_contents: list[str] = []
         for item_data in data["items"]:
             action = item_data.get("action")
             content_id = str(item_data["contentId"])
@@ -61,14 +63,19 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
                         }
                     ]
                 )
+                touched_contents.append(content_id)
             elif action == "move":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
-                    await self.update(existing.id, {"position": item_data.get("position")})
+                    new_sticky = item_data.get("sticky", existing.sticky)
+                    await self.update(existing.id, {"position": item_data.get("position"), "sticky": new_sticky})
+                    touched_contents.append(content_id)
             elif action == "delete":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
                     await self.delete(existing)
+
+        await self._renumber(list_id, touched_contents)
 
         await lists_service.mongo_async.update_one(
             {"_id": list_id},
@@ -77,3 +84,39 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         result = await lists_service.find_by_id(list_id)
         assert result is not None
         return result
+
+    async def _renumber(self, list_id: ObjectId, touched_contents: list[str]) -> None:
+        """Rewrite non-sticky positions as a contiguous ``0..N-1`` sequence.
+
+        Items in ``touched_contents`` (added or moved in this batch) win position
+        ties: when an item lands on a slot already occupied, the touched item
+        keeps the slot and the prior occupant shifts to the next one. Later
+        entries in ``touched_contents`` outrank earlier ones.
+        """
+        docs = await self.mongo_async.find(
+            {"list_id": list_id, "sticky": {"$ne": True}},
+            projection={"_id": 1, "content": 1, "position": 1},
+        ).to_list(None)
+
+        touched_rank = {c: i for i, c in enumerate(touched_contents)}
+
+        def sort_key(d: dict) -> tuple:
+            pos = d.get("position")
+            rank = touched_rank.get(d.get("content"))
+            return (
+                pos is None,
+                pos if pos is not None else 0,
+                rank is None,
+                -rank if rank is not None else 0,
+                d["_id"],
+            )
+
+        docs.sort(key=sort_key)
+
+        ops = [
+            UpdateOne({"_id": doc["_id"]}, {"$set": {"position": i}})
+            for i, doc in enumerate(docs)
+            if doc.get("position") != i
+        ]
+        if ops:
+            await self.mongo_async.bulk_write(ops, ordered=False)
