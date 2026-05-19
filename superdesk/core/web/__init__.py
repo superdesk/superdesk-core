@@ -10,6 +10,7 @@
 
 from .endpoints import Endpoint, EndpointGroup, NullEndpoint, endpoint
 from .rest_endpoints import RestEndpoints, ItemRequestViewArgs
+from .http_client_session import AsyncHttpClientSessionMixin
 
 __all__ = [
     "Endpoint",
@@ -18,4 +19,5 @@ __all__ = [
     "endpoint",
     "RestEndpoints",
     "ItemRequestViewArgs",
+    "AsyncHttpClientSessionMixin",
 ]
