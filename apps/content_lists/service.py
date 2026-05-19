@@ -1,6 +1,7 @@
 from typing import Any
 
 from bson import ObjectId
+from pymongo import UpdateOne
 
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -44,39 +45,36 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         if list_items_updated_at and list_items_updated_at.strftime(DATE_FORMAT) != data["updatedAt"]:
             raise SuperdeskApiError.conflictError("Content list items have been modified")
 
+        touched_contents: list[str] = []
         for item_data in data["items"]:
             action = item_data.get("action")
             content_id = str(item_data["contentId"])
 
             if action == "add":
-                new_position = item_data.get("position")
-                if new_position is not None:
-                    await self._shift_positions_up(list_id, new_position)
                 await self.create(
                     [
                         {
                             "list_id": list_id,
                             "content": content_id,
-                            "position": new_position,
+                            "position": item_data.get("position"),
                             "sticky": item_data.get("sticky", False),
                             "sticky_position": item_data.get("stickyPosition"),
                             "enabled": True,
                         }
                     ]
                 )
+                touched_contents.append(content_id)
             elif action == "move":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
-                    new_position = item_data.get("position")
-                    await self._shift_positions_for_move(list_id, existing.id, existing.position, new_position)
-                    await self.update(existing.id, {"position": new_position})
+                    await self.update(existing.id, {"position": item_data.get("position")})
+                    touched_contents.append(content_id)
             elif action == "delete":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
-                    old_position = existing.position
                     await self.delete(existing)
-                    if old_position is not None:
-                        await self._shift_positions_down(list_id, old_position)
+
+        await self._renumber(list_id, touched_contents)
 
         await lists_service.mongo_async.update_one(
             {"_id": list_id},
@@ -86,54 +84,38 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         assert result is not None
         return result
 
-    async def _shift_positions_up(self, list_id: ObjectId, position: int) -> None:
-        """Make room at ``position`` by incrementing the position of every item at or after it."""
-        await self.mongo_async.update_many(
-            {"list_id": list_id, "sticky": {"$ne": True}, "position": {"$gte": position}},
-            {"$inc": {"position": 1}},
-        )
+    async def _renumber(self, list_id: ObjectId, touched_contents: list[str]) -> None:
+        """Rewrite non-sticky positions as a contiguous ``0..N-1`` sequence.
 
-    async def _shift_positions_down(self, list_id: ObjectId, position: int) -> None:
-        """Close the gap at ``position`` by decrementing the position of every item after it."""
-        await self.mongo_async.update_many(
-            {"list_id": list_id, "sticky": {"$ne": True}, "position": {"$gt": position}},
-            {"$inc": {"position": -1}},
-        )
+        Items in ``touched_contents`` (added or moved in this batch) win position
+        ties: when an item lands on a slot already occupied, the touched item
+        keeps the slot and the prior occupant shifts to the next one. Later
+        entries in ``touched_contents`` outrank earlier ones.
+        """
+        docs = await self.mongo_async.find(
+            {"list_id": list_id, "sticky": {"$ne": True}},
+            projection={"_id": 1, "content": 1, "position": 1},
+        ).to_list(None)
 
-    async def _shift_positions_for_move(
-        self,
-        list_id: ObjectId,
-        item_id: ObjectId,
-        old_position: int | None,
-        new_position: int | None,
-    ) -> None:
-        """Reorder items affected by moving a single item from ``old_position`` to ``new_position``."""
-        if new_position == old_position:
-            return
-        if old_position is None and new_position is not None:
-            await self._shift_positions_up(list_id, new_position)
-            return
-        if new_position is None and old_position is not None:
-            await self._shift_positions_down(list_id, old_position)
-            return
-        assert old_position is not None and new_position is not None
-        if new_position < old_position:
-            await self.mongo_async.update_many(
-                {
-                    "list_id": list_id,
-                    "sticky": {"$ne": True},
-                    "_id": {"$ne": item_id},
-                    "position": {"$gte": new_position, "$lt": old_position},
-                },
-                {"$inc": {"position": 1}},
+        touched_rank = {c: i for i, c in enumerate(touched_contents)}
+
+        def sort_key(d: dict) -> tuple:
+            pos = d.get("position")
+            rank = touched_rank.get(d.get("content"))
+            return (
+                pos is None,
+                pos if pos is not None else 0,
+                rank is None,
+                -rank if rank is not None else 0,
+                d["_id"],
             )
-        else:
-            await self.mongo_async.update_many(
-                {
-                    "list_id": list_id,
-                    "sticky": {"$ne": True},
-                    "_id": {"$ne": item_id},
-                    "position": {"$gt": old_position, "$lte": new_position},
-                },
-                {"$inc": {"position": -1}},
-            )
+
+        docs.sort(key=sort_key)
+
+        ops = [
+            UpdateOne({"_id": doc["_id"]}, {"$set": {"position": i}})
+            for i, doc in enumerate(docs)
+            if doc.get("position") != i
+        ]
+        if ops:
+            await self.mongo_async.bulk_write(ops, ordered=False)
