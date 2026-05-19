@@ -110,12 +110,13 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         """Reorder items affected by moving a single item from ``old_position`` to ``new_position``."""
         if new_position == old_position:
             return
-        if old_position is None:
-            await self._shift_positions_up(list_id, new_position)  # type: ignore[arg-type]
+        if old_position is None and new_position is not None:
+            await self._shift_positions_up(list_id, new_position)
             return
-        if new_position is None:
+        if new_position is None and old_position is not None:
             await self._shift_positions_down(list_id, old_position)
             return
+        assert old_position is not None and new_position is not None
         if new_position < old_position:
             await self.mongo_async.update_many(
                 {
