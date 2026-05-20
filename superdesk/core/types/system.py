@@ -1,4 +1,4 @@
-from typing import Any, Sequence, Protocol
+from typing import Any, Sequence, Protocol, Callable
 
 from .web import Request, Endpoint, EndpointGroup
 
@@ -95,4 +95,7 @@ class WSGIApp(Protocol):
         ...
 
     def get_endpoint_for_current_request(self) -> Endpoint | None:
+        ...
+
+    def add_background_task(self, func: Callable, *args, **kwargs) -> None:
         ...

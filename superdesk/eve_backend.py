@@ -20,10 +20,14 @@ from pymongo.collation import Collation
 from motor.motor_asyncio import AsyncIOMotorCursor, AsyncIOMotorCollection
 from eve.utils import document_etag, ParsedRequest
 from eve.io.mongo import MongoJSONEncoder
+from eve_elastic.elastic import ElasticCursor
 from superdesk.utc import utcnow
 from superdesk.logging import logger, item_msg
 from eve.methods.common import resolve_document_etag
 from elasticsearch.exceptions import RequestError, NotFoundError
+
+import superdesk
+from quart_babel import gettext as _
 
 from superdesk.core import json, get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD, ETAG, LAST_UPDATED, DATE_CREATED
@@ -31,6 +35,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification as _push_notification
 from superdesk.cache import cache
 from superdesk.utils import get_list_chunks
+from superdesk.eve_async import ElasticAsyncEveCursor
 
 
 SYSTEM_KEYS = set(
@@ -162,7 +167,7 @@ class EveBackend:
             return search_backend.find(endpoint_name, req, {})[0]
         else:
             # Should we raise an exception here?
-            logger.warn("there is no search backend for %s" % endpoint_name)
+            logger.warning("there is no search backend for %s" % endpoint_name)
 
     async def search_async(self, endpoint_name, source):
         """Search for items using search backend
@@ -177,7 +182,35 @@ class EveBackend:
             return (await search_backend.find(endpoint_name, req, {}))[0]
         else:
             # Should we raise an exception here?
-            logger.warn("there is no search backend for %s" % endpoint_name)
+            logger.warning("there is no search backend for %s" % endpoint_name)
+
+    def search_raw(self, endpoint_name: str, source: dict) -> ElasticCursor | None:
+        """Search for items using search backend, without applying resource-specific filters.
+
+        :param endpoint_name: The name of the endpoint to perform the search on.
+        :param source: A dictionary containing the data to be used for the search
+        :return: An instance of ElasticCursor if the search is successful, or None if no backend is found.
+        """
+
+        if search_backend := self._lookup_backend(endpoint_name):
+            return search_backend.search(source, endpoint_name)
+        else:
+            logger.warning("there is no search backend for %s" % endpoint_name)
+            return None
+
+    async def search_raw_async(self, endpoint_name: str, source: dict) -> ElasticAsyncEveCursor | None:
+        """Search for items using async search backend, without applying resource-specific filters.
+
+        :param endpoint_name: The name of the endpoint to perform the search on.
+        :param source: A dictionary containing the data to be used for the search
+        :return: An instance of ElasticAsyncEveCursor if the search is successful, or None if no backend is found.
+        """
+
+        if search_backend := self._lookup_backend(endpoint_name, use_async=True):
+            return await search_backend.search(source, endpoint_name)
+        else:
+            logger.warning("there is no search backend for %s" % endpoint_name)
+            return None
 
     def get(self, endpoint_name, req, lookup, **kwargs):
         """Get list of items.
@@ -273,7 +306,7 @@ class EveBackend:
             kwargs["query"] = backend._mongotize(kwargs["query"], endpoint_name)
 
         result = backend.driver.db[endpoint_name].find_one_and_update(**kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return result
 
     async def find_and_modify_async(self, endpoint_name, **kwargs):
@@ -288,7 +321,7 @@ class EveBackend:
             kwargs["query"] = backend._mongotize(kwargs["query"], endpoint_name)
 
         result = await backend.driver.db[endpoint_name].find_one_and_update(**kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return result
 
     def get_mongo_collection(self, endpoint_name) -> pymongo.collection.Collection:
@@ -311,7 +344,7 @@ class EveBackend:
             doc.pop("_type", None)
         ids = self.create_in_mongo(endpoint_name, docs, **kwargs)
         self.create_in_search(endpoint_name, docs, **kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
 
         for doc in docs:
             self._push_resource_notification("created", endpoint_name, _id=str(doc["_id"]))
@@ -328,7 +361,7 @@ class EveBackend:
             doc.pop("_type", None)
         ids = await self.create_in_mongo_async(endpoint_name, docs, **kwargs)
         await self.create_in_search_async(endpoint_name, docs, **kwargs)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
 
         for doc in docs:
             self._push_resource_notification("created", endpoint_name, _id=str(doc["_id"]))
@@ -512,7 +545,7 @@ class EveBackend:
                 logger.warning("Item is missing in elastic resource=%s id=%s", endpoint_name, id)
                 search_backend.insert(endpoint_name, [doc])
 
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return updates
 
     async def _change_request_async(
@@ -565,7 +598,7 @@ class EveBackend:
                 logger.warning("Item is missing in elastic resource=%s id=%s", endpoint_name, id)
                 await search_backend.insert(endpoint_name, [doc])
 
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return updates
 
     def replace(self, endpoint_name, id, document, original):
@@ -578,7 +611,7 @@ class EveBackend:
         """
         res = self.replace_in_mongo(endpoint_name, id, document, original)
         self.replace_in_search(endpoint_name, id, document, original)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
 
         # with soft delete enabled eve uses replace to update the document
         if document.get("_deleted") and not original.get("_deleted"):
@@ -600,7 +633,7 @@ class EveBackend:
         """
         res = await self.replace_in_mongo_async(endpoint_name, id, document, original)
         await self.replace_in_search_async(endpoint_name, id, document, original)
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
 
         # with soft delete enabled eve uses replace to update the document
         if document.get("_deleted") and not original.get("_deleted"):
@@ -720,7 +753,7 @@ class EveBackend:
                 removed_ids = [lookup["_id"]]
             except NotFoundError:
                 pass  # not found in elastic and not in mongo
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return removed_ids
 
     async def delete_async(self, endpoint_name, lookup):
@@ -745,7 +778,7 @@ class EveBackend:
                 removed_ids = [lookup["_id"]]
             except NotFoundError:
                 pass  # not found in elastic and not in mongo
-        cache.clean([endpoint_name])
+        self._clean_cache(endpoint_name)
         return removed_ids
 
     def delete_docs(self, endpoint_name, docs):
@@ -839,7 +872,7 @@ class EveBackend:
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
         if search_backend:
-            raise SuperdeskApiError.forbiddenError(message="Can not remove from endpoint with a defined search")
+            raise SuperdeskApiError.forbiddenError(message=_("Can not remove from endpoint with a defined search"))
         backend.remove(endpoint_name, lookup)
 
     async def delete_from_mongo_async(self, endpoint_name: str, lookup: Dict[str, Any]):
@@ -855,7 +888,7 @@ class EveBackend:
         backend = self._backend(endpoint_name, use_async=True)
         search_backend = self._lookup_backend(endpoint_name, use_async=True)
         if search_backend:
-            raise SuperdeskApiError.forbiddenError(message="Can not remove from endpoint with a defined search")
+            raise SuperdeskApiError.forbiddenError(message=_("Can not remove from endpoint with a defined search"))
         await backend.remove(endpoint_name, lookup)
 
     def remove_from_search(self, endpoint_name, doc):
@@ -894,6 +927,10 @@ class EveBackend:
         if backend is None and fallback:
             backend = app.data._backend(endpoint_name, use_async)
         return backend
+
+    def _clean_cache(self, endpoint_name: str) -> None:
+        if getattr(superdesk.get_resource_service(endpoint_name), "uses_cache", False):
+            cache.clean_in_thread([endpoint_name])
 
     def set_default_dates(self, doc):
         """Helper to populate ``_created`` and ``_updated`` timestamps."""

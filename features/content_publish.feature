@@ -23,10 +23,15 @@ Feature: Content Publishing
       """
       [{"name": "Sports", "content_expiry": 60}]
       """
+      And "users"
+      """
+      [{"username": "author_user", "password": "pass", "email": "author@test.com", "first_name": "Author", "last_name": "User"}]
+      """
       When we post to "/archive" with success
       """
       [{"guid": "123", "type": "text", "headline": "test", "state": "fetched",
         "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "authors": [{"parent": "#users._id#", "name": "Author User"}],
         "subject":[{"qcode": "17004000", "name": "Statistics"}],
         "slugline": "test",
         "body_html": "Test Document body",
@@ -104,7 +109,7 @@ Feature: Content Publishing
       Then we get existing resource
       """
       {"_items": [
-        {"name": "published_articles", "value": 1, "user": "#CONTEXT_USER_ID#"}
+        {"name": "published_articles", "value": 1, "user": "#users._id#"}
       ]}
       """
 

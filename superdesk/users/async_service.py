@@ -12,6 +12,8 @@ import logging
 from typing import Any
 from bson import ObjectId
 
+from quart_babel import gettext as _
+
 from superdesk.core.types.search import SearchRequest
 from superdesk.resource_fields import VERSION, LAST_UPDATED
 from superdesk.core import get_app_config
@@ -436,7 +438,7 @@ class DBUsersAsyncService(UsersAsyncService):
                 tokenDoc = {"user": user_id, "email": email}
                 token_id = await reset_service.store_reset_password_token(tokenDoc, email, activate_ttl, user_id)
                 if not token_id:
-                    raise SuperdeskApiError.internalError("Failed to send account activation email.")
+                    raise SuperdeskApiError.internalError(_("Failed to send account activation email."))
                 tokenDoc.update({"username": username})
 
                 await send_activate_account_email(tokenDoc, activate_ttl)
@@ -464,7 +466,7 @@ class DBUsersAsyncService(UsersAsyncService):
         user = await self.find_by_id(user_id)
 
         if not user:
-            raise SuperdeskApiError.unauthorizedError("User not found")
+            raise SuperdeskApiError.unauthorizedError(_("User not found"))
 
         if not await self.is_user_active(user):
             raise UserInactiveError()

@@ -18,15 +18,15 @@ import json
 import logging
 import time
 import unidecode
-from io import BytesIO
 
-from os.path import splitext
-from urllib.parse import urlparse
+from botocore.exceptions import ClientError
 from botocore.client import Config
 from werkzeug.datastructures import Range, FileStorage
+from bson import ObjectId
 
+from superdesk.core import get_config
 from superdesk.core.types import SuperdeskFile, SuperdeskAsyncFile
-from superdesk.media.media_operations import download_file_from_url, download_file_from_url_async, guess_media_extension
+from superdesk.media.media_operations import download_file_from_url, download_file_from_url_async
 from superdesk.utc import query_datetime
 from . import SuperdeskMediaStorage
 
@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 
 class AmazonObjectWrapper(SuperdeskFile):
-    def __init__(self, s3_object, name, metadata):
+    def __init__(self, s3_object, key, metadata):
         super().__init__()
 
         s3_body = s3_object["Body"]
@@ -51,16 +51,15 @@ class AmazonObjectWrapper(SuperdeskFile):
         self.seek(0)
         self.content_type = s3_object["ContentType"]
         self.length = int(s3_object["ContentLength"])
-        self._name = name
-        self.filename = name
-        self.metadata = metadata
+        self.metadata = metadata or {}
+        self._name = self.filename = self.metadata.get("filename") or key
         self.upload_date = s3_object["LastModified"]
         self.md5 = s3_object["ETag"][1:-1]
-        self._id = name
+        self._id = key
 
 
 class AmazonObjectAsyncWrapper(SuperdeskAsyncFile):
-    def __init__(self, s3_object, name, metadata, begin: int = 0, end: int | None = None):
+    def __init__(self, s3_object, key, metadata, begin: int = 0, end: int | None = None):
         if s3_object.get("ContentRange"):
             # We're using a range to get partial data
             # Get the total size of the file from the range header
@@ -68,16 +67,20 @@ class AmazonObjectAsyncWrapper(SuperdeskAsyncFile):
         else:
             length = int(s3_object["ContentLength"])
 
+        if metadata is None:
+            metadata = {}
+
+        filename = metadata.get("filename") or key
         super().__init__(
             buffer=s3_object["Body"],
             content_type=s3_object["ContentType"],
             length=length,
-            name=name,
-            filename=name,
+            name=filename,
+            filename=filename,
             metadata=metadata,
             upload_date=s3_object["LastModified"],
             md5=s3_object["ETag"][1:-1],
-            media_id=name,
+            media_id=key,
             begin=begin,
             end=end,
         )
@@ -150,30 +153,38 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
 
         return unidecode.unidecode(str(_id)).translate(get_translation_table())
 
-    def media_id(self, filename, content_type=None, version=True):
-        """Get the ``media_id`` path for the given ``filename``.
-
-        if filename doesn't have an extension one is guessed,
-        and additional *version* option to have automatic version or not to have,
-        or to send a `string` one.
+    def media_id(self, version: bool | str = True) -> str:
         """
-        path = urlparse(filename).path.split("/")[-1]
-        file_extension = splitext(path)[1]
+        Generates a media ID string using a configurable time-based prefix and a unique identifier.
 
-        extension = ""
-        if not file_extension:
-            extension = str(guess_media_extension(content_type)) if content_type else ""
+        This method generates a media ID based on a configurable time granularity or provided
+        custom version. The time granularity settings can be 'hourly', 'daily', or 'none'. A unique
+        identifier is appended to the generated string, ensuring a unique media ID is produced
+        each time the method is called.
+
+        :param version: Determines the versioning format. If True, an automatic time-based
+                        version is generated based on the 'AMAZON_MEDIA_ID_TIME_PREFIX' configuration
+                        from the application. If False, no version prefix is included. If a string is
+                        provided, it is used as a custom prefix after stripping any surrounding slashes.
+        :returns: A unique media ID string composed of the specified versioning format and a unique identifier.
+        """
 
         if version is True:
-            # automatic version is set on 15mins granularity.
-            mins_granularity = int(int(time.strftime("%M")) / 4) * 4
-            version = "%s%s/" % (time.strftime("%Y%m%d%H%m"), mins_granularity)
+            folder_granularity = str(self.app.config.get("AMAZON_MEDIA_ID_TIME_PREFIX", "hourly")).lower()
+
+            if folder_granularity == "daily":
+                version = "%s/" % time.strftime("%Y%m%d")
+            elif folder_granularity == "none":
+                version = ""
+            else:
+                # default automatic version is set on hourly granularity.
+                version = "%s/" % time.strftime("%Y%m%d%H")
         elif version is False:
             version = ""
         else:
             version = "%s/" % version.strip("/")
 
-        return "%s%s%s" % (version, self._make_s3_safe(filename), extension)
+        return f"{version}{ObjectId()}"
 
     def fetch_rendition(self, rendition, resource=None):
         stream, name, mime = download_file_from_url(rendition.get("href"))
@@ -291,7 +302,9 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
     def extract_metadata_from_headers(self, request_headers):
         headers = {}
         for key, value in request_headers.items():
-            if self.user_metadata_header in key:
+            if key == "filename":
+                headers["filename"] = value
+            elif self.user_metadata_header in key:
                 new_key = key.split(self.user_metadata_header)[1]
                 if value:
                     try:
@@ -300,9 +313,9 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
                         logger.exception(ex)
         return headers
 
-    def _get_put_id(self, filename=None, content_type=None, _id=None, version=True, folder=None):
+    def _get_put_id(self, _id: str | None = None, version: bool | str = True, folder: str | None = None) -> str:
         if not _id:
-            _id = self.media_id(filename, content_type=content_type, version=version)
+            _id = self.media_id(version)
 
         if folder:
             _id = "%s/%s" % (folder.rstrip("/"), _id)
@@ -325,6 +338,10 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             # not sure it's really needed here,
             # probably better to turn on/off public-read on the bucket instead
             kwargs["ACL"] = acl
+
+        if filename:
+            kwargs.setdefault("Metadata", {})
+            kwargs["Metadata"]["filename"] = self._make_s3_safe(filename)
 
         body = content.stream if isinstance(content, FileStorage) else content
 
@@ -364,7 +381,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug("Going to save file file=%s media=%s " % (filename, _id))
 
-        media_id = self._get_put_id(filename, content_type, _id, version, folder)
+        media_id = self._get_put_id(_id, version, folder)
         found = self._check_exists(media_id)
         if found:
             return media_id
@@ -411,7 +428,7 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         #      and they are anyway stored in MongoDB (and still part of the file). See issue SD-4231
         logger.debug("Going to save file file=%s media=%s " % (filename, _id))
 
-        media_id = self._get_put_id(filename, content_type, _id, version, folder)
+        media_id = self._get_put_id(_id, version, folder)
         found = await self._check_exists_async(media_id)
         if found:
             return media_id
@@ -484,16 +501,34 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         try:
             self.call("head_object", Key=id_or_filename)
             return True
-        except Exception:
-            # File not found
+        except Exception as error:
+            try:
+                if isinstance(error, ClientError) and error.response["Error"]["Code"] == "404":
+                    return False
+            except (KeyError, TypeError, IndexError):
+                pass
+
+            if get_config(bool, "SUPERDESK_DEBUG", False):
+                raise
+
+            logger.exception(error)
             return False
 
     async def _check_exists_async(self, id_or_filename):
         try:
             await self.call_async("head_object", Key=id_or_filename)
             return True
-        except Exception:
-            # File not found
+        except Exception as error:
+            try:
+                if isinstance(error, ClientError) and error.response["Error"]["Code"] == "404":
+                    return False
+            except (KeyError, TypeError, IndexError):
+                pass
+
+            if get_config(bool, "SUPERDESK_DEBUG", False):
+                raise
+
+            logger.exception(error)
             return False
 
     def remove_unreferenced_files(self, existing_files, resource=None):

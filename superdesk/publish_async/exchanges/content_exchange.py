@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from bson import ObjectId
 from celery.exceptions import SoftTimeLimitExceeded
 from quart_babel import gettext
-import elasticapm
 
 # TODO-ASYNC: Replace resolve_document_version with something from async core lib
 from eve.versioning import resolve_document_version
@@ -311,7 +310,6 @@ class ContentPublishExchange(BasicPublishExchange):
         await signals.item_published_async.send(original, True)
         await get_resource_service(PUBLISHED).patch_async(published_item_id, published_update)
 
-    @elasticapm.capture_span()
     async def _publish_package_items(self, request: PublishRequest) -> PublishRequestResponse | None:
         items = get_residrefs(request.item)
         subscriber_items: dict[ObjectId, SubscriberPackageItems] = {}
@@ -355,7 +353,6 @@ class ContentPublishExchange(BasicPublishExchange):
 
         return await self.publish_package(request, subscriber_items)
 
-    @elasticapm.capture_span()
     async def publish_package(
         self, request: PublishRequest, target_subscribers: dict[ObjectId, SubscriberPackageItems]
     ) -> PublishRequestResponse | None:

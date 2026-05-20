@@ -850,7 +850,11 @@ Feature: Packages
         When we get "archive"
         Then we get list with 2 items
         """
-        {"_items": [{"guid": "tag:example.com,0000:newsml_BRE9A679", "headline": "test", "linked_in_packages": [], "type": "text"}]}
+        {"_items": [
+            {"guid": "tag:example.com,0000:newsml_BRE9A679", "headline": "test", "linked_in_packages": [
+                {"package": "#archive._id#"}
+            ], "type": "text"}
+        ]}
         """
 
     @auth

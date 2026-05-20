@@ -30,6 +30,8 @@ from PIL import Image, ImageEnhance
 from .image import get_meta
 from .video import get_meta as video_meta
 
+from quart_babel import gettext as _
+
 from superdesk.core import json, get_app_config
 from superdesk.flask import url_for
 from superdesk.errors import SuperdeskApiError
@@ -108,7 +110,7 @@ def download_file_from_url(
 
     rv = session.get(_get_url_for_request(url), **request_kwargs)
     if rv.status_code not in (200, 201):
-        raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
+        raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: {url}").format(url=url))
     content = BytesIO(rv.content)
     name, content_type = _get_name_and_content_type_from_response(content, rv.headers)
     return content, name, content_type
@@ -140,7 +142,7 @@ async def download_file_from_url_async(
     try:
         async with session.get(_get_url_for_request(url), **request_kwargs) as response:
             if response.status not in (200, 201):
-                raise SuperdeskApiError.internalError("Failed to retrieve file from URL: %s" % url)
+                raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: {url}").format(url=url))
 
             content = BytesIO(await response.read())
             name, content_type = _get_name_and_content_type_from_response(content, response.headers)
@@ -167,7 +169,7 @@ def process_file_from_stream(content, content_type=None):
     try:
         metadata = process_file(content, file_type)
     except OSError:  # error from PIL when image is supposed to be an image but is not.
-        raise SuperdeskApiError.internalError("Failed to process file")
+        raise SuperdeskApiError.internalError(_("Failed to process file"))
     file_name = get_file_name(content)
     content.seek(0)
     metadata = encode_metadata(metadata)
@@ -265,20 +267,30 @@ def crop_image(content, file_name, cropping_data, exact_size=None, image_format=
         logger.debug("Opened image {} from stream, going to crop it".format(file_name))
         content.seek(0)
         img = Image.open(content)
+        exif = img.getexif() if hasattr(img, "getexif") else None
+        exif_bytes = exif.tobytes() if exif else None
         cropped = img.crop(cropping_data)
         if exact_size and "width" in exact_size and "height" in exact_size:
             cropped = cropped.resize((int(exact_size["width"]), int(exact_size["height"])), Image.LANCZOS)
         logger.debug("Cropped image {} from stream, going to save it".format(file_name))
+        output_format = image_format or img.format
         try:
             out = BytesIO()
-            cropped.save(out, image_format or img.format)
-            out.seek(0)
-            setattr(out, "width", cropped.size[0])
-            setattr(out, "height", cropped.size[1])
-            return True, out
+            save_kwargs = {}
+            if exif_bytes:
+                save_kwargs["exif"] = exif_bytes
+            cropped.save(out, output_format, **save_kwargs)
+        except (TypeError, ValueError):
+            out = BytesIO()
+            cropped.save(out, output_format)
         except Exception as io:
             logger.exception("Failed to generate crop for filename: {}. Crop: {}".format(file_name, cropping_data))
             return False, io
+
+        out.seek(0)
+        setattr(out, "width", cropped.size[0])
+        setattr(out, "height", cropped.size[1])
+        return True, out
     return False, content
 
 

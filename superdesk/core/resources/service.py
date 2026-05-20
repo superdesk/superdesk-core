@@ -18,6 +18,7 @@ from typing import (
     Dict,
     Any,
     AsyncIterable,
+    AsyncGenerator,
     Union,
     cast,
     overload,
@@ -38,6 +39,8 @@ from motor.motor_asyncio import AsyncIOMotorCursor
 
 # TODO-ASYNC: Replace Eve's parser with our own
 from eve.io.mongo.parser import parse, ParseError
+
+from quart_babel import gettext as _
 
 from superdesk.core.types import SearchRequest, SortListParam, SortParam, ProjectedFieldArg
 from superdesk.core.errors import ElasticNotConfiguredForResource
@@ -706,6 +709,69 @@ class AsyncResourceService(Generic[ResourceModelType]):
         else:
             logger.warning(f"Not enough iterations for resource {self.resource_name}")
 
+    async def get_all_batch_elastic_raw(
+        self,
+        query: dict | None = None,
+        size: int = 500,
+        max_iterations: int = 10000,
+        projection: ProjectedFieldArg | None = None,
+    ) -> AsyncGenerator[dict, None]:
+        """Helper function to get all items from this resource, in batches
+
+        The default arguments allow iterating over 5 million documents.
+        If more is needed, then consider increasing ``size`` and/or ``max_iterations``
+
+        :param query: An optional elasticsearch query used to filter items for
+        :param size: The number of items to fetch on each iteration
+        :param max_iterations: Maximum number of iterations to run, before returning gracefully
+        :param projection: Optional projection to apply to the search results
+        :return: An async generator yielding a dictionary of the document
+        """
+
+        es_query = query.copy() if query else {}
+        es_query["size"] = size
+        es_query.setdefault("sort", [{"_created": "asc"}, {"_updated": "asc"}])
+        for i in range(max_iterations):
+            response = await self.elastic.search(es_query, projection=projection)
+            cursor = ElasticsearchResourceCursorAsync(cast(Type[ResourceModelType], self.config.data_class), response)
+
+            last_hit = await cursor.next_raw(as_hit=True)
+            while last_hit is not None:
+                yield last_hit["_source"]
+                last_hit = await cursor.next_raw(as_hit=True)
+
+            if last_hit is None:
+                break
+            elif not last_hit.get("sort"):
+                logger.warning(f"No sort value found in es hit for resource {self.resource_name}")
+                break
+
+            es_query["search_after"] = last_hit["sort"]
+        else:
+            logger.warning(f"Not enough iterations for resource {self.resource_name}")
+
+    async def get_all_batch_elastic(
+        self,
+        query: dict | None = None,
+        size: int = 500,
+        max_iterations: int = 10000,
+        projection: ProjectedFieldArg | None = None,
+    ) -> AsyncGenerator[ResourceModelType, None]:
+        """Helper function to get all items from this resource, in batches
+
+        The default arguments allow iterating over 5 million documents.
+        If more is needed, then consider increasing ``size`` and/or ``max_iterations``
+
+        :param query: An optional elasticsearch query used to filter items for
+        :param size: The number of items to fetch on each iteration
+        :param max_iterations: Maximum number of iterations to run, before returning gracefully
+        :param projection: Optional projection to apply to the search results
+        :return: An async generator with ``ResourceModel`` instances
+        """
+
+        async for data in self.get_all_batch_elastic_raw(query, size, max_iterations, projection):
+            yield self.get_model_instance_from_dict(data)
+
     @overload
     async def find(
         self, req: SearchRequest
@@ -832,7 +898,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 try:
                     where = parse(req.where)
                 except ParseError:
-                    raise SuperdeskApiError.badRequestError("Failed to parse the where filter")
+                    raise SuperdeskApiError.badRequestError(_("Failed to parse the where filter"))
 
         self._validate_lookup(where)
         where = cast_item(where or {})
@@ -900,7 +966,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         etag = etag.replace('"', "")
 
         if etag != original.etag:
-            raise SuperdeskApiError.preconditionFailedError("Client and server etags don't match")
+            raise SuperdeskApiError.preconditionFailedError(_("Client and server etags don't match"))
 
     def generate_etag(self, value: dict[str, Any], ignore_fields: list[str] | None = None) -> str:
         if ignore_fields is not None:
@@ -956,7 +1022,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         if not self.config.versioning:
-            raise SuperdeskApiError.badRequestError("Resource does not support versioning")
+            raise SuperdeskApiError.badRequestError(_("Resource does not support versioning"))
 
         item: dict | None = await self.mongo_async.find_one({ID_FIELD: item_id}, projection=projection)
         if not item:
@@ -991,7 +1057,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         if not self.config.versioning:
-            raise SuperdeskApiError.badRequestError("Resource does not support versioning")
+            raise SuperdeskApiError.badRequestError(_("Resource does not support versioning"))
 
         versioned_item: dict | None = await self.mongo_versioned_async.find_one(
             {
@@ -1079,7 +1145,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             mongo_result, elastic_result = await asyncio.gather(mongo_task, elastic_task)
 
         if not mongo_result.acknowledged:
-            raise SuperdeskApiError.badRequestError("Failed to bulk update items in MongoDB")
+            raise SuperdeskApiError.badRequestError(_("Failed to bulk update items in MongoDB"))
 
         if mongo_result.modified_count != len(ids):
             logger.warning(

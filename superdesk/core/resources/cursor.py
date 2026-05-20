@@ -94,14 +94,14 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync[ResourceModelType], G
         item_dict = await self.next_raw()
         return None if item_dict is None else self.get_model_instance(item_dict)
 
-    async def next_raw(self) -> dict[str, Any] | None:
+    async def next_raw(self, as_hit: bool = False) -> dict[str, Any] | None:
         try:
             data = self.hits["hits"]["hits"][self._index]
             source = data["_source"]
             source["_id"] = data["_id"]
-            source["_type"] = source.pop("_resource", None)
+            source.setdefault("_type", source.pop("_resource", None))
             self._index += 1
-            return source
+            return data if as_hit else source
         except (IndexError, KeyError, TypeError):
             self._index = 0
             return None

@@ -8,10 +8,14 @@ from superdesk import get_resource_service
 from superdesk.errors import FormatterError, SuperdeskApiError
 from superdesk.publish.formatters import get_all_formatters
 from superdesk.utils import get_random_string
+from superdesk.auth.utils import generate_url_with_token
 from superdesk.validation import ValidationError
 from io import BytesIO
 from zipfile import ZipFile
 from quart_babel import gettext as _
+
+
+EXPORT_EXPIRY_DAYS = 7
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +82,11 @@ class ExportService(AsyncBaseService):
                 content_type="application/zip",
                 folder="temp",
             )
-            doc["url"] = app.media.url_for_download(zip_id, "application/zip")
+            doc["url"] = generate_url_with_token(
+                app.media.url_for_download(zip_id, "application/zip"),
+                expiry_days=EXPORT_EXPIRY_DAYS,
+                media_id=str(zip_id),
+            )
 
         return [len(docs)]
 

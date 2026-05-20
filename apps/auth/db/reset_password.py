@@ -58,7 +58,7 @@ class ResetPasswordService(AsyncBaseService):
         reset_request = await superdesk.get_resource_service("active_tokens").find_one_async(req=None, token=token)
         if not reset_request or reset_request["expire_time"] < utcnow():
             logger.warning("Invalid token received: %s" % token)
-            raise SuperdeskApiError.unauthorizedError("Invalid token received")
+            raise SuperdeskApiError.unauthorizedError(_("Invalid token received"))
 
         return reset_request
 

@@ -15,6 +15,8 @@ from collections import OrderedDict
 from typing import Optional, Dict, List, Tuple
 from urllib.parse import urljoin
 
+from quart_babel import gettext as _
+
 from superdesk.core import get_app_config
 from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
@@ -338,7 +340,7 @@ class IMatrics(AIServiceBase):
             if not uuid:
                 raise KeyError
         except KeyError:
-            raise SuperdeskApiError.badRequestError("[{name}] no tag UUID specified".format(name=self.name))
+            raise SuperdeskApiError.badRequestError(_("[{name}] no tag UUID specified").format(name=self.name))
 
         self._request("concept/delete", method="DELETE", params={"uuid": data["uuid"]})
         return {}

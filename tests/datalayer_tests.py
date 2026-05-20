@@ -14,6 +14,7 @@ import superdesk
 from bson import ObjectId
 from superdesk.tests import TestCase
 from superdesk.datalayer import SuperdeskJSONEncoder
+from superdesk.errors import SuperdeskApiError
 
 
 class DatalayerTestCase(TestCase):
@@ -97,3 +98,57 @@ class DatalayerTestCase(TestCase):
         service.create(items)
         service.delete({})
         assert 0 == service.find({}).count()
+
+    async def test_get_all_batch_elastic(self):
+        expected_item_count = 500
+        items = []
+        for i in range(expected_item_count):
+            items.append(
+                {
+                    "_id": "test-{:04d}".format(i),
+                    "guid": "test-{:04d}".format(i),
+                }
+            )
+        service = superdesk.get_resource_service("archive")
+        service.create(items)
+
+        # Use custom sort, as all items would have the same ``_created`` and ``_updated`` values
+        query = {"sort": [{"_created": "asc"}, {"_updated": "asc"}, {"guid": "asc"}]}
+        counter = 0
+        for item in service.get_all_batch_elastic(query, size=5):
+            assert item["_id"] == "test-{:04d}".format(counter)
+            counter += 1
+        assert counter == expected_item_count
+
+    async def test_get_all_batch_elastic_required_sort_field(self):
+        service = superdesk.get_resource_service("archive")
+
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            service.get_all_batch_elastic({}).send(None)
+
+        self.assertEqual(ctx.exception.status_code, 400)  # bad request error
+
+    async def test_get_all_batch_elastic_with_lookup(self):
+        expected_item_count = 20
+        matching = []
+        other = []
+        for i in range(expected_item_count):
+            matching.append({"_id": f"match-{i:04d}", "guid": f"match-{i:04d}", "slugline": "keep"})
+            other.append({"_id": f"skip-{i:04d}", "guid": f"skip-{i:04d}", "slugline": "drop"})
+
+        service = superdesk.get_resource_service("archive")
+        service.create(matching + other)
+
+        query = {
+            "query": {"match": {"slugline": "keep"}},
+            # Use custom sort, as all items would have the same ``_created`` and ``_updated`` values
+            "sort": [{"_created": "asc"}, {"_updated": "asc"}, {"guid": "asc"}],
+        }
+        seen = []
+        for item in service.get_all_batch_elastic(query, size=5):
+            seen.append(item)
+
+        assert len(seen) == expected_item_count
+        assert all(doc["slugline"] == "keep" for doc in seen)
+        # ensure we did not accidentally yield items from the other slugline
+        assert all(not doc["_id"].startswith("skip-") for doc in seen)

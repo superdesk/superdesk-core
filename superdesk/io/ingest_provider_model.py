@@ -22,6 +22,7 @@ from superdesk.activity import (
     notify_and_add_activity,
     ACTIVITY_DELETE,
 )
+from quart_babel import gettext as _
 from superdesk.errors import SuperdeskApiError
 from superdesk.io import allowed_feeding_services, allowed_feed_parsers, get_feeding_service
 from superdesk.metadata.item import CONTENT_STATE, CONTENT_TYPE
@@ -273,7 +274,7 @@ class IngestProviderService(AsyncBaseService):
         """
 
         if doc.get("last_item_update"):
-            raise SuperdeskApiError.forbiddenError("Deleting an Ingest Source after receiving items is prohibited.")
+            raise SuperdeskApiError.forbiddenError(_("Deleting an Ingest Source after receiving items is prohibited."))
 
     async def on_deleted_async(self, doc):
         """

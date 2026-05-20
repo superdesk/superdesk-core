@@ -300,6 +300,52 @@ This should be only enabled when you have dedicated worker running::
 
     $ celery -A worker worker -Q publish_priority
 
+
+.. _settings.ws:
+
+Websocket Server Settings
+-------------------------
+
+``WS_HOST``
+^^^^^^^^^^^
+
+Default: ``'0.0.0.0'``
+
+``WS_PORT``
+^^^^^^^^^^^
+
+Default: ``5100``
+
+``WS_REDIS_CONNECT_TIMEOUT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``2``
+
+``WS_REDIS_TIMEOUT``
+^^^^^^^^^^^^^^^^^^^^
+
+Default: ``10``
+
+``WS_REDIS_KEEPALIVE_IDLE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``30``
+
+``WS_REDIS_KEEPALIVE_INTERVAL``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``10``
+
+``WS_REDIS_KEEPALIVE_COUNT``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``3``
+
+``WS_DEBUG``
+^^^^^^^^^^^^
+
+Default: ``False``
+
 .. _settings.monitoring:
 
 Monitoring settings
@@ -402,6 +448,14 @@ Default: ``'us-east-1'``
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default: ``''``
+
+``AMAZON_MEDIA_ID_TIME_PREFIX``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'hourly'``
+
+Controls the auto-generated prefix folder for Amazon media IDs.
+Supported values are ``'hourly'`` (``YYYYMMDDHH/``), ``'daily'`` (``YYYYMMDD/``), and ``'none'``.
 
 ``AMAZON_S3_SUBFOLDER``
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -22,7 +22,7 @@ from superdesk.cache import cache
 from superdesk import privilege, get_resource_service
 from superdesk.notification import push_notification
 from superdesk.resource import Resource
-from superdesk.eve_async.service import AsyncBaseService
+from superdesk.eve_async.service import CachableAsyncBaseService
 from superdesk.users import get_user_from_request
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -174,7 +174,7 @@ class VocabulariesResource(Resource):
     mongo_indexes = {"field_type": [("field_type", 1)]}
 
 
-class VocabulariesService(AsyncBaseService):
+class VocabulariesService(CachableAsyncBaseService):
     system_keys = set(DEFAULT_SCHEMA.keys()).union(set(DEFAULT_EDITOR.keys()))
 
     async def _validate_items_async(self, update):
@@ -281,7 +281,7 @@ class VocabulariesService(AsyncBaseService):
         Overriding to validate vocabulary deletion
         """
         if "field_type" not in doc:
-            raise SuperdeskApiError.badRequestError("Default vocabularies cannot be deleted")
+            raise SuperdeskApiError.badRequestError(_("Default vocabularies cannot be deleted"))
 
     def _check_uniqueness(self, items, unique_field):
         """Checks the uniqueness if a unique field is defined
@@ -296,7 +296,7 @@ class VocabulariesService(AsyncBaseService):
                 continue
 
             if not item.get(unique_field):
-                raise SuperdeskApiError.badRequestError("{} cannot be empty".format(unique_field))
+                raise SuperdeskApiError.badRequestError(_("{} cannot be empty").format(unique_field))
 
             unique_value = str(item.get(unique_field)).upper()
 

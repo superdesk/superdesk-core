@@ -1,24 +1,19 @@
 import re
 
 from typing import Literal
-from elasticapm.contrib.flask import ElasticAPM
 from superdesk.flask import Flask
 
 
 def setup_apm(app: Flask, service="Core API") -> None:
-    if getattr(app, "apm", None) is None and app.config.get("APM_SERVER_URL") and app.config.get("APM_SECRET_TOKEN"):
-        app.config["ELASTIC_APM"] = {
-            "DEBUG": app.debug,
-            "ENVIRONMENT": get_environment(app),
-            "SERVER_URL": app.config["APM_SERVER_URL"],
-            "SECRET_TOKEN": app.config["APM_SECRET_TOKEN"],
-            "TRANSACTIONS_IGNORE_PATTERNS": ["^OPTIONS "],
-            "SERVICE_NAME": "{app} - {service}".format(
-                app=app.config.get("APM_SERVICE_NAME") or app.config.get("APPLICATION_NAME"), service=service
-            ),
-        }
+    # APM is intentionally disabled (see commented-out client initialization below).
+    # Keep this function as a no-op to avoid constructing unused ELASTIC_APM config,
+    # including SECRET_TOKEN, when no APM client is active.
+    return
 
-        app.apm = ElasticAPM(app)  # type: ignore
+    # disable apm, doesn't support quart
+    #
+    # from elasticapm.contrib.flask import ElasticAPM
+    # app.apm = ElasticAPM(app)  # type: ignore
 
 
 def get_environment(app: Flask) -> Literal["testing", "staging", "production"]:
