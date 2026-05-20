@@ -186,6 +186,7 @@ class STTNewsMLFeedParser(NewsMLTwoFeedParser):
         creditline = meta.find(self.qname("creditline"))
         if creditline is not None:
             item["source"] = creditline.text.replace("–", "-").rstrip("-")  # replace endash with dash
+        return meta
 
     def parse_version_dates(self, tree, item):
         """
