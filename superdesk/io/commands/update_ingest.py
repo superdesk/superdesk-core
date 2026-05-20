@@ -744,7 +744,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
     except Exception as ex:
         await ProviderError.ingestItemError(ex, provider, item=item).send_notifications()
         return False, []
-    return bool(items_ids), items_ids
+    return True, items_ids
 
 
 def resolve_ref(assoc):

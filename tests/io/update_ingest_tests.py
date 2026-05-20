@@ -786,5 +786,5 @@ class UpdateIngestTest(TestCase):
 
         # update an event
         ingested, ids = await ingest_item(item, provider=provider, feeding_service={})
-        self.assertFalse(ingested)
+        self.assertTrue(ingested)
         self.assertEqual([], ids)
