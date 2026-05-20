@@ -25,8 +25,19 @@ class AsyncHttpClientSessionMixin:
 
     _http_session: ClassVar[aiohttp.ClientSession | None] = None
     _connected_loop: ClassVar[asyncio.AbstractEventLoop | None] = None
+    _http_lock: ClassVar[asyncio.Lock | None] = None
     http_timeout: ClassVar[aiohttp.ClientTimeout] = aiohttp.ClientTimeout(connect=5, sock_read=30)
     http_verify_ssl: ClassVar[bool] = True
+
+    @classmethod
+    def _get_lock(cls) -> asyncio.Lock:
+        """
+        Returns a lock unique to the class (subclass) to ensure concurrency safety.
+        """
+
+        if "_http_lock" not in cls.__dict__ or cls._http_lock is None:
+            cls._http_lock = asyncio.Lock()
+        return cls._http_lock
 
     @classmethod
     async def _get_http_session(cls) -> tuple[aiohttp.ClientSession, bool]:
@@ -38,20 +49,21 @@ class AsyncHttpClientSessionMixin:
         """
         # Lazy initialization of session
         new_session_created = False
+        current_loop = asyncio.get_running_loop()
 
-        current_loop = asyncio.get_event_loop()
-        if cls._connected_loop != current_loop:
-            # Event loop has changed, make sure to re-connect to the new one
-            if cls._http_session and not cls._http_session.closed:
-                await cls._http_session.close()
-            cls._http_session = None
-            cls._connected_loop = current_loop
+        async with cls._get_lock():
+            if cls._connected_loop != current_loop:
+                # Event loop has changed, make sure to re-connect to the new one
+                if cls._http_session and not cls._http_session.closed:
+                    await cls._http_session.close()
+                cls._http_session = None
+                cls._connected_loop = current_loop
 
-        if cls._http_session is None or cls._http_session.closed:
-            cls._http_session = cls._create_http_session()
-            new_session_created = True
+            if cls._http_session is None or cls._http_session.closed:
+                cls._http_session = cls._create_http_session()
+                new_session_created = True
 
-        return cls._http_session, new_session_created
+            return cls._http_session, new_session_created
 
     @classmethod
     def _create_http_session(cls) -> aiohttp.ClientSession:
