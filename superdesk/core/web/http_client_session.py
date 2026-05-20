@@ -26,6 +26,7 @@ class AsyncHttpClientSessionMixin:
     _http_session: ClassVar[aiohttp.ClientSession | None] = None
     _connected_loop: ClassVar[asyncio.AbstractEventLoop | None] = None
     _http_lock: ClassVar[asyncio.Lock | None] = None
+    _after_serving_registered: ClassVar[bool] = False
     http_timeout: ClassVar[aiohttp.ClientTimeout] = aiohttp.ClientTimeout(connect=5, sock_read=30)
     http_verify_ssl: ClassVar[bool] = True
 
@@ -35,9 +36,9 @@ class AsyncHttpClientSessionMixin:
         Returns a lock unique to the class (subclass) to ensure concurrency safety.
         """
 
-        if "_http_lock" not in cls.__dict__ or cls._http_lock is None:
-            cls._http_lock = asyncio.Lock()
-        return cls._http_lock
+        if not (lock := getattr(cls, "_http_lock", None)):
+            cls._http_lock = lock = asyncio.Lock()
+        return lock
 
     @classmethod
     async def _get_http_session(cls) -> tuple[aiohttp.ClientSession, bool]:
@@ -81,17 +82,22 @@ class AsyncHttpClientSessionMixin:
 
         connector = aiohttp.TCPConnector(ssl=cls.http_verify_ssl)
         session = aiohttp.ClientSession(connector=connector, timeout=cls.http_timeout)
-        app = get_current_app()
 
-        @app.after_serving
-        async def close_session():
-            if session and not session.closed:
-                try:
-                    await session.close()
-                except Exception:
-                    logger.exception("Failed to close aiohttp ClientSession")
+        if not getattr(cls, "_after_serving_registered", False):
+            app = get_current_app()
 
-            cls._http_session = None
+            @app.after_serving
+            async def close_session():
+                async with cls._get_lock():
+                    if cls._http_session and not cls._http_session.closed:
+                        try:
+                            await cls._http_session.close()
+                        except Exception:
+                            logger.exception("Failed to close aiohttp ClientSession")
+
+                    cls._http_session = None
+
+            cls._after_serving_registered = True
 
         return session
 
