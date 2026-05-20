@@ -24,8 +24,10 @@ __all__ = [
     "item_updated",
     "item_fetched",
     "item_move",
+    "item_move_async",
     "item_moved",
     "item_rewrite",
+    "item_rewrite_async",
     "item_validate",
     "item_routed",
     "item_duplicate",
@@ -98,6 +100,7 @@ item_fetched = signals.signal("item:fetched")
 #: :param item: item after moving
 #: :param original: item before moving
 item_move = signals.signal("item:move")
+item_move_async = AsyncSignal[dict, dict]("item:move")
 
 #: Sent after item is moved to different desk/stage.
 #:
@@ -117,6 +120,7 @@ item_moved = signals.signal("item:moved")
 #: :param item: new item update
 #: :param original: original item
 item_rewrite = signals.signal("item:rewrite")
+item_rewrite_async = AsyncSignal[dict, dict]("item:rewrite")
 
 
 #: Validate item

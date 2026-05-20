@@ -45,7 +45,7 @@ class ANANewsMLOneFeedParser(NewsMLOneFeedParser):
             item["priority"] = self.map_priority(parsed_el.text if parsed_el is not None else None)
 
             self.parse_news_identifier(item, xml)
-            self.parse_newslines(item, xml)
+            await self.parse_newslines(item, xml)
             self.parse_news_management(item, xml)
 
             parsed_el = xml.findall("NewsItem/NewsComponent/DescriptiveMetadata/Language")
@@ -63,7 +63,7 @@ class ANANewsMLOneFeedParser(NewsMLOneFeedParser):
                 'NewsItem/NewsComponent/DescriptiveMetadata/SubjectCode/Subject[@Scheme="IptcSubjectCodes"]'
             )
 
-            item["subject"] = self.format_subjects(subjects)
+            item["subject"] = await self.format_subjects(subjects)
 
             item["body_html"] = (
                 html.unescape(
@@ -115,7 +115,7 @@ class ANANewsMLOneFeedParser(NewsMLOneFeedParser):
         except Exception as ex:
             raise await ParserError.newsmlOneParserError(ex, provider).send_notifications()
 
-    def parse_newslines(self, item, tree):
+    async def parse_newslines(self, item, tree):
         parsed_el = self.parse_elements(tree.find("NewsItem/NewsComponent/NewsLines"))
 
         # Set the date component of the dateline assuming that the date is in the Athens timezone

@@ -1,6 +1,8 @@
-from typing import Any, Sequence, Protocol, Callable
+from typing import Any, Sequence, Protocol, Callable, Awaitable
 
 from .web import Request, Endpoint, EndpointGroup
+
+AfterServingCallable = Callable[[], None] | Callable[[], Awaitable[None]]
 
 
 class NotificationClientProtocol(Protocol):
@@ -30,6 +32,8 @@ class WSGIApp(Protocol):
 
     #: Config for the front-end application
     client_config: dict[str, Any]
+
+    debug: bool = False
 
     testing: bool = False
 
@@ -98,4 +102,7 @@ class WSGIApp(Protocol):
         ...
 
     def add_background_task(self, func: Callable, *args, **kwargs) -> None:
+        ...
+
+    def after_serving(self, func: AfterServingCallable) -> AfterServingCallable:
         ...

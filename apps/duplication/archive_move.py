@@ -174,6 +174,7 @@ class MoveService(AsyncBaseService):
         archived_doc["versioncreated"] = utcnow()
 
         signals.item_move.send(self, item=archived_doc, original=original)
+        await signals.item_move_async.send(archived_doc, original)
         await archive_service.update_async(original[ID_FIELD], archived_doc, original)
 
         await insert_into_versions_async(id_=original[ID_FIELD])
