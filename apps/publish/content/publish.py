@@ -25,6 +25,9 @@ from superdesk.metadata.item import (
 
 from apps.archive.common import set_sign_off, ITEM_OPERATION
 from apps.archive.archive import update_word_count
+from superdesk.lifecycle_timing import duration_ms, to_epoch_ms, duration_ms_from_epoch
+from datetime import datetime
+
 from superdesk.utc import utcnow
 from superdesk.publish_async.utils import get_residrefs
 
@@ -62,15 +65,62 @@ class ArchivePublishService(BasePublishService):
             if len(items) == 0 and self.publish_type == ITEM_PUBLISH:
                 raise SuperdeskApiError.badRequestError(_("Empty package cannot be published!"))
 
+    def _set_first_published(self, updates: dict, original: dict) -> datetime | None:
+        """Set ``firstpublished`` on updates and return a ms-precision datetime for lifecycle timing.
+
+        Returns the ms-precision publish datetime, or ``None`` if ``firstpublished`` was already set.
+        """
+        if original.get("firstpublished"):
+            return None
+        if updates.get(SCHEDULE_SETTINGS) and updates[SCHEDULE_SETTINGS].get("utc_publish_schedule"):
+            updates["firstpublished"] = updates[SCHEDULE_SETTINGS]["utc_publish_schedule"]
+            return None
+        first_published_dt = utcnow(microseconds=True)
+        updates["firstpublished"] = first_published_dt.replace(microsecond=0)
+        return first_published_dt
+
+    def _update_lifecycle_timing(self, updates: dict, original: dict, first_published_dt: datetime | None) -> None:
+        """Merge and populate ``lifecycle_timing`` on the first publish of an item."""
+        # Preserve existing lifecycle timing fields from the original document.
+        # Without this merge, setting updates["lifecycle_timing"] would replace
+        # the full object and drop ingest timestamps.
+        lifecycle_timing = dict(original.get("lifecycle_timing") or {})
+        lifecycle_timing.update(updates.get("lifecycle_timing") or {})
+        updates["lifecycle_timing"] = lifecycle_timing
+
+        if "first_published_at" in lifecycle_timing:
+            return
+
+        # Use ms-precision datetime for lifecycle timing; fall back to firstpublished for scheduled items.
+        first_pub_dt = first_published_dt or updates["firstpublished"]
+        lifecycle_timing["first_published_at"] = first_pub_dt
+        lifecycle_timing["first_published_ms"] = to_epoch_ms(first_pub_dt)
+
+        if not lifecycle_timing.get("lifecycle_started_at"):
+            lifecycle_timing["lifecycle_started_at"] = lifecycle_timing["first_published_at"]
+        if not isinstance(lifecycle_timing.get("lifecycle_started_ms"), int):
+            lifecycle_timing["lifecycle_started_ms"] = to_epoch_ms(lifecycle_timing["lifecycle_started_at"])
+
+        started_ms = lifecycle_timing.get("lifecycle_started_ms")
+        finished_ms = lifecycle_timing.get("first_published_ms")
+        if isinstance(started_ms, int) and isinstance(finished_ms, int):
+            lifecycle_timing["lifecycle_to_first_publish_ms"] = duration_ms_from_epoch(started_ms, finished_ms)
+        else:
+            start_time = lifecycle_timing.get("lifecycle_started_at")
+            if start_time:
+                lifecycle_timing["lifecycle_to_first_publish_ms"] = duration_ms(
+                    start_time, lifecycle_timing["first_published_at"]
+                )
+
     async def on_update_async(self, updates, original):
         updates[ITEM_OPERATION] = self.item_operation
         await super().on_update_async(updates, original)
 
-        if not original.get("firstpublished"):
-            if updates.get(SCHEDULE_SETTINGS) and updates[SCHEDULE_SETTINGS].get("utc_publish_schedule"):
-                updates["firstpublished"] = updates[SCHEDULE_SETTINGS]["utc_publish_schedule"]
-            else:
-                updates["firstpublished"] = utcnow()
+        is_first_publish = not original.get("firstpublished")
+        first_published_dt = self._set_first_published(updates, original)
+
+        if is_first_publish and updates.get("firstpublished"):
+            self._update_lifecycle_timing(updates, original, first_published_dt)
 
         if original.get("marked_for_user"):
             # remove marked_for_user on publish and keep it as previous_marked_user for history

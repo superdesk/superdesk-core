@@ -10,6 +10,7 @@ from superdesk.errors import PublishHTTPPushClientError
 from superdesk.utc import utcnow
 from superdesk.resource_fields import LAST_UPDATED
 from superdesk.publish import registered_transmitters
+from superdesk.lifecycle_timing import duration_ms, to_epoch_ms, duration_ms_from_epoch
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,25 @@ class AsyncioPublishConsumer(PublishConsumer):
                 # otherwise it will halt the processing of other transmission requests
                 # while waiting for network responses
                 await response
+
+            completed_now = utcnow(microseconds=True)
+            completed_at = completed_now.replace(microsecond=0)
+            completed_ms: int = to_epoch_ms(completed_now)
+            success_update: dict[str, object] = {
+                "state": PublishQueueState.SUCCESS,
+                "completed_at": completed_at,
+                "completed_ms": completed_ms,
+            }
+            if isinstance(task.lifecycle_started_ms, int):
+                success_update["lifecycle_to_transmit_ms"] = duration_ms_from_epoch(
+                    task.lifecycle_started_ms, completed_ms
+                )
+            elif task.lifecycle_started_at:
+                success_update["lifecycle_to_transmit_ms"] = duration_ms(task.lifecycle_started_at, completed_now)
+
+            await PublishQueueResource.get_service().update(task.id, success_update, task.etag, task)
             logger.info(f"Transmit completed for queue item {log_msg}")
+
             return True
         except Exception as e:
             logger.exception("Failed to transmit queue item", extra=log_extra)
@@ -105,7 +124,7 @@ class AsyncioPublishConsumer(PublishConsumer):
             retry_attempt_delay = get_config(int, "TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES")
             try:
                 timeout = 2 ** min(6, task.retry_attempt or retry_attempt_delay)
-                updates = {LAST_UPDATED: utcnow()}
+                updates: dict[str, object] = {LAST_UPDATED: utcnow()}
 
                 if task.retry_attempt < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
                     updates.update(

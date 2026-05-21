@@ -1,7 +1,9 @@
 import logging
+from datetime import datetime
 from inspect import isawaitable
 from io import BytesIO
 from copy import deepcopy
+from typing import Any, cast
 
 from bson import ObjectId
 from quart_babel import gettext
@@ -21,13 +23,15 @@ from superdesk.types import (
 )
 from superdesk import get_resource_service
 from superdesk.resource_fields import ID_FIELD, ITEM_TYPE, ASSOCIATIONS, VERSION
-from superdesk.metadata.item import PUBLISH_SCHEDULE, CONTENT_TYPE
+from superdesk.metadata.item import PUBLISH_SCHEDULE, CONTENT_TYPE, INGEST_ID
 from superdesk.metadata.packages import GROUPS, GROUP_ID, REFS, RESIDREF, ROOT_GROUP
 from superdesk.publish import PUBLISHED_IN_PACKAGE
 from superdesk.errors import SuperdeskPublishError, SuperdeskErrorWithNotifications
 from superdesk.publish_async.publish_cache import PublishCache
 from superdesk.publish_async.utils import generate_sequence_number, get_utc_schedule
 from superdesk.publish.formatters import Formatter, get_formatter
+from superdesk.utc import utcnow
+from superdesk.lifecycle_timing import duration_ms, to_epoch_ms, duration_ms_from_epoch
 
 from apps.content_types import apply_schema
 
@@ -71,6 +75,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             list of strings representing subscribers that have formatting issues.
         """
 
+        lifecycle_started_at, lifecycle_started_ms = await self._resolve_lifecycle_timing(request)
         item = self.filter_item_fields(request.item)
         tasks: list[PublishQueueResource] = []
         no_formatters: list[str] = []
@@ -85,7 +90,13 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
 
             try:
                 subscriber_tasks, subscriber_no_formatters = await self.get_tasks_for_subscriber(
-                    request, item, subscriber, response, task_cache
+                    request,
+                    item,
+                    subscriber,
+                    response,
+                    task_cache,
+                    lifecycle_started_at,
+                    lifecycle_started_ms,
                 )
                 tasks.extend(subscriber_tasks)
                 no_formatters.extend(subscriber_no_formatters)
@@ -108,6 +119,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         subscriber: SubscribersResource,
         response: PublishRequestResponse,
         task_cache: dict[str, list[PublishQueueResource]],
+        lifecycle_started_at: datetime | None = None,
+        lifecycle_started_ms: int | None = None,
     ):
         """
         Retrieves publishing tasks for the provided subscriber and their destinations.
@@ -130,6 +143,9 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         """
 
         no_formatters: list[str] = []
+        if lifecycle_started_at is None and lifecycle_started_ms is None:
+            lifecycle_started_at, lifecycle_started_ms = await self._resolve_lifecycle_timing(request)
+
         subscriber_dict = subscriber.to_dict()
         content_api_enabled = subscriber.id in response.content_api_subscribers
         tasks: list[PublishQueueResource] = []
@@ -160,6 +176,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                     embed_package_items,
                     destination,
                     task_cache,
+                    lifecycle_started_at,
+                    lifecycle_started_ms,
                 )
             )
 
@@ -175,6 +193,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         embed_package_items: bool,
         destination: SubscriberDestination,
         task_cache: dict[str, list[PublishQueueResource]],
+        lifecycle_started_at: datetime | None,
+        lifecycle_started_ms: int | None,
     ) -> list[PublishQueueResource]:
         """
         Generate a list of publish queue resources for a given subscriber destination.
@@ -224,6 +244,11 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                 publish_queue_item.destination = destination
                 publish_queue_item.published_seq_num = await generate_sequence_number(subscriber)
                 publish_queue_item.priority = subscriber.priority
+                self._populate_content_api_completion_timing(
+                    publish_queue_item,
+                    lifecycle_started_at=lifecycle_started_at,
+                    lifecycle_started_ms=lifecycle_started_ms,
+                )
                 tasks.append(publish_queue_item)
 
                 await publish_queue_service.create([publish_queue_item])
@@ -253,7 +278,18 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                     ),
                 )
                 await self._create_publish_queue_item(
-                    request, item, subscriber, response, destination, "", PublishQueueState.ERROR, 0, None, str(error)
+                    request,
+                    item,
+                    subscriber,
+                    response,
+                    destination,
+                    "",
+                    PublishQueueState.ERROR,
+                    0,
+                    None,
+                    str(error),
+                    lifecycle_started_at,
+                    lifecycle_started_ms,
                 )
 
                 if isinstance(error, SuperdeskErrorWithNotifications):
@@ -291,6 +327,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                     ),
                     pub_seq_num,
                     encoded_item,
+                    lifecycle_started_at=lifecycle_started_at,
+                    lifecycle_started_ms=lifecycle_started_ms,
                 )
 
                 tasks.append(publish_queue_item)
@@ -312,7 +350,12 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         pub_seq_num: int,
         encoded_item: bytes | None = None,
         error_message: str | None = None,
+        lifecycle_started_at: datetime | None = None,
+        lifecycle_started_ms: int | None = None,
     ) -> PublishQueueResource:
+        if lifecycle_started_ms is None and lifecycle_started_at:
+            lifecycle_started_ms = to_epoch_ms(lifecycle_started_at)
+
         publish_queue_item = PublishQueueResource(
             id=ObjectId(),
             state=queue_state,
@@ -326,6 +369,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             unique_name=item.get("unique_name", None),
             content_type=item[ITEM_TYPE],
             headline=item.get("headline") or item.get("name") or item.get("slugline") or "",
+            lifecycle_started_at=lifecycle_started_at,
+            lifecycle_started_ms=lifecycle_started_ms,
             ingest_provider=ObjectId(item["ingest_provider"]) if item.get("ingest_provider") else None,
             associated_items=response.associations.get(subscriber.id, []),
             # The following fields are required by the model, and will be updated per subscriber & destination
@@ -345,9 +390,58 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         if error_message:
             publish_queue_item.error_message = error_message
 
+        self._populate_content_api_completion_timing(
+            publish_queue_item,
+            lifecycle_started_at=lifecycle_started_at,
+            lifecycle_started_ms=lifecycle_started_ms,
+        )
+
         await PublishQueueResource.get_service().create([publish_queue_item])
 
         return publish_queue_item
+
+    def _populate_content_api_completion_timing(
+        self,
+        publish_queue_item: PublishQueueResource,
+        lifecycle_started_at: datetime | None = None,
+        lifecycle_started_ms: int | None = None,
+    ) -> None:
+        # Content API items are considered completed at queue creation time,
+        # so lifecycle transmission timing must be populated immediately.
+        if not (publish_queue_item.is_content_api and publish_queue_item.state == PublishQueueState.SUCCESS):
+            return
+
+        completed_at_ms = utcnow(microseconds=True)
+        publish_queue_item.completed_at = completed_at_ms.replace(microsecond=0)
+        publish_queue_item.completed_ms = to_epoch_ms(completed_at_ms)
+
+        if isinstance(lifecycle_started_ms, int):
+            publish_queue_item.lifecycle_to_transmit_ms = duration_ms_from_epoch(
+                lifecycle_started_ms, publish_queue_item.completed_ms
+            )
+        elif lifecycle_started_at:
+            publish_queue_item.lifecycle_to_transmit_ms = duration_ms(lifecycle_started_at, completed_at_ms)
+
+    async def _resolve_lifecycle_timing(self, request: PublishRequest) -> tuple[datetime | None, int | None]:
+        lifecycle_timing = (request.item or {}).get("lifecycle_timing") or {}
+        lifecycle_started_at = cast(datetime | None, lifecycle_timing.get("lifecycle_started_at"))
+        lifecycle_started_ms = cast(int | None, lifecycle_timing.get("lifecycle_started_ms"))
+
+        if not lifecycle_started_at:
+            ingest_id = (request.item or {}).get(INGEST_ID)
+            if ingest_id:
+                ingest_service = cast(Any, get_resource_service("ingest"))
+                ingest_doc = await ingest_service.find_one_async(req=None, _id=ingest_id)
+                if ingest_doc is None:
+                    ingest_doc = await ingest_service.find_one_async(req=None, guid=ingest_id)
+                ingest_lifecycle_timing = (ingest_doc or {}).get("lifecycle_timing", {})
+                lifecycle_started_at = cast(datetime | None, ingest_lifecycle_timing.get("lifecycle_started_at"))
+                lifecycle_started_ms = cast(int | None, ingest_lifecycle_timing.get("lifecycle_started_ms"))
+
+        if lifecycle_started_ms is None and lifecycle_started_at:
+            lifecycle_started_ms = to_epoch_ms(lifecycle_started_at)
+
+        return lifecycle_started_at, lifecycle_started_ms
 
     def filter_item_fields(self, item: dict) -> dict:
         """
