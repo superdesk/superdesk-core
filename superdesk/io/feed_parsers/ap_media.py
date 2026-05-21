@@ -20,6 +20,7 @@ from superdesk.metadata.item import ITEM_URGENCY, ITEM_PRIORITY, Priority
 from apps.archive.common import format_dateline_to_locmmmddsrc
 from superdesk.utc import get_date
 from superdesk import get_resource_service
+from superdesk.lifecycle_timing import set_ingest_started_at
 
 
 logger = logging.getLogger(__name__)
@@ -171,6 +172,7 @@ class APMediaFeedParser(FeedParser):
         nitf_item = s_json.get("nitf", {})
         item = {"guid": in_item.get("altids", {}).get("itemid") + ":" + str(in_item.get("version"))}
         item["source"] = provider.get("source") if provider else "AP"
+        set_ingest_started_at(item)
 
         for copy_property in self.direct_copy_properties:
             if in_item.get(copy_property) is not None:
