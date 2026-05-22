@@ -13,7 +13,7 @@ import logging
 from typing import List, cast
 
 from bson.objectid import ObjectId
-from quart_babel import lazy_gettext
+from quart_babel import gettext as _, lazy_gettext
 
 import superdesk
 from superdesk import get_resource_service
@@ -111,7 +111,7 @@ class ActivityService(AsyncBaseService):
             req = ParsedRequest()
         user = get_current_app().get_current_user_dict()
         if not user:
-            raise SuperdeskApiError.notFoundError("Can not determine user")
+            raise SuperdeskApiError.notFoundError(_("Can not determine user"))
         where_cond = {}
         if req.where:
             if req.where[0] != "{":
@@ -134,26 +134,26 @@ class ActivityService(AsyncBaseService):
         """
         user = get_current_app().get_current_user_dict()
         if not user:
-            raise SuperdeskApiError.notFoundError("Can not determine user")
+            raise SuperdeskApiError.notFoundError(_("Can not determine user"))
         user_id = user.get("_id")
 
         # make sure that the user making the read notification is in the notification list
         if not self.is_recipient(updates, user_id):
-            raise SuperdeskApiError.forbiddenError("User is not in the notification list")
+            raise SuperdeskApiError.forbiddenError(_("User is not in the notification list"))
 
         # make sure the transition is from not read to read
         if not self.is_read(updates, user_id) and self.is_read(original, user_id):
-            raise SuperdeskApiError.forbiddenError("Can not set notification as read")
+            raise SuperdeskApiError.forbiddenError(_("Can not set notification as read"))
 
         # make sure that no other users are being marked as read
         for recipient in updates.get("recipients", []):
             if recipient["user_id"] != user_id:
                 if self.is_read(updates, recipient["user_id"]) != self.is_read(original, recipient["user_id"]):
-                    raise SuperdeskApiError.forbiddenError("Can not set other users notification as read")
+                    raise SuperdeskApiError.forbiddenError(_("Can not set other users notification as read"))
 
         # make sure that no other fields are being up dated just read and _updated
         if len(updates) != 2:
-            raise SuperdeskApiError.forbiddenError("Can not update")
+            raise SuperdeskApiError.forbiddenError(_("Can not update"))
 
     def is_recipient(self, activity, user_id):
         """

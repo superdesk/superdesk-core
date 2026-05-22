@@ -352,7 +352,7 @@ def jwt_decode(token) -> Optional[Dict]:
     secret_key = cast(str, get_app_config("SECRET_KEY"))
     try:
         return jwt.decode(token, secret_key, algorithms=[JWT_ALGO])
-    except jwt.InvalidSignatureError:
+    except jwt.PyJWTError:
         return None
 
 

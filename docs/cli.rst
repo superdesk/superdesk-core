@@ -284,3 +284,8 @@ Storage Dumps and Records
 ^^^^^^^^^^^^^^^^^^^
 
 .. autofunction:: superdesk.storage.fix_links.cli_media_fix_links()
+
+``storage:delete_gridfs_files``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. autofunction:: superdesk.storage.delete_gridfs_files.cli_delete_gridfs_files()

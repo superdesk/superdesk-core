@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from bson import ObjectId
+from quart_babel import gettext as _
 
 from superdesk.core import get_current_app
 from superdesk.errors import SuperdeskApiError
@@ -61,7 +62,7 @@ class AssetsService(BaseService):
             doc["mime_type"] = content_type
             doc["filemeta"] = decode_metadata(metadata)
         except Exception as io:
-            raise SuperdeskApiError.internalError("Saving file failed", exception=io)
+            raise SuperdeskApiError.internalError(_("Saving file failed"), exception=io)
 
     def download_file(self, doc):
         url = doc.get("URL")

@@ -207,7 +207,7 @@ Feature: Content Expiry Not Published Items
   Scenario: Content linked in planning does not expire.
     Given "assignments"
     """
-    [{"planning": {}}]
+    [{"planning": {}, "assigned_to": {"state": "draft"}}]
     """
     When we post to "archive" with success
     """

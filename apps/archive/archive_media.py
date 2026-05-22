@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from quart_babel import gettext as _
 
 from superdesk.core import get_current_app, get_app_config
 from superdesk.resource_fields import ID_FIELD, VERSION
@@ -47,7 +48,7 @@ class ArchiveMediaService:
         inserted = []
         for doc in docs:
             if "media" not in doc or doc["media"] is None:
-                abort(400, description="No media found")
+                abort(400, description=_("No media found"))
             # check content type of video by python-magic
             content_type = app.media._get_mimetype(doc["media"])
             doc["media"].seek(0)

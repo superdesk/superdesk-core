@@ -6,6 +6,7 @@ import hermes.backend.inprocess
 
 from urllib.parse import urlparse
 
+import superdesk
 from superdesk import json_utils
 from superdesk.logging import logger
 from superdesk.flask import Flask
@@ -63,6 +64,9 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
                     password=parsed_url.password if parsed_url.password else None,
                     port=int(parsed_url.port) if parsed_url.port else 6379,
                     db=int(parsed_url.path[1:]) if parsed_url.path else 0,
+                    socket_timeout=app.config.get("CACHE_REDIS_TIMEOUT", 10),
+                    socket_connect_timeout=app.config.get("CACHE_REDIS_CONNECT_TIMEOUT", 2),
+                    retry_on_timeout=True,
                 )
                 logger.info("using redis cache backend")
                 return
@@ -109,5 +113,10 @@ class SuperdeskCacheBackend(hermes.backend.AbstractBackend):
         return self._backend.clean()
 
 
+class SuperdeskCache(hermes.Hermes):
+    def clean_in_thread(self, tags: list[str]) -> None:
+        superdesk.core.get_current_app().add_background_task(self.clean, tags)
+
+
 cache_backend = SuperdeskCacheBackend(SuperdeskMangler())
-cache = hermes.Hermes(cache_backend, mangler=cache_backend.mangler, ttl=600)
+cache = SuperdeskCache(cache_backend, mangler=cache_backend.mangler, ttl=600)

@@ -290,6 +290,18 @@ CACHE_URL = env("SUPERDESK_CACHE_URL", REDIS_URL)
 #: cache type - set explicit cache type if it wouldn't get it right from url
 CACHE_TYPE = env("SUPERDESK_CACHE_TYPE")
 
+#: Cache Redis socket timeout
+#:
+#: .. versionadded:: 3.5
+#:
+CACHE_REDIS_TIMEOUT = float(env("CACHE_REDIS_TIMEOUT", 10))
+
+#: Cache Redis socket connection timeout
+#:
+#: .. versionadded:: 3.5
+#:
+CACHE_REDIS_CONNECT_TIMEOUT = float(env("CACHE_REDIS_CONNECT_TIMEOUT", 2))
+
 #: celery broker
 BROKER_URL = env("CELERY_BROKER_URL", REDIS_URL)
 CELERY_BROKER_URL = BROKER_URL
@@ -773,6 +785,8 @@ AMAZON_SECRET_ACCESS_KEY = env("AMAZON_SECRET_ACCESS_KEY", "")
 AMAZON_REGION = env("AMAZON_REGION", "us-east-1")
 #: amazon bucket name
 AMAZON_CONTAINER_NAME = env("AMAZON_CONTAINER_NAME", "")
+#: time-based prefix for generated Amazon media IDs (hourly, daily, none)
+AMAZON_MEDIA_ID_TIME_PREFIX = env("AMAZON_MEDIA_ID_TIME_PREFIX", "hourly")
 #: use subfolder in bucket to store files
 AMAZON_S3_SUBFOLDER = env("AMAZON_S3_SUBFOLDER", "")
 #: adds ACL when putting to S3, can be set to ``public-read``, etc.
@@ -902,8 +916,44 @@ MACROS_MODULE = env("MACROS_MODULE", "superdesk.macros")
 WS_HOST = env("WSHOST", "0.0.0.0")
 WS_PORT = env("WSPORT", "5100")
 
-# Used by the  Kombu Connection. Only valid for the AMQP protocol
+# Used by the Kombu Connection. Only valid for the AMQP protocol
 WS_HEART_BEAT = int(env("WS_HEARTBEAT", "0"))
+
+#: Websocket Redis connection timeout
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_CONNECT_TIMEOUT = float(env("WS_REDIS_CONNECT_TIMEOUT", 2))
+
+#: Websocket Redis read/write timeout
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_TIMEOUT = float(env("WS_REDIS_TIMEOUT", 10))
+
+#: Websocket Redis TCP Keepalive Idle param
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_KEEPALIVE_IDLE = int(env("WS_REDIS_KEEPALIVE_IDLE", 30))
+
+#: Websocket Redis TCP Keepalive Interval param
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_KEEPALIVE_INTERVAL = int(env("WS_REDIS_KEEPALIVE_INTERVAL", 10))
+
+#: Websocket Redis TCP Keepalive Count param
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_REDIS_KEEPALIVE_COUNT = int(env("WS_REDIS_KEEPALIVE_COUNT", 3))
+
+#: Set Websocket server to run in debug mode
+#:
+#: .. versionadded:: 2.11, 3.1, 3.4
+#:
+WS_DEBUG = strtobool(env("WS_DEBUG", "False"))
 
 #: Defines the maximum value of Publish Sequence Number after which the value will start from 1
 MAX_VALUE_OF_PUBLISH_SEQUENCE = int(env("MAX_VALUE_OF_PUBLISH_SEQUENCE", 9999))
@@ -1093,11 +1143,15 @@ AUTO_PUBLISH_CONTENT_PROFILE = True
 #: controll error notifications globally
 ERROR_NOTIFICATIONS = strtobool(env("SUPERDESK_ERROR_NOTIFICATIONS", "true"))
 
+
 #: geonames config
 GEONAMES_USERNAME = env("GEONAMES_USERNAME")
 GEONAMES_TOKEN = env("GEONAMES_TOKEN")
 GEONAMES_URL = env("GEONAMES_URL", "http://api.geonames.org/")
 GEONAMES_FEATURE_CLASSES = ["P"]
+#: Which param to use for geonames search (e.g. 'name', 'name_startsWith')
+#: .. versionadded:: 2.11
+GEONAMES_SEARCH_PARAM = env("GEONAMES_SEARCH_PARAM", "name")
 #: Set how much metadata should be returned
 #:
 #: .. versionadded:: 1.33

@@ -100,6 +100,25 @@ class AppInitializeWithDataCommandTestCase(TestCase):
         self.assertEqual("Urgency", urgency["display_name"])
         self.assertEqual("init", urgency["_etag"])
 
+    async def test_init_deletes_tombstone_records(self):
+        await self._run(["vocabularies"])
+        urgency = self.app.data.find_one("vocabularies", req=None, _id="urgency")
+        self.assertIsNotNone(urgency)
+
+        init_dir = tempfile.mkdtemp("init", "test")
+        self.app.config.update({"INIT_DATA_PATH": init_dir})
+        self.addCleanup(self.app.config.pop, "INIT_DATA_PATH", None)
+        self.addCleanup(shutil.rmtree, init_dir)
+
+        with open(os.path.join(init_dir, "vocabularies.json"), "w") as f:
+            f.write(json.dumps([{"_id": "urgency", "_deleted": True}]))
+            f.flush()
+
+        await self._run(["vocabularies"])
+
+        urgency = self.app.data.find_one("vocabularies", req=None, _id="urgency")
+        self.assertIsNone(urgency)
+
     async def test_init_can_combine_files_from_folders(self):
         init_dir = tempfile.mkdtemp("init", "test")
         self.app.config.update({"INIT_DATA_PATH": init_dir})

@@ -12,6 +12,8 @@
 import logging
 
 import superdesk
+from quart_babel import gettext
+
 from superdesk.core import get_app_config, get_current_app
 from superdesk.flask import request, redirect, make_response, jsonify, Blueprint
 import json
@@ -76,7 +78,7 @@ async def get_upload_as_data_uri(media_id):
     if media_file:
         return await generate_response_for_file(media_file)
 
-    raise SuperdeskApiError.notFoundError("File not found on media storage.")
+    raise SuperdeskApiError.notFoundError(gettext("File not found on media storage."))
 
 
 @bp.route("/upload/config-file", methods=["POST", "OPTIONS"])
@@ -87,15 +89,15 @@ async def upload_config_file():
 
     _resource = request.args.get("resource")
     if not _resource:
-        raise SuperdeskApiError.forbiddenError("Provide required param: 'resource'.")
+        raise SuperdeskApiError.forbiddenError(gettext("Provide required param: 'resource'."))
 
     resource_privileges = get_resource_privileges(_resource).get("POST", None)
     if not current_user_has_privilege(resource_privileges):
-        raise SuperdeskApiError.forbiddenError("You don't have permissions to upload JSON file.")
+        raise SuperdeskApiError.forbiddenError(gettext("You don't have permissions to upload JSON file."))
 
     json_files = (await request.files).getlist("json_file")
     if not json_files:
-        raise SuperdeskApiError.badRequestError("Provide JSON file with key 'json_file'.")
+        raise SuperdeskApiError.badRequestError(gettext("Provide JSON file with key 'json_file'."))
 
     _items = []
     for _file in json_files:
@@ -110,7 +112,7 @@ async def upload_config_file():
             file_data = json.loads(_file.read())
         except Exception as ex:
             logger.error("Invalid JSON file {0}: {1}".format(file_name, str(ex)))
-            raise SuperdeskApiError.internalError("Invalid JSON file: {}.".format(file_name))
+            raise SuperdeskApiError.internalError(gettext("Invalid JSON file: {}.").format(file_name))
 
         if isinstance(file_data, dict):
             file_data = [file_data]
@@ -229,7 +231,7 @@ class UploadService(AsyncBaseService):
         except Exception as io:
             for file_id in inserted:
                 await delete_file_on_error_async(doc, file_id)
-            raise SuperdeskApiError.internalError("Generating renditions failed", exception=io)
+            raise SuperdeskApiError.internalError(gettext("Generating renditions failed"), exception=io)
 
     async def download_file(self, doc):
         url = doc.get("URL")

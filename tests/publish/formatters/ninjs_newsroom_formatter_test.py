@@ -192,7 +192,14 @@ class NewsroomNinjsFormatterTest(TestCase):
         self.assertEqual(json.loads(doc), expected)
 
     async def test_planning_data(self):
-        assignments = [{"coverage_item": "urn:coverage-id", "planning_item": "urn:planning-id", "planning": {}}]
+        assignments = [
+            {
+                "coverage_item": "urn:coverage-id",
+                "planning_item": "urn:planning-id",
+                "planning": {},
+                "assigned_to": {"state": "draft"},
+            }
+        ]
         await test_utils.post_items("assignments", assignments)
 
         article = {

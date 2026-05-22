@@ -12,7 +12,8 @@ import re
 import logging
 from inspect import isawaitable
 
-# from superdesk.errors import SuperdeskApiError
+from quart_babel import gettext as _
+
 import superdesk
 from superdesk.text_checkers.spellcheckers import SPELLCHECKER_DEFAULT, CAP_SPELLING, LANG_ANY
 from superdesk.text_checkers.spellcheckers.base import SpellcheckerBase
@@ -35,7 +36,7 @@ class Default(SpellcheckerBase):
 
     async def check(self, text, language=None):
         if language is None:
-            raise SuperdeskApiError.badRequestError("missing language for default spellchecker")
+            raise SuperdeskApiError.badRequestError(_("missing language for default spellchecker"))
         dictionaries_service = superdesk.get_resource_service("dictionaries")
         model = await dictionaries_service.get_model_for_lang(language)
         err_list = []
@@ -53,7 +54,7 @@ class Default(SpellcheckerBase):
 
     async def suggest(self, text, language=None):
         if language is None:
-            raise SuperdeskApiError.badRequestError("missing language for default spellchecker")
+            raise SuperdeskApiError.badRequestError(_("missing language for default spellchecker"))
         spellcheck_service = superdesk.get_resource_service("spellcheck")
         suggestions = await spellcheck_service.suggest(text, language)
         return {"suggestions": self.list2suggestions(suggestions)}

@@ -11,6 +11,8 @@
 import cProfile
 import logging
 
+from quart_babel import gettext as _
+
 from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import SuperdeskApiError
 from superdesk.services import BaseService
@@ -73,5 +75,5 @@ class ProfilingService(BaseService):
         sort_fields = req.sort.split(",")
         for field in sort_fields:
             if field not in self.SORT_FIELDS:
-                raise SuperdeskApiError.badRequestError("Invalid sort field %s" % field)
+                raise SuperdeskApiError.badRequestError(_("Invalid sort field {field}").format(field=field))
         return sort_fields

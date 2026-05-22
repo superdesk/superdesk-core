@@ -7,6 +7,8 @@
 from typing import Any
 from inspect import isawaitable
 
+from quart_babel import gettext as _
+
 from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource
 from superdesk.errors import SuperdeskApiError
@@ -90,7 +92,7 @@ class AIService(AsyncBaseService):
         try:
             service = registered_ai_services[service]
         except KeyError:
-            raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
+            raise SuperdeskApiError.notFoundError(_("{service} service can't be found").format(service=service))
 
         analyzed_data = service.analyze(item, doc.get("tags"))
         if isawaitable(analyzed_data):
@@ -163,7 +165,7 @@ class AIDataOpService(AsyncBaseService):
         try:
             service = registered_ai_services[service]
         except KeyError:
-            raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
+            raise SuperdeskApiError.notFoundError(_("{service} service can't be found").format(service=service))
 
         result = service.data_operation("POST", operation, name, data)
         if isawaitable(result):
@@ -230,7 +232,7 @@ class AIImageSuggestionService(AsyncBaseService):
         try:
             service = registered_ai_services[service]
         except KeyError:
-            raise SuperdeskApiError.notFoundError("{service} service can't be found".format(service=service))
+            raise SuperdeskApiError.notFoundError(_("{service} service can't be found").format(service=service))
 
         res_data = service.search_images(items)
         if isawaitable(res_data):

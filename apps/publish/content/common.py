@@ -237,8 +237,7 @@ class BasePublishService(AsyncBaseService):
         signals.item_published.send(self, item=original, after_scheduled=False)
         await signals.item_published_async.send(original, False)
 
-        if original.get("original_creator"):
-            user_metrics.incr("published_articles", original["original_creator"])
+        self._track_published_articles(original)
 
         packages = await self.package_service.get_packages_async(original[ID_FIELD])
         if packages and (await packages.count()) > 0:
@@ -267,43 +266,59 @@ class BasePublishService(AsyncBaseService):
                     await insert_into_versions_async(id_=package[ID_FIELD])
                     processed_packages.append(package[ID_FIELD])
 
+    async def _process_item_updates_and_associations(self, original: dict, updates: dict) -> dict:
+        """
+        Processes item updates and associations asynchronously.
+
+        This method handles the unlocking of the given item, applies updates, and ensures proper associations and
+        publishing actions are carried out based on the item's type and the provided updates. Depending on the
+        `auto_publish` flag and item type, it may update archive versions, refresh associated items, and send
+        corresponding publish signals.
+
+        :param original: The original item data before applying updates.
+        :param updates: The dictionary containing updates to be applied to the item.
+        :returns: The updated item data after applying the updates and processing associations.
+        """
+
+        # unlock the item
+        set_unlock_updates(updates)
+
+        auto_publish = updates.get("auto_publish", False)
+        updated = deepcopy(original)
+
+        if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
+            await self._publish_package_items(original, updates)
+            await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
+            updated.update(deepcopy(updates))
+        else:
+            await self._publish_associated_items(original, updates)
+            updated = deepcopy(original)
+            updated.update(deepcopy(updates))
+
+            if updates.get(ASSOCIATIONS):
+                await self._refresh_associated_items(updated, skip_related=True)  # updates got lost with update
+
+            if updated.get(ASSOCIATIONS):
+                self._fix_related_references(updated, updates)
+
+            if updated[ITEM_TYPE] == "picture" or updated[ITEM_TYPE] == "video":
+                self._update_media_metadata(updates, updated)
+
+            signals.item_publish.send(self, item=updated, updates=updates)
+            await signals.item_publish_async.send(updated, updates)
+
+            updated.update(deepcopy(updates))
+            await self.update_published_collection(updated)
+            await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
+
+        return updated
+
     async def update_async(self, id, updates, original, raise_errors: bool = False):
         """
         Handles workflow of each Publish, Corrected, Killed and TakeDown.
         """
         try:
-            user = get_user()
-            auto_publish = updates.get("auto_publish", False)
-            target_media_type = updates.get("target_media_type")
-
-            # unlock the item
-            set_unlock_updates(updates)
-
-            updated = deepcopy(original)
-            updated.update(deepcopy(updates))
-
-            if original[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE:
-                await self._publish_package_items(original, updates)
-                await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
-            else:
-                await self._publish_associated_items(original, updates)
-                updated = deepcopy(original)
-                updated.update(deepcopy(updates))
-
-                if updates.get(ASSOCIATIONS):
-                    await self._refresh_associated_items(updated, skip_related=True)  # updates got lost with update
-
-                if updated.get(ASSOCIATIONS):
-                    self._fix_related_references(updated, updates)
-
-                if updated[ITEM_TYPE] == "picture" or updated[ITEM_TYPE] == "video":
-                    self._update_media_metadata(updates, updated)
-
-                signals.item_publish.send(self, item=updated, updates=updates)
-                await signals.item_publish_async.send(updated, updates)
-                await self._update_archive(original, updates, should_insert_into_versions=auto_publish)
-
-                await self.update_published_collection(published_item_id=original[ID_FIELD], updated=updated)
+            updated = await self._process_item_updates_and_associations(original, updates)
 
             response = await publish_item(
                 PublishRequest(
@@ -313,7 +328,7 @@ class BasePublishService(AsyncBaseService):
                     operation=self.item_operation,
                     published_state=self.published_state,
                     sender_type=PublishSenderType.API,
-                    target_media_type=target_media_type
+                    target_media_type=updates.get("target_media_type")
                     or (
                         SubscriberType.DIGITAL
                         if updated[ITEM_TYPE] not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]
@@ -336,6 +351,7 @@ class BasePublishService(AsyncBaseService):
                 else:
                     logger.warning(error_message)
 
+            user = get_user()
             push_notification(
                 "item:publish",
                 item=str(id),
@@ -527,6 +543,22 @@ class BasePublishService(AsyncBaseService):
         updates["pubstatus"] = PUB_STATUS.CANCELED if self.publish_type == ITEM_KILL else PUB_STATUS.USABLE
         await self._set_item_expiry(updates, original)
 
+    def _track_published_articles(self, item):
+        """Track published articles by author(s), with fallback to original_creator.
+
+        Increments the published articles metric for each author with a user ID.
+        If no authors are present, falls back to the original_creator.
+
+        :param dict item: article item to track
+        """
+        authors = item.get("authors", [])
+        if authors:
+            for author in authors:
+                if isinstance(author, dict) and author.get("parent"):
+                    user_metrics.incr("published_articles", author["parent"])
+        elif item.get("original_creator"):
+            user_metrics.incr("published_articles", item["original_creator"])
+
     async def _set_item_expiry(self, updates, original):
         """Set the expiry for the item.
 
@@ -632,7 +664,7 @@ class BasePublishService(AsyncBaseService):
 
         updated = deepcopy(package)
         updated.update(updates)
-        await self.update_published_collection(published_item_id=package[ID_FIELD], updated=updated)
+        await self.update_published_collection(updated)
 
         if send_to_exchange:
             await publish_item(
@@ -646,19 +678,16 @@ class BasePublishService(AsyncBaseService):
                 publish_to_content_api=True,
             )
 
-    async def update_published_collection(self, published_item_id, updated=None):
+    async def update_published_collection(self, doc: dict) -> None:
         """Updates the published collection with the published item.
 
         Set the last_published_version to false for previous versions of the published items.
 
-        :param: str published_item_id: _id of the document.
+        :param doc: The document to be used for updating and posting a new published collection.
         """
-        published_item = await super().find_one_async(req=None, _id=published_item_id)
-        published_item = copy(published_item)
-        if updated:
-            published_item.update(updated)
-        await get_resource_service(PUBLISHED).update_published_items(published_item_id, LAST_PUBLISHED_VERSION, False)
-        return await get_resource_service(PUBLISHED).post_async([published_item])
+
+        await get_resource_service(PUBLISHED).update_published_items(doc[ID_FIELD], LAST_PUBLISHED_VERSION, False)
+        await get_resource_service(PUBLISHED).post_async([doc.copy()])
 
     def set_state(self, original, updates):
         """Set the state of the document based on the action (publish, correction, kill, recalled)

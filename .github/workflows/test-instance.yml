@@ -15,11 +15,11 @@ jobs:
 
     services:
       mongodb:
-        image: mongo:6
+        image: mongo:8
         ports:
           - 27017:27017
       redis:
-        image: redis:alpine
+        image: redis:8
         ports:
           - 6379:6379
       elastic:

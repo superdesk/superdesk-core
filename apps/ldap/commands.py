@@ -11,6 +11,7 @@
 import logging
 
 import click
+from quart_babel import gettext as _
 
 from superdesk.core import get_app_config
 from superdesk.commands import cli
@@ -70,7 +71,7 @@ class ImportUserProfileFromADCommand:
         print(user_data)
 
         if len(user_data) == 0:
-            raise SuperdeskApiError.notFoundError("Username not found")
+            raise SuperdeskApiError.notFoundError(_("Username not found"))
 
         # Check if User Profile already exists in Mongo
         users_service = superdesk.get_resource_service("users")

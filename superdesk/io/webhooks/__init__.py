@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from quart_babel import gettext as _
+
 from superdesk.resource import Resource
 from superdesk.eve_async import AsyncBaseService
 from superdesk.io.commands import update_ingest
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class FeedingServiceWebhookAuth(object):
     def authenticate(self):
-        abort(403, description="You are not authorized to access this resource")
+        abort(403, description=_("You are not authorized to access this resource"))
 
     def authorized(self, allowed_roles, resource, method):
         try:

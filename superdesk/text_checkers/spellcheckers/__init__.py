@@ -12,6 +12,8 @@ from typing import Any
 import logging
 from inspect import isawaitable
 
+from quart_babel import gettext as _
+
 import superdesk
 from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource import Resource
@@ -144,7 +146,7 @@ class SpellcheckerService(AsyncBaseService):
         try:
             spellchecker = registered_spellcheckers[sc_name]
         except KeyError:
-            raise SuperdeskApiError.notFoundError("{sc_name} spellchecker can't be found".format(sc_name=sc_name))
+            raise SuperdeskApiError.notFoundError(_("{sc_name} spellchecker can't be found").format(sc_name=sc_name))
 
         if doc["suggestions"]:
             check_data = spellchecker.suggest(doc["text"], language)

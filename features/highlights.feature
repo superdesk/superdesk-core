@@ -122,7 +122,7 @@ Feature: Highlights
         And we get "archive"
         Then we get list with 1 items
         """
-        {"_items": [{"highlights": [], "_etag": "#archive._etag#"}]}
+        {"_items": [{"highlights": ["#highlights._id#"], "_etag": "#archive._etag#"}]}
         """
 
     @auth
