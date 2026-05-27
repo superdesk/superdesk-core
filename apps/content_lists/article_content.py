@@ -17,7 +17,17 @@ async def attach_article_content(items: list[dict[str, Any]]) -> None:
     cursor = await archive_service.get_from_mongo_async(
         req=None,
         lookup={"_id": {"$in": article_ids}},
-        projection={"headline": 1, "state": 1, "associations": 1, "body_html": 1},
+        projection={
+            "headline": 1,
+            "state": 1,
+            "associations": 1,
+            "body_html": 1,
+            "anpa_category": 1,
+            "subject": 1,
+            "_updated": 1,
+            "_created": 1,
+            "firstpublished": 1,
+        },
     )
     articles_by_id: dict[str, dict[str, Any]] = {}
     async for article in cursor:
@@ -29,11 +39,18 @@ async def attach_article_content(items: list[dict[str, Any]]) -> None:
 
 
 def _build_article_content(article: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "title": article.get("headline"),
-        "state": article.get("state"),
-        "thumbnail": _get_thumbnail(article),
-    }
+    content: dict[str, Any] = {}
+    if "headline" in article:
+        content["title"] = article["headline"]
+    if "state" in article:
+        content["state"] = article["state"]
+    thumbnail = _get_thumbnail(article)
+    if thumbnail is not None:
+        content["thumbnail"] = thumbnail
+    for field in ("anpa_category", "subject", "_updated", "_created", "firstpublished"):
+        if field in article:
+            content[field] = article[field]
+    return content
 
 
 def _get_thumbnail(article: dict[str, Any]) -> dict[str, Any] | str | None:
