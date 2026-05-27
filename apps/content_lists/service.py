@@ -67,7 +67,8 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
             elif action == "move":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
                 if existing:
-                    await self.update(existing.id, {"position": item_data.get("position")})
+                    new_sticky = item_data.get("sticky", existing.sticky)
+                    await self.update(existing.id, {"position": item_data.get("position"), "sticky": new_sticky})
                     touched_contents.append(content_id)
             elif action == "delete":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
@@ -85,36 +86,62 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         return result
 
     async def _renumber(self, list_id: ObjectId, touched_contents: list[str]) -> None:
-        """Rewrite non-sticky positions as a contiguous ``0..N-1`` sequence.
+        """Reassign positions so every item has a unique slot.
 
-        Items in ``touched_contents`` (added or moved in this batch) win position
-        ties: when an item lands on a slot already occupied, the touched item
-        keeps the slot and the prior occupant shifts to the next one. Later
-        entries in ``touched_contents`` outrank earlier ones.
+        Sticky items keep their declared position. Non-sticky items in
+        ``touched_contents`` (added or moved in this batch) also anchor at the
+        position they were just set to. Remaining untouched non-sticky items
+        fill the lowest-numbered free positions in their previous order. If
+        two anchors land on the same slot, sticky beats non-sticky and the
+        most recently touched wins within a group; the loser spills to the
+        nearest higher free slot.
         """
         docs = await self.mongo_async.find(
-            {"list_id": list_id, "sticky": {"$ne": True}},
-            projection={"_id": 1, "content": 1, "position": 1},
+            {"list_id": list_id},
+            projection={"_id": 1, "content": 1, "position": 1, "sticky": 1},
         ).to_list(None)
+        if not docs:
+            return
 
         touched_rank = {c: i for i, c in enumerate(touched_contents)}
 
-        def sort_key(d: dict) -> tuple:
-            pos = d.get("position")
+        def anchor_priority(d: dict) -> tuple:
             rank = touched_rank.get(d.get("content"))
             return (
-                pos is None,
-                pos if pos is not None else 0,
-                rank is None,
-                -rank if rank is not None else 0,
+                0 if d.get("sticky") else 1,
+                -(rank if rank is not None else -1),
                 d["_id"],
             )
 
-        docs.sort(key=sort_key)
+        anchors = [d for d in docs if d.get("sticky") or d.get("content") in touched_rank]
+        anchors.sort(key=anchor_priority)
+
+        placement: dict[int, dict] = {}
+        for doc in anchors:
+            pos = doc.get("position")
+            slot = pos if pos is not None and pos >= 0 else 0
+            while slot in placement:
+                slot += 1
+            placement[slot] = doc
+
+        rest = [d for d in docs if not d.get("sticky") and d.get("content") not in touched_rank]
+        rest.sort(
+            key=lambda d: (
+                d.get("position") is None,
+                d.get("position") if d.get("position") is not None else 0,
+                d["_id"],
+            )
+        )
+        next_slot = 0
+        for doc in rest:
+            while next_slot in placement:
+                next_slot += 1
+            placement[next_slot] = doc
+            next_slot += 1
 
         ops = [
             UpdateOne({"_id": doc["_id"]}, {"$set": {"position": i}})
-            for i, doc in enumerate(docs)
+            for i, doc in placement.items()
             if doc.get("position") != i
         ]
         if ops:
