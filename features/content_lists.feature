@@ -160,6 +160,87 @@ Feature: Content Lists
         """
 
     @auth
+    Scenario: Move action toggles sticky flag on an item
+        Given an archive item "article-1"
+        When we post to "/content_lists"
+        """
+        {"name": "Breaking News", "type": "manual"}
+        """
+        Then we get OK response
+        When we bulk patch items for "/content_lists/#content_lists._id#/items"
+        """
+        {
+            "updatedAt": null,
+            "items": [{"action": "add", "contentId": "article-1", "position": 0}]
+        }
+        """
+        Then we get OK response
+        And we store response as "content_lists"
+        When we get "/content_lists/#content_lists._id#/items"
+        Then we get existing resource
+        """
+        {"_items": [{"content": "article-1", "position": 0, "sticky": false}]}
+        """
+        When we bulk patch items for "/content_lists/#content_lists._id#/items"
+        """
+        {
+            "updatedAt": "#content_lists.content_list_items_updated_at#",
+            "items": [{"action": "move", "contentId": "article-1", "position": 3, "sticky": true}]
+        }
+        """
+        Then we get OK response
+        And we store response as "content_lists"
+        When we get "/content_lists/#content_lists._id#/items"
+        Then we get existing resource
+        """
+        {"_items": [{"content": "article-1", "position": 3, "sticky": true}]}
+        """
+        When we bulk patch items for "/content_lists/#content_lists._id#/items"
+        """
+        {
+            "updatedAt": "#content_lists.content_list_items_updated_at#",
+            "items": [{"action": "move", "contentId": "article-1", "position": 2, "sticky": false}]
+        }
+        """
+        Then we get OK response
+        When we get "/content_lists/#content_lists._id#/items"
+        Then we get existing resource
+        """
+        {"_items": [{"content": "article-1", "position": 2, "sticky": false}]}
+        """
+
+    @auth
+    Scenario: Move action preserves sticky flag when not provided
+        Given an archive item "article-1"
+        When we post to "/content_lists"
+        """
+        {"name": "Breaking News", "type": "manual"}
+        """
+        Then we get OK response
+        When we bulk patch items for "/content_lists/#content_lists._id#/items"
+        """
+        {
+            "updatedAt": null,
+            "items": [{"action": "add", "contentId": "article-1", "position": 0, "sticky": true}]
+        }
+        """
+        Then we get OK response
+        And we store response as "content_lists"
+        When we bulk patch items for "/content_lists/#content_lists._id#/items"
+        """
+        {
+            "updatedAt": "#content_lists.content_list_items_updated_at#",
+            "items": [{"action": "move", "contentId": "article-1", "position": 4}]
+        }
+        """
+        Then we get OK response
+        When we get "/content_lists/#content_lists._id#/items"
+        Then we get existing resource
+        """
+        {"_items": [{"content": "article-1", "position": 4, "sticky": true}]}
+        """
+
+    @auth
     Scenario: Moving an item shifts other items to keep positions unique
         Given an archive item "article-a"
         And an archive item "article-b"
