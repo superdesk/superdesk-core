@@ -5,11 +5,11 @@ from time import sleep
 from quart import Config
 
 from superdesk import get_resource_service
-from superdesk.factory import get_app
+from superdesk.factory.app import get_app, SUPERDESK_PATH
 from superdesk.tests import update_config
 
 
-config = Config({})
+config = Config(SUPERDESK_PATH)
 config.from_object("superdesk.default_settings")
 update_config(config)
 
