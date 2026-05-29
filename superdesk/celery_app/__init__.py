@@ -17,6 +17,8 @@ from typing import TYPE_CHECKING
 
 from .context_task import HybridAppContextTask, HybridAppContextWorkerTask, celery_wsgi_instance
 from .serializer import CELERY_SERIALIZER_NAME, ContextAwareSerializerFactory
+from .async_worker import CeleryAsyncWorkerTask
+from .hooks import connect_signals
 
 from superdesk.logging import logger
 from superdesk.core import get_current_app, get_app_config
@@ -50,6 +52,17 @@ def init_celery(app: "SuperdeskEve") -> None:
     # Allow kombu's own JSON encoder to handle ObjectId (e.g. in celery inspection commands)
     # Registered here rather than at module level to keep startup ordering explicit.
     register_type(ObjectId, "bson.objectid", str, ObjectId)
+
+    if not IS_BEAT_PROCESS and app.config.get("CELERY_USE_ASYNC_WORKER"):
+        celery.task_cls = CeleryAsyncWorkerTask
+        app.config.update(
+            {
+                "CELERY_WORKER_PREFETCH_MULTIPLIER": app.config.get("CELERY_ASYNC_PREFETCH_MULTIPLIER", 10),
+                "CELERY_WORKER_TASK_ACKS_LATE": True,
+                "CELERY_WORKER_TASK_ACKS_ON_FAILURE_OR_TIMEOUT": True,
+            }
+        )
+        connect_signals()
 
     celery_wsgi_instance.set(app)
     celery.config_from_object(app.config, namespace="CELERY")
