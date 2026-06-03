@@ -363,8 +363,7 @@ Feature: Content Correction
         """
 
         When we get "/published"
-        Then we get existing resource
-        """
+        Then we get list with 2 items
         {
             "_items": [
                 {"guid": "mismatch-123", "state": "published"},
