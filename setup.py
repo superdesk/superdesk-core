@@ -66,6 +66,7 @@ install_requires = [
     # Patch Quart, Asyncio to work with Flask extensions
     # TODO-ASYNC: Remove this with our own flask patch (as quart-flask-patch also patches asyncio)
     "quart-flask-patch>=0.3.0,<0.4",
+    "aiohttp<3.14",  # upload.feature tests are failing due to conflict with aioresponses 0.7.8
 ]
 
 package_data = {
