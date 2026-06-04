@@ -8,6 +8,8 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
+
 from superdesk.core import get_current_app, get_app_config
 from superdesk import get_resource_service, editor_utils
 from superdesk.media.crop import CropService
@@ -20,6 +22,9 @@ from .common import BasePublishService, BasePublishResource, ITEM_CORRECT
 from superdesk.emails import send_translation_changed
 from superdesk.activity import add_activity
 from superdesk.types import UsersResourceModel
+
+
+logger = logging.getLogger(__name__)
 
 
 async def send_translation_notifications(original):
@@ -98,6 +103,13 @@ class CorrectPublishService(BasePublishService):
             being_corrected_article = await publish_service.find_one_async(
                 req=None, guid=original.get("guid"), state="being_corrected"
             )
+
+            if not being_corrected_article:
+                logger.warning(
+                    "Skipping correction workflow state transition: no published item in 'being_corrected' state",
+                    extra={"guid": original.get("guid")},
+                )
+                return
 
             if being_corrected_article.get("correction_sequence", 0) > 0:
                 await publish_service.patch_async(being_corrected_article["_id"], updates={"state": "corrected"})
