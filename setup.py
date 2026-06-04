@@ -8,7 +8,6 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import aiohttp
 from setuptools import setup, find_packages
 
 LONG_DESCRIPTION = "Superdesk Server Core"
