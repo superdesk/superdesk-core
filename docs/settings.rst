@@ -307,7 +307,7 @@ If async workers are enabled, this will be used for the ``CELERY_WORKER_PREFETCH
 Default: ``100``
 
 The maximum number of active tasks in the async thread. If more tasks are added, task submission
-to the thread is paused (as the client level).
+to the thread is paused (at the client level).
 
 ``CELERY_ASYNC_THREAD_RESTART_TASKS``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

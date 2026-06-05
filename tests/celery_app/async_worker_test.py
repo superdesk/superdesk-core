@@ -7,18 +7,21 @@ import threading
 from superdesk import get_resource_service
 from superdesk.celery_app.async_worker import CeleryAsyncWorkerThread
 
-from superdesk.tests import TestCase
-from superdesk.tests.worker import run_celery_in_background, async_task_test, sync_task_test
+from superdesk.tests import TestCase, AsyncFlaskTestCase
+from superdesk.tests import worker_test
 
 
-class CeleryAsyncWorkerTestCase(TestCase):
-    app_config = {"CELERY_USE_ASYNC_WORKER": True}
+class CeleryAsyncWorkerTaskTestCase(TestCase):
+    app_config = {
+        "CELERY_USE_ASYNC_WORKER": True,
+        "CELERY_TASK_ALWAYS_EAGER": False,
+    }
     _celery_process: Popen
 
     @classmethod
     async def asyncSetUpClass(cls):
         await super().asyncSetUpClass()
-        cls._celery_process = run_celery_in_background()
+        cls._celery_process = worker_test.run_celery_in_background()
 
     @classmethod
     async def asyncTearDownClass(cls):
@@ -26,10 +29,7 @@ class CeleryAsyncWorkerTestCase(TestCase):
         cls._celery_process.terminate()
         cls._celery_process.wait()
 
-    async def test_celery_worker_is_running(self):
-        assert self.app.celery.control.inspect().ping() is not None
-
-    async def _wait_for_celery_task(self):
+    async def _wait_for_celery_task(self, wait_for_count=1):
         """Wait for the celery task to be processed
 
         Using the test tasks, the "system_messages" resource should have 1 new message.
@@ -37,12 +37,15 @@ class CeleryAsyncWorkerTestCase(TestCase):
 
         service = get_resource_service("system_messages")
         runs = 0
-        while await service.count_async() == 0 and runs < 10:
+        while await service.count_async() < wait_for_count and runs < 10:
             await asyncio.sleep(0.5)
             runs += 1
 
+    async def test_celery_worker_is_running(self):
+        assert self.app.celery.control.inspect().ping() is not None
+
     async def test_sync_worker(self):
-        await async_task_test.delay(
+        await worker_test.sync_task_test.delay(
             {
                 "is_active": True,
                 "type": "success",
@@ -66,7 +69,7 @@ class CeleryAsyncWorkerTestCase(TestCase):
         )
 
     async def test_async_worker(self):
-        await sync_task_test.delay(
+        await worker_test.async_task_test.delay(
             {
                 "is_active": True,
                 "type": "warning",
@@ -88,16 +91,46 @@ class CeleryAsyncWorkerTestCase(TestCase):
             },
         )
 
+    async def test_task_no_timeout(self):
+        service = get_resource_service("system_messages")
+        await worker_test.async_task_timeout_test.delay(0, 0)
+        await self._wait_for_celery_task()
+        messages = await (await service.get_all_async()).to_list()
+        assert len(messages) == 1
+        self.assertDictContains(messages[0], {"type": "success", "message": "done"})
+        assert messages[0]["type"] == "success"
+
+    async def test_task_soft_timeout(self):
+        service = get_resource_service("system_messages")
+        await worker_test.async_task_timeout_test.delay(1, 0)
+        await self._wait_for_celery_task()
+        messages = await (await service.get_all_async()).to_list()
+        assert len(messages) == 1
+        self.assertDictContains(messages[0], {"type": "alert", "message": "asyncio.CancelledError"})
+
+    async def test_task_hard_timeout(self):
+        service = get_resource_service("system_messages")
+        await worker_test.async_task_timeout_test.delay(0.5, 1)
+        await asyncio.sleep(3)
+        self.assertEqual(0, await service.count_async())
+
+
+class CeleryAsyncWorkerEagerTestCase(AsyncFlaskTestCase):
+    app_config = {
+        "CELERY_USE_ASYNC_WORKER": True,
+        "CELERY_TASK_ALWAYS_EAGER": True,
+        "INSTALLED_APPS": ["apps.system_message"],
+    }
+
     async def test_sync_worker_eager(self):
-        with patch.dict(self.app_config, {"CELERY_ALWAYS_EAGER": True}):
-            await async_task_test.delay(
-                {
-                    "is_active": True,
-                    "type": "success",
-                    "message_title": "Test Async Celery 1",
-                    "message": "Testing async celery worker and task",
-                }
-            )
+        await worker_test.async_task_test.delay(
+            {
+                "is_active": True,
+                "type": "success",
+                "message_title": "Test Async Celery 1",
+                "message": "Testing async celery worker and task",
+            }
+        )
 
         service = get_resource_service("system_messages")
         self.assertEqual(await service.count_async(), 1)
@@ -113,15 +146,14 @@ class CeleryAsyncWorkerTestCase(TestCase):
         )
 
     async def test_async_worker_eager(self):
-        with patch.dict(self.app_config, {"CELERY_ALWAYS_EAGER": True}):
-            await sync_task_test.delay(
-                {
-                    "is_active": True,
-                    "type": "warning",
-                    "message_title": "Test Async Celery 2",
-                    "message": "Testing async celery worker and task",
-                }
-            )
+        await worker_test.sync_task_test.delay(
+            {
+                "is_active": True,
+                "type": "warning",
+                "message_title": "Test Async Celery 2",
+                "message": "Testing async celery worker and task",
+            }
+        )
 
         service = get_resource_service("system_messages")
         self.assertEqual(await service.count_async(), 1)
@@ -137,7 +169,7 @@ class CeleryAsyncWorkerTestCase(TestCase):
         )
 
 
-class CeleryAsyncThreadTestCase(TestCase):
+class CeleryAsyncThreadTestCase(AsyncFlaskTestCase):
     app_config = {
         "CELERY_USE_ASYNC_WORKER": True,
         "CELERY_ASYNC_THREAD_MAX_TASKS": 5,
@@ -158,12 +190,12 @@ class CeleryAsyncThreadTestCase(TestCase):
         self.assertLess(end_time - start_time, 0.1)
 
     def test_submit_triggers_limit(self):
-        """Test that submit() calls limit_active_tasks()."""
+        """Test that submit_to_thread() calls limit_active_tasks()."""
         worker = CeleryAsyncWorkerThread.get_instance()
         with patch.object(worker, "limit_active_tasks") as mock_limit:
             # Mock run_task to avoid actual execution
             with patch.object(worker, "run_task"):
-                worker.submit(MagicMock())
+                worker.submit_to_thread(MagicMock())
                 mock_limit.assert_called_once()
 
     def test_limit_active_tasks_high_load_blocks(self):

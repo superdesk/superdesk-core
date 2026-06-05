@@ -18,7 +18,10 @@ def start_async_thread(sender, **kwargs):
 
 def shutdown_async_thread(sender, **kwargs):
     logger.info(f"on_worker_shutting_down[{getpid()}]")
-    CeleryAsyncWorkerThread.get_instance().stop()
+    try:
+        CeleryAsyncWorkerThread.get_instance(raise_if_not_available=True).stop()
+    except CeleryAsyncWorkerThread.WorkerNotCreatedException:
+        pass
 
 
 def connect_signals():
