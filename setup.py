@@ -20,7 +20,7 @@ install_requires = [
     "pillow>=9.2,<12.1",
     "bcrypt>=3.1.1,<5.1",
     "blinker>=1.3,<1.10",
-    "celery[redis]>=5.2.7,<5.7",
+    "celery[redis]>=5.6.2,<5.7",
     "cerberus>=1.3.2,<1.4",
     "feedparser>=6.0.8,<6.1",
     "hachoir<=3.3.0",
@@ -66,6 +66,7 @@ install_requires = [
     # Patch Quart, Asyncio to work with Flask extensions
     # TODO-ASYNC: Remove this with our own flask patch (as quart-flask-patch also patches asyncio)
     "quart-flask-patch>=0.3.0,<0.4",
+    "aiohttp<3.14",  # upload.feature tests are failing due to conflict with aioresponses 0.7.8
 ]
 
 package_data = {
@@ -88,7 +89,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="3.5.0-dev",
+    version="3.5.0",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
