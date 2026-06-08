@@ -1,5 +1,3 @@
-version: "3.2"
-
 # Note: this file is mainly used for tests. If you want to run Superdesk or its
 # services from docker, please use docker-compose.yml found in main Superdesk
 # repository (https://github.com/superdesk/superdesk)
@@ -11,11 +9,16 @@ services:
             - "9200:9200"
         environment:
             - discovery.type=single-node
-            - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+            # Keep heap conservative for local test environments.
+            - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
         tmpfs:
             - /usr/share/elasticsearch/data
         networks:
             - superdesk-core
+        ulimits:
+            nofile:
+                soft: 65535
+                hard: 65535
 
     redis:
         image: redis:8
@@ -32,6 +35,13 @@ services:
             - /data/db
         networks:
             - superdesk-core
+        ulimits:
+            nofile:
+                soft: 65535
+                hard: 65535
+            nproc:
+                soft: 65535
+                hard: 65535
 
 networks:
     superdesk-core:

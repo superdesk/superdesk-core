@@ -120,8 +120,18 @@ class HybridAppContextTask(Task):
         self.handle_exception(exc)
 
     def _is_always_eager(self):
+        # Prefer Celery's canonical flag because task execution can happen outside
+        # the expected app-context resolution path on some runtimes.
+        task_app = getattr(self, "app", None)
+        if task_app is not None:
+            task_conf = getattr(task_app, "conf", None)
+            if task_conf is not None:
+                eager_value = getattr(task_conf, "task_always_eager", None)
+                if eager_value is not None:
+                    return bool(eager_value)
+
         app = self.get_current_app()
-        return app.config.get("CELERY_TASK_ALWAYS_EAGER", False)
+        return bool(app.config.get("CELERY_TASK_ALWAYS_EAGER", False))
 
 
 class HybridAppContextWorkerTask(HybridAppContextTask):
@@ -139,7 +149,8 @@ class HybridAppContextWorkerTask(HybridAppContextTask):
         # directly run and await the task if eager
         if self._is_always_eager():
             async_result = super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
-            return await async_result.get()
+            eager_result = async_result.get()
+            return await eager_result if isawaitable(eager_result) else eager_result
 
         return super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
 
