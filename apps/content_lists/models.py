@@ -2,10 +2,10 @@ import enum
 from typing import Any, Annotated
 from datetime import datetime
 
-from bson import ObjectId
 from pydantic import Field
 
 from superdesk.core.resources import ResourceModelWithObjectId
+from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_not_empty, validate_data_relation_async
 
 
