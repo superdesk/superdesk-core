@@ -5,6 +5,7 @@ from pymongo import UpdateOne
 
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
+from superdesk.notification import push_notification
 from superdesk.core.resources import AsyncResourceService
 from superdesk.default_settings import DATE_FORMAT
 
@@ -16,9 +17,21 @@ class ContentListsService(AsyncResourceService[ContentList]):
         updates.pop("content_list_items_updated_at", None)
         await super().on_update(updates, original)
 
+    async def on_created(self, docs: list[ContentList]) -> None:
+        await super().on_created(docs)
+        # Let other open clients live-add the new list without a refresh.
+        for doc in docs:
+            push_notification("content_list:created", _id=str(doc.id))
+
+    async def on_updated(self, updates: dict[str, Any], original: ContentList) -> None:
+        await super().on_updated(updates, original)
+        # List metadata changed (name, limit, ...) — let open clients refresh it.
+        push_notification("content_list:updated", _id=str(original.id))
+
     async def on_deleted(self, doc: ContentList) -> None:
         await ContentListItemsService().delete_many({"list_id": doc.id})
         await super().on_deleted(doc)
+        push_notification("content_list:deleted", _id=str(doc.id))
 
 
 class ContentListItemsService(AsyncResourceService[ContentListItem]):
@@ -83,6 +96,12 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         )
         result = await lists_service.find_by_id(list_id)
         assert result is not None
+
+        # Tell every open client (including the editor's other tabs) that this
+        # list's items changed, so they can live-refresh instead of waiting for
+        # a manual page reload.
+        push_notification("content_list:items_updated", list_id=str(list_id))
+
         return result
 
     async def _renumber(self, list_id: ObjectId, touched_contents: list[str]) -> None:
