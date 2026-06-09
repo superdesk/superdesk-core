@@ -129,7 +129,8 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         touched_rank = {c: i for i, c in enumerate(touched_contents)}
 
         def anchor_priority(d: dict) -> tuple:
-            rank = touched_rank.get(d.get("content"))
+            content = d.get("content")
+            rank = touched_rank.get(content) if content is not None else None
             return (
                 0 if d.get("sticky") else 1,
                 -(rank if rank is not None else -1),

@@ -41,9 +41,7 @@ class ContentListWebhookDeliveryTestCase(unittest.TestCase):
         body = json.loads(post_mock.call_args.kwargs["data"])
         self.assertEqual(body["list_id"], str(list_id))
         self.assertEqual(body["event"], "content_list:items_updated")
-        self.assertEqual(
-            post_mock.call_args.kwargs["headers"]["Content-Type"], "application/json"
-        )
+        self.assertEqual(post_mock.call_args.kwargs["headers"]["Content-Type"], "application/json")
 
 
 class ContentListWebhookEnqueueTestCase(TestCase):
