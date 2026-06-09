@@ -31,7 +31,7 @@ async def enqueue_webhook_deliveries(event: str, list_id: ObjectId) -> None:
     for webhook in webhooks:
         if list_id in webhook.excluded_lists:
             continue
-        deliver_content_list_webhook.apply_async(kwargs={"url": webhook.url, "payload": payload})
+        await deliver_content_list_webhook.apply_async(kwargs={"url": webhook.url, "payload": payload})
 
 
 @celery.task(bind=True, max_retries=WEBHOOK_MAX_RETRIES, soft_time_limit=30)
