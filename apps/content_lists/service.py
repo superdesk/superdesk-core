@@ -10,6 +10,7 @@ from superdesk.core.resources import AsyncResourceService
 from superdesk.default_settings import DATE_FORMAT
 
 from .models import ContentList, ContentListItem
+from .webhooks import enqueue_webhook_deliveries
 
 
 class ContentListsService(AsyncResourceService[ContentList]):
@@ -101,6 +102,9 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         # list's items changed, so they can live-refresh instead of waiting for
         # a manual page reload.
         push_notification("content_list:items_updated", list_id=str(list_id))
+
+        # Notify external subscribers (webhooks) of the item change out of band.
+        await enqueue_webhook_deliveries("content_list:items_updated", list_id)
 
         return result
 

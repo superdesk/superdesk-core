@@ -33,3 +33,11 @@ class ContentListItem(ResourceModelWithObjectId):
     sticky: bool = False
     sticky_position: int | None = None
     enabled: bool = True
+
+
+class ContentListWebhook(ResourceModelWithObjectId):
+    url: Annotated[str, validate_not_empty()]
+    name: str | None = None
+    enabled: bool = True
+    # Webhooks fire for every content list by default; ids listed here are skipped.
+    excluded_lists: list[ObjectId] = Field(default_factory=list)
