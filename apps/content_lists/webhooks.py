@@ -2,6 +2,7 @@ import logging
 
 import requests
 from bson import ObjectId
+from eve.io.mongo import MongoJSONEncoder
 
 from superdesk.celery_app import celery
 from superdesk.core.resources import AsyncResourceService
@@ -43,7 +44,16 @@ def deliver_content_list_webhook(self, url: str, payload: dict) -> None:
     are exhausted the failure is logged and dropped.
     """
     try:
-        response = requests.post(url, json=payload, timeout=WEBHOOK_TIMEOUT)
+        # Encode the body ourselves: the Celery serializer re-casts hex-string
+        # ids back into ObjectId on the worker, which the default requests JSON
+        # encoder cannot serialize. MongoJSONEncoder renders ObjectId/datetime.
+        body = MongoJSONEncoder().encode(payload)
+        response = requests.post(
+            url,
+            data=body,
+            headers={"Content-Type": "application/json"},
+            timeout=WEBHOOK_TIMEOUT,
+        )
         response.raise_for_status()
     except requests.RequestException as exc:
         if self.request.retries < self.max_retries:
