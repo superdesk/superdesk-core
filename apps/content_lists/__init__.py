@@ -1,5 +1,6 @@
 from quart_babel import lazy_gettext as _
 
+from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules
 from superdesk.core.module import Module
 from superdesk.core.privileges import Privilege
 from superdesk.core.resources import (
@@ -62,6 +63,13 @@ content_list_webhooks_config = ResourceConfig(
     rest_endpoints=RestEndpointConfig(
         resource_methods=["GET", "POST"],
         item_methods=["GET", "PATCH", "DELETE"],
+        auth=http_method_privilege_based_rules(
+            {
+                "POST": "content_lists",
+                "PATCH": "content_lists",
+                "DELETE": "content_lists",
+            }
+        ),
     ),
 )
 
