@@ -96,6 +96,7 @@ class UnarchiveItemCommandTestCase(TestCase):
         await UnarchiveItemCommand().run(["dry"], dry_run=True)
         assert await test_utils.count("archived", {"item_id": "dry"}) == 1
         assert await test_utils.count("archive", {"_id": "dry"}) == 0
+        assert await test_utils.count("published", {"item_id": "dry"}) == 0
 
     async def test_unarchive_collision_aborts(self):
         await test_utils.post_items(
@@ -114,3 +115,4 @@ class UnarchiveItemCommandTestCase(TestCase):
         results = await UnarchiveItemCommand().run(["coll"])
         assert len(results["failed"]) == 1
         assert await test_utils.count("archived", {"item_id": "coll"}) == 1
+        assert await test_utils.count("published", {"item_id": "coll"}) == 0

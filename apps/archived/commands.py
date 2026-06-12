@@ -284,8 +284,8 @@ class UnarchiveItemCommand:
         """Set expiry on the restored item.
 
         Priority:
-        1. Original desk/stage settings via get_expiry()
-        2. PUBLISHED_CONTENT_EXPIRY_MINUTES config
+        1. PUBLISHED_CONTENT_EXPIRY_MINUTES config
+        2. Original desk/stage settings via get_expiry()
         3. 7 days fallback
         """
         task = doc.get("task", {})
