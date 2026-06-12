@@ -76,17 +76,9 @@ class UnarchiveItemCommand:
         """Unarchive a single item"""
         archived_service = get_resource_service(ARCHIVED_SOURCE)
         archive_service = get_resource_service(ARCHIVE_SOURCE)
+        published_service = get_resource_service(PUBLISHED)
 
-        # Find the latest archived version
-        archived_items = await (
-            await archived_service.get_from_mongo_async(req=None, lookup={"item_id": item_id})
-        ).to_list()
-
-        if not archived_items:
-            raise ValueError("No archived items found for item_id: {}".format(item_id))
-
-        archived_items.sort(key=lambda x: x.get(VERSION, 0), reverse=True)
-        latest_item = archived_items[0]
+        latest_item = await self._get_latest_archived_item(archived_service, item_id)
 
         # Collect items to restore (main item + direct package refs + takes package if applicable)
         items_to_restore = await self._collect_items_to_restore(latest_item, archived_service)
@@ -101,6 +93,11 @@ class UnarchiveItemCommand:
             existing = await archive_service.find_one_async(req=None, _id=item["item_id"])
             if existing:
                 raise ValueError("Item already exists in archive: {}. Aborting atomic restore.".format(item["item_id"]))
+            existing = await published_service.find_one_async(req=None, item_id=item["item_id"])
+            if existing:
+                raise ValueError(
+                    "Item already exists in published: {}. Aborting atomic restore.".format(item["item_id"])
+                )
 
         if dry_run:
             for item in restore_order:
@@ -108,14 +105,33 @@ class UnarchiveItemCommand:
             return
 
         # Restore all items
-        for item in restore_order:
-            await self._restore_to_archive(item)
-            await self._restore_to_published(item)
+        restored_item_ids = []
+        try:
+            for item in restore_order:
+                await self._restore_to_archive(item)
+                await self._restore_to_published(item)
+                restored_item_ids.append(item["item_id"])
+        except Exception:
+            await self._rollback_restored_items(restored_item_ids)
+            raise
 
         # Clean up archived
         for item in items_to_restore:
             await archived_service.command_delete({"item_id": item["item_id"]})
             logger.info("Removed archived versions for item: %s", item["item_id"])
+
+    async def _get_latest_archived_item(self, archived_service, item_id: str) -> dict:
+        req = ParsedRequest()
+        req.sort = '[("%s", -1)]' % VERSION
+        req.max_results = 1
+        archived_items = await (
+            await archived_service.get_from_mongo_async(req=req, lookup={"item_id": item_id})
+        ).to_list()
+
+        if not archived_items:
+            raise ValueError("No archived items found for item_id: {}".format(item_id))
+
+        return archived_items[0]
 
     async def _collect_items_to_restore(self, latest_item: dict, archived_service) -> list[dict]:
         """Collect the main item and all takes package items for atomic restoration.
@@ -147,30 +163,16 @@ class UnarchiveItemCommand:
         # Check if item is part of a takes package
         takes_package_id = self._get_take_package_id(latest_item)
         if takes_package_id:
-            # Find the takes package in archived
-            req = ParsedRequest()
-            req.sort = '[("%s", -1)]' % VERSION
-            take_packages = await (
-                await archived_service.get_from_mongo_async(req=req, lookup={"item_id": takes_package_id})
-            ).to_list()
+            takes_package = await self._get_latest_archived_item(archived_service, takes_package_id)
+            items.append(takes_package)
 
-            if take_packages:
-                take_packages.sort(key=lambda x: x.get(VERSION, 0), reverse=True)
-                takes_package = take_packages[0]
-                items.append(takes_package)
-
-                # Find all takes in the package
-                for ref in self._get_package_refs(takes_package):
-                    take_id = ref.get("residRef")
-                    if take_id and take_id not in seen_ids:
-                        take_items = await (
-                            await archived_service.get_from_mongo_async(req=None, lookup={"item_id": take_id})
-                        ).to_list()
-                        if not take_items:
-                            raise ValueError("No archived item found for package ref: {}".format(take_id))
-                        take_items.sort(key=lambda x: x.get(VERSION, 0), reverse=True)
-                        items.append(take_items[0])
-                        seen_ids.add(take_id)
+            # Find all takes in the package
+            for ref in self._get_package_refs(takes_package):
+                take_id = ref.get("residRef")
+                if take_id and take_id not in seen_ids:
+                    take_item = await self._get_latest_archived_item(archived_service, take_id)
+                    items.append(take_item)
+                    seen_ids.add(take_id)
 
         return items
 
@@ -194,6 +196,24 @@ class UnarchiveItemCommand:
         groups: list[dict] = package.get("groups", [])
         refs: list[dict] = next((group.get("refs", []) for group in groups if group.get("id") == MAIN_GROUP), [])
         return refs
+
+    async def _rollback_restored_items(self, restored_item_ids: list[str]) -> None:
+        if not restored_item_ids:
+            return
+
+        archive_service = get_resource_service(ARCHIVE_SOURCE)
+        published_service = get_resource_service(PUBLISHED)
+
+        for item_id in restored_item_ids:
+            try:
+                await archive_service.delete_by_article_ids([item_id])
+            except Exception:
+                logger.exception("Failed to rollback archive item: %s", item_id)
+
+            try:
+                await published_service.delete_by_article_id(item_id)
+            except Exception:
+                logger.exception("Failed to rollback published item: %s", item_id)
 
     async def _restore_to_archive(self, item: dict) -> None:
         """Restore an item to the archive collection."""
@@ -272,6 +292,11 @@ class UnarchiveItemCommand:
         desk_id = task.get("desk")
         stage_id = task.get("stage")
 
+        expiry_minutes = get_config(int, "PUBLISHED_CONTENT_EXPIRY_MINUTES", 0)
+        if expiry_minutes:
+            doc["expiry"] = get_expiry_date(expiry_minutes)
+            return
+
         try:
             if desk_id:
                 expiry = await get_expiry(desk_id, stage_id)
@@ -281,27 +306,22 @@ class UnarchiveItemCommand:
         except Exception:
             logger.warning("Failed to get expiry for desk %s stage %s", desk_id, stage_id)
 
-        expiry_minutes = get_config(int, "PUBLISHED_CONTENT_EXPIRY_MINUTES", 0)
-        if expiry_minutes:
-            doc["expiry"] = get_expiry_date(expiry_minutes)
-        else:
-            doc["expiry"] = utcnow() + timedelta(days=DEFAULT_UNARCHIVE_EXPIRY_DAYS)
+        doc["expiry"] = utcnow() + timedelta(days=DEFAULT_UNARCHIVE_EXPIRY_DAYS)
 
 
 @cli.command("archived:unarchive")
-@click.option("--item-id", "-i", multiple=True, required=True, help="Item ID(s) to unarchive")
+@click.argument("item_ids", nargs=-1)
 @click.option("--dry-run", "-d", is_flag=True, help="Simulate without making changes")
-async def cli_archived_unarchive(item_id, dry_run):
+async def cli_archived_unarchive(item_ids, dry_run):
     """Unarchive published articles so they can be edited/corrected.
 
     Example:
     ::
 
-        $ python manage.py archived:unarchive --item-id=urn:newsml:example.com:2023-01-01:1
-        $ python manage.py archived:unarchive -i item1 -i item2 --dry-run
+        $ python manage.py archived:unarchive item1 item2 --dry-run
 
     """
-    item_ids = list(item_id)
+    item_ids = list(item_ids)
 
     if not item_ids:
         print("No item IDs provided.")
