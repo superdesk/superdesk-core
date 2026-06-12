@@ -65,6 +65,7 @@ PACKAGE_TYPE = "package_type"
 TAKES_PACKAGE = "takes"
 SEQUENCE = "sequence"
 LAST_TAKE = "last_take"
+SOURCE = "archived"
 
 
 class ArchivedResource(Resource):
