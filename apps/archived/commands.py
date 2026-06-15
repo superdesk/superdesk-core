@@ -16,13 +16,12 @@ import click
 from eve.utils import ParsedRequest
 
 from superdesk.commands import cli
-from superdesk.core import get_config
 from superdesk.metadata.item import CONTENT_STATE, CONTENT_TYPE, ITEM_TYPE, PUBLISH_STATES
 from superdesk.resource_fields import ETAG, ID_FIELD, VERSION
-from superdesk.utc import utcnow, get_expiry_date
+from superdesk.utc import utcnow
 from superdesk.types.archived import QueueState
 from superdesk import get_resource_service
-from apps.archive.common import ARCHIVE, get_expiry, insert_into_versions_async
+from apps.archive.common import ARCHIVE, insert_into_versions_async
 from apps.archive.archive import SOURCE as ARCHIVE_SOURCE
 from apps.archived.archived import SOURCE as ARCHIVED_SOURCE
 from apps.packages import PackageService
@@ -30,7 +29,6 @@ from apps.publish.published_item import LAST_PUBLISHED_VERSION, PUBLISHED, QUEUE
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_UNARCHIVE_EXPIRY_DAYS = 7
 ARCHIVED_FIELDS_TO_REMOVE = {
     "archived_id",
     "item_id",
@@ -53,7 +51,12 @@ ARCHIVED_FIELDS_TO_REMOVE = {
 class UnarchiveItemCommand:
     """Command to unarchive published articles so they can be edited/corrected."""
 
-    async def run(self, item_ids: list[str], dry_run: bool = False) -> dict[str, list]:
+    async def run(
+        self,
+        item_ids: list[str],
+        dry_run: bool = False,
+        expiry_days: int | None = None,
+    ) -> dict[str, list]:
         """Unarchive the given item IDs.
 
         :param item_ids: List of item IDs (GUIDs) to unarchive.
@@ -64,7 +67,7 @@ class UnarchiveItemCommand:
 
         for item_id in item_ids:
             try:
-                await self._unarchive_item(item_id, dry_run)
+                await self._unarchive_item(item_id, dry_run, expiry_days)
                 results["success"].append(item_id)
             except Exception as e:
                 logger.error("Failed to unarchive item %s: %s", item_id, e)
@@ -72,7 +75,7 @@ class UnarchiveItemCommand:
 
         return results
 
-    async def _unarchive_item(self, item_id: str, dry_run: bool) -> None:
+    async def _unarchive_item(self, item_id: str, dry_run: bool, expiry_days: int | None) -> None:
         """Unarchive a single item"""
         archived_service = get_resource_service(ARCHIVED_SOURCE)
         archive_service = get_resource_service(ARCHIVE_SOURCE)
@@ -108,7 +111,7 @@ class UnarchiveItemCommand:
         restored_item_ids = []
         try:
             for item in restore_order:
-                await self._restore_to_archive(item)
+                await self._restore_to_archive(item, expiry_days)
                 await self._restore_to_published(item)
                 restored_item_ids.append(item["item_id"])
         except Exception:
@@ -215,7 +218,7 @@ class UnarchiveItemCommand:
             except Exception:
                 logger.exception("Failed to rollback published item: %s", item_id)
 
-    async def _restore_to_archive(self, item: dict) -> None:
+    async def _restore_to_archive(self, item: dict, expiry_days: int | None) -> None:
         """Restore an item to the archive collection."""
         archive_service = get_resource_service(ARCHIVE_SOURCE)
         archive_item = deepcopy(item)
@@ -232,7 +235,7 @@ class UnarchiveItemCommand:
         archive_item["_updated"] = utcnow()
 
         # Set expiry
-        await self._set_expiry(archive_item)
+        await self._set_expiry(archive_item, expiry_days)
 
         # For composites, restore ref location to archive
         if archive_item.get(ITEM_TYPE) == CONTENT_TYPE.COMPOSITE:
@@ -280,39 +283,29 @@ class UnarchiveItemCommand:
         await published_service.post_async([published_doc])
         logger.info("Restored item to published: %s", item["item_id"])
 
-    async def _set_expiry(self, doc: dict) -> None:
+    async def _set_expiry(self, doc: dict, expiry_days: int | None) -> None:
         """Set expiry on the restored item.
 
-        Priority:
-        1. PUBLISHED_CONTENT_EXPIRY_MINUTES config
-        2. Original desk/stage settings via get_expiry()
-        3. 7 days fallback
+        By default restored items do not expire.
+        Use the CLI expiry-days override to opt back in.
         """
-        task = doc.get("task", {})
-        desk_id = task.get("desk")
-        stage_id = task.get("stage")
-
-        expiry_minutes = get_config(int, "PUBLISHED_CONTENT_EXPIRY_MINUTES", 0)
-        if expiry_minutes:
-            doc["expiry"] = get_expiry_date(expiry_minutes)
+        if expiry_days is None:
+            doc["expiry"] = None
             return
 
-        try:
-            if desk_id:
-                expiry = await get_expiry(desk_id, stage_id)
-                if expiry:
-                    doc["expiry"] = expiry
-                    return
-        except Exception:
-            logger.warning("Failed to get expiry for desk %s stage %s", desk_id, stage_id)
-
-        doc["expiry"] = utcnow() + timedelta(days=DEFAULT_UNARCHIVE_EXPIRY_DAYS)
+        doc["expiry"] = utcnow() + timedelta(days=expiry_days)
 
 
 @cli.command("archived:unarchive")
 @click.argument("item_ids", nargs=-1)
 @click.option("--dry-run", "-d", is_flag=True, help="Simulate without making changes")
-async def cli_archived_unarchive(item_ids, dry_run):
+@click.option(
+    "--expiry-days",
+    type=int,
+    default=None,
+    help="Optional days until restored items expire; omit for no expiry",
+)
+async def cli_archived_unarchive(item_ids, dry_run, expiry_days):
     """Unarchive published articles so they can be edited/corrected.
 
     Example:
@@ -327,7 +320,7 @@ async def cli_archived_unarchive(item_ids, dry_run):
         print("No item IDs provided.")
         return
 
-    results = await UnarchiveItemCommand().run(item_ids, dry_run=dry_run)
+    results = await UnarchiveItemCommand().run(item_ids, dry_run=dry_run, expiry_days=expiry_days)
 
     print("Unarchive complete:")
     print("  Successful: {}".format(len(results["success"])))

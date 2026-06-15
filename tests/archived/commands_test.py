@@ -22,6 +22,46 @@ class UnarchiveItemCommandTestCase(TestCase):
         assert await test_utils.count("archive", {"_id": "test"}) == 1
         assert await test_utils.count("published", {"item_id": "test"}) == 1
 
+    async def test_unarchive_defaults_expiry_to_null(self):
+        await test_utils.post_items(
+            "archived",
+            [
+                {
+                    "_id": ObjectId(),
+                    "item_id": "null-expiry",
+                    "guid": "null-expiry",
+                    "type": "text",
+                    "state": "published",
+                }
+            ],
+        )
+
+        await UnarchiveItemCommand().run(["null-expiry"])
+
+        archive_doc = await test_utils.find_one("archive", _id="null-expiry")
+        assert archive_doc is not None
+        assert archive_doc.get("expiry") is None
+
+    async def test_unarchive_expiry_days_override_sets_expiry(self):
+        await test_utils.post_items(
+            "archived",
+            [
+                {
+                    "_id": ObjectId(),
+                    "item_id": "override-expiry",
+                    "guid": "override-expiry",
+                    "type": "text",
+                    "state": "published",
+                }
+            ],
+        )
+
+        await UnarchiveItemCommand().run(["override-expiry"], expiry_days=30)
+
+        archive_doc = await test_utils.find_one("archive", _id="override-expiry")
+        assert archive_doc is not None
+        assert archive_doc.get("expiry") is not None
+
     async def test_unarchive_package_restores_children(self):
         package_id = "package"
         picture_id = "picture"
