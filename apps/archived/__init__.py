@@ -11,6 +11,7 @@
 import superdesk
 
 from apps.archived.archived import ArchivedResource, ArchivedService
+from apps.archived.commands import UnarchiveItemCommand, cli_archived_unarchive  # noqa
 
 
 def init_app(app) -> None:
