@@ -438,9 +438,9 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
             }
         # Also recover stale ``routing`` items: queue items whose Celery transmit task was
         # dispatched but never executed (e.g. broker hiccup or CancelledError during
-        # asyncio routing). The transmit_item lock TTL is 310 s, so items still in
-        # ``routing`` after 5 minutes are safe to retry.
-        stale_routing_threshold = utcnow() - timedelta(minutes=5)
+        # asyncio routing). The transmit_item lock TTL is 310 s, so wait at least that
+        # long (plus a small buffer) before retrying.
+        stale_routing_threshold = utcnow() - timedelta(seconds=320)
         return {
             "$and": [
                 {

@@ -155,6 +155,18 @@ class ContentPublishExchange(BasicPublishExchange):
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
             await published_service.patch_async(published_item_id, error_updates)
             raise
+        except asyncio.CancelledError as error:
+            # Request/task cancellation can be raised as Exception (py3.10) or BaseException (py3.11+).
+            # Keep the item retryable and protect the DB write from cancellation.
+            error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            try:
+                await asyncio.shield(published_service.patch_async(published_item_id, error_updates))
+            except Exception:
+                logger.error(
+                    "Failed to reset published item state after cancellation",
+                    extra=dict(item_id=request.item_id),
+                )
+            raise
         except Exception as error:
             if isinstance(error, KeyError):
                 error_msg = gettext(f"Key is missing on article to be published: {error}")
@@ -164,10 +176,7 @@ class ContentPublishExchange(BasicPublishExchange):
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except BaseException as error:
-            # Handles asyncio.CancelledError (BaseException, not Exception in Python 3.8+)
-            # which can occur when the HTTP request is cancelled mid-flight during the
-            # asyncio routing path. Without this, published.queue_state stays stuck at
-            # in_progress and is never retried.
+            # Handle non-Exception base errors by resetting state so the item is retryable.
             # asyncio.shield() protects the DB update itself from being cancelled.
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
             try:
