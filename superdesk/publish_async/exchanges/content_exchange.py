@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from copy import deepcopy
 from dataclasses import dataclass
@@ -161,6 +162,21 @@ class ContentPublishExchange(BasicPublishExchange):
                 error_msg = str(error)
             error_updates = {QUEUE_STATE: PublishState.ERROR, ERROR_MESSAGE: error_msg}
             await published_service.patch_async(published_item_id, error_updates)
+            raise
+        except BaseException as error:
+            # Handles asyncio.CancelledError (BaseException, not Exception in Python 3.8+)
+            # which can occur when the HTTP request is cancelled mid-flight during the
+            # asyncio routing path. Without this, published.queue_state stays stuck at
+            # in_progress and is never retried.
+            # asyncio.shield() protects the DB update itself from being cancelled.
+            error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            try:
+                await asyncio.shield(published_service.patch_async(published_item_id, error_updates))
+            except Exception:
+                logger.error(
+                    "Failed to reset published item state after cancellation",
+                    extra=dict(item_id=request.item_id),
+                )
             raise
 
     async def get_published_item_from_request(self, request: PublishRequest) -> dict | None:

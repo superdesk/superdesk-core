@@ -1,4 +1,5 @@
 import logging
+from datetime import timedelta
 
 from bson import ObjectId
 from quart_babel import gettext
@@ -435,9 +436,22 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
                     priority_lookup,
                 ]
             }
+        # Also recover stale ``routing`` items: queue items whose Celery transmit task was
+        # dispatched but never executed (e.g. broker hiccup or CancelledError during
+        # asyncio routing). The transmit_item lock TTL is 310 s, so items still in
+        # ``routing`` after 5 minutes are safe to retry.
+        stale_routing_threshold = utcnow() - timedelta(minutes=5)
         return {
             "$and": [
-                {"state": PublishQueueState.PENDING},
+                {
+                    "$or": [
+                        {"state": PublishQueueState.PENDING},
+                        {
+                            "state": PublishQueueState.ROUTING,
+                            "_created": {"$lte": stale_routing_threshold},
+                        },
+                    ]
+                },
                 priority_lookup,
             ]
         }
