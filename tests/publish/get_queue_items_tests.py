@@ -174,3 +174,54 @@ class QueueItemsTestCase(TestCase):
         service.get_from_mongo.return_value = cursor
         service.delete({"_id": "4567"})
         assert fake_storage_delete.call_args == mock.call("TEST ID")
+
+    @mock.patch.object(publish_queue, "get_resource_service")
+    def test_on_create_hydrates_missing_destination_secrets(self, fake_get_resource_service):
+        subscriber_id = ObjectId()
+        subscriber_service = fake_get_resource_service.return_value
+        subscriber_service.find_one.return_value = {
+            "_id": subscriber_id,
+            "destinations": [
+                {
+                    "_id": "ftp-destination-1",
+                    "name": "FTP Destination",
+                    "format": "ftp ninjs",
+                    "delivery_type": "ftp",
+                    "config": {
+                        "host": "127.0.0.1",
+                        "username": "superdesk",
+                        "password": "superdesk",
+                        "secret_token": "secret-token",
+                        "apiKey": "api-key",
+                        "access_key_id": "access-key-id",
+                        "secret_access_key": "secret-access-key",
+                        "passive": True,
+                    },
+                }
+            ],
+        }
+
+        service = publish_queue.PublishQueueService(backend=MagicMock())
+        doc = {
+            "subscriber_id": subscriber_id,
+            "destination": {
+                "name": "FTP Destination",
+                "format": "ftp ninjs",
+                "delivery_type": "ftp",
+                "config": {
+                    "host": "127.0.0.1",
+                    "username": "superdesk",
+                    "passive": True,
+                },
+            },
+            "published_seq_num": 2,
+            "state": "pending",
+        }
+
+        service.on_create([doc])
+
+        self.assertEqual(doc["destination"]["config"]["password"], "superdesk")
+        self.assertEqual(doc["destination"]["config"]["secret_token"], "secret-token")
+        self.assertEqual(doc["destination"]["config"]["apiKey"], "api-key")
+        self.assertEqual(doc["destination"]["config"]["access_key_id"], "access-key-id")
+        self.assertEqual(doc["destination"]["config"]["secret_access_key"], "secret-access-key")

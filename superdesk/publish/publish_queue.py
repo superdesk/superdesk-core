@@ -20,7 +20,7 @@ from flask import current_app as app
 
 logger = logging.getLogger(__name__)
 
-
+SECRET_FIELDS = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
 PUBLISHED_IN_PACKAGE = "published_in_package"
 
 
@@ -96,12 +96,63 @@ class PublishQueueService(BaseService):
         subscriber_service = get_resource_service("subscribers")
 
         for doc in docs:
+            self._hydrate_destination_secrets(doc, subscriber_service)
             self._set_queue_state(doc, {})
             doc["moved_to_legal"] = False
 
             if "published_seq_num" not in doc:
                 subscriber = subscriber_service.find_one(req=None, _id=doc["subscriber_id"])
                 doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
+
+    def _hydrate_destination_secrets(self, doc, subscriber_service):
+        destination = doc.get("destination") or {}
+        subscriber_id = doc.get("subscriber_id")
+
+        if not destination or not subscriber_id:
+            return
+
+        subscriber = subscriber_service.find_one(req=None, _id=subscriber_id)
+        if not subscriber:
+            return
+
+        subscriber_destination = self._match_subscriber_destination(destination, subscriber.get("destinations") or [])
+        if not subscriber_destination:
+            return
+
+        self._copy_destination_secrets(destination, subscriber_destination)
+
+    def _match_subscriber_destination(self, queued_destination, subscriber_destinations):
+        queued_identity = self._destination_identity(queued_destination)
+
+        for subscriber_destination in subscriber_destinations:
+            if queued_destination.get("_id") and queued_destination.get("_id") == subscriber_destination.get("_id"):
+                return subscriber_destination
+
+            if self._destination_identity(subscriber_destination) != queued_identity:
+                continue
+
+            return subscriber_destination
+
+        return None
+
+    def _destination_identity(self, destination):
+        config = destination.get("config") or {}
+        config = {key: value for key, value in config.items() if key not in SECRET_FIELDS}
+
+        return {
+            "name": destination.get("name"),
+            "format": destination.get("format"),
+            "delivery_type": destination.get("delivery_type"),
+            "config": config,
+        }
+
+    def _copy_destination_secrets(self, destination, source_destination):
+        destination_config = destination.setdefault("config", {})
+        source_config = source_destination.get("config") or {}
+
+        for field in SECRET_FIELDS:
+            if field in source_config:
+                destination_config.setdefault(field, source_config[field])
 
     def on_updated(self, updates, original):
         if updates.get("state", "") != original.get("state", ""):
