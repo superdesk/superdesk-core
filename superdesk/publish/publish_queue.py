@@ -19,8 +19,6 @@ from superdesk.utils import SuperdeskBaseEnum
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
-
-SECRET_FIELDS = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
 PUBLISHED_IN_PACKAGE = "published_in_package"
 
 
@@ -96,48 +94,53 @@ class PublishQueueService(BaseService):
         subscriber_service = get_resource_service("subscribers")
 
         for doc in docs:
-            self._hydrate_destination_secrets(doc, subscriber_service)
+            subscriber = None
+            subscriber_id = doc.get("subscriber_id")
+            if subscriber_id:
+                subscriber = subscriber_service.find_one(req=None, _id=subscriber_id)
+
+            self._hydrate_destination_secrets(doc, subscriber)
             self._set_queue_state(doc, {})
             doc["moved_to_legal"] = False
 
-            if "published_seq_num" not in doc:
-                subscriber = subscriber_service.find_one(req=None, _id=doc["subscriber_id"])
+            if "published_seq_num" not in doc and subscriber:
                 doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
 
-    def _hydrate_destination_secrets(self, doc, subscriber_service):
+    def _hydrate_destination_secrets(self, doc, subscriber):
         destination = doc.get("destination") or {}
-        subscriber_id = doc.get("subscriber_id")
-
-        if not destination or not subscriber_id:
-            return
-
-        subscriber = subscriber_service.find_one(req=None, _id=subscriber_id)
         if not subscriber:
             return
 
+        secret_fields = self._get_secret_fields()
         subscriber_destination = self._match_subscriber_destination(destination, subscriber.get("destinations") or [])
         if not subscriber_destination:
             return
 
-        self._copy_destination_secrets(destination, subscriber_destination)
+        self._copy_destination_secrets(destination, subscriber_destination, secret_fields)
+
+    def _get_secret_fields(self):
+        from superdesk.publish.subscribers import SECRET_FIELDS
+
+        return SECRET_FIELDS
 
     def _match_subscriber_destination(self, queued_destination, subscriber_destinations):
-        queued_identity = self._destination_identity(queued_destination)
+        secret_fields = self._get_secret_fields()
+        queued_identity = self._destination_identity(queued_destination, secret_fields)
 
         for subscriber_destination in subscriber_destinations:
             if queued_destination.get("_id") and queued_destination.get("_id") == subscriber_destination.get("_id"):
                 return subscriber_destination
 
-            if self._destination_identity(subscriber_destination) != queued_identity:
+            if self._destination_identity(subscriber_destination, secret_fields) != queued_identity:
                 continue
 
             return subscriber_destination
 
         return None
 
-    def _destination_identity(self, destination):
+    def _destination_identity(self, destination, secret_fields):
         config = destination.get("config") or {}
-        config = {key: value for key, value in config.items() if key not in SECRET_FIELDS}
+        config = {key: value for key, value in config.items() if key not in secret_fields}
 
         return {
             "name": destination.get("name"),
@@ -146,11 +149,11 @@ class PublishQueueService(BaseService):
             "config": config,
         }
 
-    def _copy_destination_secrets(self, destination, source_destination):
+    def _copy_destination_secrets(self, destination, source_destination, secret_fields):
         destination_config = destination.setdefault("config", {})
         source_config = source_destination.get("config") or {}
 
-        for field in SECRET_FIELDS:
+        for field in secret_fields:
             if field in source_config:
                 destination_config.setdefault(field, source_config[field])
 

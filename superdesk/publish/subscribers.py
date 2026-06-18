@@ -27,6 +27,8 @@ from superdesk.notification import push_notification
 
 logger = logging.getLogger(__name__)
 
+SECRET_FIELDS = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
+
 
 def get_destination_id(destination) -> str:
     if destination.get("_id"):
@@ -108,7 +110,7 @@ class SubscribersResource(Resource):
 
 class SubscribersService(CacheableService):
     cache_lookup = {"is_active": True}
-    hide_fields = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
+    hide_fields = SECRET_FIELDS
 
     def get(self, req, lookup):
         if req is None:
