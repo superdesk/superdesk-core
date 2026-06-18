@@ -11,12 +11,11 @@
 import json
 
 from superdesk.core import get_app_config, get_current_app
-from superdesk.emails import send_email
+from superdesk.core.emails import send_email, EmailAttachment
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishEmailError
 from superdesk.media.media_operations import get_watermark
-from flask_mail import Attachment
 from PIL import Image
 import io
 import logging
@@ -61,7 +60,7 @@ class EmailPublishService(PublishService):
             html_body = item.get("message_html", queue_item["formatted_item"])
 
             # Attach feature media if required
-            attachments = []
+            attachments: list[EmailAttachment] = []
             if config.get("attach_media") and item.get("renditions"):
                 # The CID can be used to embbed the image in the html template email like <img src=CID:cid-value>
                 cid = config.get("media_cid", "")
@@ -78,15 +77,15 @@ class EmailPublishService(PublishService):
                     im.save(binary, "jpeg", quality=80)
 
                     attachments.append(
-                        Attachment(
+                        EmailAttachment(
                             filename=media.name,
                             content_type=media.content_type,
                             data=binary.getvalue(),
-                            headers=[("Content-ID", cid)],
+                            cid=cid,
                         )
                     )
 
-            # sending email synchronously
+            # sending email synchronously (don't send this as a Celery Task)
             await send_email(
                 subject=subject,
                 sender=admins[0],
