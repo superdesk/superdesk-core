@@ -230,32 +230,3 @@ class QueueItemsTestCase(TestCase):
         self.assertEqual(doc["destination"]["config"]["access_key_id"], "access-key-id")
         self.assertEqual(doc["destination"]["config"]["secret_access_key"], "secret-access-key")
         self.assertEqual(doc["published_seq_num"], 7)
-
-    @mock.patch.object(publish_queue, "get_resource_service")
-    def test_get_redacts_destination_secrets(self, fake_get_resource_service):
-        fake_get_resource_service.return_value = SubscribersService("subscribers", backend=MagicMock())
-
-        service = publish_queue.PublishQueueService(backend=MagicMock())
-        service.backend.get.return_value = [
-            {
-                "_id": ObjectId(),
-                "destination": {
-                    "name": "FTP Destination",
-                    "format": "ftp ninjs",
-                    "delivery_type": "ftp",
-                    "config": {
-                        "host": "127.0.0.1",
-                        "username": "superdesk",
-                        "password": "superdesk",
-                        "passive": True,
-                    },
-                },
-            }
-        ]
-
-        items = list(service.get(None, None))
-
-        self.assertEqual(
-            items[0]["destination"]["config"], {"host": "127.0.0.1", "username": "superdesk", "passive": True}
-        )
-        self.assertNotIn("password", items[0]["destination"]["config"])

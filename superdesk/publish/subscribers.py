@@ -146,18 +146,6 @@ class SubscribersService(CacheableService):
 
         self._copy_destination_secrets(destination, subscriber_destination)
 
-    def hide_destination_secrets(self, destination):
-        if not destination:
-            return destination
-
-        return {
-            **destination,
-            "config": {
-                key: value for key, value in (destination.get("config") or {}).items() if key not in SECRET_FIELDS
-            },
-            "_id": get_destination_id(destination),
-        }
-
     def keep_destinations_secrets(self, updates, original):
         """Populate the secrets removed on fetch so those won't be overridden on save."""
         original_destinations = original.get("destinations") or []
