@@ -146,8 +146,20 @@ class SubscribersService(CacheableService):
 
         self._copy_destination_secrets(destination, subscriber_destination)
 
+    def hide_destination_secrets(self, destination):
+        if not destination:
+            return destination
+
+        return {
+            **destination,
+            "config": {
+                key: value for key, value in (destination.get("config") or {}).items() if key not in SECRET_FIELDS
+            },
+            "_id": get_destination_id(destination),
+        }
+
     def keep_destinations_secrets(self, updates, original):
-        """Populate the secrets removed on fetch so those won't be overriden on save."""
+        """Populate the secrets removed on fetch so those won't be overridden on save."""
         original_destinations = original.get("destinations") or []
         updates_destinations = updates.get("destinations") or []
         for destination in original_destinations:
@@ -163,7 +175,9 @@ class SubscribersService(CacheableService):
         queued_identity = self._destination_identity(queued_destination)
 
         for subscriber_destination in subscriber_destinations:
-            if queued_destination.get("_id") and queued_destination.get("_id") == subscriber_destination.get("_id"):
+            if queued_destination.get("_id") and queued_destination.get("_id") == get_destination_id(
+                subscriber_destination
+            ):
                 return subscriber_destination
 
             if self._destination_identity(subscriber_destination) != queued_identity:

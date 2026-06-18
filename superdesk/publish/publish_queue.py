@@ -16,6 +16,7 @@ from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.services import BaseService
 from superdesk.utils import SuperdeskBaseEnum
+from superdesk.utils import ListCursor
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ class PublishQueueResource(Resource):
                 "format": {"type": "string", "required": True},
                 "delivery_type": {"type": "string", "required": True},
                 "config": {"type": "dict"},
+                "_id": {"type": "string"},
             },
         },
         PUBLISHED_IN_PACKAGE: {"type": "string"},
@@ -90,6 +92,20 @@ class PublishQueueResource(Resource):
 
 
 class PublishQueueService(BaseService):
+    def get(self, req, lookup):
+        subscriber_service = get_resource_service("subscribers")
+        queue_items = list(super().get(req, lookup))
+
+        return ListCursor(
+            [
+                {
+                    **doc,
+                    "destination": subscriber_service.hide_destination_secrets(doc.get("destination") or {}),
+                }
+                for doc in queue_items
+            ]
+        )
+
     def on_create(self, docs):
         subscriber_service = get_resource_service("subscribers")
 
