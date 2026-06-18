@@ -15,7 +15,7 @@ LONG_DESCRIPTION = "Superdesk Server Core"
 install_requires = [
     "urllib3>=1.26,<3",
     "elasticsearch[async]<7.18",  # we are using oss version on test server
-    "aiosmtpd>=1.4.6,<2.0",
+    "aiosmtplib>=5.1.1,<5.2",
     "arrow>=0.4,<=1.4.0",
     "pillow>=9.2,<12.1",
     "bcrypt>=3.1.1,<5.1",
