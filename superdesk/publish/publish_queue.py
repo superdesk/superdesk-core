@@ -19,8 +19,6 @@ from superdesk.utils import SuperdeskBaseEnum
 from flask import current_app as app
 
 logger = logging.getLogger(__name__)
-
-
 PUBLISHED_IN_PACKAGE = "published_in_package"
 
 
@@ -50,6 +48,7 @@ class PublishQueueResource(Resource):
                 "format": {"type": "string", "required": True},
                 "delivery_type": {"type": "string", "required": True},
                 "config": {"type": "dict"},
+                "_id": {"type": "string"},
             },
         },
         PUBLISHED_IN_PACKAGE: {"type": "string"},
@@ -96,11 +95,16 @@ class PublishQueueService(BaseService):
         subscriber_service = get_resource_service("subscribers")
 
         for doc in docs:
+            subscriber = None
+            subscriber_id = doc.get("subscriber_id")
+            if subscriber_id:
+                subscriber = subscriber_service.find_one(req=None, _id=subscriber_id)
+
+            subscriber_service.hydrate_destination_secrets(doc.get("destination") or {}, subscriber)
             self._set_queue_state(doc, {})
             doc["moved_to_legal"] = False
 
-            if "published_seq_num" not in doc:
-                subscriber = subscriber_service.find_one(req=None, _id=doc["subscriber_id"])
+            if "published_seq_num" not in doc and subscriber:
                 doc["published_seq_num"] = subscriber_service.generate_sequence_number(subscriber)
 
     def on_updated(self, updates, original):

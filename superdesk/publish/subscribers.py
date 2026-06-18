@@ -27,6 +27,8 @@ from superdesk.notification import push_notification
 
 logger = logging.getLogger(__name__)
 
+SECRET_FIELDS = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
+
 
 def get_destination_id(destination) -> str:
     if destination.get("_id"):
@@ -108,7 +110,7 @@ class SubscribersResource(Resource):
 
 class SubscribersService(CacheableService):
     cache_lookup = {"is_active": True}
-    hide_fields = ("secret_token", "password", "apiKey", "access_key_id", "secret_access_key")
+    hide_fields = SECRET_FIELDS
 
     def get(self, req, lookup):
         if req is None:
@@ -134,8 +136,18 @@ class SubscribersService(CacheableService):
         self._validate_products_destinations(subscriber)
         self.keep_destinations_secrets(updates, original)
 
+    def hydrate_destination_secrets(self, destination, subscriber):
+        if not subscriber or not destination:
+            return
+
+        subscriber_destination = self._match_subscriber_destination(destination, subscriber.get("destinations") or [])
+        if not subscriber_destination:
+            return
+
+        self._copy_destination_secrets(destination, subscriber_destination)
+
     def keep_destinations_secrets(self, updates, original):
-        """Populate the secrets removed on fetch so those won't be overriden on save."""
+        """Populate the secrets removed on fetch so those won't be overridden on save."""
         original_destinations = original.get("destinations") or []
         updates_destinations = updates.get("destinations") or []
         for destination in original_destinations:
@@ -146,6 +158,41 @@ class SubscribersService(CacheableService):
                 if dest_id == update_destination.get("_id"):
                     for field, value in destination["config"].items():
                         update_destination["config"].setdefault(field, value)
+
+    def _match_subscriber_destination(self, queued_destination, subscriber_destinations):
+        queued_identity = self._destination_identity(queued_destination)
+
+        for subscriber_destination in subscriber_destinations:
+            if queued_destination.get("_id") and queued_destination.get("_id") == get_destination_id(
+                subscriber_destination
+            ):
+                return subscriber_destination
+
+            if self._destination_identity(subscriber_destination) != queued_identity:
+                continue
+
+            return subscriber_destination
+
+        return None
+
+    def _destination_identity(self, destination):
+        config = destination.get("config") or {}
+        config = {key: value for key, value in config.items() if key not in SECRET_FIELDS}
+
+        return {
+            "name": destination.get("name"),
+            "format": destination.get("format"),
+            "delivery_type": destination.get("delivery_type"),
+            "config": config,
+        }
+
+    def _copy_destination_secrets(self, destination, source_destination):
+        destination_config = destination.setdefault("config", {})
+        source_config = source_destination.get("config") or {}
+
+        for field in SECRET_FIELDS:
+            if field in source_config:
+                destination_config.setdefault(field, source_config[field])
 
     def on_updated(self, updates, original):
         push_notification("subscriber:update", _id=[original.get(config.ID_FIELD)])
