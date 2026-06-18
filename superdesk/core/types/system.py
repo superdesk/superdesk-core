@@ -1,6 +1,7 @@
 from typing import Any, Sequence, Protocol, Callable, Awaitable
 
 from .web import Request, Endpoint, EndpointGroup
+from .email import EmailFactoryProtocol
 
 AfterServingCallable = Callable[[], None] | Callable[[], Awaitable[None]]
 
@@ -40,7 +41,7 @@ class WSGIApp(Protocol):
     #: Interface to upload/download/query media
     media: Any
 
-    mail: Any
+    mail: EmailFactoryProtocol
 
     data: Any
 
