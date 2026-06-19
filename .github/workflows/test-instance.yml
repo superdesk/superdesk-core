@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ['3.12']
 
     env:
       SKIP_SERVER_INSTALL: true
