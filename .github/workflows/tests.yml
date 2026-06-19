@@ -11,15 +11,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            python-version: '3.10'
-            elastic: '7.17.29'
-          - os: ubuntu-22.04
-            python-version: '3.10'
-            elastic: '8.19.6'
           - os: ubuntu-24.04
             python-version: '3.12'
             elastic: '7.17.29'
+          - os: ubuntu-24.04
+            python-version: '3.12'
+            elastic: '8.19.6'
 
     runs-on: ${{ matrix.os }}
 
@@ -62,7 +59,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.12']
 
     steps:
     - uses: actions/checkout@v6
@@ -82,15 +79,12 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            python-version: '3.10'
-            elastic: '7.17.29'
-          - os: ubuntu-22.04
-            python-version: '3.10'
-            elastic: '8.19.6'
           - os: ubuntu-24.04
             python-version: '3.12'
             elastic: '7.17.29'
+          - os: ubuntu-24.04
+            python-version: '3.12'
+            elastic: '8.19.6'
 
     runs-on: ${{ matrix.os }}
 
@@ -134,8 +128,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            python-version: '3.10'
           - os: ubuntu-24.04
             python-version: '3.12'
 
@@ -161,8 +153,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-22.04
-            python-version: '3.10'
           - os: ubuntu-24.04
             python-version: '3.12'
 
