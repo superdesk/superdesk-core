@@ -82,7 +82,7 @@ class EmailRequest(BaseModel):
 
 
 class EmailFactoryProtocol(Protocol):
-    async def send(self, requet: EmailRequest) -> None:
+    async def send(self, request: EmailRequest) -> None:
         ...
 
     async def send_bulk_email(self, requests: list[EmailRequest]) -> None:

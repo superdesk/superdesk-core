@@ -1,18 +1,13 @@
-from typing import TypeAlias, Any
 import logging
 
-import email.policy
-from email.message import EmailMessage, MIMEPart
+from email.message import MIMEPart
 from email.utils import formataddr, make_msgid, formatdate
-from mimetypes import guess_type
 import aiosmtplib
 from celery import shared_task
 from celery.exceptions import SoftTimeLimitExceeded
 
 from superdesk.core import get_current_app, get_config
-from superdesk.core.config import ConfigModel
-from superdesk.core.utils import SingletonInstance, sha
-from superdesk.core.resources.model import Dataclass
+from superdesk.core.utils import sha
 from superdesk.lock import lock, unlock
 
 from .types import (
@@ -49,6 +44,10 @@ def _get_html_part_from_message(message: EmailMessage) -> MIMEPart | None:
     return None
 
 
+def _get_recipient_addresses(recipients: list[EmailAddress]) -> str:
+    return ", ".join([sanitize_address(recipient) for recipient in recipients])
+
+
 def _get_message_from_request(request: EmailRequest) -> EmailMessage:
     msg = EmailMessage()
     msg.set_content(request.text_body)
@@ -58,17 +57,13 @@ def _get_message_from_request(request: EmailRequest) -> EmailMessage:
     if not html_part:
         raise ValueError("Email message must contain at least one HTML part")
 
-    try:
-        msg["Subject"] = request.subject.split("\n")[0]
-    except AttributeError:
-        msg["Subject"] = None
-
+    msg["Subject"] = request.subject.split("\n", 1)[0]
     msg["From"] = sanitize_address(request.sender or get_config(str, "MAIL_DEFAULT_SENDER"))
-    msg["To"] = [sanitize_address(recipient) for recipient in request.recipients]
+    msg["To"] = _get_recipient_addresses(request.recipients)
     if request.cc:
-        msg["CC"] = [sanitize_address(recipient) for recipient in request.cc]
+        msg["CC"] = _get_recipient_addresses(request.cc)
     if request.bcc:
-        msg["BCC"] = [sanitize_address(recipient) for recipient in request.bcc]
+        msg["BCC"] = _get_recipient_addresses(request.bcc)
     msg["Date"] = formatdate(localtime=True)
     msg["Message-ID"] = make_msgid()
 
@@ -116,7 +111,7 @@ def _get_config() -> EmailConfig:
 
 class EmailFactory:
     def get_client(self):
-        config = get_config()
+        config = _get_config()
         return aiosmtplib.SMTP(
             hostname=config.server,
             port=config.port,

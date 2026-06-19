@@ -12,7 +12,11 @@ RecordedEmail: TypeAlias = tuple[str, list[str], EmailMessage]
 
 
 class MockEmailFactory(EmailFactory):
-    messages: list[EmailMessage] = []
+    messages: list[EmailMessage]
+
+    def __init__(self):
+        super().__init__()
+        self.messages = []
 
     @contextmanager
     def record_messages(self):

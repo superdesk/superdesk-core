@@ -92,10 +92,10 @@ class EmailPublishServiceTest(TestCase):
             # Get attachments from the message tree
             attachments: list[tuple[str, str, str]] = []
             for part in outbox[0].walk():
-                content_disposition = part.get("Content-Disposition", "")
-                if not content_disposition.startswith("attachment"):
+                content_id = part.get("Content-ID")
+                if not content_id:
                     continue
 
-                attachments.append((part.get_filename(), part.get_content_type(), part.get("Content-ID")))
+                attachments.append((part.get_filename(), part.get_content_type(), content_id))
 
             self.assertEqual(attachments, [(MOCK_FILENAME, MOCK_CONTENT_TYPE, "<MainImage>")])
