@@ -89,7 +89,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="3.5.0",
+    version="3.6.0-dev",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
@@ -105,7 +105,7 @@ setup(
     extras_require={  # type: ignore[arg-type]
         "exiv2": ["pyexiv2>=2.12.0,<2.16"],
     },
-    python_requires=">=3.10",
+    python_requires=">=3.12",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",

@@ -6,7 +6,7 @@ jobs:
   black:
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.12']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -20,7 +20,7 @@ jobs:
   flake8:
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.12']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -34,7 +34,7 @@ jobs:
   mypy:
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.12']
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
