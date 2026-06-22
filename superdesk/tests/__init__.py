@@ -42,6 +42,8 @@ from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 from superdesk.storage.proxy import ProxyMediaStorage
 from superdesk.types import User, UsersResourceModel
 
+from .mocks.emails import MockEmailFactory
+
 
 logger = logging.getLogger(__name__)
 test_user = {
@@ -522,6 +524,7 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
     if not previous_app or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
         cfg = setup_config(config, auto_add_apps)
         app = app_factory(cfg)  # type: ignore[attr-defined]
+        app.mail = MockEmailFactory()
 
         await cleanup_db_connections(app)
         await cleanup_async_db_connections(app.async_app)

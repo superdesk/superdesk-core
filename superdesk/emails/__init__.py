@@ -8,72 +8,18 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import hashlib
 import logging
-import email.policy
 
 from datetime import timedelta
 from superdesk.utc import utcnow
-from superdesk.lock import lock, unlock
-from bson.json_util import dumps
-from flask_mail import Message
-from superdesk.celery_app import celery
 from superdesk.core import get_current_app, get_app_config
+from superdesk.core.emails import send_email
+from superdesk.core.utils import sha
 from superdesk.flask import render_template, render_template_string
-from superdesk import get_resource_service
 from superdesk.types import UsersResourceModel
 
 logger = logging.getLogger(__name__)
-
-
-class SuperdeskMessage(Message):
-    def as_bytes(self):
-        msg = self._message()
-        return msg.as_bytes(policy=email.policy.HTTP)
-
-
 EMAIL_TIMESTAMP_RESOURCE = "email_timestamps"
-
-
-@celery.task(bind=True, max_retries=3, soft_time_limit=120)
-async def send_email(self, subject, sender, recipients, text_body, html_body, cc=None, bcc=None, attachments=None):
-    _id = get_activity_digest(
-        {
-            "subject": subject,
-            "recipients": recipients,
-            "text_body": text_body,
-            "html_body": html_body,
-            "cc": cc,
-            "bcc": bcc,
-        }
-    )
-
-    lock_id = "email:%s" % _id
-    if not lock(lock_id, expire=120):
-        return
-
-    try:
-        subject_line = subject.split("\n")[0]
-    except AttributeError:
-        subject_line = None
-
-    try:
-        msg = SuperdeskMessage(
-            subject_line,
-            sender=sender,
-            recipients=recipients,
-            cc=cc,
-            bcc=bcc,
-            body=text_body,
-            html=html_body,
-            attachments=attachments,
-        )
-        if get_app_config("E2E") is not True:
-            return get_current_app().mail.send(msg)
-    except OSError:
-        logger.exception("can not send email %s", subject)
-    finally:
-        unlock(lock_id, remove=True)
 
 
 async def send_activate_account_email(doc, activate_ttl):
@@ -164,16 +110,9 @@ async def send_user_mentioned_email(recipients, user_name, doc, url):
     )
 
 
-def get_activity_digest(value):
-    h = hashlib.sha1()
-    json_encoder = get_current_app().data.json_encoder_class()
-    h.update(dumps(value, sort_keys=True, default=json_encoder.default).encode("utf-8"))
-    return h.hexdigest()
-
-
 async def send_activity_emails(activity, recipients):
     now = utcnow()
-    message_id = get_activity_digest(activity)
+    message_id = sha(activity)
     # there is no resource for email timestamps registered,
     # so use users resoure to get pymongo db
     email_timestamps = get_current_app().data.mongo.pymongo("users").db[EMAIL_TIMESTAMP_RESOURCE]
@@ -206,7 +145,7 @@ async def send_article_killed_email(article, recipients, transmitted_at):
         place = place.get("qcode", "")
     body = article.get("body_html", "")
 
-    subject = article.get("headline", "Kill Notification")
+    subject = article.get("headline") or "Kill Notification"
     operation = article.get("operation")
 
     text_body = await render_template(

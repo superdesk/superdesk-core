@@ -30,6 +30,7 @@ from .web import (
 from .mongo import MongoIndexCollation, MongoIndexOptions, MongoResourceConfig, MongoClientConfig
 from .elastic import ElasticResourceConfig, ElasticClientConfig
 from .storage import SuperdeskFile, AsyncBuffer, SuperdeskAsyncFile
+from .email import EmailMessage, EmailConfig, EmailAddress, EmailAttachment, EmailRequest
 
 
 __all__ = [
