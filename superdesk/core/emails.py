@@ -106,7 +106,7 @@ def _get_request_hash(request: EmailRequest) -> str:
 
 
 def _get_config() -> EmailConfig:
-    return EmailConfig().load_from_dict(get_current_app().config, prefix="MAIL", freeze=True)
+    return EmailConfig.create_from_dict(get_current_app().config, prefix="MAIL", freeze=True)
 
 
 class EmailFactory:
