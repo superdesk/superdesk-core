@@ -70,12 +70,15 @@ def _get_message_from_request(request: EmailRequest) -> EmailMessage:
     if request.attachments:
         for attachment in request.attachments:
             maintype, subtype = attachment.get_content_type().split("/")
+            # Encode str payloads to bytes: a str routes to set_text_content() which rejects
+            # maintype/subtype and raises a TypeError; bytes routes to set_bytes_content() (base64).
+            data = attachment.data.encode("utf-8") if isinstance(attachment.data, str) else attachment.data
             if attachment.cid:
                 # If this Attachment has a CID, then we assume it's for embedding into the email
                 # So we use `add_related` instead of `add_attachment`.
                 # This tells email clients the file is part of the HTML structure, not a separate file to download
                 html_part.add_related(
-                    attachment.data,
+                    data,
                     maintype=maintype,
                     subtype=subtype,
                     filename=attachment.filename,
@@ -83,7 +86,7 @@ def _get_message_from_request(request: EmailRequest) -> EmailMessage:
                 )
             else:
                 msg.add_attachment(
-                    attachment.data,
+                    data,
                     maintype=maintype,
                     subtype=subtype,
                     filename=attachment.filename,
