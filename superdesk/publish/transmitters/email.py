@@ -85,7 +85,7 @@ class EmailPublishService(PublishService):
                         )
                     )
 
-            # sending email synchronously (don't send this as a Celery Task)
+            # sending email in this task (don't send this as a Celery Task)
             await send_email(
                 subject=subject,
                 sender=admins[0],
@@ -94,6 +94,7 @@ class EmailPublishService(PublishService):
                 html_body=html_body,
                 bcc=bcc,
                 attachments=attachments,
+                raise_exceptions=True,
             )
 
         except Exception as ex:
