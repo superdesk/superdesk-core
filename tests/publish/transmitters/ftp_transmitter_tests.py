@@ -92,7 +92,7 @@ class TestMedia(io.BytesIO):
     mimetype = "text/plain"
 
 
-def mockGet(self, _id, resource=None):
+async def mockGet(self, _id, resource=None):
     return b"binary"
 
 
@@ -131,7 +131,7 @@ class FTPPublishServiceTestCase(TestCase):
         self.assertTrue(self.is_item_loaded(config, "abc.ntf"))
 
     @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect", return_value=mock_ftp_connect())
-    @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
+    @mock.patch("superdesk.storage.ProxyMediaStorage.get_async", mockGet)
     @mock.patch(
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
@@ -153,7 +153,7 @@ class FTPPublishServiceTestCase(TestCase):
             ftp_mock.upload_data.assert_any_call("5e448ee9016d1f63a92f040b.jpg", b"binary")
 
     @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect", return_value=mock_ftp_connect())
-    @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
+    @mock.patch("superdesk.storage.ProxyMediaStorage.get_async", mockGet)
     @mock.patch(
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
@@ -173,7 +173,7 @@ class FTPPublishServiceTestCase(TestCase):
             ftp_mock.upload_data.assert_any_call("5e448dd1016d1f63a92f039e.png", b"binary")
 
     @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect", return_value=mock_ftp_connect())
-    @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
+    @mock.patch("superdesk.storage.ProxyMediaStorage.get_async", mockGet)
     async def test_publish_non_ninjs_item_assoc(self, ftp_connect_mock, *args):
         service = FTPPublishService()
         queue_item = {
