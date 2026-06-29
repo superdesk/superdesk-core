@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import importlib
-from typing import Dict, List, Optional, Any, cast
+from typing import Dict, List, Optional, Any, cast, overload
 from typing_extensions import TypeVar
 
 from superdesk.core.types import WSGIApp
@@ -21,6 +21,7 @@ from .signals import SignalGroup, Signal
 
 
 CONFIG_DATA_TYPE = TypeVar("CONFIG_DATA_TYPE")
+CONFIG_DEFAULT_TYPE = TypeVar("CONFIG_DEFAULT_TYPE")
 
 
 def get_app_config(key: str, default: Any | None = None) -> Any | None:
@@ -50,9 +51,21 @@ def get_app_config(key: str, default: Any | None = None) -> Any | None:
     raise RuntimeError("Superdesk app is not running")
 
 
+@overload
+def get_config(data_type: type[CONFIG_DATA_TYPE], key: str) -> CONFIG_DATA_TYPE:
+    ...
+
+
+@overload
 def get_config(
-    data_type: type[CONFIG_DATA_TYPE], key: str, default: CONFIG_DATA_TYPE | object = DefaultNoValue
-) -> CONFIG_DATA_TYPE:
+    data_type: type[CONFIG_DATA_TYPE], key: str, default: CONFIG_DEFAULT_TYPE
+) -> CONFIG_DATA_TYPE | CONFIG_DEFAULT_TYPE:
+    ...
+
+
+def get_config(
+    data_type: type[CONFIG_DATA_TYPE], key: str, default: CONFIG_DEFAULT_TYPE | object = DefaultNoValue
+) -> CONFIG_DATA_TYPE | CONFIG_DEFAULT_TYPE:
     """
     Fetches and casts a configuration value from the application configuration based on
     the specified key. If the key is not present in the configuration, a default value
@@ -70,7 +83,7 @@ def get_config(
     if value is DefaultNoValue:
         raise KeyError(f"Missing config '{key}'")
 
-    return cast(CONFIG_DATA_TYPE, value)
+    return cast(CONFIG_DATA_TYPE | CONFIG_DEFAULT_TYPE, value)
 
 
 class SuperdeskAsyncApp(SignalGroup):
