@@ -18,8 +18,7 @@ import datetime
 import pytz
 
 from unittest import mock
-from superdesk.tests import setup
-from superdesk.tests import TestCase as CoreTestCase
+from superdesk.tests import setup, TestCase as CoreTestCase, markers
 from superdesk.io.feeding_services import ftp
 from superdesk.utc import utcnow, utc
 from superdesk.default_settings import FTP_INGEST_FILES_LIST_LIMIT
@@ -62,7 +61,7 @@ async def ingest_items(generator, ingest_status=True):
             break
 
 
-class FakeFTP(mock.MagicMock):
+class FakeFTP(mock.AsyncMock):
     files = [
         ftp_file("filename_1.xml", "20170517164739"),
         ftp_file("filename_2.xml", "20170517164739"),
@@ -82,11 +81,11 @@ class FakeFTP(mock.MagicMock):
         ftp_file("filename_16.xml", "20170517164756"),
     ]
 
-    def mlsd(self, path=""):
-        return iter(self.files)
-
-    def cwd(self, path):
+    async def change_directory(self, path):
         pass
+
+    async def list(self):
+        return iter(self.files)
 
 
 def mock_ftp_connect(ftp_class: type[FakeFTP] = FakeFTP):
@@ -136,6 +135,8 @@ class TestCase(CoreTestCase):
 
 
 class FTPTestCase(TestCase):
+    pytestmark = markers.to_be_done_in_another_task
+
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.app.config["FTP_INGEST_FILES_LIST_LIMIT"] = FTP_INGEST_FILES_LIST_LIMIT

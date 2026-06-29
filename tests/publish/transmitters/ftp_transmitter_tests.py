@@ -10,7 +10,6 @@
 
 
 import os
-from unittest.mock import create_autospec
 from superdesk.tests import TestCase
 import ftplib
 from apps.publish import init_app
@@ -128,16 +127,16 @@ class FTPPublishServiceTestCase(TestCase):
         self.assertEqual("test", config["path"])
         self.assertEqual("localhost", config["host"])
 
-        service._transmit(self.item, subscriber={"config": config})
+        await service._transmit(self.item, subscriber={"config": config})
         self.assertTrue(self.is_item_loaded(config, "abc.ntf"))
 
-    @mock.patch("ftplib.FTP", autospec=True)
+    @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect", return_value=mock_ftp_connect())
     @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
     @mock.patch(
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
     )
-    async def test_with_associations(self, mock_ftp_constructor, *args):
+    async def test_with_associations(self, ftp_connect_mock, *args):
         item = {
             "associations": {
                 "featuremedia": ASSOCIATIONS["featuremedia"],
@@ -146,30 +145,32 @@ class FTPPublishServiceTestCase(TestCase):
 
         service = FTPPublishService()
 
-        service._copy_published_media_files(item, mock_ftp_constructor)
+        async with ftp_connect_mock as ftp_mock:
+            await service._copy_published_media_files(item, ftp_mock)
 
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448e47016d1f63a92f03b8.jpg", b"binary")
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448ee8016d1f63a92f0408.jpg", b"binary")
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448ee9016d1f63a92f040b.jpg", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448e47016d1f63a92f03b8.jpg", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448ee8016d1f63a92f0408.jpg", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448ee9016d1f63a92f040b.jpg", b"binary")
 
-    @mock.patch("superdesk.ftp.ftplib.FTP", autospec=True)
+    @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect", return_value=mock_ftp_connect())
     @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
     @mock.patch(
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
     )
-    async def test_with_association_and_embed(self, mock_ftp_constructor, *args):
+    async def test_with_association_and_embed(self, ftp_connect_mock, *args):
         item = {"associations": ASSOCIATIONS}
 
         service = FTPPublishService()
-        service._copy_published_media_files(item, mock_ftp_constructor)
+        async with ftp_connect_mock as ftp_mock:
+            await service._copy_published_media_files(item, ftp_mock)
 
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448e47016d1f63a92f03b8.jpg", b"binary")
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448ee8016d1f63a92f0408.jpg", b"binary")
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448ee9016d1f63a92f040b.jpg", b"binary")
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448dd1016d1f63a92f0393.png", b"binary")
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448dd1016d1f63a92f0398.png", b"binary")
-        mock_ftp_constructor.storbinary.assert_any_call("STOR 5e448dd1016d1f63a92f039e.png", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448e47016d1f63a92f03b8.jpg", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448ee8016d1f63a92f0408.jpg", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448ee9016d1f63a92f040b.jpg", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448dd1016d1f63a92f0393.png", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448dd1016d1f63a92f0398.png", b"binary")
+            ftp_mock.upload_data.assert_any_call("5e448dd1016d1f63a92f039e.png", b"binary")
 
     @mock.patch("superdesk.publish.transmitters.ftp.ftp_connect", return_value=mock_ftp_connect())
     @mock.patch("superdesk.storage.ProxyMediaStorage.get", mockGet)
@@ -197,5 +198,5 @@ class FTPPublishServiceTestCase(TestCase):
         subscriber = {}
         await service._transmit(queue_item, subscriber)
 
-        ftp_mock.storbinary.assert_any_call("STOR 5e448e47016d1f63a92f03b8.jpg", b"binary")
-        ftp_mock.storbinary.assert_any_call("STOR 5e448dd1016d1f63a92f0393.png", b"binary")
+        ftp_mock.upload_data.assert_any_call("5e448e47016d1f63a92f03b8.jpg", b"binary")
+        ftp_mock.upload_data.assert_any_call("5e448dd1016d1f63a92f0393.png", b"binary")

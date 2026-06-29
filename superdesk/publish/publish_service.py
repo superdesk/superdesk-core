@@ -39,7 +39,7 @@ class PublishServiceBase:
         """
         raise NotImplementedError()
 
-    def _transmit_media(self, media, destination):
+    async def _transmit_media(self, media, destination):
         """Transmit media file. Implement in subclass"""
         raise NotImplementedError()
 
