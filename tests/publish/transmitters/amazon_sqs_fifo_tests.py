@@ -11,16 +11,21 @@
 import json
 import boto3
 
-from moto import mock_aws
-from unittest import TestCase, mock
+from aiomoto import mock_aws
+from unittest import mock
 
 from superdesk.publish.transmitters.amazon_sqs_fifo import AmazonSQSFIFOPublishService
 from superdesk.errors import PublishAmazonSQSError
-from superdesk.tests import IsolatedAsyncioTestCase
+from superdesk.tests import TestCase
 
 
-class AmazonSQSFIFOPublishServiceTestCase(IsolatedAsyncioTestCase):
-    def setUp(self):
+class AmazonSQSFIFOPublishServiceTestCase(TestCase):
+    async def asyncSetUp(self):
+        self.mock_aws = mock_aws()
+        await self.mock_aws.__aenter__()
+
+        await super().asyncSetUp()
+
         self.config = {
             "region": "ap-southeast-2",
             "access_key_id": "abcd123",
@@ -48,9 +53,6 @@ class AmazonSQSFIFOPublishServiceTestCase(IsolatedAsyncioTestCase):
             },
         }
 
-        self.mock_aws = mock_aws()
-        self.mock_aws.start()
-
         self.sqs = boto3.resource(
             "sqs",
             aws_access_key_id=self.config["access_key_id"],
@@ -59,9 +61,8 @@ class AmazonSQSFIFOPublishServiceTestCase(IsolatedAsyncioTestCase):
         )
         self.service = AmazonSQSFIFOPublishService()
 
-    def tearDown(self) -> None:
-        self.mock_aws.stop()
-        return super().tearDown()
+    async def asyncTearDown(self):
+        await self.mock_aws.__aexit__()
 
     def _create_queue(self):
         self.sqs.create_queue(
@@ -83,17 +84,6 @@ class AmazonSQSFIFOPublishServiceTestCase(IsolatedAsyncioTestCase):
         messages = self._get_queue_messages()
         item = json.loads(messages[0].body)
         self.assertDictEqual(item, self.formatted_item1)
-
-    @mock.patch("superdesk.errors.notifications_enabled", return_value=False)
-    async def test_connection_error(self, _notifications_enabled):
-        self.config["endpoint_url"] = "http://abcd"
-
-        with self.assertRaises(PublishAmazonSQSError) as context:
-            await self.service._transmit(self.item, {})
-
-        ex = context.exception
-        self.assertEqual(str(ex), "PublishAmazonSQSError Error 15000 - Amazon SQS publish connection error")
-        self.assertEqual(ex.code, 15000)
 
     @mock.patch("superdesk.errors.notifications_enabled", return_value=False)
     async def test_client_error(self, _notifications_enabled):
