@@ -6,26 +6,23 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Optional, Dict, List, Tuple
 import os
 import logging
-import requests
-import superdesk
-
 from collections import OrderedDict
-from typing import Optional, Dict, List, Tuple
 from urllib.parse import urljoin
 
 from quart_babel import gettext as _
+import aiohttp
 
-from superdesk.core import get_app_config
+import superdesk
+from superdesk.core import get_config
+from superdesk.core.web import AsyncHttpClientSessionMixin
 from superdesk.text_utils import get_text
 from superdesk.errors import SuperdeskApiError
 from .base import AIServiceBase
 
 logger = logging.getLogger(__name__)
-session = requests.Session()
-
-TIMEOUT = (5, 30)
 
 # iMatrics concept type to SD type mapping
 CONCEPT_MAPPING = OrderedDict(
@@ -53,7 +50,7 @@ SCHEME_MAPPING = {
 DEFAULT_CONCEPT_TYPE = "topic"
 
 
-class IMatrics(AIServiceBase):
+class IMatrics(AIServiceBase, AsyncHttpClientSessionMixin):
     """IMatrics autotagging service
 
     The IMATRICS_BASE_URL, IMATRICS_USER and IMATRICS_KEY setting (or environment variable) must be set
@@ -71,25 +68,32 @@ class IMatrics(AIServiceBase):
 
     @property
     def base_url(self):
-        return get_app_config("IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
+        return get_config(str, "IMATRICS_BASE_URL", os.environ.get("IMATRICS_BASE_URL"))
 
     @property
     def user(self):
-        return get_app_config("IMATRICS_USER", os.environ.get("IMATRICS_USER"))
+        return get_config(str, "IMATRICS_USER", os.environ.get("IMATRICS_USER"))
 
     @property
     def key(self):
-        return get_app_config("IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
+        return get_config(str, "IMATRICS_KEY", os.environ.get("IMATRICS_KEY"))
+
+    @property
+    def auth_header(self) -> aiohttp.BasicAuth | None:
+        user, key = self.user, self.key
+        if user and key:
+            return aiohttp.BasicAuth(user, key)
+        return None
 
     @property
     def image_base_url(self):
-        return get_app_config("IMATRICS_IMAGE_BASE_URL", os.environ.get("IMATRICS_IMAGE_BASE_URL"))
+        return get_config(str, "IMATRICS_IMAGE_BASE_URL", os.environ.get("IMATRICS_IMAGE_BASE_URL"))
 
     @property
     def image_key(self):
-        return get_app_config("IMATRICS_IMAGE_KEY", os.environ.get("IMATRICS_IMAGE_KEY"))
+        return get_config(str, "IMATRICS_IMAGE_KEY", os.environ.get("IMATRICS_IMAGE_KEY"))
 
-    def concept2tag_data(self, concept: dict) -> Tuple[dict, str]:
+    async def concept2tag_data(self, concept: dict) -> Tuple[dict, str]:
         """Convert an iMatrics concept to Superdesk friendly data"""
         tag_data = {
             "name": concept["title"],
@@ -122,7 +126,7 @@ class IMatrics(AIServiceBase):
                 topic_id = link["id"]
                 if topic_id.startswith("medtop:"):
                     topic_id = topic_id[7:]
-                subject = self.find_subject(topic_id)
+                subject = await self.find_subject(topic_id)
                 if subject:
                     tag_data.update(subject)
                 tag_data["altids"]["medtop"] = topic_id
@@ -137,27 +141,27 @@ class IMatrics(AIServiceBase):
             tag_data.setdefault("scheme", SCHEME_MAPPING[concept["type"]])
 
         if tag_type == "place":
-            self.sync_place(tag_data)
+            await self.sync_place(tag_data)
 
         return tag_data, tag_type
 
-    def find_subject(self, topic_id):
-        # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
-        SCHEME_ID = get_app_config("IMATRICS_SUBJECT_SCHEME")
+    async def find_subject(self, topic_id) -> dict | None:
+        SCHEME_ID = get_config(str, "IMATRICS_SUBJECT_SCHEME", None)
         if not SCHEME_ID:
-            return
+            return None
         if not self._subjects:
-            cv = superdesk.get_resource_service("vocabularies").find_one(req=None, _id=SCHEME_ID)
+            cv = await superdesk.get_resource_service("vocabularies").find_one_async(req=None, _id=SCHEME_ID)
             if cv and cv.get("items"):
                 self._subjects = [item for item in cv["items"] if item.get("is_active")]
         for subject in self._subjects:
             if subject.get("qcode") == topic_id:
                 return superdesk.get_resource_service("vocabularies").get_article_cv_item(subject, SCHEME_ID)
 
-    def sync_place(self, place_data):
+        return None
+
+    async def sync_place(self, place_data):
         if self._places is None:
-            # TODO-ASYNC[vocabularies]: Use VocabulariesService async service where when upgrading this module
-            places = superdesk.get_resource_service("vocabularies").get_items(SCHEME_MAPPING["place"])
+            places = await superdesk.get_resource_service("vocabularies").get_items_async(SCHEME_MAPPING["place"])
             self._places = {p["qcode"]: p for p in places}
         place = self._places.get(place_data["qcode"])
         if place:
@@ -172,11 +176,11 @@ class IMatrics(AIServiceBase):
                 )
             )
 
-    def _parse_concepts(self, concepts: List[dict]) -> Dict[str, List]:
+    async def _parse_concepts(self, concepts: List[dict]) -> Dict[str, List]:
         """Parse response data, convert iMatrics concepts to SD data and add them to analyzed_data"""
         analyzed_data: Dict[str, List] = {}
         for concept in concepts:
-            tag_data, tag_type = self.concept2tag_data(concept)
+            tag_data, tag_type = await self.concept2tag_data(concept)
             analyzed_data.setdefault(tag_type, []).append(tag_data)
         for tags in analyzed_data.values():
             tags.sort(key=lambda d: d.get("weight", 0), reverse=True)
@@ -198,7 +202,7 @@ class IMatrics(AIServiceBase):
             "language": item["language"],
         }
 
-    def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
+    async def analyze(self, item: dict, tags: Optional[dict] = None) -> dict:
         """Analyze article to get tagging suggestions"""
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't analyze article")
@@ -210,11 +214,11 @@ class IMatrics(AIServiceBase):
             logger.warning("no body nor headline found in item {item_id!r}".format(item_id=item["guid"]))
             # we return an empty result
             return {"subject": []}
-        r_data = self._analyze(data)
-        return self._parse_concepts(r_data["concepts"] + r_data["broader"])
+        r_data = await self._analyze(data)
+        return await self._parse_concepts(r_data["concepts"] + r_data["broader"])
 
-    def _analyze(self, data, **params):
-        return self._request(
+    async def _analyze(self, data: dict, **params) -> dict:
+        return await self._request(
             "article/analysis",
             data,
             params=dict(
@@ -223,27 +227,27 @@ class IMatrics(AIServiceBase):
             ),
         )
 
-    def search_images(self, items: list) -> list:
+    async def search_images(self, items: list) -> list:
         """Fetch image suggestions"""
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured properly, can't fetch images")
             return []
         data = items
         try:
-            r_data = self._search_images(data)
+            r_data = await self._search_images(data)
         except Exception as err:
             logger.exception(err)
             return []
         return [image for image in r_data if isinstance(image["imageUrl"], str) and image["imageUrl"] != ""]
 
-    def _search_images(self, data, **params):
-        return self._request_images(
+    async def _search_images(self, data: list[dict], **params) -> list[dict]:
+        return await self._request_images(
             "images/search",
             data,
             params=dict(**params),
         )
 
-    def search2(self, reg: dict) -> dict:
+    async def search2(self, reg: dict) -> dict:
         """Test search via analyze, it's missing entities."""
         data = {
             "body": [],
@@ -252,12 +256,12 @@ class IMatrics(AIServiceBase):
             "language": reg["language"],
         }
 
-        test_data = self._analyze(data, cleanText=False, categories=10, entities=10)
-        tags = self._parse_concepts(test_data["concepts"])
-        broader = self._parse_concepts(test_data["broader"])
+        test_data = await self._analyze(data, cleanText=False, categories=10, entities=10)
+        tags = await self._parse_concepts(test_data["concepts"])
+        broader = await self._parse_concepts(test_data["broader"])
         return {"tags": tags, "broader": broader}
 
-    def search(self, reg: dict) -> dict:
+    async def search(self, reg: dict) -> dict:
         data = {
             "title": reg["term"],
             "type": "all",
@@ -265,7 +269,7 @@ class IMatrics(AIServiceBase):
             "size": 10,
         }
 
-        r_data = self._request(
+        r_data = await self._request(
             "concept/get",
             data,
             params=dict(
@@ -277,38 +281,40 @@ class IMatrics(AIServiceBase):
         tags: Dict[str, List[Dict]] = {}
         broader: Dict[str, List[Dict]] = {}
         for concept in r_data["result"]:
-            tag_data, tag_type = self.concept2tag_data(concept)
+            tag_data, tag_type = await self.concept2tag_data(concept)
             tags.setdefault(tag_type, []).append(tag_data)
             if tag_type == "subject":
                 broader.setdefault(tag_type, [])
-                self._fetch_parent(broader[tag_type], concept)
+                await self._fetch_parent(broader[tag_type], concept)
         return dict(tags=tags, broader=broader)
 
-    def _fetch_parent(self, broader, concept):
+    async def _fetch_parent(self, broader, concept):
         parent_id = concept.get("broader")
         if not parent_id:
             return
-        parent = self._get_parent(parent_id)
+        parent = await self._get_parent(parent_id)
         if not parent:
             return
-        tag_data, _ = self.concept2tag_data(parent)
+        tag_data, _ = await self.concept2tag_data(parent)
         if tag_data["qcode"] in [b["qcode"] for b in broader]:
             return
         broader.append(tag_data)
-        self._fetch_parent(broader, parent)
+        await self._fetch_parent(broader, parent)
 
-    def _get_parent(self, parent_id: str):
+    async def _get_parent(self, parent_id: str):
         data = {"uuid": parent_id}
-        return self._request(
-            "concept/get",
-            data,
-            params=dict(
-                operation="id",
-                conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader",
-            ),
+        return (
+            await self._request(
+                "concept/get",
+                data,
+                params=dict(
+                    operation="id",
+                    conceptFields="uuid,title,type,shortDescription,aliases,source,weight,broader",
+                ),
+            )
         )["result"][0]
 
-    def create(self, data: dict) -> dict:
+    async def create(self, data: dict) -> dict:
         concept = {}
 
         try:
@@ -325,7 +331,7 @@ class IMatrics(AIServiceBase):
             logger.warning("no mapping for superdesk type {sd_type!r}".format(sd_type=sd_type))
             concept["type"] = "topic"
 
-        r_data = self._request("concept/create", concept)
+        r_data = await self._request("concept/create", concept)
 
         if r_data["error"]:
             raise SuperdeskApiError.proxyError(
@@ -334,7 +340,7 @@ class IMatrics(AIServiceBase):
 
         return {}
 
-    def delete(self, data: dict) -> dict:
+    async def delete(self, data: dict) -> dict:
         try:
             uuid = data["uuid"].strip()
             if not uuid:
@@ -342,67 +348,74 @@ class IMatrics(AIServiceBase):
         except KeyError:
             raise SuperdeskApiError.badRequestError(_("[{name}] no tag UUID specified").format(name=self.name))
 
-        self._request("concept/delete", method="DELETE", params={"uuid": data["uuid"]})
+        await self._request("concept/delete", method="DELETE", params={"uuid": data["uuid"]})
         return {}
 
-    def data_operation(self, verb: str, operation: str, name: Optional[str], data: dict) -> dict:
+    async def data_operation(self, verb: str, operation: str, name: Optional[str], data: dict) -> dict:
         if not self.base_url or not self.user or not self.key:
             logger.warning("IMatrics is not configured propertly, can't analyze article")
             return {}
         if operation == "search":
             self.check_verb("POST", verb, operation)
-            return self.search(data)
+            return await self.search(data)
         elif operation == "create":
             self.check_verb("POST", verb, operation)
-            return self.create(data)
+            return await self.create(data)
         elif operation == "delete":
             self.check_verb("POST", verb, operation)
-            return self.delete(data)
+            return await self.delete(data)
         elif operation == "feedback":
             self.check_verb("POST", verb, operation)
-            return self.feedback(data)
+            return await self.feedback(data)
         else:
             raise SuperdeskApiError.badRequestError(
                 "[{name}] Unexpected operation: {operation}".format(name=name, operation=operation)
             )
 
-    def publish(self, data):
-        return self._request("article/store", data)
+    async def publish(self, data):
+        return await self._request("article/store", data)
 
-    def feedback(self, data):
+    async def feedback(self, data):
         payload = self._transform_to_imatrics(data["item"], publish=True)
         payload["concepts"] = self._format_concepts(data["tags"])
-        self.publish(payload)
+        await self.publish(payload)
         return {}
 
-    def _request(self, service, data=None, method="POST", params=None):
+    async def _request(
+        self, service: str, data: dict | None = None, method: str = "POST", params: dict | None = None
+    ) -> dict:
         url = urljoin(self.base_url, service)
-        r = session.request(method, url, json=data, auth=(self.user, self.key), params=params, timeout=TIMEOUT)
 
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError(
-                "Unexpected return code ({status_code}) from {name}: {msg}".format(
-                    name=self.name,
-                    status_code=r.status_code,
-                    msg=r.text,
+        http_client = await self.http_session()
+        async with http_client.request(method, url, json=data, auth=self.auth_header, params=params) as r:
+            if r.status != 200:
+                raise SuperdeskApiError.proxyError(
+                    "Unexpected return code ({status_code}) from {name}: {msg}".format(
+                        name=self.name,
+                        status_code=r.status,
+                        msg=r.text,
+                    )
                 )
-            )
-        return r.json()
+            return await r.json()
 
-    def _request_images(self, service, data=None, method="POST", params=None):
+    async def _request_images(
+        self, service: str, data: list[dict] | None = None, method: str = "POST", params: dict | None = None
+    ) -> list[dict]:
         url = urljoin(self.image_base_url, service)
-        r = session.request(
-            method, url, json=data, headers={"x-api-key": self.image_key}, params=params, timeout=TIMEOUT
-        )
-        if r.status_code != 200:
-            raise SuperdeskApiError.proxyError(
-                "Unexpected return code ({status_code}) from {name}: {msg}".format(
-                    name=self.name,
-                    status_code=r.status_code,
-                    msg=r.text,
+
+        http_client = await self.http_session()
+        async with http_client.request(
+            method, url, json=data, headers={"x-api-key": self.image_key}, params=params
+        ) as r:
+            if r.status != 200:
+                raise SuperdeskApiError.proxyError(
+                    "Unexpected return code ({status_code}) from {name}: {msg}".format(
+                        name=self.name,
+                        status_code=r.status,
+                        msg=r.text,
+                    )
                 )
-            )
-        return r.json()
+            return await r.json()
 
     def _format_concepts(self, tags):
         concepts = []
