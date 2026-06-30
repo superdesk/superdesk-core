@@ -40,7 +40,7 @@ jobs:
             xpack.security.enabled: false
 
     steps:
-    - uses: actions/checkout@v6.0.3
+    - uses: actions/checkout@v7.0.0
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
@@ -62,7 +62,7 @@ jobs:
         python-version: ['3.12']
 
     steps:
-    - uses: actions/checkout@v6.0.3
+    - uses: actions/checkout@v7.0.0
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
@@ -108,7 +108,7 @@ jobs:
             xpack.security.enabled: false
 
     steps:
-    - uses: actions/checkout@v6.0.3
+    - uses: actions/checkout@v7.0.0
 
     - uses: actions/setup-python@v6
       with:
@@ -134,7 +134,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v6.0.3
+    - uses: actions/checkout@v7.0.0
 
     - uses: actions/setup-python@v6
       with:
@@ -159,7 +159,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v6.0.3
+    - uses: actions/checkout@v7.0.0
 
     - uses: actions/setup-python@v6
       with:
@@ -181,7 +181,7 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v6.0.3
+    - uses: actions/checkout@v7.0.0
 
     - uses: actions/setup-python@v6
       with:
