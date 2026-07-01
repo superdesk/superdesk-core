@@ -393,7 +393,7 @@ class IMatrics(AIServiceBase, AsyncHttpClientSessionMixin):
                     "Unexpected return code ({status_code}) from {name}: {msg}".format(
                         name=self.name,
                         status_code=r.status,
-                        msg=r.text,
+                        msg=await r.text(),
                     )
                 )
             return await r.json()
@@ -412,7 +412,7 @@ class IMatrics(AIServiceBase, AsyncHttpClientSessionMixin):
                     "Unexpected return code ({status_code}) from {name}: {msg}".format(
                         name=self.name,
                         status_code=r.status,
-                        msg=r.text,
+                        msg=await r.text(),
                     )
                 )
             return await r.json()
