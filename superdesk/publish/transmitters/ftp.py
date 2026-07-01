@@ -15,8 +15,8 @@ from urllib.parse import urlparse
 from io import BytesIO
 
 from superdesk.core import get_current_app
-from superdesk.ftp import ftp_connect
-from superdesk.publish import register_transmitter, registered_transmitter_file_providers
+from superdesk.ftp import ftp_connect, FTPClient
+from superdesk.publish import register_transmitter, registered_transmitter_file_providers, TransmitterFileEntry
 from superdesk.publish.publish_service import get_publish_service, PublishService
 from superdesk.errors import PublishFtpError
 from superdesk.media.renditions import get_rendition_file_name
@@ -71,38 +71,37 @@ class FTPPublishService(PublishService):
                 if config.get("push_associated", False):
                     # Set the working directory for the associated files
                     if "associated_path" in config and config.get("associated_path"):
-                        ftp.cwd("/" + config.get("associated_path", "").lstrip("/"))
+                        await ftp.change_directory("/" + config.get("associated_path", "").lstrip("/"))
 
                     item = await self._get_published_item(queue_item)
                     if item:
-                        self._copy_published_media_files(item, ftp)
+                        await self._copy_published_media_files(item, ftp)
 
                     # If the directory was changed to push associated files change it back
                     if "associated_path" in config and config.get("associated_path"):
-                        ftp.cwd("/" + config.get("path").lstrip("/"))
+                        await ftp.change_directory("/" + config.get("path").lstrip("/"))
 
                 filename = get_publish_service().get_filename(queue_item)
                 b = BytesIO(queue_item.get("encoded_item", queue_item.get("formatted_item").encode("UTF-8")))
-                ftp.storbinary("STOR " + filename, b)
+                await ftp.upload_data(filename, b)
         except PublishFtpError:
             raise
         except Exception as ex:
             raise await PublishFtpError.ftpError(ex, queue_item.get("destination")).send_notifications()
 
-    def _copy_published_media_files(self, item, ftp):
-        media = {}
+    async def _copy_published_media_files(self, item: dict, ftp: FTPClient):
+        media: dict[str, TransmitterFileEntry] = {}
         for get_files in registered_transmitter_file_providers:
             media.update(get_files(self.NAME, item))
 
         # Retrieve the list of files that currently exist in the FTP server
-        remote_items = []
-        ftp.retrlines("LIST", remote_items.append)
+        remote_items = [str(path) for path, _info in await ftp.list()]
 
         app = get_current_app()
         for media_id, rendition in media.items():
             if not self._media_exists(rendition, remote_items):
-                binary = app.media.get(media_id, resource=rendition.get("resource", "upload"))
-                self._transmit_media(binary, rendition, ftp)
+                binary = await app.media.get_async(media_id, resource=rendition.get("resource", "upload"))
+                await self._transmit_media(binary, rendition, ftp)
 
     def _media_exists(self, rendition, items):
         for file in items:
@@ -110,8 +109,8 @@ class FTPPublishService(PublishService):
                 return True
         return False
 
-    def _transmit_media(self, binary, rendition, ftp):
-        ftp.storbinary("STOR " + get_rendition_file_name(rendition), binary)
+    async def _transmit_media(self, binary: bytes, rendition: TransmitterFileEntry, ftp: FTPClient):  # type: ignore[override]
+        await ftp.upload_data(get_rendition_file_name(rendition), binary)
 
 
 register_transmitter("ftp", FTPPublishService(), errors)

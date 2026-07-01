@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import aiofiles
 from superdesk.publish import publish_service
 from superdesk.publish import register_transmitter
 from superdesk.errors import PublishFileError
@@ -30,8 +31,11 @@ class FilePublishService(publish_service.PublishService):
             file_path = config["file_path"]
             if not path.isabs(file_path):
                 file_path = "/" + file_path
-            with open(path.join(file_path, publish_service.get_publish_service().get_filename(queue_item)), "wb") as f:
-                f.write(queue_item["encoded_item"])
+
+            async with aiofiles.open(
+                path.join(file_path, publish_service.get_publish_service().get_filename(queue_item)), "wb"
+            ) as f:
+                await f.write(queue_item["encoded_item"])
         except Exception as ex:
             raise await PublishFileError.fileSaveError(ex, config).send_notifications()
 

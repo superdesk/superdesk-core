@@ -12,3 +12,6 @@ requires_eve_resource_async_event = mark.skip(reason="Requires eve resources to 
 
 # Skips the test, requires investigation into the cause of the test failure
 investigate_cause_of_error = mark.skip(reason="Test fails due to currently unknown reason")
+
+# to be done in another task
+to_be_done_in_another_task = mark.skip(reason="Test fails and will be fixed in another task")

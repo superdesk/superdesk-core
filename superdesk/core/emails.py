@@ -125,7 +125,7 @@ class EmailFactory:
             password=None if not config.password else config.password,
         )
 
-    async def _send(self, client: aiosmtplib.SMTP, request: EmailRequest) -> None:
+    async def _send(self, client: aiosmtplib.SMTP, request: EmailRequest, raise_exceptions: bool = False) -> None:
         lock_id = f"email:{_get_request_hash(request)}" if request.use_lock else None
         if lock_id and not lock(lock_id, expire=120):
             logger.error(
@@ -140,22 +140,32 @@ class EmailFactory:
             if errors:
                 for recipient, error_details in errors.items():
                     code, msg = error_details
+                    if raise_exceptions and 500 <= int(code) <= 599:
+                        raise aiosmtplib.SMTPResponseException(code, msg)
                     logger.error(f"Failed to deliver email: error {code}", extra={"recipient": recipient, "error": msg})
         except aiosmtplib.SMTPAuthenticationError:
             logger.exception("Authentication failed. Check username and password.", extra={"subject": request.subject})
+            if raise_exceptions:
+                raise
         except aiosmtplib.SMTPServerDisconnected:
             logger.exception("Server unexpectedly disconnected mid-transaction.", extra={"subject": request.subject})
+            if raise_exceptions:
+                raise
         except aiosmtplib.SMTPException as e:
             logger.exception("A general SMTP error occurred", extra={"subject": request.subject, "error": str(e)})
+            if raise_exceptions:
+                raise
         except OSError as e:
             logger.exception("OSError while sending email", extra={"subject": request.subject, "error": str(e)})
+            if raise_exceptions:
+                raise
         finally:
             if lock_id:
                 unlock(lock_id, remove=True)
 
-    async def send(self, request: EmailRequest) -> None:
+    async def send(self, request: EmailRequest, raise_exceptions: bool = False) -> None:
         async with self.get_client() as client:
-            await self._send(client, request)
+            await self._send(client, request, raise_exceptions)
 
     async def send_bulk_email(self, requests: list[EmailRequest]) -> None:
         async with self.get_client() as client:
@@ -191,6 +201,7 @@ async def send_email(
     bcc: list[EmailAddress] | None = None,
     attachments: list[EmailAttachment] | None = None,
     use_lock: bool = True,
+    raise_exceptions: bool = False,
 ) -> None:
     if get_config(bool, "E2E", False):
         return
@@ -206,5 +217,6 @@ async def send_email(
             bcc=bcc,
             attachments=attachments,
             use_lock=use_lock,
-        )
+        ),
+        raise_exceptions=raise_exceptions,
     )

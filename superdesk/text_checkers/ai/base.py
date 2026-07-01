@@ -52,6 +52,6 @@ class AIServiceBase(metaclass=AIServiceRegisterer):
         return self.name.title()
 
     @abc.abstractmethod
-    def analyze(self, item: dict) -> dict:
+    async def analyze(self, item: dict) -> dict:
         """Analyze article"""
         pass
