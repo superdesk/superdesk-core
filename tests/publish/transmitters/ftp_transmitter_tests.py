@@ -136,7 +136,7 @@ class FTPPublishServiceTestCase(TestCase):
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
     )
-    async def test_with_associations(self, ftp_connect_mock, *args):
+    async def test_with_associations(self, _get_renditions_spec_mock, ftp_connect_mock, *args):
         item = {
             "associations": {
                 "featuremedia": ASSOCIATIONS["featuremedia"],
@@ -158,7 +158,7 @@ class FTPPublishServiceTestCase(TestCase):
         "superdesk.publish.transmitters.file_providers.associations.get_renditions_spec",
         return_value={"16-9": {}, "4-3": {}},
     )
-    async def test_with_association_and_embed(self, ftp_connect_mock, *args):
+    async def test_with_association_and_embed(self, _get_renditions_spec_mock, ftp_connect_mock, *args):
         item = {"associations": ASSOCIATIONS}
 
         service = FTPPublishService()

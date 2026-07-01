@@ -110,6 +110,7 @@ class HTTPPushService(PublishService, AsyncHttpClientSessionMixin):
             async with http_client.post(url, headers=headers, data=data) as resp:
                 resp.raise_for_status()
                 yield resp
+                return
         except aiohttp.ClientResponseError as error:
             message = f"HTTPPush Response Error {error.status} {error.message}"
             logger.exception(message)
