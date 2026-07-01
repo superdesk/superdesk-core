@@ -13,6 +13,8 @@ import json
 import hmac
 import logging
 import asyncio
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 import aiohttp
 
@@ -101,12 +103,13 @@ class HTTPPushService(PublishService, AsyncHttpClientSessionMixin):
             HTTPPushService.http_timeout = aiohttp.ClientTimeout(connect=timeouts[0], sock_read=timeouts[1])
         return super()._create_http_session()
 
-    async def _post(self, destination, url, headers, data) -> aiohttp.ClientResponse:
+    @asynccontextmanager
+    async def _post(self, destination, url, headers, data) -> AsyncIterator[aiohttp.ClientResponse]:
         try:
             http_client = await self.http_session()
             async with http_client.post(url, headers=headers, data=data) as resp:
                 resp.raise_for_status()
-                return resp
+                yield resp
         except aiohttp.ClientResponseError as error:
             message = f"HTTPPush Response Error {error.status} {error.message}"
             logger.exception(message)
@@ -131,7 +134,8 @@ class HTTPPushService(PublishService, AsyncHttpClientSessionMixin):
     async def _push_item(self, destination, data):
         resource_url = self._get_resource_url(destination)
         headers = await self._get_headers(data, destination, self.headers)
-        await self._post(destination, resource_url, headers, data)
+        async with self._post(destination, resource_url, headers, data):
+            pass
 
     async def _copy_published_media_files(self, item, destination):
         """Copy the media files for the given item to the publish_items endpoint
@@ -168,13 +172,14 @@ class HTTPPushService(PublishService, AsyncHttpClientSessionMixin):
         form.add_field("media", media, filename=str(media._id), content_type=mimetype)
         assets_url = self._get_assets_url(destination)
         headers = await self._get_headers(form, destination, {})
-        response = await self._post(destination, assets_url, headers, form)
-        if response.status not in (200, 201):
-            await self._raise_publish_error(
-                response.status,
-                Exception(f"Error pushing media file {media._id}: {response.status} {await response.text()}"),
-                destination,
-            )
+
+        async with self._post(destination, assets_url, headers, form) as response:
+            if response.status not in (200, 201):
+                await self._raise_publish_error(
+                    response.status,
+                    Exception(f"Error pushing media file {media._id}: {response.status} {await response.text()}"),
+                    destination,
+                )
 
     async def _media_exists(self, media_id, destination) -> bool:
         """Returns true if the media with the given id exists at the service identified by assets_url.
