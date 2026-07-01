@@ -145,7 +145,7 @@ class FTPPublishServiceTestCase(TestCase):
 
         service = FTPPublishService()
 
-        async with ftp_connect_mock as ftp_mock:
+        async with ftp_connect_mock() as ftp_mock:
             await service._copy_published_media_files(item, ftp_mock)
 
             ftp_mock.upload_data.assert_any_call("5e448e47016d1f63a92f03b8.jpg", b"binary")
@@ -162,7 +162,7 @@ class FTPPublishServiceTestCase(TestCase):
         item = {"associations": ASSOCIATIONS}
 
         service = FTPPublishService()
-        async with ftp_connect_mock as ftp_mock:
+        async with ftp_connect_mock() as ftp_mock:
             await service._copy_published_media_files(item, ftp_mock)
 
             ftp_mock.upload_data.assert_any_call("5e448e47016d1f63a92f03b8.jpg", b"binary")
