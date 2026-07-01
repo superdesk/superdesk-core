@@ -166,7 +166,7 @@ class HTTPPushServiceTestCase(TestCase):
         service = HTTPPushService()
 
         await service._transmit(self.item, self.subscribers)
-        self.assertTrue(self.is_item_published(self.item["item_id"]))
+        self.assertTrue(await self.is_item_published(self.item["item_id"]))
 
         self.item["formatted_item"] = json.dumps(self.formatted_item2)
         await service._transmit(self.item, self.subscribers)
