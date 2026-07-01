@@ -62,7 +62,8 @@ class AmazonSQSFIFOPublishServiceTestCase(TestCase):
         self.service = AmazonSQSFIFOPublishService()
 
     async def asyncTearDown(self):
-        await self.mock_aws.__aexit__()
+        await self.mock_aws.__aexit__(None, None, None)
+        await super().asyncTearDown()
 
     def _create_queue(self):
         self.sqs.create_queue(
