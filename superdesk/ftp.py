@@ -3,6 +3,7 @@ import socket
 import ssl
 import logging
 from collections.abc import AsyncIterator, AsyncGenerator
+from io import BytesIO
 
 import aioftp
 
@@ -16,7 +17,9 @@ logger = logging.getLogger(__name__)
 
 
 class FTPClient(aioftp.Client):
-    async def upload_data(self, filename: str, data: AsyncGenerator[bytes, None] | bytes):
+    async def upload_data(
+        self, filename: str, data: SuperdeskAsyncFile | AsyncGenerator[bytes, None] | BytesIO | bytes
+    ):
         if isinstance(data, (AsyncGenerator, SuperdeskAsyncFile)):
             async with self.upload_stream(filename) as stream:
                 async for chunk in data:
@@ -24,6 +27,10 @@ class FTPClient(aioftp.Client):
         elif isinstance(data, bytes):
             async with self.upload_stream(filename) as stream:
                 await stream.write(data)
+        elif isinstance(data, BytesIO):
+            data.seek(0)
+            async with self.upload_stream(filename) as stream:
+                await stream.write(data.read())
         else:
             raise TypeError("Invalid data type for upload")
 
