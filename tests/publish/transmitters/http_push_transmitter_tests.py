@@ -17,6 +17,8 @@ import re
 import aiohttp
 from aioresponses import aioresponses
 from yarl import URL
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 
 from superdesk.publish import SUBSCRIBER_TYPES
@@ -112,10 +114,11 @@ class HTTPPushServiceTestCase(TestCase):
 
         self.destination = self.item.get("destination", {})
 
-    async def _get_item(self, item_id: str) -> aiohttp.ClientResponse:
+    @asynccontextmanager
+    async def _get_item(self, item_id: str) -> AsyncIterator[aiohttp.ClientResponse]:
         async with aiohttp.ClientSession() as session:
             async with session.get(self.getItemURL(item_id)) as response:
-                return response
+                yield response
 
     async def is_item_published(self, item_id):
         """Return True if the item was published, False otherwise.
@@ -125,11 +128,11 @@ class HTTPPushServiceTestCase(TestCase):
         if not getattr(self, "resource_url", None):
             return
 
-        response = await self._get_item(item_id)
-        if response.status == 404:
-            return False
-        self.assertEqual(response.status, 200, "Error retrieving item from the content API")
-        return True
+        async with self._get_item(item_id) as response:
+            if response.status == 404:
+                return False
+            self.assertEqual(response.status, 200, "Error retrieving item from the content API")
+            return True
 
     def getItemURL(self, item_id):
         """Returns the URL for item read
@@ -168,8 +171,9 @@ class HTTPPushServiceTestCase(TestCase):
         self.item["formatted_item"] = json.dumps(self.formatted_item2)
         await service._transmit(self.item, self.subscribers)
 
-        response = await self._get_item(self.item["item_id"])
-        item = await response.json()
+        async with self._get_item(self.item["item_id"]) as response:
+            item = await response.json()
+
         self.assertEqual(item["headline"], "headline2")
         self.assertEqual(item["version"], 2)
 
