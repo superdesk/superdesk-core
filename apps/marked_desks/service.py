@@ -80,8 +80,6 @@ class MarkedForDesksService(AsyncBaseService):
                 marked=int(marked_desks_on),
                 item_id=item["_id"],
                 mark_id=str(doc["marked_desk"]),
-                # Included on a mark so open editors can reflect it with the real marker, not a
-                # fabricated one. Absent on an unmark, which only needs the desk id.
                 user_marked=new_mark["user_marked"] if marked_desks_on else None,
                 date_marked=new_mark["date_marked"] if marked_desks_on else None,
             )
