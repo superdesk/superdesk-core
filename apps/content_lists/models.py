@@ -10,8 +10,11 @@ from superdesk.core.resources.validators import validate_not_empty, validate_dat
 
 _http_url_adapter: TypeAdapter = TypeAdapter(AnyHttpUrl)
 
-# Validates as an HTTP(S) URL, but keeps the value a plain ``str`` so it stays
-# serializable for MongoDB storage and Celery task arguments.
+# Validates as an HTTP(S) URL and stores the WHATWG-canonical form (a bare
+# domain gets a trailing slash: ``https://x.com`` → ``https://x.com/``), so
+# equivalent spellings of the same endpoint can't coexist as duplicates. Kept
+# a plain ``str`` so it stays serializable for MongoDB storage and Celery
+# task arguments.
 HttpUrlStr = Annotated[str, BeforeValidator(lambda value: str(_http_url_adapter.validate_python(value)))]
 
 

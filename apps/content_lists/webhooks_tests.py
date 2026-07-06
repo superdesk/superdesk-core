@@ -82,6 +82,8 @@ class ContentListWebhookEnqueueTestCase(TestCase):
 
         self.assertEqual(apply_async_mock.await_count, 1)
         kwargs = apply_async_mock.await_args.kwargs["kwargs"]
-        self.assertEqual(kwargs["url"], "https://enabled.example.com")
+        # URLs are stored WHATWG-canonicalized, so the bare domain entered in
+        # setUp gains a trailing slash.
+        self.assertEqual(kwargs["url"], "https://enabled.example.com/")
         self.assertEqual(kwargs["payload"]["list_id"], str(self.list_id))
         self.assertEqual(kwargs["payload"]["event"], "content_list:items_updated")
