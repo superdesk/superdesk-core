@@ -5,10 +5,10 @@ from superdesk.text_checkers.ai.imatrics import IMatrics
 
 
 class IMatricsTransmitter(PublishService):
-    def _transmit(self, queue_item, subscriber):
+    async def _transmit(self, queue_item, subscriber):
         imatrics = IMatrics(get_current_app())
         item = json.loads(queue_item["formatted_item"])
-        imatrics.publish(item)
+        await imatrics.publish(item)
 
 
 register_transmitter("imatrics", IMatricsTransmitter(), [])

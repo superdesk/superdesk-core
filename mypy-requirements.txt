@@ -1,6 +1,7 @@
 mypy==1.19.1
 mypy-extensions==1.1.0
 types-aioboto3==15.5.0
+types-aiofiles==25.1.0.20260518
 types-chardet~=5.0.4
 types-click==7.1.8
 types-croniter~=6.0.0

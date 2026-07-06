@@ -287,6 +287,42 @@ Default: ``None``
 
 If not set it will be the number of CPUs available.
 
+``CELERY_USE_ASYNC_WORKER``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+If enabled, will use the newer Celery async worker thread.
+
+``CELERY_ASYNC_PREFETCH_MULTIPLIER``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``10``
+
+If async workers are enabled, this will be used for the ``CELERY_WORKER_PREFETCH_MULTIPLIER`` config
+
+``CELERY_ASYNC_THREAD_MAX_TASKS``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``100``
+
+The maximum number of active tasks in the async thread. If more tasks are added, task submission
+to the thread is paused (at the client level).
+
+``CELERY_ASYNC_THREAD_RESTART_TASKS``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``20``
+
+The maximum number of active tasks in the async thread, before task submission is resumed.
+
+``CELERY_ASYNC_THREAD_BLOCK_SLEEP``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``1``
+
+The number of seconds to pause between checking the number of active tasks, once max tasks has been reached.
+
 ``HIGH_PRIORITY_QUEUE_ENABLED``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

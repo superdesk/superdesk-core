@@ -472,6 +472,8 @@ class IngestFtpError(SuperdeskIngestError):
         5001: "FTP parser could not be found",
         5002: "FTP Auth error",
         5003: "FTP Host error",
+        5004: "FTP Timeout error",
+        5005: "FTP SSL error",
     }
 
     @classmethod
@@ -489,6 +491,14 @@ class IngestFtpError(SuperdeskIngestError):
     @classmethod
     def ftpHostError(cls, exception=None, provider=None):
         return IngestFtpError(5003, exception, provider)
+
+    @classmethod
+    def ftpTimeoutError(cls, exception=None, provider=None):
+        return IngestFtpError(5004, exception, provider)
+
+    @classmethod
+    def ftpSSLError(cls, exception=None, provider=None):
+        return IngestFtpError(5005, exception, provider)
 
 
 class IngestEmailError(SuperdeskIngestError):

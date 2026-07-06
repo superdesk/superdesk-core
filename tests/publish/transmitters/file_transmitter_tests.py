@@ -52,7 +52,7 @@ class FilePublishServiceTest(TestCase):
         }
         service = FilePublishService()
         try:
-            service._transmit(item, self.subscribers)
+            await service._transmit(item, self.subscribers)
             self.assertTrue(True)
         finally:
             path = os.path.join(self.fixtures, "test_file_name-1-1.txt")
@@ -76,7 +76,7 @@ class FilePublishServiceTest(TestCase):
         }
         service = FilePublishService()
         try:
-            service._transmit(item, self.subscribers)
+            await service._transmit(item, self.subscribers)
             self.assertTrue(True)
         finally:
             path = os.path.join(self.fixtures, "test_file_name-1-1.ntf")
@@ -85,7 +85,7 @@ class FilePublishServiceTest(TestCase):
 
         item["destination"]["config"]["file_extension"] = ""
         try:
-            service._transmit(item, self.subscribers)
+            await service._transmit(item, self.subscribers)
             self.assertTrue(True)
         finally:
             path = os.path.join(self.fixtures, "test_file_name-1-1.ntf")
@@ -111,7 +111,7 @@ class FilePublishServiceTest(TestCase):
         # with self.app.app_context():
         service = FilePublishService()
         try:
-            service._transmit(item, self.subscribers)
+            await service._transmit(item, self.subscribers)
         except PublishFileError as ex:
             self.assertEqual(str(ex), "PublishFileError Error 13000 - File publish error")
             self.assertEqual(ex.code, 13000)

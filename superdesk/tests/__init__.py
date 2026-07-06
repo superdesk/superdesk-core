@@ -42,6 +42,8 @@ from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 from superdesk.storage.proxy import ProxyMediaStorage
 from superdesk.types import User, UsersResourceModel
 
+from .mocks.emails import MockEmailFactory
+
 
 logger = logging.getLogger(__name__)
 test_user = {
@@ -89,7 +91,14 @@ def update_config(conf, auto_add_apps: bool = True, include_planning: bool = Tru
     conf["TESTING"] = True
     conf["SUPERDESK_TESTING"] = True
     conf["BCRYPT_GENSALT_WORK_FACTOR"] = 4
-    conf["CELERY_TASK_ALWAYS_EAGER"] = True
+
+    if conf.get("CELERY_USE_ASYNC_WORKER"):
+        conf["CELERY_TASK_ALWAYS_EAGER"] = False
+        conf["CELERY_WORKER_TASK_ACKS_LATE"] = True
+        conf["CELERY_WORKER_TASK_ACKS_ON_FAILURE_OR_TIMEOUT"] = True
+    else:
+        conf["CELERY_TASK_ALWAYS_EAGER"] = True
+
     conf["CELERY_BEAT_SCHEDULE_FILENAME"] = "./testschedule.db"
     conf["CELERY_BEAT_SCHEDULE"] = {}
     conf["CONTENT_EXPIRY_MINUTES"] = 99
@@ -204,6 +213,8 @@ def setup_config(config, auto_add_apps: bool = True):
     else:
         logger.warning("Can't find local settings")
 
+    app_config["CELERY_USE_ASYNC_WORKER"] = config.get("CELERY_USE_ASYNC_WORKER", False)
+    app_config["CELERY_TASK_ALWAYS_EAGER"] = config.get("CELERY_TASK_ALWAYS_EAGER", False)
     update_config(app_config, auto_add_apps)
 
     app_config.setdefault("INSTALLED_APPS", [])
@@ -513,6 +524,7 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
     if not previous_app or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
         cfg = setup_config(config, auto_add_apps)
         app = app_factory(cfg)  # type: ignore[attr-defined]
+        app.mail = MockEmailFactory()
 
         await cleanup_db_connections(app)
         await cleanup_async_db_connections(app.async_app)

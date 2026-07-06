@@ -1,40 +1,31 @@
 import pytz
-import base64
-import unittest
-import responses
+from aioresponses import aioresponses
+import aiohttp
+from yarl import URL
 import superdesk
 
 from datetime import datetime, timedelta
 from unittest.mock import patch
 from tests.mock import resources
 
-from superdesk.core import json
-from superdesk.flask import Flask
-from superdesk.json_utils import SuperdeskJSONEncoder
+from superdesk.tests import TestCase
 from superdesk.publish.formatters.imatrics import IMatricsFormatter
 from superdesk.publish.transmitters.imatrics import IMatricsTransmitter
 
 
-class IMatricsTransmitterTestCase(unittest.TestCase):
-    def setUp(self):
-        self.app = Flask(__name__)
-        self.app.config.update(
-            {
-                "IMATRICS_BASE_URL": "https://webdemo.imatrics.com/api/",
-                "IMATRICS_USER": "foo",
-                "IMATRICS_KEY": "key",
-            }
-        )
+class IMatricsTransmitterTestCase(TestCase):
+    app_config = {
+        "IMATRICS_BASE_URL": "https://webdemo.imatrics.com/api/",
+        "IMATRICS_USER": "foo",
+        "IMATRICS_KEY": "key",
+    }
 
-    @responses.activate
     async def test_publish_article(self):
         start = datetime(2020, 10, 8, 10, 0, 0, tzinfo=pytz.UTC)
-        async with self.app.app_context():
+        with aioresponses() as mock_http:
             with patch.dict(superdesk.resources, resources):
-                responses.add(
-                    responses.POST,
-                    url=self.app.config["IMATRICS_BASE_URL"] + "article/store",
-                    json={"uuid": "guid"},
+                mock_http.post(
+                    self.app.config["IMATRICS_BASE_URL"] + "article/store", status=200, payload={"uuid": "guid"}
                 )
                 formatter = IMatricsFormatter()
                 subscriber = {}
@@ -110,13 +101,16 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
                         },
                     ],
                 }
-                queue_item = {"formatted_item": formatter.format(item, subscriber)[0][1]}
-                transmitter._transmit(queue_item, subscriber)
-                self.assertEqual(len(responses.calls), 1)
+                queue_item = {"formatted_item": (await formatter.format(item, subscriber))[0][1]}
+                await transmitter._transmit(queue_item, subscriber)
+
+                requests = mock_http.requests[("POST", URL("https://webdemo.imatrics.com/api/article/store"))]
+                self.assertEqual(len(requests), 1)
                 self.assertEqual(
-                    "Basic {}".format(base64.b64encode("foo:key".encode()).decode()),
-                    responses.calls[0].request.headers["Authorization"],
+                    requests[0].kwargs["auth"],
+                    aiohttp.BasicAuth("foo", "key"),
                 )
+
                 self.maxDiff = None
                 self.assertEqual(
                     {
@@ -172,5 +166,5 @@ class IMatricsTransmitterTestCase(unittest.TestCase):
                             "another one",
                         ],
                     },
-                    json.loads(responses.calls[0].request.body.decode()),
+                    requests[0].kwargs["json"],
                 )

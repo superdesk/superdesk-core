@@ -6,10 +6,10 @@ jobs:
   black:
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.12']
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v6.0.3
     - uses: actions/setup-python@v6
       with:
         cache: 'pip'
@@ -20,10 +20,10 @@ jobs:
   flake8:
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.12']
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v6.0.3
     - uses: actions/setup-python@v6
       with:
         cache: 'pip'
@@ -34,10 +34,10 @@ jobs:
   mypy:
     strategy:
       matrix:
-        python-version: ['3.10', '3.12']
+        python-version: ['3.12']
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v6.0.3
     - uses: actions/setup-python@v6
       with:
         cache: 'pip'

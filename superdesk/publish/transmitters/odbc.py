@@ -10,6 +10,8 @@
 
 import json
 
+from quart.utils import run_sync
+
 from superdesk.core import get_app_config
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
@@ -49,14 +51,19 @@ class ODBCPublishService(PublishService):
         config = queue_item.get("destination", {}).get("config", {})
 
         try:
-            with pyodbc.connect(config["connection_string"]) as conn:
-                item = json.loads(queue_item["formatted_item"])
-
-                ret = self._CallStoredProc(conn, procName=config["stored_procedure"], paramDict=item)
-                conn.commit()
-            return ret
+            # Note: No suitable library found for ODBC, so pushing this to a separate thread
+            # so we aren't holding up the current event loop
+            return await run_sync(self._store_data)(
+                config["connection_string"], json.loads(queue_item["formatted_item"]), config["stored_procedure"]
+            )
         except Exception as ex:
             raise await PublishODBCError.odbcError(ex, config).send_notifications()
+
+    def _store_data(self, connection_string, data, stored_procedure):
+        with pyodbc.connect(connection_string) as conn:
+            ret = self._CallStoredProc(conn, procName=stored_procedure, paramDict=data)
+            conn.commit()
+        return ret
 
     def _CallStoredProc(self, conn, procName, paramDict):
         params = ""

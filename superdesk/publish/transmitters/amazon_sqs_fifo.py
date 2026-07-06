@@ -8,13 +8,17 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-import boto3
+import asyncio
+import logging
+
+from aiohttp import ClientConnectionError
+import aioboto3
 from botocore.exceptions import EndpointConnectionError, ConnectionClosedError, ClientError, NoCredentialsError
-from urllib3.exceptions import NewConnectionError
 
 from superdesk.publish import publish_service, register_transmitter
 from superdesk.errors import PublishAmazonSQSError
 
+logger = logging.getLogger(__name__)
 errors = [
     PublishAmazonSQSError.connectionError().get_error_description(),
     PublishAmazonSQSError.clientError().get_error_description(),
@@ -50,24 +54,33 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
 
     async def _send_to_sqs(self, config, message_body, destination):
         try:
-            sqs = boto3.resource(
+            session = aioboto3.Session()
+            async with session.client(
                 "sqs",
                 aws_access_key_id=config.get("access_key_id"),
                 aws_secret_access_key=config.get("secret_access_key"),
                 region_name=config.get("region"),
                 endpoint_url=config.get("endpoint_url"),
-            )
-            queue = sqs.get_queue_by_name(QueueName=config.get("queue_name"))
-            queue.send_message(
-                MessageBody=message_body,
-                MessageGroupId=config.get("message_group_id"),
-            )
+            ) as sqs:
+                response = await sqs.get_queue_url(QueueName=config.get("queue_name"))
+                queue_url = response["QueueUrl"]
+
+                await sqs.send_message(
+                    QueueUrl=queue_url,
+                    MessageBody=message_body,
+                    MessageGroupId=config.get("message_group_id"),
+                )
         except NoCredentialsError:
             raise
-        except (EndpointConnectionError, ConnectionClosedError, NewConnectionError) as error:
+        except (EndpointConnectionError, ConnectionClosedError, ClientConnectionError) as error:
             raise await PublishAmazonSQSError.connectionError(error, destination).send_notifications()
         except ClientError as error:
             raise await PublishAmazonSQSError.clientError(error, destination).send_notifications()
+        except asyncio.TimeoutError as error:
+            raise await PublishAmazonSQSError.connectionError(error, destination).send_notifications()
+        except asyncio.CancelledError:
+            logger.exception("AmazonSQSFIFOPublishService Asyncio Task Cancelled")
+            raise
         except Exception as error:
             raise await PublishAmazonSQSError.sendMessageError(error, destination).send_notifications()
 
@@ -87,7 +100,7 @@ class AmazonSQSFIFOPublishService(publish_service.PublishService):
             except NoCredentialsError as error:
                 raise PublishAmazonSQSError.credentialsError(error, destination)
 
-    def _transmit_media(self, media, destination):
+    async def _transmit_media(self, media, destination):
         # Not supported
         pass
 
