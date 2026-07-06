@@ -12,6 +12,8 @@ from superdesk.default_settings import DATE_FORMAT
 from .models import ContentList, ContentListItem
 from .webhooks import enqueue_webhook_deliveries
 
+ITEMS_UPDATED_EVENT = "content_list:items_updated"
+
 
 class ContentListsService(AsyncResourceService[ContentList]):
     async def on_update(self, updates: dict[str, Any], original: ContentList) -> None:
@@ -101,10 +103,10 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         # Tell every open client (including the editor's other tabs) that this
         # list's items changed, so they can live-refresh instead of waiting for
         # a manual page reload.
-        push_notification("content_list:items_updated", list_id=str(list_id))
+        push_notification(ITEMS_UPDATED_EVENT, list_id=str(list_id))
 
         # Notify external subscribers (webhooks) of the item change out of band.
-        await enqueue_webhook_deliveries("content_list:items_updated", list_id)
+        await enqueue_webhook_deliveries(ITEMS_UPDATED_EVENT, list_id)
 
         return result
 
