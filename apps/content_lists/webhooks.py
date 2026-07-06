@@ -27,13 +27,20 @@ async def enqueue_webhook_deliveries(event: str, list_id: ObjectId) -> None:
     Reads matching webhooks in the request's async context, then hands each
     delivery off to a Celery task so the slow outbound HTTP never blocks the
     API request that triggered the change.
+
+    Never raises: by the time this runs the triggering change is already
+    committed, so a broker outage must not fail the request — the error is
+    logged and the deliveries are dropped.
     """
-    webhooks = await ContentListWebhooksService().get_all_list({"enabled": True})
-    payload = {"event": event, "list_id": str(list_id)}
-    for webhook in webhooks:
-        if list_id in webhook.excluded_lists:
-            continue
-        await deliver_content_list_webhook.apply_async(kwargs={"url": webhook.url, "payload": payload})
+    try:
+        webhooks = await ContentListWebhooksService().get_all_list({"enabled": True})
+        payload = {"event": event, "list_id": str(list_id)}
+        for webhook in webhooks:
+            if list_id in webhook.excluded_lists:
+                continue
+            await deliver_content_list_webhook.apply_async(kwargs={"url": webhook.url, "payload": payload})
+    except Exception:
+        logger.exception("Failed to enqueue content list webhook deliveries for list %s", list_id)
 
 
 @celery.task(bind=True, max_retries=WEBHOOK_MAX_RETRIES, soft_time_limit=30)
