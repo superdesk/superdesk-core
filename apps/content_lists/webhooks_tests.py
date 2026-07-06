@@ -18,16 +18,16 @@ from superdesk.tests import TestCase
 
 from apps.content_lists.webhooks import (
     ContentListWebhooksService,
+    WebhookContentListDelivery,
     deliver_content_list_webhook,
     enqueue_webhook_deliveries,
 )
 
 
-class ContentListWebhookDeliveryTestCase(unittest.TestCase):
+class ContentListWebhookDeliveryTestCase(unittest.IsolatedAsyncioTestCase):
     """Unit tests for the outbound delivery task (no app context needed)."""
 
-    @mock.patch("apps.content_lists.webhooks.requests.post")
-    def test_objectid_payload_is_serialized_to_string(self, post_mock):
+    async def test_objectid_payload_is_serialized_to_string(self):
         # The Celery serializer re-casts hex-string ids back into ObjectId on the
         # worker, so the task receives an ObjectId here. Encoding must not raise
         # and must render it as its hex string. Regression for the original
@@ -35,13 +35,24 @@ class ContentListWebhookDeliveryTestCase(unittest.TestCase):
         list_id = ObjectId("6a0ce307233d76adba4d8ca8")
         payload = {"event": "content_list:items_updated", "list_id": list_id}
 
-        deliver_content_list_webhook.run("https://example.com/hook", payload)
+        response_mock = mock.MagicMock()
+        post_context = mock.MagicMock()
+        post_context.__aenter__ = mock.AsyncMock(return_value=response_mock)
+        post_context.__aexit__ = mock.AsyncMock(return_value=False)
+        session_mock = mock.MagicMock()
+        session_mock.post = mock.MagicMock(return_value=post_context)
 
-        post_mock.assert_called_once()
-        body = json.loads(post_mock.call_args.kwargs["data"])
+        with mock.patch.object(WebhookContentListDelivery, "http_session", mock.AsyncMock(return_value=session_mock)):
+            await deliver_content_list_webhook.run("https://example.com/hook", payload)
+
+        session_mock.post.assert_called_once()
+        args, kwargs = session_mock.post.call_args
+        self.assertEqual(args[0], "https://example.com/hook")
+        body = json.loads(kwargs["data"])
         self.assertEqual(body["list_id"], str(list_id))
         self.assertEqual(body["event"], "content_list:items_updated")
-        self.assertEqual(post_mock.call_args.kwargs["headers"]["Content-Type"], "application/json")
+        self.assertEqual(kwargs["headers"]["Content-Type"], "application/json")
+        response_mock.raise_for_status.assert_called_once()
 
 
 class ContentListWebhookEnqueueTestCase(TestCase):
