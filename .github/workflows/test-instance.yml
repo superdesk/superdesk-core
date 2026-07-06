@@ -8,7 +8,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ['3.10']
+        python-version: ['3.12']
 
     env:
       SKIP_SERVER_INSTALL: true
@@ -30,7 +30,7 @@ jobs:
           discovery.type: single-node
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v6.0.3
     - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}

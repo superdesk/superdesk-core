@@ -13,10 +13,12 @@ from typing_extensions import Self
 from importlib import import_module
 from datetime import datetime, timezone
 from uuid import uuid4
+import hashlib
 
 import arrow
+from quart import json
 
-from .app import get_app_config
+from .app import get_app_config, get_current_app
 from .types import DefaultNoValue
 
 GUID_TAG = "tag"
@@ -204,3 +206,15 @@ def get_nested_value(
         raise TypeError(f"Expected value at path '{path}' to be of type {expected_type}, got {type(final_value)}")
 
     return cast(NESTED_VALUE_TYPE, final_value)
+
+
+def sha(value: str | dict) -> str:
+    h = hashlib.sha256()
+    json_encoder = get_current_app().data.json_encoder_class()
+    string_value = (
+        json.dumps(value, sort_keys=True, default=json_encoder.default).encode("utf-8")
+        if isinstance(value, dict)
+        else value.encode("utf-8")
+    )
+    h.update(string_value)
+    return h.hexdigest()

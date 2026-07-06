@@ -76,7 +76,12 @@ class MarkedForDesksService(AsyncBaseService):
                     await published_service.system_update_async(published_item["_id"], updates, published_item)
 
             push_notification(
-                "item:marked_desks", marked=int(marked_desks_on), item_id=item["_id"], mark_id=str(doc["marked_desk"])
+                "item:marked_desks",
+                marked=int(marked_desks_on),
+                item_id=item["_id"],
+                mark_id=str(doc["marked_desk"]),
+                user_marked=new_mark["user_marked"] if marked_desks_on else None,
+                date_marked=new_mark["date_marked"] if marked_desks_on else None,
             )
 
             app = get_current_app().as_any()

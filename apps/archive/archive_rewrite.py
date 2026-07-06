@@ -46,7 +46,7 @@ from superdesk.metadata.utils import item_url, generate_guid
 from superdesk.workflow import is_workflow_state_transition_valid
 from superdesk.errors import SuperdeskApiError, InvalidStateTransitionError
 from superdesk.notification import push_notification
-from superdesk.signals import item_rewrite
+from superdesk.signals import item_rewrite, item_rewrite_async
 from apps.archive.archive import update_associations
 from superdesk.editor_utils import generate_fields, copy_fields
 from quart_babel import gettext as _
@@ -111,6 +111,7 @@ class ArchiveRewriteService(AsyncBaseService):
 
         # signal
         item_rewrite.send(self, item=rewrite, original=original)
+        await item_rewrite_async.send(rewrite, original)
         app = get_current_app().as_any()
 
         if update_document:

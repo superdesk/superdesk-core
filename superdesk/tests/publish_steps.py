@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-
+from aioresponses import aioresponses
 from behave import when, then  # @UnresolvedImport
 from behave.api.async_step import async_run_until_complete
 from superdesk.core import json
@@ -75,9 +75,14 @@ def then_we_pushed_1_item(context):
 
 @then("we pushed {count} items")
 def then_we_pushed_x_items(context, count):
-    history = context.http_mock.request_history
-    assert count == len(history), "there were %d calls" % (len(history),)
+    http_mock: aioresponses = context.http_mock
+    calls = [
+        json.loads(args_list.kwargs["data"]) for args_list in http_mock.requests.values() for args_list in args_list
+    ]
+
+    num_pushes = len(calls)
+    assert count == num_pushes, f"there were {num_pushes} calls"
+
     if context.text:
         context_data = json.loads(apply_placeholders(context, context.text))
-        for i, _ in enumerate(context_data):
-            assert_equal(json_match(context_data[i], history[i].json()), True, msg="item[%d]: %s" % (i, history[i]))
+        assert_equal(json_match(context_data, calls), True, msg=str(context_data) + "\n != \n" + str(calls))

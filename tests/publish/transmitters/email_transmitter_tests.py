@@ -11,9 +11,12 @@
 import os
 from unittest.mock import Mock
 
+from superdesk import json
 from superdesk.publish.transmitters.email import EmailPublishService
-from superdesk.tests import TestCase, markers
-from superdesk.publish import init_app
+from superdesk.tests import TestCase
+
+MOCK_FILENAME = "IPTC-PhotometadataRef-Std2017.1.jpg"
+MOCK_CONTENT_TYPE = "image/jpeg"
 
 
 class MockMediaFS:
@@ -25,8 +28,8 @@ class MockMediaFS:
         self.read = Mock()
         self.read.side_effect = self._read
 
-    name = "filename"
-    content_type = "image/jpeg"
+    name = MOCK_FILENAME
+    content_type = MOCK_CONTENT_TYPE
 
     def _get(self, id, resource):
         return self
@@ -51,23 +54,17 @@ class MockMail:
 
 
 class EmailPublishServiceTest(TestCase):
-    filename = "IPTC-PhotometadataRef-Std2017.1.jpg"
-
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        init_app(self.app)
-        self._media = self.app.media
         self.app.media = MockMediaFS()
-        self._mail = self.app.mail
-        self.app.mail = MockMail()
 
-    async def asyncTearDown(self):
-        self.app.mail = self._mail
-        self.app.media = self._media
-        await super().asyncTearDown()
-
-    @markers.requires_async_celery
     async def test_attachment(self):
+        item = {
+            "message_text": "Test",
+            "message_html": '<p>Test <img src="cid:MainImage"></p>',
+            "message_subject": "Test Subject",
+            "renditions": {"viewImage": {"media": "1234"}},
+        }
         queue_item = {
             "item_id": "123",
             "destination": {
@@ -82,9 +79,23 @@ class EmailPublishServiceTest(TestCase):
                 "name": "Email",
                 "format": "Email",
             },
-            "formatted_item": '{"message_text": "Test", "message_html": "<p>Test</p>", '
-            '"message_subject": "Test Subject", "renditions": {"viewImage": {"media": "1234"}}}',
+            "formatted_item": json.dumps(item),
         }
 
         transmitter = EmailPublishService()
-        transmitter._transmit(queue_item=queue_item, subscriber={})
+        with self.app.mail.record_messages() as outbox:
+            await transmitter._transmit(queue_item=queue_item, subscriber={})
+            self.assertEqual(len(outbox), 1)
+            self.assertEqual(outbox[0].subject, "Test Subject")
+            self.assertIn('<img src="cid:MainImage">', outbox[0].html)
+
+            # Get attachments from the message tree
+            attachments: list[tuple[str, str, str]] = []
+            for part in outbox[0].walk():
+                content_id = part.get("Content-ID")
+                if not content_id:
+                    continue
+
+                attachments.append((part.get_filename(), part.get_content_type(), content_id))
+
+            self.assertEqual(attachments, [(MOCK_FILENAME, MOCK_CONTENT_TYPE, "<MainImage>")])

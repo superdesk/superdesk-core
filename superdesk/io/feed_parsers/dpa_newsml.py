@@ -72,9 +72,9 @@ class DPAFeedParser(NewsMLTwoFeedParser):
 
             item["body_html"] = "".join(etree.tostring(child, encoding="unicode", method="html") for child in tree)
 
-    def parse_content_meta(self, tree, item):
+    async def parse_content_meta(self, tree, item):
         self.parse_keywords(tree, item)
-        return super().parse_content_meta(tree, item)
+        return await super().parse_content_meta(tree, item)
 
     def parse_keywords(self, tree, item):
         item["keywords"] = []

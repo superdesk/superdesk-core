@@ -20,7 +20,6 @@ import sentry_sdk
 
 from pydantic import ValidationError
 from celery import Celery
-from flask_mail import Mail
 from quart_babel import Babel
 from babel import parse_locale
 from eve.auth import TokenAuth
@@ -71,6 +70,7 @@ from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.resources import ResourceRestEndpoints, ResourceConfig
 from superdesk.core.resources.validators import convert_pydantic_validation_error_for_response
 from superdesk.core.web import NullEndpoint
+from superdesk.core.emails import EmailFactory
 
 SUPERDESK_PATH = os.path.abspath(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 
@@ -579,7 +579,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     )
 
     app.jinja_loader = custom_loader
-    app.mail = Mail(app)
+    app.mail = EmailFactory()
     cache_backend.init_app(app)
     setup_apm(app)
 

@@ -308,8 +308,15 @@ CELERY_BROKER_URL = BROKER_URL
 
 #: celery task config
 CELERY_TASK_ALWAYS_EAGER = strtobool(env("CELERY_ALWAYS_EAGER", "false"))
-CELERY_TASK_SERIALIZER = "json"
-CELERY_TASK_PROTOCOL = 1
+CELERY_TASK_SERIALIZER = "context-aware/json"
+
+#: Celery protocol to use
+#:
+#: .. versionchanged:: 3.6
+#:    Default value changed from `1` to `2`
+#:
+CELERY_TASK_PROTOCOL = 2
+
 CELERY_TASK_IGNORE_RESULT = True
 CELERY_TASK_SEND_EVENTS = False
 
@@ -320,6 +327,36 @@ CELERY_WORKER_LOG_FORMAT = "%(message)s level=%(levelname)s process=%(processNam
 CELERY_WORKER_TASK_LOG_FORMAT = " ".join([CELERY_WORKER_LOG_FORMAT, "task=%(task_name)s task_id=%(task_id)s"])
 CELERY_WORKER_CONCURRENCY = env("CELERY_WORKER_CONCURRENCY") or None
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
+
+#: If enabled will use the newer async celery worker runtime
+#:
+#: .. versionadded:: 3.6
+#:
+CELERY_USE_ASYNC_WORKER = strtobool(env("CELERY_USE_ASYNC_WORKER", "false"))
+
+#: If async workers are enabled, this will be used for the ``CELERY_WORKER_PREFETCH_MULTIPLIER`` config
+#:
+#: .. versionadded:: 3.6
+#:
+CELERY_ASYNC_PREFETCH_MULTIPLIER = 10
+
+#: Pauses async worker if number of tasks hits this number (high watermark)
+#:
+#: .. versionadded:: 3.6
+#:
+CELERY_ASYNC_THREAD_MAX_TASKS = 100
+
+#: Resumes async worker if number of tasks hits below or equal to this number (low watermark)
+#:
+#: .. versionadded:: 3.6
+#:
+CELERY_ASYNC_THREAD_RESTART_TASKS = 20
+
+#: How often worker process pauses when checking for low watermark
+#:
+#: .. versionadded:: 3.6
+#:
+CELERY_ASYNC_THREAD_BLOCK_SLEEP = 1
 
 #: celery routing config
 CELERY_TASK_DEFAULT_QUEUE = celery_queue("default")

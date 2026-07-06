@@ -29,7 +29,7 @@ from inspect import isawaitable
 from urllib.parse import urlparse
 from pathlib import Path
 import yaml
-import requests_mock
+import re
 
 from behave import given, when, then  # @UnresolvedImport
 from behave.api.async_step import async_run_until_complete
@@ -2505,10 +2505,9 @@ async def step_field_name_does_not_exist(context, field_name):
 @when('we publish "{item_id}" with "{pub_type}" type and "{state}" state')
 @async_run_until_complete
 async def step_impl_when_publish_url(context, item_id, pub_type, state):
-    with requests_mock.Mocker() as m:
+    with aioresponses(passthrough=["http://127.0.0.1", "http://localhost"]) as m:
         context.http_mock = m
-        m.post("mock://publish", text=json.dumps({}))
-        m.post("mock://assets", text=json.dumps({}))
+        m.post(re.compile(r"^mock://.*"), payload={}, repeat=True)
         item_id = apply_placeholders(context, item_id)
         res = await get_res("/archive/" + item_id, context)
         headers = if_match(context, res.get("_etag"))

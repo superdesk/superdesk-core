@@ -1,5 +1,9 @@
-from superdesk.emails import send_user_status_changed_email, send_activity_emails, send_email, send_translation_changed
-from superdesk.tests import TestCase, markers
+import base64
+
+from superdesk.core.emails import send_email
+from superdesk.core.types import EmailAttachment
+from superdesk.emails import send_user_status_changed_email, send_activity_emails, send_translation_changed
+from superdesk.tests import TestCase
 from unittest.mock import patch, AsyncMock
 
 
@@ -16,6 +20,25 @@ class SendEmailTestCase(TestCase):
             await send_email("foo\nbar", "admin@localhost", ["foo@example.com"], "text", "<p>html</p>")
             assert len(outbox) == 1
             assert outbox[0].subject == "foo"
+
+    async def test_send_email_with_str_attachment(self):
+        ics = "BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n"
+        with self.app.mail.record_messages() as outbox:
+            await send_email(
+                "subject",
+                "admin@localhost",
+                ["foo@example.com"],
+                "text",
+                "<p>html</p>",
+                attachments=[EmailAttachment(filename="invite", content_type="text/calendar", data=ics)],
+            )
+            assert len(outbox) == 1
+            attachments = list(outbox[0].iter_attachments())
+            assert len(attachments) == 1
+            part = attachments[0]
+            assert part.get_content_type() == "text/calendar"
+            assert part.get_filename() == "invite"
+            assert base64.b64decode(part.get_payload()).decode("utf-8") == ics
 
     async def test_send_activity_emails_error(self):
         recipients = ["foo", "bar"]

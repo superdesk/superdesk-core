@@ -15,12 +15,12 @@ LONG_DESCRIPTION = "Superdesk Server Core"
 install_requires = [
     "urllib3>=1.26,<3",
     "elasticsearch[async]<7.18",  # we are using oss version on test server
-    "flask-mail>=0.9,<0.11",
+    "aiosmtplib>=5.1.1,<5.2",
     "arrow>=0.4,<=1.4.0",
     "pillow>=9.2,<12.1",
     "bcrypt>=3.1.1,<5.1",
     "blinker>=1.3,<1.10",
-    "celery[redis]>=5.2.7,<5.7",
+    "celery[redis]>=5.6.2,<5.7",
     "cerberus>=1.3.2,<1.4",
     "feedparser>=6.0.8,<6.1",
     "hachoir<=3.3.0",
@@ -49,7 +49,7 @@ install_requires = [
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe>2.1",
     "reportlab>=3.6.11,<4.6",
-    "pyjwt>=2.4.0,<2.11",
+    "pyjwt>=2.4.0,<2.14",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
     # Async libraries
@@ -66,6 +66,8 @@ install_requires = [
     # Patch Quart, Asyncio to work with Flask extensions
     # TODO-ASYNC: Remove this with our own flask patch (as quart-flask-patch also patches asyncio)
     "quart-flask-patch>=0.3.0,<0.4",
+    "aiohttp<3.14",  # upload.feature tests are failing due to conflict with aioresponses 0.7.8
+    "aioftp>=0.27.2,<0.28",
 ]
 
 package_data = {
@@ -88,7 +90,7 @@ package_data = {
 
 setup(
     name="Superdesk-Core",
-    version="3.5.0-dev",
+    version="3.6.0-dev",
     description="Superdesk Core library",
     long_description=LONG_DESCRIPTION,
     author="petr jasek",
@@ -104,7 +106,7 @@ setup(
     extras_require={  # type: ignore[arg-type]
         "exiv2": ["pyexiv2>=2.12.0,<2.16"],
     },
-    python_requires=">=3.10",
+    python_requires=">=3.12",
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Web Environment",

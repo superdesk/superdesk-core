@@ -105,6 +105,7 @@ async def setup_providers(context):
                 "feeding_service": "ftp",
                 "feed_parser": "ninjs",
                 "is_closed": False,
+                "content_types": ["text"],
                 "config": {
                     "path_fixtures": path_to_fixtures,
                     "formatted": True,
