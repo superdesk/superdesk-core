@@ -213,6 +213,9 @@ paths:
           $ref: '#/components/responses/PreconditionRequired'
 
   /content_list_webhooks:
+    description: >
+      All webhook endpoints (including reads, since webhook URLs may embed
+      auth tokens) require the `content_lists` privilege.
     get:
       summary: List webhooks
       tags:
@@ -236,6 +239,8 @@ paths:
                       $ref: '#/components/schemas/ContentListWebhook'
                   _meta:
                     $ref: '#/components/schemas/Meta'
+        '403':
+          $ref: '#/components/responses/Forbidden'
     post:
       summary: Create a webhook
       tags:
@@ -255,6 +260,8 @@ paths:
                 $ref: '#/components/schemas/ContentListWebhook'
         '400':
           $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /content_list_webhooks/{webhookId}:
     parameters:
@@ -270,6 +277,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContentListWebhook'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
     patch:
@@ -291,6 +300,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ContentListWebhook'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
         '428':
@@ -304,6 +315,8 @@ paths:
       responses:
         '204':
           description: No content
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '412':
           $ref: '#/components/responses/PreconditionFailed'
         '428':
@@ -537,6 +550,12 @@ components:
         url:
           type: string
           format: uri
+          description: >
+            Must be an HTTP(S) URL. Stored in WHATWG-canonical form: a bare
+            domain gains a trailing slash (`https://x.com` →
+            `https://x.com/`), the scheme and host are lowercased, default
+            ports are dropped, dot segments are resolved, and reserved
+            characters are percent-encoded.
           example: https://example.com/hook
         name:
           type: string
@@ -634,6 +653,13 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
 
+    Forbidden:
+      description: Missing the `content_lists` privilege.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
     PreconditionRequired:
       description: Missing `If-Match` header.
       content:
@@ -654,4 +680,12 @@ tags:
   - name: Content List Items
     description: Items within a content list.
   - name: Content List Webhooks
-    description: Endpoints notified when a list's items change.
+    description: >
+      Endpoints notified when a list's items change. Each enabled webhook
+      whose `excluded_lists` does not contain the changed list receives a
+      `POST` with a JSON body of
+      `{"event": "content_list:items_updated", "list_id": "<id>"}` and
+      `Content-Type: application/json`. Failed deliveries (connection errors
+      or non-2xx responses) are retried up to 3 times at 60-second intervals,
+      then dropped; deliveries are queued asynchronously and never fail the
+      API request that triggered them.
