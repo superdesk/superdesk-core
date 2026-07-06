@@ -2,7 +2,8 @@ import logging
 
 import requests
 from bson import ObjectId
-from eve.io.mongo import MongoJSONEncoder
+
+from superdesk.json_utils import SuperdeskJSONEncoder
 
 from superdesk.celery_app import celery
 from superdesk.core.resources import AsyncResourceService
@@ -46,8 +47,9 @@ def deliver_content_list_webhook(self, url: str, payload: dict) -> None:
     try:
         # Encode the body ourselves: the Celery serializer re-casts hex-string
         # ids back into ObjectId on the worker, which the default requests JSON
-        # encoder cannot serialize. MongoJSONEncoder renders ObjectId/datetime.
-        body = MongoJSONEncoder().encode(payload)
+        # encoder cannot serialize. SuperdeskJSONEncoder renders ObjectId and
+        # datetime (ISO-8601).
+        body = SuperdeskJSONEncoder().encode(payload)
         response = requests.post(
             url,
             data=body,
