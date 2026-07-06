@@ -507,3 +507,84 @@ Feature: Content Lists
         Then we get deleted response
         When we get "/content_lists/#content_lists._id#"
         Then we get response code 404
+
+    @auth
+    Scenario: Empty content list webhooks
+        Given empty "content_list_webhooks"
+        When we get "/content_list_webhooks"
+        Then we get list with 0 items
+
+    @auth
+    Scenario: Create a webhook
+        When we post to "/content_list_webhooks"
+        """
+        {"url": "https://example.com/hook"}
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {"url": "https://example.com/hook", "enabled": true, "excluded_lists": []}
+        """
+
+    @auth
+    Scenario: Create a webhook with all fields
+        When we post to "/content_lists"
+        """
+        {"name": "Breaking News", "type": "manual"}
+        """
+        Then we get OK response
+        And we store response as "content_lists"
+        When we post to "/content_list_webhooks"
+        """
+        {
+            "url": "https://example.com/hook",
+            "name": "My hook",
+            "enabled": false,
+            "excluded_lists": ["#content_lists._id#"]
+        }
+        """
+        Then we get OK response
+        And we get existing resource
+        """
+        {
+            "url": "https://example.com/hook",
+            "name": "My hook",
+            "enabled": false,
+            "excluded_lists": ["#content_lists._id#"]
+        }
+        """
+
+    @auth
+    Scenario: Create webhook fails with empty url
+        When we post to "/content_list_webhooks"
+        """
+        {"url": ""}
+        """
+        Then we get error 400
+
+    @auth
+    Scenario: Update a webhook
+        When we post to "/content_list_webhooks"
+        """
+        {"url": "https://example.com/hook"}
+        """
+        Then we get OK response
+        When we patch latest
+        """
+        {"enabled": false}
+        """
+        Then we get updated response
+        And we get existing resource
+        """
+        {"url": "https://example.com/hook", "enabled": false}
+        """
+
+    @auth
+    Scenario: Delete a webhook
+        When we post to "/content_list_webhooks"
+        """
+        {"url": "https://example.com/hook"}
+        """
+        Then we get OK response
+        When we delete latest
+        Then we get deleted response

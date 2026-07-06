@@ -34,7 +34,8 @@ async def attach_article_content(items: list[dict[str, Any]]) -> None:
         articles_by_id[article["_id"]] = article
 
     for item in items:
-        article = articles_by_id.get(item.get("content"))
+        content_id = item.get("content")
+        article = articles_by_id.get(content_id) if content_id else None
         item["article_content"] = _build_article_content(article) if article else None
 
 

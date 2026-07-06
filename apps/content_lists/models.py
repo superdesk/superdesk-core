@@ -2,11 +2,20 @@ import enum
 from typing import Any, Annotated
 from datetime import datetime
 
-from bson import ObjectId
-from pydantic import Field
+from pydantic import AnyHttpUrl, BeforeValidator, Field, TypeAdapter
 
 from superdesk.core.resources import ResourceModelWithObjectId
+from superdesk.core.resources.fields import ObjectId
 from superdesk.core.resources.validators import validate_not_empty, validate_data_relation_async
+
+_http_url_adapter: TypeAdapter = TypeAdapter(AnyHttpUrl)
+
+# Validates as an HTTP(S) URL and stores the WHATWG-canonical form (a bare
+# domain gets a trailing slash: ``https://x.com`` → ``https://x.com/``), so
+# equivalent spellings of the same endpoint can't coexist as duplicates. Kept
+# a plain ``str`` so it stays serializable for MongoDB storage and Celery
+# task arguments.
+HttpUrlStr = Annotated[str, BeforeValidator(lambda value: str(_http_url_adapter.validate_python(value)))]
 
 
 class ContentListType(str, enum.Enum):
@@ -33,3 +42,11 @@ class ContentListItem(ResourceModelWithObjectId):
     sticky: bool = False
     sticky_position: int | None = None
     enabled: bool = True
+
+
+class ContentListWebhook(ResourceModelWithObjectId):
+    url: HttpUrlStr
+    name: str | None = None
+    enabled: bool = True
+    # Webhooks fire for every content list by default; ids listed here are skipped.
+    excluded_lists: list[ObjectId] = Field(default_factory=list)
