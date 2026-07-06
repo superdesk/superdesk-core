@@ -22,13 +22,11 @@ class ContentListsService(AsyncResourceService[ContentList]):
 
     async def on_created(self, docs: list[ContentList]) -> None:
         await super().on_created(docs)
-        # Let other open clients live-add the new list without a refresh.
         for doc in docs:
             push_notification("content_list:created", _id=str(doc.id))
 
     async def on_updated(self, updates: dict[str, Any], original: ContentList) -> None:
         await super().on_updated(updates, original)
-        # List metadata changed (name, limit, ...) — let open clients refresh it.
         push_notification("content_list:updated", _id=str(original.id))
 
     async def on_deleted(self, doc: ContentList) -> None:
@@ -100,13 +98,7 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         result = await lists_service.find_by_id(list_id)
         assert result is not None
 
-        # Tell every open client (including the editor's other tabs) that this
-        # list's items changed, so they can live-refresh instead of waiting for
-        # a manual page reload.
         push_notification(ITEMS_UPDATED_EVENT, list_id=str(list_id))
-
-        # Notify external subscribers (webhooks) of the item change out of band.
-        await enqueue_webhook_deliveries(ITEMS_UPDATED_EVENT, list_id)
 
         return result
 
