@@ -65,6 +65,9 @@ content_list_webhooks_config = ResourceConfig(
         item_methods=["GET", "PATCH", "DELETE"],
         auth=http_method_privilege_based_rules(
             {
+                # GET included: webhook URLs may embed auth tokens, so reads
+                # are limited to users who can manage content lists.
+                "GET": "content_lists",
                 "POST": "content_lists",
                 "PATCH": "content_lists",
                 "DELETE": "content_lists",
