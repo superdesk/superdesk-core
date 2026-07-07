@@ -17,7 +17,8 @@ from pathlib import Path
 from dataclasses import dataclass
 
 from copy import deepcopy
-from unittest.mock import patch
+from unittest.mock import patch, AsyncMock
+from aiomoto import mock_aws
 from quart import Response, Quart
 from quart.testing import QuartClient
 from werkzeug.datastructures import Authorization
@@ -246,19 +247,30 @@ def setup_config(config, auto_add_apps: bool = True):
     return {key: deepcopy(val) for key, val in app_config.items()}
 
 
-def update_config_from_step(context, config):
+async def update_config_from_step(context, config):
     context.app.config.update(config)
 
     if "MEDIA_STORAGE_PROVIDER" in config or "AMAZON_CONTAINER_NAME" in config:
         context.app.media = get_media_storage_class(context.app.config)(context.app)
 
     if "AMAZON_CONTAINER_NAME" in config:
+        storage = None
         if isinstance(context.app.media, AmazonMediaStorage):
-            m = patch.object(context.app.media, "client")
-            m.start()
+            storage = context.app.media
         elif isinstance(context.app.media, ProxyMediaStorage):
-            m = patch.object(context.app.media.storage(), "client")
+            storage = context.app.media.storage()
+
+        if storage:
+            m = patch.object(storage, "client")
             m.start()
+
+            context.mock_aws = mock_aws()
+            await context.mock_aws.__aenter__()
+
+            # Make sure the bucket exists in the mock AWS
+            bucket_name = context.app.config.get("AMAZON_CONTAINER_NAME", "Bucket")
+            storage.client_async = await storage.session_async.client("s3", **storage.connection_kwargs).__aenter__()
+            await storage.client_async.create_bucket(Bucket=bucket_name)
 
 
 async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=False, init_indexes: bool = False):
