@@ -26,13 +26,18 @@ class ThreadData(Protocol):
 
 
 class CeleryAsyncWorkerTask(HybridAppContextWorkerTask):
+    acks_late = True
+    store_async_result = False
+
     def __call__(self, *args, **kwargs):
         if self._is_always_eager():
             return super().__call__(*args, **kwargs)
 
         # Stop Celery from updating Task state, as we'll handle that manually
+        self.task_id = self.request.id
         self.request.acknowledged = True
-        return CeleryAsyncWorkerThread.get_instance().submit_to_thread(self, *args, **kwargs)
+        CeleryAsyncWorkerThread.get_instance().submit_to_thread(self, *args, **kwargs)
+        return self.update_state(state="PROCESSING")
 
     def on_task_complete(self, task_response) -> None:
         """
@@ -48,22 +53,24 @@ class CeleryAsyncWorkerTask(HybridAppContextWorkerTask):
         :param task_response: The response object representing the result of the asynchronous task.
         """
         request: Request = self.request
+        request.id = self.task_id
 
         try:
             result = task_response.result()
-            self.backend.mark_as_done(request.id, result)
+            logger.info(f"Task {self.name}[{self.task_id}] completed")
+            self.backend.mark_as_done(request.id, result, request=request, store_result=self.store_async_result)
         except self.app_errors as error:
             logger.exception(f"CeleryAsyncWorkerThread - App Error: {error}")
-            self.backend.mark_as_failure(request.id, error)
+            self.backend.mark_as_failure(request.id, error, store_result=self.store_async_result)
         except (SoftTimeLimitExceeded, TimeLimitExceeded) as error:
             logger.exception(f"CeleryAsyncWorkerThread - Task timed out: {error}")
-            self.backend.mark_as_failure(request.id, error)
+            self.backend.mark_as_failure(request.id, error, store_result=self.store_async_result)
         except asyncio.CancelledError as error:
             logger.exception(f"CeleryAsyncWorkerThread - Task cancelled: {error}")
-            self.backend.mark_as_failure(request.id, error)
+            self.backend.mark_as_failure(request.id, error, store_result=self.store_async_result)
         except Exception as error:
             logger.exception(f"CeleryAsyncWorkerThread - Task failed: {error}")
-            self.backend.mark_as_failure(request.id, error)
+            self.backend.mark_as_failure(request.id, error, store_result=self.store_async_result)
 
 
 class CeleryAsyncWorkerThread(threading.Thread):
