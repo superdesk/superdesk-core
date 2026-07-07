@@ -16,9 +16,8 @@ from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.flask import abort
 from apps.archive.common import copy_metadata_from_user_preferences
 from superdesk.media.media_operations import process_file_from_stream, decode_metadata
-from superdesk.media.renditions import generate_renditions, delete_file_on_error, get_renditions_spec
+from superdesk.media.renditions import create_renditions_in_celery, get_renditions_spec_async
 from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, ITEM_TYPE, CONTENT_TYPE
-from superdesk.upload import url_for_media
 from .common import (
     update_dates_for,
     generate_guid,
@@ -44,9 +43,11 @@ class ArchiveMediaService:
         """Create corresponding item on file upload."""
 
         app = get_current_app()
-        res = None
-        inserted = []
         for doc in docs:
+            res = None
+            file_id: str | None = None
+            delete_all_on_error = not doc.get("_import", None)
+
             if "media" not in doc or doc["media"] is None:
                 abort(400, description=_("No media found"))
             # check content type of video by python-magic
@@ -59,14 +60,19 @@ class ArchiveMediaService:
                 # get thumbnails for timeline bar
                 self.video_editor.create_timeline_thumbnails(doc.get("media"), 60)
             else:
-                file, content_type, metadata = self.get_file_from_document(doc)
-                inserted = [doc["media"]]
+                file, content_type, metadata = await self.get_file_from_document(doc)
+                file_id = doc["media"]
                 # if no_custom_crops is set to False the custom crops are generated automatically on media upload
                 # see (SDESK-4742)
-                rendition_spec = get_renditions_spec(no_custom_crops=get_app_config("NO_CUSTOM_CROPS"))
+                rendition_spec = await get_renditions_spec_async(no_custom_crops=get_app_config("NO_CUSTOM_CROPS"))
                 with timer("archive:renditions"):
-                    renditions = generate_renditions(
-                        file, doc["media"], inserted, file_type, content_type, rendition_spec, url_for_media
+                    renditions = await create_renditions_in_celery(
+                        file_id,
+                        rendition_spec,
+                        file_type,
+                        # Don't delete files if we are on the import from storage flow
+                        delete_all_on_error=delete_all_on_error,
+                        content_type=content_type,
                     )
             try:
                 await self._set_metadata(doc)
@@ -85,8 +91,8 @@ class ArchiveMediaService:
                 )
             except Exception as io:
                 logger.exception(io)
-                for file_id in inserted:
-                    delete_file_on_error(doc, file_id)
+                if delete_all_on_error and file_id:
+                    await app.media.delete_async(file_id)
                 if res:
                     self.video_editor._delete(res.get("_id"))
                 abort(500)
@@ -113,7 +119,7 @@ class ArchiveMediaService:
 
         copy_metadata_from_user_preferences(doc)
 
-    def get_file_from_document(self, doc):
+    async def get_file_from_document(self, doc):
         file = doc.get("media_fetched")
         if file:
             del doc["media_fetched"]
@@ -125,7 +131,9 @@ class ArchiveMediaService:
             content.seek(0)
             app = get_current_app()
             with timer("media:put.original"):
-                doc["media"] = app.media.put(content, filename=file_name, content_type=content_type, metadata=metadata)
+                doc["media"] = await app.media.put_async(
+                    content, filename=file_name, content_type=content_type, metadata=metadata
+                )
             return content, content_type, decode_metadata(metadata)
 
         return file, file.content_type, file.metadata
