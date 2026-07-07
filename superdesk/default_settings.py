@@ -317,7 +317,15 @@ CELERY_TASK_SERIALIZER = "context-aware/json"
 #:
 CELERY_TASK_PROTOCOL = 2
 
+# Enable Celery Task Results (used for Media file operation results)
+#:
+#: .. versionadded:: 3.6
+#:
 CELERY_TASK_IGNORE_RESULT = True
+CELERY_RESULT_BACKEND = BROKER_URL
+CELERY_RESULT_EXPIRES = 3600  # Delete results after 1 hour
+CELERY_RESULT_SERIALIZER = CELERY_TASK_SERIALIZER
+
 CELERY_TASK_SEND_EVENTS = False
 
 #: celery worker config
@@ -377,6 +385,7 @@ CELERY_TASK_QUEUES = (
         Exchange(HIGH_PRIORITY_QUEUE, type="direct"),
         routing_key=HIGH_PRIORITY_QUEUE,
     ),
+    Queue(celery_queue("media"), Exchange(celery_queue("media"), type="topic"), routing_key="media.#"),
 )
 
 CELERY_TASK_ROUTES = {
@@ -400,6 +409,7 @@ CELERY_TASK_ROUTES = {
         "queue": celery_queue("publish"),
         "routing_key": "publish.transmit",
     },
+    "superdesk.media.*": {"queue": celery_queue("media"), "routing_key": "media.operations"},
 }
 
 #: celery beat config
