@@ -11,6 +11,7 @@
 from superdesk.eve_async.service import AsyncBaseService
 from .media_references import MediaReferencesResource
 from .media_editor import MediaEditorService, MediaEditorResource
+from .renditions import create_renditions_in_celery_task  # noqa
 import superdesk
 
 

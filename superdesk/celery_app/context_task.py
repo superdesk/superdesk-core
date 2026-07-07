@@ -4,12 +4,15 @@ import werkzeug
 from quart import has_app_context, Quart
 from contextvars import ContextVar
 
+from kombu.utils.uuid import uuid
 from celery import Task
 from typing import Any
 
 from superdesk.logging import logger
 from superdesk.errors import SuperdeskError
 from superdesk.celery_app.serializer import CELERY_SERIALIZER_NAME
+
+from .task_result import AsyncTaskResult
 
 
 celery_wsgi_instance: ContextVar[Quart] = ContextVar("celery_wsgi_instance")
@@ -133,6 +136,9 @@ class HybridAppContextTask(Task):
         app = self.get_current_app()
         return bool(app.config.get("CELERY_TASK_ALWAYS_EAGER", False))
 
+    def AsyncResult(self, task_id, **kwargs):
+        return AsyncTaskResult(task_id, backend=self.backend, app=self.app, **kwargs)
+
 
 class HybridAppContextWorkerTask(HybridAppContextTask):
     """
@@ -152,7 +158,7 @@ class HybridAppContextWorkerTask(HybridAppContextTask):
             eager_result = async_result.get()
             return await eager_result if isawaitable(eager_result) else eager_result
 
-        return super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
+        return super().apply_async(args=args, kwargs=kwargs, task_id=uuid(), **other_kwargs)
 
     async def delay(self, *args, **kwargs) -> Any:
         return await self.apply_async(args, kwargs)

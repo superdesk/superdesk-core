@@ -14,7 +14,7 @@ import traceback
 import requests
 from superdesk.errors import IngestApiError, SuperdeskIngestError
 from superdesk.io.feeding_services import FeedingService
-from superdesk.media.media_operations import download_file_from_url
+from superdesk.media.media_operations import download_file_from_url, download_file_from_url_async
 
 
 class HTTPFeedingServiceBase(FeedingService):
@@ -225,6 +225,12 @@ class HTTPFeedingServiceBase(FeedingService):
         request_kwargs.update(kwargs)
         request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
         return download_file_from_url(url, request_kwargs, self.session)
+
+    async def download_file_async(self, url: str, **kwargs) -> tuple[BytesIO, str, str]:
+        request_kwargs = self.get_request_kwargs()
+        request_kwargs.update(kwargs)
+        request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
+        return await download_file_from_url_async(url, request_kwargs)
 
     async def update(self, provider, update):
         self.provider = provider

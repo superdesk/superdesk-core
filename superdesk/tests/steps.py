@@ -584,8 +584,9 @@ async def step_impl_given_resource_with_provider(context, provider):
 
 
 @given("config update")
-def given_config_update(context):
-    tests.update_config_from_step(context, json.loads(context.text))
+@async_run_until_complete
+async def given_config_update(context):
+    await tests.update_config_from_step(context, json.loads(context.text))
 
 
 @given("config")

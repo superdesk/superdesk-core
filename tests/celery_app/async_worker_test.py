@@ -110,8 +110,8 @@ class CeleryAsyncWorkerTaskTestCase(TestCase):
 
     async def test_task_hard_timeout(self):
         service = get_resource_service("system_messages")
-        await worker_test.async_task_timeout_test.delay(0.5, 1)
-        await asyncio.sleep(3)
+        await worker_test.async_task_timeout_test.delay(0.5, 3)
+        await asyncio.sleep(4)
         self.assertEqual(0, await service.count_async())
 
 
