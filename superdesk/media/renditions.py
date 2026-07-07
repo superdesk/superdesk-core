@@ -8,14 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from __future__ import absolute_import
 from typing import Dict, Optional, Tuple, Any
 from PIL import Image
 from io import BytesIO
 import logging
 from copy import deepcopy
+from celery import shared_task
+from quart_babel import gettext
 
-from superdesk.core import get_current_app, get_app_config
+from superdesk.core import get_current_app, get_app_config, get_config
+from superdesk.core.types import SuperdeskAsyncFile
 from .media_operations import process_file_from_stream
 from .media_operations import crop_image
 from .media_operations import download_file_from_url
@@ -24,12 +26,73 @@ from .media_operations import guess_media_extension
 from .image import fix_orientation
 from superdesk import get_resource_service
 from superdesk.filemeta import set_filemeta
+from superdesk.celery_app.task_result import AsyncTaskResult
+from superdesk.errors import SuperdeskApiError
 import os
 
 
 logger = logging.getLogger(__name__)
 
 
+async def create_renditions_in_celery(
+    image_id: str,
+    rendition_config: dict,
+    file_type: str,
+    resource: str = "upload",
+    delete_all_on_error: bool = False,
+    insert_metadata: bool = True,
+    temporary: bool = True,
+    content_type: str | None = None,
+) -> dict:
+    task_result: AsyncTaskResult[dict] | dict = await create_renditions_in_celery_task.delay(
+        image_id,
+        rendition_config,
+        file_type,
+        resource,
+        delete_all_on_error,
+        insert_metadata,
+        temporary,
+        content_type,
+    )
+    return await task_result.get_result_async() if isinstance(task_result, AsyncTaskResult) else task_result
+
+
+@shared_task(store_async_result=True)
+async def create_renditions_in_celery_task(
+    image_id: str,
+    rendition_config: dict,
+    file_type: str,
+    resource: str = "upload",
+    delete_all_on_error: bool = False,
+    insert_metadata: bool = True,
+    temporary: bool = True,
+    content_type: str | None = None,
+) -> AsyncTaskResult[dict]:
+    app = get_current_app()
+    media_file: SuperdeskAsyncFile = await app.media.get_async(image_id, resource=resource)
+    original_content = await media_file.to_buffer_sync()
+
+    inserted: list[str] = []
+    try:
+        return generate_renditions(
+            original_content,
+            image_id,
+            inserted,
+            file_type,
+            content_type or media_file.content_type,
+            rendition_config,
+            app.media.url_for_media,
+            insert_metadata=insert_metadata,
+            temporary=temporary,
+        )
+    except Exception as error:
+        if delete_all_on_error:
+            for file_id in inserted:
+                await app.media.delete_async(file_id)
+        raise SuperdeskApiError.internalError(gettext("Generating renditions failed"), exception=error)
+
+
+# Deprecated: Prefer to use `create_renditions_in_celery` instead
 def generate_renditions(
     original,
     media_id,
@@ -340,6 +403,7 @@ def _resize_image(content, size, format=None, keepProportions=True):
     return out, new_width, new_height
 
 
+# Deprecated: Use `get_renditions_spec_async` instead
 def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False):
     """Return the list of the needed renditions.
 
@@ -365,6 +429,30 @@ def get_renditions_spec(without_internal_renditions=False, no_custom_crops=False
     return rendition_spec
 
 
+async def get_renditions_spec_async(without_internal_renditions=False, no_custom_crops=False) -> dict:
+    """Return the list of the needed renditions.
+
+    It contains the ones defined in settings in `RENDITIONS.picture`
+    and the ones defined in vocabularies in `crop_sizes`
+
+    @return: list
+        Returns the list of renditions specification.
+    """
+    rendition_spec: dict = {}
+    # renditions required by superdesk
+    if not without_internal_renditions:
+        rendition_spec = deepcopy(get_config(dict, "RENDITIONS", {}).get("picture", {}))
+
+    if not no_custom_crops:
+        # load custom renditions sizes
+        custom_crops = await get_resource_service("vocabularies").find_one_async(req=None, _id="crop_sizes")
+        if custom_crops:
+            for crop in custom_crops.get("items"):
+                if crop.get("is_active"):
+                    rendition_spec[crop["name"]] = crop
+    return rendition_spec
+
+
 def download_file_from_feeding_service_or_directly(
     url: str, feeding_service: Optional[Any] = None, **kwargs: Dict[str, Any]
 ) -> Tuple[BytesIO, str, str]:
@@ -373,6 +461,18 @@ def download_file_from_feeding_service_or_directly(
     return download_file_from_url(url, kwargs)
 
 
+async def download_file_from_feeding_service_or_directly_async(
+    url: str, feeding_service: Any | None = None, **kwargs
+) -> tuple[BytesIO, str, str]:
+    if feeding_service is not None:
+        if hasattr(feeding_service, "download_file_async"):
+            return await feeding_service.download_file_async(url, **kwargs)
+        elif hasattr(feeding_service, "download_file"):
+            return feeding_service.download_file(url, **kwargs)
+    return download_file_from_url(url, kwargs)
+
+
+# Deprecated: Use `update_renditions_async` instead
 def update_renditions(
     item: Dict[str, Any],
     href: str,
@@ -427,7 +527,66 @@ def update_renditions(
         raise
 
 
-def transfer_renditions(
+async def update_renditions_async(
+    item: dict,
+    href: str,
+    old_item: dict | None,
+    request_kwargs: dict | None = None,
+    feeding_service: Any | None = None,
+) -> None:
+    """Update renditions for an item.
+
+    If the old_item has renditions uploaded in to media then the old rendition details are
+    assigned to the item, this avoids repeatedly downloading the same image and leaving the media entries orphaned.
+    If there is no old_item the original is downloaded and renditions are
+    generated.
+    :param item: parsed item from source
+    :param href: reference to original
+    :param old_item: the item that we have already ingested, if it exists
+    :param request_kwargs: Optional keyword arguments for the download request
+    :param feeding_service: Optional Feeding Service to use for downloading the renditions
+    :return: item with renditions
+    """
+
+    app = get_current_app()
+    file_guid: str | None = None
+    try:
+        # If there is an existing set of renditions we keep those
+        if old_item:
+            media = old_item.get("renditions", {}).get("original", {}).get("media", {})
+            if media:
+                item["renditions"] = old_item["renditions"]
+                item["mimetype"] = old_item.get("mimetype")
+                item["filemeta"] = old_item.get("filemeta")
+                item["filemeta_json"] = old_item.get("filemeta_json")
+                return
+
+        content, filename, content_type = await download_file_from_feeding_service_or_directly_async(
+            href, feeding_service, **request_kwargs or {}
+        )
+        file_type, ext = content_type.split("/")
+        metadata = process_file(content, file_type)
+        file_guid = await app.media.put_async(content, filename=filename, content_type=content_type, metadata=metadata)
+        rendition_spec = await get_renditions_spec_async()
+
+        renditions = await create_renditions_in_celery(
+            file_guid,
+            rendition_spec,
+            file_type,
+            delete_all_on_error=True,
+            content_type=content_type,
+        )
+        item["renditions"] = renditions
+        item["mimetype"] = content_type
+        set_filemeta(item, metadata)
+    except Exception as e:
+        logger.exception(e)
+        if file_guid:
+            await app.media.delete_async(file_guid)
+        raise
+
+
+async def transfer_renditions(
     renditions: Dict[str, Any],
     request_kwargs: Optional[Dict[str, Any]] = None,
     feeding_service: Optional[Any] = None,
@@ -446,17 +605,17 @@ def transfer_renditions(
     app = get_current_app()
     for rend in iter(renditions.values()):
         if rend.get("media"):
-            local = app.media.get(rend["media"])
+            local = await app.media.get_async(rend["media"])
             if local:
                 rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
                 continue
 
-        content, filename, content_type = download_file_from_feeding_service_or_directly(
+        content, filename, content_type = await download_file_from_feeding_service_or_directly_async(
             rend.get("href"), feeding_service, **request_kwargs or {}
         )
         file_type, ext = content_type.split("/")
         metadata = process_file(content, file_type)
-        file_guid = app.media.put(content, filename=filename, content_type=content_type, metadata=metadata)
+        file_guid = await app.media.put_async(content, filename=filename, content_type=content_type, metadata=metadata)
         rend["href"] = app.media.url_for_media(file_guid, content_type)
         rend["media"] = file_guid
 
