@@ -23,16 +23,16 @@ class ContentListsService(AsyncResourceService[ContentList]):
     async def on_created(self, docs: list[ContentList]) -> None:
         await super().on_created(docs)
         for doc in docs:
-            push_notification("content_list:created", _id=str(doc.id))
+            push_notification("content_list:created", _id=str(doc.id), extension="content-lists")
 
     async def on_updated(self, updates: dict[str, Any], original: ContentList) -> None:
         await super().on_updated(updates, original)
-        push_notification("content_list:updated", _id=str(original.id))
+        push_notification("content_list:updated", _id=str(original.id), extension="content-lists")
 
     async def on_deleted(self, doc: ContentList) -> None:
         await ContentListItemsService().delete_many({"list_id": doc.id})
         await super().on_deleted(doc)
-        push_notification("content_list:deleted", _id=str(doc.id))
+        push_notification("content_list:deleted", _id=str(doc.id), extension="content-lists")
 
 
 class ContentListItemsService(AsyncResourceService[ContentListItem]):
@@ -98,7 +98,7 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         result = await lists_service.find_by_id(list_id)
         assert result is not None
 
-        push_notification(ITEMS_UPDATED_EVENT, list_id=str(list_id))
+        push_notification(ITEMS_UPDATED_EVENT, list_id=str(list_id), extension="content-lists")
 
         return result
 
