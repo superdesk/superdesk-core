@@ -148,6 +148,7 @@ async def download_file_from_url_async(
             content = BytesIO()
             async for chunk in response.content.iter_chunked(1024 * 1024):
                 content.write(chunk)
+            content.seek(0)
             name, content_type = _get_name_and_content_type_from_response(content, response.headers)
             return content, name, content_type
     finally:

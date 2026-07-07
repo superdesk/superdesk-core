@@ -67,7 +67,7 @@ async def create_renditions_in_celery_task(
     insert_metadata: bool = True,
     temporary: bool = True,
     content_type: str | None = None,
-) -> AsyncTaskResult[dict]:
+) -> dict:
     app = get_current_app()
     media_file: SuperdeskAsyncFile = await app.media.get_async(image_id, resource=resource)
     original_content = await media_file.to_buffer_sync()

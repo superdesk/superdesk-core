@@ -229,6 +229,16 @@ def setup_config(config, auto_add_apps: bool = True):
     return {key: deepcopy(val) for key, val in app_config.items()}
 
 
+async def stop_storage_mocks(context):
+    storage_mock = getattr(context, "storage_mock", None)
+    if storage_mock:
+        storage_mock.stop()
+
+    mock_aws = getattr(context, "mock_aws", None)
+    if mock_aws:
+        await mock_aws.__aexit__(None, None, None)
+
+
 async def update_config_from_step(context, config):
     context.app.config.update(config)
 
@@ -243,8 +253,9 @@ async def update_config_from_step(context, config):
             storage = context.app.media.storage()
 
         if storage:
-            m = patch.object(storage, "client")
-            m.start()
+            await stop_storage_mocks(context)
+            context.storage_mock = patch.object(storage, "client")
+            context.storage_mock.start()
 
             context.mock_aws = mock_aws()
             await context.mock_aws.__aenter__()

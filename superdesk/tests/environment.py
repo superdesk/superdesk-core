@@ -19,7 +19,7 @@ from apps.prepopulate.app_initialize import app_initialize_data_handler
 from superdesk import tests
 from superdesk.factory.app import get_app
 from superdesk.default_settings import PUBLISH_MODULES
-from superdesk.tests import setup_auth_user
+from superdesk.tests import setup_auth_user, stop_storage_mocks
 from superdesk.tests.mocks import TestSearchProvider
 from superdesk.tests.steps import get_macro_path
 from superdesk.tests.setup_teardown import setup_providers, teardown_providers
@@ -168,6 +168,14 @@ def after_scenario(context, scenario):
             os.remove(get_macro_path("validate_headline_macro.py"))
         except Exception:
             pass
+
+    try:
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(stop_storage_mocks(context))
+    except Exception as e:
+        # Make sure exceptions raised are printed to the console
+        logger.exception(e)
+        raise e
 
 
 def before_step(context, step):

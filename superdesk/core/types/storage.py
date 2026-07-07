@@ -111,7 +111,7 @@ class SuperdeskAsyncFile(SuperdeskFile, ResponseBody):
         return (await self.to_buffer_sync(buffer)).read()
 
     async def to_buffer_sync(self, buffer: BytesIO | None = None) -> BytesIO:
-        """Asynchronously stream the entire file into a buffer and return as a bytes instance
+        """Asynchronously stream the entire file into a buffer and return the buffer instance
 
         .. warning::
             DO NOT USE WITH LARGE FILES

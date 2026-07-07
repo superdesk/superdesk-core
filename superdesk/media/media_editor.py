@@ -70,8 +70,9 @@ def transform(im, operation):
 async def perform_operations_in_celery(rendition: dict, operations: list[tuple[str, str | int | float]]):
     app = get_current_app()
     media_id = rendition["media"]
-    media = app.media.get(media_id)
-    out = im = Image.open(media)
+    media_file = await app.media.get_async(media_id)
+    media_buf = await media_file.to_buffer_sync()
+    out = im = Image.open(media_buf)
 
     # we apply all requested operations on original media
     for operation in operations:
@@ -96,6 +97,7 @@ async def perform_operations_in_celery(rendition: dict, operations: list[tuple[s
 
     # and save transformed media in database
     media_id = await app.media.put_async(buf, filename=filename, content_type=content_type)
+    buf.seek(0)
 
     renditions = generate_renditions(
         buf, media_id, [], "image", content_type, await get_renditions_spec_async(), app.media.url_for_media
