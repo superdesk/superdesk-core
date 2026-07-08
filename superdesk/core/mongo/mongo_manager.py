@@ -219,30 +219,19 @@ class MongoResources:
                     raise
             except OperationFailure as e:
                 if e.code in (85, 86):
-                    # raised when the definition of the index has been changed.
-                    # (https://github.com/mongodb/mongo/blob/master/src/mongo/base/error_codes.err#L87)
-
-                    # by default, drop the old index with old configuration and
-                    # create the index again with the new configuration.
+                    # Raised when an index with the same name exists but has a different
+                    # key spec or options. Avoid destructive index churn here; warn and
+                    # let operators handle explicit index migrations.
                     logger.warning(
-                        "Index '%s' on collection '%s' definition (keys/options) has changed, dropping and recreating it.",
+                        "Index '%s' on collection '%s' already exists with different definition. "
+                        "Skipping recreation. Existing error: %s. "
+                        "If needed, recreate it manually with: keys=%s, options=%s",
                         index_details.name,
                         collection.name,
+                        e,
+                        keys,
+                        kwargs,
                     )
-                    try:
-                        collection.drop_index(index_details.name)
-                        collection.create_index(keys, **kwargs)
-                    except OperationFailure as recreate_err:
-                        logger.exception(
-                            "Failed to recreate index '%s' on collection '%s': %s. "
-                            "Please create it manually with: keys=%s, options=%s",
-                            index_details.name,
-                            collection.name,
-                            recreate_err,
-                            keys,
-                            kwargs,
-                        )
-                        raise
                 else:
                     raise
 
