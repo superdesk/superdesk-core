@@ -49,6 +49,11 @@ def set_default_template_metadata(item, **kwargs):
     fields_to_exclude = get_app_config("DEFAULT_TEMPLATE_METADATA_MACRO_EXCLUDE", [])
     fields_to_override = get_app_config("DEFAULT_TEMPLATE_METADATA_MACRO_OVERRIDE", [])
 
+    # fields_meta contains client-side DraftJS editor state, not editorial metadata.
+    # It should never be copied from a template into an item, matching the behavior
+    # of render_content_template() which excludes it via TEMPLATE_DATA_IGNORE_FIELDS.
+    fields_to_exclude.append("fields_meta")
+
     """Replace some metadata from default content template"""
 
     content_template = get_default_content_template(item, **kwargs)
