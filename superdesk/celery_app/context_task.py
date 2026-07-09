@@ -123,6 +123,12 @@ class HybridAppContextTask(Task):
         self.handle_exception(exc)
 
     def _is_always_eager(self):
+        current_request = getattr(self, "request", None)
+        if current_request is None or not getattr(current_request, "id", None):
+            # If this task has not been bound to a request, then we're to process it directly
+            # This can happen when the task is called directly, instead of using `.delay` or `.apply_async`
+            return True
+
         # Prefer Celery's canonical flag because task execution can happen outside
         # the expected app-context resolution path on some runtimes.
         task_app = getattr(self, "app", None)
