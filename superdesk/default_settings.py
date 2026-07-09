@@ -1049,8 +1049,21 @@ ORGANIZATION_NAME_ABBREVIATION = env("ORGANIZATION_NAME_ABBREVIATION", "Short na
 #: max retries when transmitting an item
 MAX_TRANSMIT_RETRY_ATTEMPT = int(env("MAX_TRANSMIT_RETRY_ATTEMPT", 10))
 
-#: delay between retry attempts
-TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES = int(env("TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES", 3))
+#: initial delay before retry attempts. Subsequent retries use exponential backoff.
+TRANSMIT_RETRY_INITIAL_DELAY_MINUTES = int(
+    env("TRANSMIT_RETRY_INITIAL_DELAY_MINUTES", env("TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES", 1))
+)
+
+#: maximum delay between retry attempts when exponential backoff is applied.
+TRANSMIT_RETRY_MAX_DELAY_MINUTES = int(
+    env("TRANSMIT_RETRY_MAX_DELAY_MINUTES", env("MAX_TRANSMIT_RETRY_DELAY_MINUTES", 120))
+)
+
+#: legacy alias kept for backwards compatibility.
+MAX_TRANSMIT_RETRY_DELAY_MINUTES = TRANSMIT_RETRY_MAX_DELAY_MINUTES
+
+#: legacy alias kept for backwards compatibility.
+TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES = TRANSMIT_RETRY_INITIAL_DELAY_MINUTES
 
 #: max transmit items to be fetched from mongo at once
 MAX_TRANSMIT_QUERY_LIMIT = int(env("MAX_TRANSMIT_QUERY_LIMIT", 500))

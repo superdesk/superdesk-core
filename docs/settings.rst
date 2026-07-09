@@ -170,12 +170,19 @@ Default: ``10``
 
 Max retries attemps when transmitting an item.
 
-``TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+``TRANSMIT_RETRY_INITIAL_DELAY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Default: ``3``
+Default: ``1``
 
-Delay between retry attempts.
+Initial delay before retry attempts. Subsequent retries use exponential backoff.
+
+``TRANSMIT_RETRY_MAX_DELAY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``120``
+
+Maximum delay between retry attempts when exponential backoff is applied.
 
 ``MAX_TRANSMIT_QUERY_LIMIT``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

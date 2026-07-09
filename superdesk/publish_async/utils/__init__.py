@@ -13,6 +13,7 @@ from .common import (
     test_products_against_item,
     content_filter_to_elastic_query,
     ContentApiSubscriber,
+    compute_retry_timeout_minutes,
 )
 from .items import is_doc_targeted, get_codes, get_utc_publish_schedule, get_utc_schedule
 from .content_filters import get_content_filters_by_filter_condition, item_matches_content_filter
@@ -47,6 +48,7 @@ __all__ = [
     "test_products_against_item",
     "content_filter_to_elastic_query",
     "ContentApiSubscriber",
+    "compute_retry_timeout_minutes",
     # Content Filters
     "get_content_filters_by_filter_condition",
     "item_matches_content_filter",

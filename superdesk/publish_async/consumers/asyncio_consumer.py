@@ -10,6 +10,7 @@ from superdesk.errors import PublishHTTPPushClientError
 from superdesk.utc import utcnow
 from superdesk.resource_fields import LAST_UPDATED
 from superdesk.publish import registered_transmitters
+from superdesk.publish_async.utils import compute_retry_timeout_minutes
 
 logger = logging.getLogger(__name__)
 
@@ -102,17 +103,31 @@ class AsyncioPublishConsumer(PublishConsumer):
             logger.exception("Failed to transmit queue item", extra=log_extra)
 
             max_retry_attempt = get_config(int, "MAX_TRANSMIT_RETRY_ATTEMPT")
-            retry_attempt_delay = get_config(int, "TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES")
+            initial_retry_delay_minutes = get_config(
+                int,
+                "TRANSMIT_RETRY_INITIAL_DELAY_MINUTES",
+                get_config(int, "TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES", 1),
+            )
+            max_retry_delay_minutes = get_config(
+                int,
+                "TRANSMIT_RETRY_MAX_DELAY_MINUTES",
+                get_config(int, "MAX_TRANSMIT_RETRY_DELAY_MINUTES", 120),
+            )
             try:
-                timeout = 2 ** min(6, task.retry_attempt or retry_attempt_delay)
-                updates = {LAST_UPDATED: utcnow()}
+                retry_attempt = task.retry_attempt or 0
+                timeout_minutes = compute_retry_timeout_minutes(
+                    retry_attempt,
+                    initial_retry_delay_minutes,
+                    max_retry_delay_minutes,
+                )
+                updates: dict[str, object] = {LAST_UPDATED: utcnow()}
 
                 if task.retry_attempt < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
                     updates.update(
                         {
                             "retry_attempt": task.retry_attempt + 1,
                             "state": PublishQueueState.RETRYING,
-                            "next_retry_attempt_at": utcnow() + timedelta(minutes=timeout),
+                            "next_retry_attempt_at": utcnow() + timedelta(minutes=timeout_minutes),
                         }
                     )
                 else:
