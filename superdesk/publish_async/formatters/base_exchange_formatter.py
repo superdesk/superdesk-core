@@ -361,6 +361,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             is_content_api=destination.delivery_type == "content_api",
             item_id=request.item_id,
             publishing_action=request.published_state,
+            publish_operation=request.operation,
             item_version=item[VERSION],
             formatted_item=formatted_doc,
             published_in_package=item.get(PUBLISHED_IN_PACKAGE, None),

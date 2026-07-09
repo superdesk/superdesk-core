@@ -8,7 +8,7 @@ from superdesk.core import get_current_app
 from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 
-from superdesk.types import PublishQueueResource, SubscribersResource, PublishQueueState
+from superdesk.types import PublishQueueResource, SubscribersResource, PublishQueueState, PublishOperation
 from superdesk.publish_async.utils import generate_sequence_number
 from superdesk.notification import push_notification
 
@@ -58,6 +58,7 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
         seen_identities: set[tuple[Any, ...]] = set()
 
         for doc in instances:
+            is_resend = doc.publish_operation == PublishOperation.RESEND
             destination_identity_type, destination_identity_value = self._get_destination_identity(doc)
             identity = (
                 doc.item_id,
@@ -68,7 +69,7 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
                 destination_identity_value,
             )
 
-            if identity in seen_identities:
+            if not is_resend and identity in seen_identities:
                 existing_in_batch = identity_to_instance.get(identity)
                 if existing_in_batch:
                     created_instances.append(existing_in_batch)
@@ -85,7 +86,7 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
                 )
                 continue
 
-            existing = await self.find_one(**self._get_duplicate_lookup(doc))
+            existing = None if is_resend else await self.find_one(**self._get_duplicate_lookup(doc))
             if existing:
                 created_instances.append(existing)
                 identity_to_instance[identity] = existing
@@ -104,7 +105,8 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
                 seen_identities.add(identity)
                 continue
 
-            seen_identities.add(identity)
+            if not is_resend:
+                seen_identities.add(identity)
 
             try:
                 inserted = await super().create([doc])
@@ -112,7 +114,7 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
                 if inserted:
                     identity_to_instance[identity] = inserted[0]
             except DuplicateKeyError:
-                existing = await self.find_one(**self._get_duplicate_lookup(doc))
+                existing = None if is_resend else await self.find_one(**self._get_duplicate_lookup(doc))
                 if existing:
                     created_instances.append(existing)
                     identity_to_instance[identity] = existing
