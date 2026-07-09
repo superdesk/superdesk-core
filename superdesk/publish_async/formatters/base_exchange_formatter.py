@@ -249,9 +249,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                     lifecycle_started_at=lifecycle_started_at,
                     lifecycle_started_ms=lifecycle_started_ms,
                 )
-                tasks.append(publish_queue_item)
-
-                await publish_queue_service.create([publish_queue_item])
+                persisted_items = await publish_queue_service.create([publish_queue_item])
+                tasks.extend(persisted_items)
 
             return tasks
         else:
@@ -396,9 +395,8 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             lifecycle_started_ms=lifecycle_started_ms,
         )
 
-        await PublishQueueResource.get_service().create([publish_queue_item])
-
-        return publish_queue_item
+        persisted_items = await PublishQueueResource.get_service().create([publish_queue_item])
+        return persisted_items[0] if persisted_items else publish_queue_item
 
     def _populate_content_api_completion_timing(
         self,

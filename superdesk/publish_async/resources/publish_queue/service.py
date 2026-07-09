@@ -54,6 +54,7 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
     async def create(self, docs: Sequence[PublishQueueResource | dict[str, Any]]) -> list[PublishQueueResource]:
         instances = await self._convert_dicts_to_model(docs)
         created_instances: list[PublishQueueResource] = []
+        identity_to_instance: dict[tuple[Any, ...], PublishQueueResource] = {}
         seen_identities: set[tuple[Any, ...]] = set()
 
         for doc in instances:
@@ -68,6 +69,9 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
             )
 
             if identity in seen_identities:
+                existing_in_batch = identity_to_instance.get(identity)
+                if existing_in_batch:
+                    created_instances.append(existing_in_batch)
                 logger.warning(
                     "Skipping duplicate publish queue item in request batch",
                     extra=dict(
@@ -83,6 +87,8 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
 
             existing = await self.find_one(**self._get_duplicate_lookup(doc))
             if existing:
+                created_instances.append(existing)
+                identity_to_instance[identity] = existing
                 logger.warning(
                     "Skipping duplicate publish queue item already in queue",
                     extra=dict(
@@ -101,8 +107,15 @@ class PublishQueueService(AsyncResourceService[PublishQueueResource]):
             seen_identities.add(identity)
 
             try:
-                created_instances.extend(await super().create([doc]))
+                inserted = await super().create([doc])
+                created_instances.extend(inserted)
+                if inserted:
+                    identity_to_instance[identity] = inserted[0]
             except DuplicateKeyError:
+                existing = await self.find_one(**self._get_duplicate_lookup(doc))
+                if existing:
+                    created_instances.append(existing)
+                    identity_to_instance[identity] = existing
                 logger.warning(
                     "Skipping duplicate publish queue item",
                     extra=dict(
