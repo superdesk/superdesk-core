@@ -26,5 +26,5 @@ aioresponses==0.7.8  # TODO check upload.feature with aiohttp 3.14 after update
 -r mypy-requirements.txt
 
 -e .
--e git+https://github.com/superdesk/superdesk-planning.git@develop#egg=superdesk_planning
+-e git+https://github.com/superdesk/superdesk-planning.git@release/3.5#egg=superdesk_planning
 # -e git+https://github.com/superdesk/sams.git@develop#egg=sams_client&subdirectory=src/clients/python/
