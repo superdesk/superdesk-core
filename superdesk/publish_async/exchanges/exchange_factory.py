@@ -256,7 +256,16 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
         try:
             exchange = self.get_exchange(request)
             logger.info(f"Sending request for {request.item_id} to {exchange}")
-            return await exchange.send(request)
+            response = await exchange.send(request)
+            logger.info(
+                "Completed request for %s via %s (routed=%s, subscribers=%s, content_api_subscribers=%s)",
+                request.item_id,
+                exchange,
+                response.routed,
+                len(response.subscribers),
+                len(response.content_api_subscribers),
+            )
+            return response
         except KeyError as e:
             logger.exception("Missing key in request")
             raise SuperdeskApiError.badRequestError(
@@ -345,6 +354,13 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
         try:
             items = await self.get_pending_or_scheduled_content_for_publishing()
             if len(items) > 0:
+                logger.info(
+                    "Re-enqueueing published items for exchange processing",
+                    extra=dict(
+                        count=len(items),
+                        item_ids=[str(item.get("item_id")) for item in items[:20]],
+                    ),
+                )
                 await self.send_items(items)
         finally:
             unlock(lock_name)
@@ -489,13 +505,28 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         lookup = self._get_queue_lookup(retries, priority)
         lookup["$and"].append({"subscriber_id": subscriber_id})
-        return await (
+        tasks = await (
             await PublishQueueResource.get_service().find(
                 lookup,
                 max_results=get_config(int, "MAX_TRANSMIT_QUERY_LIMIT"),  # limit per subscriber now,
                 sort=[("_created", 1), ("published_seq_num", 1)],
             )
         ).to_list()
+
+        stale_routing_task_ids = [str(task.id) for task in tasks if task.state == PublishQueueState.ROUTING]
+        if stale_routing_task_ids:
+            logger.info(
+                "Recovered stale routing publish queue items",
+                extra=dict(
+                    subscriber_id=str(subscriber_id),
+                    retries=retries,
+                    priority=priority,
+                    count=len(stale_routing_task_ids),
+                    queue_ids=stale_routing_task_ids[:20],
+                ),
+            )
+
+        return tasks
 
 
 @celery.task(soft_time_limit=600, expires=10)
