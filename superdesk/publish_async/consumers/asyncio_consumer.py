@@ -73,7 +73,15 @@ class AsyncioPublishConsumer(PublishConsumer):
             item_headline=task.headline,
         )
         if task.state not in [PublishQueueState.ROUTING, PublishQueueState.PENDING, PublishQueueState.RETRYING]:
-            logger.warning("Transmit State is not pending/retrying for queue item", extra=log_extra)
+            logger.warning(
+                "Transmit State is not pending/retrying for queue item "
+                "(task_id=%s item_id=%s item_version=%s state=%s)",
+                task.id,
+                task.item_id,
+                task.item_version,
+                task.state,
+                extra=log_extra,
+            )
             return False
         elif task.destination is None:
             logger.error("Destination not defined in queue item", extra=log_extra)

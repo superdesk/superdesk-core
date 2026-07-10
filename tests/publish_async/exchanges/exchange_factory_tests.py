@@ -160,6 +160,47 @@ class ExchangeFactoryTestCase(TestCase):
         task_ids = [task.id for task in tasks]
         self.assertEqual(sorted(task_ids), [self.queue_items[1].id])
 
+    async def test_create_skips_duplicate_queue_items(self):
+        await SubscribersResource.get_service().create(self.subscribers)
+
+        queue_item = PublishQueueResource(  # type: ignore[call-arg]
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="destination1"),
+            subscriber_id=self.subscribers[0].id,
+            state=PublishQueueState.PENDING,
+            item_id="duplicate-item",
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        )
+        duplicate_queue_item = PublishQueueResource(  # type: ignore[call-arg]
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="destination1"),
+            subscriber_id=self.subscribers[0].id,
+            state=PublishQueueState.PENDING,
+            item_id="duplicate-item",
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        )
+
+        await PublishQueueResource.get_service().create([queue_item, duplicate_queue_item])
+
+        queue_items = [queue async for queue in PublishQueueResource.get_service().get_all()]
+        self.assertEqual(1, len(queue_items))
+
+        # Ensure duplicates are also skipped when the duplicate arrives in a later request
+        later_duplicate = PublishQueueResource(  # type: ignore[call-arg]
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="destination1"),
+            subscriber_id=self.subscribers[0].id,
+            state=PublishQueueState.PENDING,
+            item_id="duplicate-item",
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        )
+        await PublishQueueResource.get_service().create([later_duplicate])
+        queue_items = [queue async for queue in PublishQueueResource.get_service().get_all()]
+        self.assertEqual(1, len(queue_items))
+
     async def test_stale_routing_items_are_included_in_subscriber_tasks(self):
         """
         Queue items stuck in ``routing`` state older than 5 minutes should be
