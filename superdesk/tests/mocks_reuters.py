@@ -17,8 +17,9 @@ from aioresponses import CallbackResult
 from .http_mocks import mock_http
 
 
-def item_request(url: URL, params: dict, **kwargs) -> CallbackResult:
+def item_request(url: URL, **kwargs) -> CallbackResult:
     try:
+        params = kwargs.get("params") or {}
         fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../tests/io/fixtures")
         if "channel" in params:
             file = os.path.join(fixtures, params["channel"])
