@@ -13,20 +13,18 @@ import feedparser
 
 from calendar import timegm
 from collections import namedtuple
-from datetime import datetime
+from datetime import datetime, timezone
 
 from superdesk.errors import IngestApiError, ParserError
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.metadata.item import ITEM_TYPE, CONTENT_TYPE
 from superdesk.utils import merge_dicts
+from superdesk.utc import utcnow
 from superdesk.metadata.utils import generate_tag, generate_tag_from_url
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 
 from urllib.parse import quote as urlquote, urlsplit, urlunsplit
-
-
-utcfromtimestamp = datetime.utcfromtimestamp
 
 
 class RSSFeedingService(HTTPFeedingServiceBase):
@@ -138,8 +136,9 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         :return: prepared URL
         :rtype: str
         """
-        if self.auth_info:
-            userinfo_part = "{}:{}@".format(urlquote(self.auth_info["username"]), urlquote(self.auth_info["password"]))
+        username, password = self.auth_info
+        if username and password:
+            userinfo_part = "{}:{}@".format(urlquote(username), urlquote(password))
             scheme, netloc, path, query, fragment = urlsplit(url)
             netloc = userinfo_part + netloc
             url = urlunsplit((scheme, netloc, path, query, fragment))
@@ -176,7 +175,7 @@ class RSSFeedingService(HTTPFeedingServiceBase):
         # so that it will be recognized as "not up to date".
         # Also convert it to a naive datetime object (removing tzinfo is fine,
         # because it is in UTC anyway)
-        t_provider_updated = provider.get(LAST_ITEM_UPDATE, utcfromtimestamp(0))
+        t_provider_updated = provider.get(LAST_ITEM_UPDATE, datetime.fromtimestamp(0, tz=timezone.utc))
         t_provider_updated = t_provider_updated.replace(tzinfo=None)
 
         new_items = []
@@ -184,7 +183,9 @@ class RSSFeedingService(HTTPFeedingServiceBase):
 
         for entry in data.entries:
             try:
-                t_entry_updated = utcfromtimestamp(timegm(entry.updated_parsed))
+                t_entry_updated = datetime.fromtimestamp(timegm(entry.updated_parsed), tz=timezone.utc)
+                t_entry_updated = t_entry_updated.replace(tzinfo=None)
+
                 if t_entry_updated <= t_provider_updated:
                     continue
             except (AttributeError, TypeError):
@@ -219,10 +220,8 @@ class RSSFeedingService(HTTPFeedingServiceBase):
             (e.g. authentication error, resource not found, etc.)
         """
         url = self.config["url"]
-
-        response = await self.get_url(url)
-
-        return response.content
+        async with self.get_url(url) as response:
+            return await response.text()
 
     def _extract_image_links(self, rss_entry):
         """Extract URLs of all images referenced by the given RSS entry.
@@ -288,13 +287,13 @@ class RSSFeedingService(HTTPFeedingServiceBase):
             or (f.name_in_data in aliased_fields and f.name_in_data in field_aliases)
         )
 
-        utc_now = datetime.utcnow()
+        utc_now = utcnow()
         for field in fields_to_consider:
             data_field_name = field_aliases.get(field.name_in_data, field.name_in_data)
             field_value = data.get(data_field_name)
 
             if (field.type is datetime) and field_value:
-                field_value = utcfromtimestamp(timegm(field_value))
+                field_value = datetime.fromtimestamp(timegm(field_value), tz=timezone.utc)
                 field_value = utc_now if field_value > utc_now else field_value
 
             item[field.name] = field_value

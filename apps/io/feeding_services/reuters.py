@@ -9,20 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import datetime
-import traceback
 import superdesk
-import requests
 
 from superdesk.core import get_app_config
 from superdesk.resource_fields import ID_FIELD
 from superdesk.errors import IngestApiError
-from superdesk.etree import etree, ParseError
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
 from superdesk.logging import logger
 from superdesk.utc import utcnow
 from urllib.parse import urlparse, urlunparse
-from quart_babel import gettext as _
 
 
 class ReutersHTTPFeedingService(HTTPFeedingService):
@@ -121,46 +117,7 @@ class ReutersHTTPFeedingService(HTTPFeedingService):
 
         payload["token"] = await self._get_auth_token(self.provider, update=True)
         url = self._get_absolute_url(endpoint)
-
-        if not self.session:
-            self.session = requests.Session()
-
-        retries = 0
-        while True:
-            try:
-                response = self.session.get(url, params=payload, timeout=(30, 15))
-            except requests.exceptions.Timeout as ex:
-                if retries < 3:
-                    logger.warn("Reuters API timeout retrying, retries {}".format(retries))
-                    retries += 1
-                    continue
-                raise await IngestApiError.apiTimeoutError(ex, self.provider).send_notifications()
-            except requests.exceptions.TooManyRedirects as ex:
-                # Tell the user their URL was bad and try a different one
-                raise await IngestApiError.apiRedirectError(ex, self.provider).send_notifications()
-            except requests.exceptions.RequestException as ex:
-                # catastrophic error. bail.
-                raise await IngestApiError.apiRequestError(ex, self.provider).send_notifications()
-            except Exception as error:
-                traceback.print_exc()
-                raise await IngestApiError.apiGeneralError(error, self.provider).send_notifications()
-
-            if response.status_code == 404:
-                raise LookupError(_("Not found {payload}").format(payload=payload))
-
-            break
-
-        try:
-            return etree.fromstring(response.content)  # workaround for http mock lib
-        except UnicodeEncodeError as error:
-            traceback.print_exc()
-            raise await IngestApiError.apiUnicodeError(error, self.provider).send_notifications()
-        except ParseError as error:
-            traceback.print_exc()
-            raise await IngestApiError.apiParseError(error, self.provider).send_notifications()
-        except Exception as error:
-            traceback.print_exc()
-            raise await IngestApiError.apiGeneralError(error, self.provider).send_notifications()
+        return await self.get_xml(url, params=payload)
 
     def _get_absolute_url(self, endpoint):
         """
