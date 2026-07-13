@@ -87,6 +87,7 @@ class EmailFeedingService(FeedingService):
         try:
             imap = aioimaplib.IMAP4_SSL(host=host, port=port, timeout=get_config(float, "EMAIL_TIMEOUT", 10.0))
             await imap.wait_hello_from_server()
+            return imap
         except (socket.gaierror, OSError, asyncio.TimeoutError) as e:
             raise await IngestEmailError.emailHostError(exception=e, provider=provider).send_notifications()
         except asyncio.CancelledError:
@@ -109,7 +110,7 @@ class EmailFeedingService(FeedingService):
 
         return imap
 
-    async def parse_extra(self, aioimaplib: imaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
+    async def parse_extra(self, imap: aioimaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
         """Parse extra metadata
 
         This method is called after main parsing, and can be used by subclasses
