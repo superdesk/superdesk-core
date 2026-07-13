@@ -49,6 +49,7 @@ SUBSCRIBER_DECISION_REASON_NO_MATCHING_PRODUCTS = "no_matching_products"
 SUBSCRIBER_DECISION_REASON_MATCHED_GLOBAL_FILTER = "matched_global_filter"
 
 PRODUCT_FILTER_REASON_NO_FILTER_CONFIGURED = "no_filter_configured"
+PRODUCT_FILTER_REASON_FILTER_MISSING = "filter_missing"
 PRODUCT_FILTER_REASON_MATCHED_PERMITTING = "matched_permitting"
 PRODUCT_FILTER_REASON_MATCHED_BLOCKING = "matched_blocking"
 PRODUCT_FILTER_REASON_NOT_MATCHED_PERMITTING = "not_matched_permitting"
@@ -986,6 +987,29 @@ class EnqueueService:
                 content_filter.get("filter_type"),
                 doc.get(config.ID_FIELD),
             )
+            filter = service.get_cached_by_id(content_filter.get("filter_id"))
+
+        if not filter:
+            logger.warning(
+                "Product content filter missing from service cache: product_id=%s product_name=%s filter_id=%s filter_type=%s item=%s",
+                product.get(config.ID_FIELD),
+                product.get("name"),
+                content_filter.get("filter_id"),
+                content_filter.get("filter_type"),
+                doc.get(config.ID_FIELD),
+            )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "Product content filter decision: product_id=%s product_name=%s filter_id=%s filter_type=%s result=true reason=%s item=%s",
+                    product.get(config.ID_FIELD),
+                    product.get("name"),
+                    content_filter.get("filter_id"),
+                    content_filter.get("filter_type"),
+                    PRODUCT_FILTER_REASON_FILTER_MISSING,
+                    doc.get(config.ID_FIELD),
+                )
+            return True
+
         does_match = service.does_match(filter, doc, self.filters)
         result = (
             content_filter["filter_type"] == "permitting" if does_match else content_filter["filter_type"] == "blocking"
