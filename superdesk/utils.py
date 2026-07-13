@@ -21,12 +21,17 @@ import base64
 import tempfile
 import string
 import logging
+import shutil
+import asyncio
 
 from uuid import uuid4
 from datetime import datetime, timezone, timedelta
 from bson import ObjectId
 from enum import Enum
 from importlib import import_module
+
+import aiofiles
+import aiofiles.os
 from eve.utils import document_etag
 
 from superdesk.default_settings import ELASTIC_DATE_FORMAT, ELASTIC_DATETIME_FORMAT
@@ -128,7 +133,7 @@ def get_hash(input_str, salt):
     return hashed.decode("UTF-8")
 
 
-def get_sorted_files(path, sort_by=FileSortAttributes.fname, sort_order=SortOrder.asc):
+async def get_sorted_files(path, sort_by=FileSortAttributes.fname, sort_order=SortOrder.asc):
     """
     Get the list of files based on the sort order.
 
@@ -140,7 +145,10 @@ def get_sorted_files(path, sort_by=FileSortAttributes.fname, sort_order=SortOrde
     :return: list of files from the path
     """
     # get the files
-    files = [file for file in os.listdir(path) if os.path.isfile(os.path.join(path, file))]
+
+    files = [
+        file for file in await aiofiles.os.listdir(path) if await aiofiles.os.path.isfile(os.path.join(path, file))
+    ]
     if sort_by == FileSortAttributes.fname:
         files.sort(reverse=(sort_order == SortOrder.desc))
     elif sort_by == FileSortAttributes.created:
@@ -151,6 +159,10 @@ def get_sorted_files(path, sort_by=FileSortAttributes.fname, sort_order=SortOrde
         files.sort(reverse=(sort_order == SortOrder.desc))
 
     return files
+
+
+async def copy_file(src: str, dest: str) -> None:
+    await asyncio.to_thread(shutil.copy2, src, dest)
 
 
 def is_hashed(input_str):

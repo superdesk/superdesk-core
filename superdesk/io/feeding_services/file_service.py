@@ -10,9 +10,10 @@
 
 import logging
 import os
-import shutil
 from datetime import datetime
 from lxml import etree
+import aiofiles
+import aiofiles.os
 
 from superdesk.core import get_current_app
 from superdesk.errors import IngestFileError, ParserError, ProviderError
@@ -21,7 +22,7 @@ from superdesk.io.feed_parsers import XMLFeedParser
 from superdesk.io.feeding_services import FeedingService, OLD_CONTENT_MINUTES
 from superdesk.notification import push_notification
 from superdesk.utc import utc
-from superdesk.utils import get_sorted_files, FileSortAttributes
+from superdesk.utils import get_sorted_files, copy_file, FileSortAttributes
 
 logger = logging.getLogger(__name__)
 
@@ -56,9 +57,9 @@ class FileFeedingService(FeedingService):
 
     async def _test(self, provider):
         path = provider.get("config", {}).get("path", None)
-        if not os.path.exists(path):
+        if not await aiofiles.os.path.exists(path):
             raise await IngestFileError.notExistsError().send_notifications()
-        if not os.path.isdir(path):
+        if not await aiofiles.os.path.isdir(path):
             raise await IngestFileError.isNotDirError().send_notifications()
 
     async def _update(self, provider, update):
@@ -79,7 +80,7 @@ class FileFeedingService(FeedingService):
         self.path = provider.get("config", {}).get("path", None)
 
         if not self.path:
-            logger.warn(
+            logger.warning(
                 "File Feeding Service {} is configured without path. Please check the configuration".format(
                     provider["name"]
                 )
@@ -87,36 +88,39 @@ class FileFeedingService(FeedingService):
             return
 
         registered_parser = await self.get_feed_parser(provider)
-        for filename in get_sorted_files(self.path, sort_by=FileSortAttributes.created):
+        for filename in await get_sorted_files(self.path, sort_by=FileSortAttributes.created):
             try:
                 last_updated = None
                 file_path = os.path.join(self.path, filename)
-                if os.path.isfile(file_path):
-                    last_updated = self.get_last_updated(file_path)
+                if not await aiofiles.os.path.isfile(file_path):
+                    continue
 
-                    if self.is_latest_content(last_updated, provider.get("last_updated")):
-                        if self.is_empty(file_path):
-                            logger.info("Ignoring empty file {}".format(filename))
-                            continue
-                        if isinstance(registered_parser, XMLFeedParser):
-                            with open(file_path, "rb") as f:
-                                xml = etree.parse(f)
-                                parser = await self.get_feed_parser(provider, xml.getroot())
-                                item = await parser.parse(xml.getroot(), provider)
-                        else:
-                            parser = await self.get_feed_parser(provider, file_path)
-                            item = await parser.parse(file_path, provider)
+                last_updated = self.get_last_updated(file_path)
 
-                        self.after_extracting(item, provider)
-
-                        if isinstance(item, list):
-                            failed = yield item
-                        else:
-                            failed = yield [item]
-
-                        await self.move_file(self.path, filename, provider=provider, success=not failed)
+                if self.is_latest_content(last_updated, provider.get("last_updated")):
+                    if await self.is_empty(file_path):
+                        logger.info("Ignoring empty file {}".format(filename))
+                        continue
+                    elif isinstance(registered_parser, XMLFeedParser):
+                        async with aiofiles.open(file_path, "rb") as f:
+                            file_data = await f.read()
+                            xml = etree.parse(file_data)
+                            parser = await self.get_feed_parser(provider, xml.getroot())
+                            item = await parser.parse(xml.getroot(), provider)
                     else:
-                        await self.move_file(self.path, filename, provider=provider, success=False)
+                        parser = await self.get_feed_parser(provider, file_path)
+                        item = await parser.parse(file_path, provider)
+
+                    await self.after_extracting(item, provider)
+
+                    if isinstance(item, list):
+                        failed = yield item
+                    else:
+                        failed = yield [item]
+
+                    await self.move_file(self.path, filename, provider=provider, success=not failed)
+                else:
+                    await self.move_file(self.path, filename, provider=provider, success=False)
             except Exception as ex:
                 if last_updated and self.is_old_content(last_updated):
                     await self.move_file(self.path, filename, provider=provider, success=False)
@@ -126,7 +130,7 @@ class FileFeedingService(FeedingService):
 
         push_notification("ingest:update")
 
-    def after_extracting(self, article, provider):
+    async def after_extracting(self, article, provider):
         """Sub-classes should override this method if something needs to be done to the given article.
 
         For example, if the article comes from DPA provider the system needs to derive dateline
@@ -155,26 +159,26 @@ class FileFeedingService(FeedingService):
         """
 
         try:
-            if not os.path.exists(os.path.join(file_path, "_PROCESSED/")):
-                os.makedirs(os.path.join(file_path, "_PROCESSED/"))
-            if not os.path.exists(os.path.join(file_path, "_ERROR/")):
-                os.makedirs(os.path.join(file_path, "_ERROR/"))
+            if not await aiofiles.os.path.exists(os.path.join(file_path, "_PROCESSED/")):
+                await aiofiles.os.makedirs(os.path.join(file_path, "_PROCESSED/"))
+            if not await aiofiles.os.path.exists(os.path.join(file_path, "_ERROR/")):
+                await aiofiles.os.makedirs(os.path.join(file_path, "_ERROR/"))
         except Exception as ex:
             raise await IngestFileError.folderCreateError(ex, provider).send_notifications()
 
         try:
             if success:
-                shutil.copy2(os.path.join(file_path, filename), os.path.join(file_path, "_PROCESSED/"))
+                await copy_file(os.path.join(file_path, filename), os.path.join(file_path, "_PROCESSED/"))
             else:
-                shutil.copy2(os.path.join(file_path, filename), os.path.join(file_path, "_ERROR/"))
+                await copy_file(os.path.join(file_path, filename), os.path.join(file_path, "_ERROR/"))
         except Exception as ex:
             raise await IngestFileError.fileMoveError(ex, provider).send_notifications()
         finally:
-            os.remove(os.path.join(file_path, filename))
+            await aiofiles.os.remove(os.path.join(file_path, filename))
 
-    def is_empty(self, file_path):
+    async def is_empty(self, file_path):
         """Test if given file path is empty, return True if a file is empty"""
-        return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
+        return not (await aiofiles.os.path.isfile(file_path) and await aiofiles.os.path.getsize(file_path) > 0)
 
     def get_last_updated(self, file_path):
         """Get last updated time for file.
