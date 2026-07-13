@@ -249,8 +249,9 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
                     lifecycle_started_at=lifecycle_started_at,
                     lifecycle_started_ms=lifecycle_started_ms,
                 )
-                persisted_items = await publish_queue_service.create([publish_queue_item])
-                tasks.extend(persisted_items)
+                tasks.append(publish_queue_item)
+
+                await publish_queue_service.create([publish_queue_item])
 
             return tasks
         else:
@@ -361,7 +362,6 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             is_content_api=destination.delivery_type == "content_api",
             item_id=request.item_id,
             publishing_action=request.published_state,
-            publish_operation=request.operation,
             item_version=item[VERSION],
             formatted_item=formatted_doc,
             published_in_package=item.get(PUBLISHED_IN_PACKAGE, None),
@@ -396,8 +396,9 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
             lifecycle_started_ms=lifecycle_started_ms,
         )
 
-        persisted_items = await PublishQueueResource.get_service().create([publish_queue_item])
-        return persisted_items[0] if persisted_items else publish_queue_item
+        await PublishQueueResource.get_service().create([publish_queue_item])
+
+        return publish_queue_item
 
     def _populate_content_api_completion_timing(
         self,

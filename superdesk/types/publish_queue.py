@@ -23,7 +23,6 @@ class PublishQueueState(str, Enum):
 class PublishQueueResource(ResourceModelWithObjectId):
     item_id: str
     publishing_action: str
-    publish_operation: str | None = None
 
     item_version: int
     formatted_item: str
