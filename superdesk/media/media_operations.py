@@ -130,9 +130,10 @@ async def download_file_from_url_async(
 
     request_kwargs = _set_default_request_headers(request_kwargs)
     if isinstance(request_kwargs.get("timeout"), tuple):
-        # Requests can use a tuple for timeouts - connection and read timeouts
-        # aiohttp doesn't have this capability, so we combine the two numbers together
-        request_kwargs["timeout"] = sum(request_kwargs["timeout"])
+        # Convert timeout tuple into an aiohttp-compatible timeout object
+        request_kwargs["timeout"] = aiohttp.ClientTimeout(
+            connect=request_kwargs["timeout"][0], total=request_kwargs["timeout"][1]
+        )
 
     close_session = False
     if session is None:
