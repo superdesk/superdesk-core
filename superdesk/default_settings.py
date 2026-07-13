@@ -124,6 +124,9 @@ LOG_CONFIG_FILE = env("LOG_CONFIG_FILE", "logging_config.yml")
 LOG_SERVER_ADDRESS = env("LOG_SERVER_ADDRESS", "localhost")
 LOG_SERVER_PORT = int(env("LOG_SERVER_PORT", 5555))
 
+# Enable verbose routing/filter diagnostics without turning global logging to DEBUG.
+LOGGING_CONTENT_FILTER_DEBUG = strtobool(env("LOGGING_CONTENT_FILTER_DEBUG", "False"))
+
 SAMS_HOST = env("SAMS_HOST", "localhost")
 SAMS_PORT = env("SAMS_PORT", 5700)
 
