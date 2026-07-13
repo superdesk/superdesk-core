@@ -95,7 +95,7 @@ class FTPPublishService(PublishService):
             media.update(get_files(self.NAME, item))
 
         # Retrieve the list of files that currently exist in the FTP server
-        remote_items = [str(path) for path, _info in await ftp.list()]
+        remote_items = [path.name async for path, facts in ftp.list() if facts.get("type") == "file"]
 
         app = get_current_app()
         for media_id, rendition in media.items():

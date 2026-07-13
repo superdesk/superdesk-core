@@ -229,12 +229,14 @@ class FTPFeedingService(FeedingService):
         """Test if given file path is empty, return True if a file is empty"""
         return not (await aiofiles.os.path.isfile(file_path) and await aiofiles.os.path.getsize(file_path) > 0)
 
-    async def _list_files(self, ftp: FTPClient, provider):
+    async def _list_files(self, ftp: FTPClient, provider) -> list[tuple[str, str]]:
         self._timer.start("ftp_list")
         try:
-            data = await ftp.list()
-            logger.debug(f"FTP list files: {data}")
-            return [(filename, facts["modify"]) for filename, facts in data if facts.get("type") == "file"]
+            files: list[tuple[str, str]] = []
+            async for path, facts in ftp.list():
+                if facts.get("type") == "file":
+                    files.append((path.name, facts.get("modify")))
+            return files
         except Exception as ex:
             raise await IngestFtpError.ftpError(ex, provider).send_notifications()
         finally:
