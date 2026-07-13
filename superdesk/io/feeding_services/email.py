@@ -10,15 +10,22 @@
 
 from typing import List
 import socket
+import asyncio
+import logging
+
 import imaplib
+import aioimaplib
 
 from quart_babel import lazy_gettext as l_
 
-from superdesk.core import get_app_config
+from superdesk.core import get_config
 from superdesk.errors import IngestEmailError
 from superdesk.io.registry import register_feeding_service, register_feeding_service_parser
 from superdesk.io.feeding_services import FeedingService
 from superdesk.upload import url_for_media
+
+
+logger = logging.getLogger(__name__)
 
 
 class EmailFeedingService(FeedingService):
@@ -76,23 +83,33 @@ class EmailFeedingService(FeedingService):
     async def _test(self, provider):
         await self._update(provider, update=None, test=True)
 
-    async def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
+    async def connect(self, provider: dict, host: str, port: int = aioimaplib.IMAP4_SSL_PORT) -> aioimaplib.IMAP4_SSL:
+        try:
+            imap = aioimaplib.IMAP4_SSL(host=host, port=port, timeout=get_config(float, "EMAIL_TIMEOUT", 10.0))
+            await imap.wait_hello_from_server()
+        except (socket.gaierror, OSError, asyncio.TimeoutError) as e:
+            raise await IngestEmailError.emailHostError(exception=e, provider=provider).send_notifications()
+        except asyncio.CancelledError:
+            logger.exception("Email Asyncio Task Cancelled")
+            raise
+
+    async def authenticate(self, provider: dict, config: dict) -> aioimaplib.IMAP4_SSL:
         server = config.get("server", "")
         port = int(config.get("port", 993))
-        try:
-            socket.setdefaulttimeout(get_app_config("EMAIL_TIMEOUT", 10))
-            imap = imaplib.IMAP4_SSL(host=server, port=port)
-        except (socket.gaierror, OSError) as e:
-            raise await IngestEmailError.emailHostError(exception=e, provider=provider).send_notifications()
+        imap = await self.connect(provider, server, port)
 
         try:
-            imap.login(config.get("user", ""), config.get("password", ""))
-        except imaplib.IMAP4.error:
-            raise await IngestEmailError.emailLoginError(imaplib.IMAP4.error, provider).send_notifications()
+            status, lines = await imap.login(config.get("user", ""), config.get("password", ""))
+            normalized_status = str(status).upper()
+            if normalized_status != "OK":
+                response_lines = ". ".join([str(line) for line in lines])
+                raise aioimaplib.AioImapException(f"{normalized_status}: {response_lines}")
+        except aioimaplib.AioImapException as error:
+            raise await IngestEmailError.emailLoginError(error, provider).send_notifications()
 
         return imap
 
-    def parse_extra(self, imap: imaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
+    async def parse_extra(self, aioimaplib: imaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
         """Parse extra metadata
 
         This method is called after main parsing, and can be used by subclasses
@@ -107,32 +124,35 @@ class EmailFeedingService(FeedingService):
             imap = await self.authenticate(provider, config)
 
             try:
-                rv, data = imap.select(config.get("mailbox", None), readonly=False)
-                if rv != "OK":
+                rv, data = await imap.select(config.get("mailbox", None))
+                if str(rv).upper() != "OK":
                     raise await IngestEmailError.emailMailboxError().send_notifications()
                 try:
                     # at least one criterion must be set
                     # (see file:///usr/share/doc/python/html/library/imaplib.html#imaplib.IMAP4.search)
-                    rv, data = imap.search(None, config.get("filter") or "(UNSEEN)")
-                    if rv != "OK":
+                    rv, data = await imap.search(config.get("filter") or "(UNSEEN)")
+                    if str(rv).upper() != "OK":
                         raise await IngestEmailError.emailFilterError().send_notifications()
                     for num in data[0].split():
-                        rv, data = imap.fetch(num, "(RFC822)")
-                        if rv == "OK" and not test:
+                        rv, data = await imap.fetch(num, "(RFC822)")
+                        if str(rv).upper() == "OK" and not test:
                             try:
                                 parser = await self.get_feed_parser(provider, data)
                                 parsed_items = await parser.parse(data, provider)
-                                self.parse_extra(imap, num, parsed_items)
+                                await self.parse_extra(imap, num, parsed_items)
                                 new_items.append(parsed_items)
-                                rv, data = imap.store(num, "+FLAGS", "\\Seen")
+                                rv, data = await imap.store(num, "+FLAGS", "\\Seen")
+                                if str(rv).upper() != "OK":
+                                    logger.warning("Failed to mark email as read", extra=dict(status=rv, lines=data))
                             except IngestEmailError:
+                                logger.error("Failed to parse email", extra=dict(status=rv, data=data))
                                 continue
                 finally:
-                    imap.close()
+                    await imap.close()
             finally:
-                imap.logout()
-        except IngestEmailError:
-            raise
+                await imap.logout()
+        except IngestEmailError as ex:
+            raise await ex.send_notifications()
         except Exception as ex:
             raise await IngestEmailError.emailError(ex, provider).send_notifications()
         return new_items
