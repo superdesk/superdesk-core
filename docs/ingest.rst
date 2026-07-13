@@ -49,8 +49,6 @@ Handle transport protocols when ingesting.
 
 .. autoclass:: RSSFeedingService
 
-.. autoclass:: apps.io.feeding_services.wufoo.WufooFeedingService
-
 Add new Service
 ^^^^^^^^^^^^^^^
 
