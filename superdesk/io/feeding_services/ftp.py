@@ -23,7 +23,7 @@ import aiofiles.os
 from superdesk.core import get_app_config
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
-from superdesk.utc import utc, utcnow
+from superdesk.utc import utc
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
 from superdesk.ftp import ftp_connect, FTPClient, all_ftp_errors
@@ -266,14 +266,16 @@ class FTPFeedingService(FeedingService):
                         self._timer.split("retrieve_parse"), await aiofiles.os.path.getsize(local_file_path), filename
                     )
                 )
-            except ftplib.all_errors as err:
+            except all_ftp_errors as err:
                 self._log_msg(
                     "Download failed. Exec time: {:.4f} secs. File: {}.".format(
                         self._timer.stop("retrieve_parse"), filename
                     )
                 )
                 await aiofiles.os.remove(local_file_path)
-                raise Exception("Exception retrieving file from FTP server ({filename})".format(filename=filename))
+                raise Exception(
+                    "Exception retrieving file from FTP server ({filename})".format(filename=filename)
+                ) from err
 
         if await self._is_empty(local_file_path):
             logger.info("ignoring empty file {filename}".format(filename=filename))
