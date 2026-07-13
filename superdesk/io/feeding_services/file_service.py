@@ -104,9 +104,9 @@ class FileFeedingService(FeedingService):
                     elif isinstance(registered_parser, XMLFeedParser):
                         async with aiofiles.open(file_path, "rb") as f:
                             file_data = await f.read()
-                            xml = etree.parse(file_data)
-                            parser = await self.get_feed_parser(provider, xml.getroot())
-                            item = await parser.parse(xml.getroot(), provider)
+                            root = etree.fromstring(file_data)
+                            parser = await self.get_feed_parser(provider, root)
+                            item = await parser.parse(root, provider)
                     else:
                         parser = await self.get_feed_parser(provider, file_path)
                         item = await parser.parse(file_path, provider)
