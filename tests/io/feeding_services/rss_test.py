@@ -9,12 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 from time import struct_time
 from unittest import mock
-from unittest.mock import call, MagicMock, AsyncMock
+from unittest.mock import MagicMock
+import re
+
+from aiohttp import BasicAuth
 
 from superdesk.tests import TestCase
+from superdesk.tests.http_mocks import mock_http
 from superdesk.io.commands.update_ingest import LAST_ITEM_UPDATE
 
 feed_parse = MagicMock()
@@ -46,7 +50,9 @@ class RssResponse:
     content = nrk_xml
 
 
-class RssError(Exception):
+class FakeIngestApiError(Exception):
+    """Mocked factory for ingest API errors."""
+
     def __init__(self, name, orig_ex, provider):
         self.name = name
         self.orig_ex = orig_ex
@@ -55,21 +61,17 @@ class RssError(Exception):
     async def send_notifications(self):
         return self
 
-
-class FakeIngestApiError(Exception):
-    """Mocked factory for ingest API errors."""
-
     @classmethod
     def apiGeneralError(cls, exception, provider):
-        return RssError("general_error", exception, provider)
+        return FakeIngestApiError("general_error", exception, provider)
 
     @classmethod
     def apiNotFoundError(cls, exception, provider):
-        return RssError("not_found_error", exception, provider)
+        return FakeIngestApiError("not_found_error", exception, provider)
 
     @classmethod
     def apiAuthError(cls, exception, provider):
-        return RssError("auth_error", exception, provider)
+        return FakeIngestApiError("auth_error", exception, provider)
 
 
 class FakeParseError(Exception):
@@ -102,7 +104,7 @@ class InstanceInitTestCase(RssIngestServiceTest):
     """Tests if instance is correctly initialized on creation."""
 
     def test_initializes_auth_info_to_none(self):
-        self.assertIsNone(self.instance.auth_info)
+        self.assertEqual(self.instance.auth_info, (None, None))
 
 
 class PrepareHrefMethodTestCase(RssIngestServiceTest):
@@ -142,14 +144,15 @@ class UpdateMethodTestCase(RssIngestServiceTest):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self._hard_reset_mock(feed_parse)
-        self.instance._fetch_data = AsyncMock(return_value="<rss>foo</rss>")
         self.instance._create_item = MagicMock(return_value={})
-        self.instance._extract_image_links = MagicMock(return_value=[])
-        self.instance._fetch_images = MagicMock()
-        self.instance._wrap_into_package = MagicMock()
 
     async def test_raises_ingest_error_if_fetching_data_fails(self):
-        self.instance._fetch_data.side_effect = FakeIngestApiError
+        self.instance.provider = {"config": {"url": "http://example.com/rss.xml"}}
+
+        mock_http(self).get(
+            re.compile(r".*"),
+            exception=FakeIngestApiError.apiGeneralError(Exception("Fetch error!"), self.instance.provider),
+        )
         try:
             with self.assertRaises(FakeIngestApiError):
                 await self.instance._update({}, {})
@@ -157,11 +160,25 @@ class UpdateMethodTestCase(RssIngestServiceTest):
             self.fail("Expected exception type was not raised.")
 
     async def test_raises_ingest_error_on_parse_error(self):
+        mock_http(self).get(
+            re.compile(r".*"),
+            status=200,
+            body="<rss>X</rss>",
+            content_type="application/rss+xml",
+        )
+        self.instance.provider = {"config": {"url": "http://example.com/rss.xml"}}
         feed_parse.side_effect = Exception("Parse error!")
         with self.assertRaises(FakeParseError):
             await self.instance._update({}, {})
 
     async def test_returns_items_built_from_retrieved_data(self):
+        mock_http(self).get(
+            re.compile(r".*"),
+            status=200,
+            body="<rss>X</rss>",
+            content_type="application/rss+xml",
+        )
+        self.instance.provider = {"config": {"url": "http://example.com/rss.xml"}}
         feed_parse.return_value = MagicMock(
             entries=[
                 MagicMock(updated_parsed=struct_time([2015, 2, 25, 17, 11, 11, 2, 56, 0])),
@@ -188,6 +205,13 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.assertEqual(items, [item_1, item_2])
 
     async def test_does_not_return_old_items(self):
+        mock_http(self).get(
+            re.compile(r".*"),
+            status=200,
+            body="<rss>X</rss>",
+            content_type="application/rss+xml",
+        )
+        self.instance.provider = {"config": {"url": "http://example.com/rss.xml"}}
         feed_parse.return_value = MagicMock(
             entries=[
                 MagicMock(updated_parsed=struct_time([2015, 2, 25, 11, 11, 11, 2, 56, 0])),
@@ -208,6 +232,13 @@ class UpdateMethodTestCase(RssIngestServiceTest):
         self.assertEqual(len(items), 0)
 
     async def test_returns_items_and_package_list_if_entry_contains_image_urls(self):
+        mock_http(self).get(
+            re.compile(r".*"),
+            status=200,
+            body="<rss>X</rss>",
+            content_type="application/rss+xml",
+        )
+        self.instance.provider = {"config": {"url": "http://example.com/rss.xml"}}
         feed_parse.return_value = MagicMock(
             entries=[
                 MagicMock(updated_parsed=struct_time([2015, 2, 25, 17, 11, 11, 0, 0, 0])),
@@ -253,22 +284,21 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        self.instance.session.get = MagicMock()
         self.fake_provider = MagicMock(name="fake provider")
         self.instance.provider = self.fake_provider
         self.fake_provider.__getitem__.return_value = self.config
         self.fake_provider.setdefault.return_value = self.config
 
     async def test_retrieves_feed_from_correct_url(self):
-        self.instance.session.get.return_value = MagicMock(ok=True)
+        http_mock = mock_http(self)
+        http_mock.get(re.compile(r".*"), status=200)
         self.config.update(dict(url="http://news.com/rss"))
-
         await self.instance._fetch_data()
-
-        call_args = self.instance.session.get.call_args[0]
-        self.assertEqual(call_args[0], "http://news.com/rss")
+        http_mock.assert_called_with("http://news.com/rss")
 
     async def test_stores_auth_info_in_instance_if_auth_required(self):
+        http_mock = mock_http(self)
+        http_mock.get(re.compile(r".*"), status=200)
         self.fake_provider["config"].update(
             {
                 "url": "foo",
@@ -278,38 +308,35 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
             }
         )
 
-        self.instance.session.get.return_value = MagicMock(ok=False)
-
-        try:
-            await self.instance._update(self.fake_provider, {})
-        except Exception:
-            pass
-
-        self.assertEqual(self.instance.auth_info, {"username": "james", "password": "bond+007"})
+        await self.instance._update(self.fake_provider, {})
+        self.assertEqual(self.instance.auth_info, ("james", "bond+007"))
+        http_mock.assert_called_with("foo", auth=BasicAuth("james", "bond+007"))
 
     async def test_provides_auth_info_if_required(self):
-        self.instance.session.get.return_value = MagicMock(ok=True)
+        http_mock = mock_http(self)
+        http_mock.get(re.compile(r".*"), status=200)
         self.config.update(dict(url="http://news.com/rss", auth_required=True, username="johndoe", password="secret"))
 
         await self.instance._fetch_data()
-
-        kw_call_args = self.instance.session.get.call_args[1]
-        self.assertEqual(kw_call_args.get("auth"), ("johndoe", "secret"))
+        http_mock.assert_called_with("http://news.com/rss", auth=BasicAuth("johndoe", "secret"))
 
     async def test_returns_fetched_data_on_success(self):
-        self.instance.session.get.return_value = MagicMock(ok=True, content="<rss>X</rss>")
+        mock_http(self).get(
+            re.compile(r".*"),
+            status=200,
+            body="<rss>X</rss>",
+            content_type="application/rss+xml",
+        )
         self.config.update(dict(url="http://news.com/rss"))
-
         response = await self.instance._fetch_data()
-
         self.assertEqual(response, "<rss>X</rss>")
 
     async def test_raises_auth_error_on_401(self):
-        self.instance.session.get.return_value = MagicMock(ok=False, status_code=401, reason="invalid credentials")
+        mock_http(self).get(re.compile(r".*"), status=401, reason="invalid credentials")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
-            with self.assertRaises(RssError) as exc_context:
+            with self.assertRaises(FakeIngestApiError) as exc_context:
                 await self.instance._fetch_data()
         except Exception:
             self.fail("Expected exception type was not raised.")
@@ -320,11 +347,11 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertIs(ex.provider, self.fake_provider)
 
     async def test_raises_auth_error_on_403(self):
-        self.instance.session.get.return_value = MagicMock(ok=False, status_code=403, reason="access forbidden")
+        mock_http(self).get(re.compile(r".*"), status=403, reason="access forbidden")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
-            with self.assertRaises(RssError) as exc_context:
+            with self.assertRaises(FakeIngestApiError) as exc_context:
                 await self.instance._fetch_data()
         except Exception:
             self.fail("Expected exception type was not raised.")
@@ -335,11 +362,11 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertIs(ex.provider, self.fake_provider)
 
     async def test_raises_not_found_error_on_404(self):
-        self.instance.session.get.return_value = MagicMock(ok=False, status_code=404, reason="resource not found")
+        mock_http(self).get(re.compile(r".*"), status=404, reason="resource not found")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
-            with self.assertRaises(RssError) as exc_context:
+            with self.assertRaises(FakeIngestApiError) as exc_context:
                 await self.instance._fetch_data()
         except Exception:
             self.fail("Expected exception type was not raised.")
@@ -350,11 +377,11 @@ class FetchDataMethodTestCase(RssIngestServiceTest):
         self.assertIs(ex.provider, self.fake_provider)
 
     async def test_raises_general_error_on_unknown_error(self):
-        self.instance.session.get.return_value = MagicMock(ok=False, status_code=500, reason="server down")
+        mock_http(self).get(re.compile(r".*"), status=500, reason="server down")
         self.config.update(dict(url="http://news.com/rss"))
 
         try:
-            with self.assertRaises(RssError) as exc_context:
+            with self.assertRaises(FakeIngestApiError) as exc_context:
                 await self.instance._fetch_data()
         except Exception:
             self.fail("Expected exception type was not raised.")
@@ -514,8 +541,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual(item.get("guid"), "http://news.com/rss/1234abcd")
         self.assertEqual(item.get("uri"), "http://news.com/rss/1234abcd")
         self.assertEqual(item.get("type"), "text")
-        self.assertEqual(item.get("firstcreated"), datetime(2015, 2, 25, 16, 45, 23))
-        self.assertEqual(item.get("versioncreated"), datetime(2015, 2, 25, 17, 52, 11))
+        self.assertEqual(item.get("firstcreated"), datetime(2015, 2, 25, 16, 45, 23, tzinfo=timezone.utc))
+        self.assertEqual(item.get("versioncreated"), datetime(2015, 2, 25, 17, 52, 11, tzinfo=timezone.utc))
         self.assertEqual(item.get("headline"), "Breaking News!")
         self.assertEqual(item.get("abstract"), "Something happened...")
         self.assertEqual(
@@ -598,8 +625,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual(item.get("guid"), "http://news.com/rss/1234abcd")
         self.assertEqual(item.get("uri"), "http://news.com/rss/1234abcd")
         self.assertEqual(item.get("type"), "text")
-        self.assertEqual(item.get("firstcreated"), datetime(2015, 2, 25, 16, 45, 23))
-        self.assertEqual(item.get("versioncreated"), datetime(2015, 2, 25, 17, 52, 11))
+        self.assertEqual(item.get("firstcreated"), datetime(2015, 2, 25, 16, 45, 23, tzinfo=timezone.utc))
+        self.assertEqual(item.get("versioncreated"), datetime(2015, 2, 25, 17, 52, 11, tzinfo=timezone.utc))
         self.assertEqual(item.get("headline"), "Breaking News!")
         self.assertEqual(item.get("abstract"), "Something happened...")
         self.assertEqual(
@@ -623,8 +650,8 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual(item.get("guid"), "http://news.com/rss/1234abcd")
         self.assertEqual(item.get("uri"), "http://news.com/rss/1234abcd")
         self.assertEqual(item.get("type"), "text")
-        self.assertEqual(item.get("firstcreated"), datetime(2015, 2, 25, 16, 45, 23))
-        self.assertEqual(item.get("versioncreated"), datetime(2015, 2, 25, 17, 52, 11))
+        self.assertEqual(item.get("firstcreated"), datetime(2015, 2, 25, 16, 45, 23, tzinfo=timezone.utc))
+        self.assertEqual(item.get("versioncreated"), datetime(2015, 2, 25, 17, 52, 11, tzinfo=timezone.utc))
         self.assertEqual(item.get("headline"), "Breaking News!")
         self.assertEqual(
             item.get("body_html"),
@@ -649,9 +676,13 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertEqual(item.get("abstract"), "http://news.com/1234abcd")
 
     async def test_guid_not_permalink(self):
+        mock_http(self).get(
+            re.compile(r".*"),
+            status=200,
+            body=nrk_xml,
+            content_type="application/rss+xml",
+        )
         self.instance.provider = provider = {"config": {"url": "http://example.com/rss"}}
-        self.instance.session.get = MagicMock()
-        self.instance.session.get.return_value = RssResponse()
         items = (await self.instance._update(provider, None))[0]
         self.assertEqual(1, len(items))
         self.assertEqual("https://www.nrk.no/finnmark/stanset-ikke-for-fotgjenger-1.13362571", items[0]["uri"])
@@ -659,11 +690,13 @@ class CreateItemMethodTestCase(RssIngestServiceTest):
         self.assertIn(items[0]["uri"], items[0]["body_html"])
 
     async def test_guid_not_set(self):
+        mock_http(self).get(
+            re.compile(r".*"),
+            status=200,
+            body=nrk_xml.replace('<guid isPermaLink="false">1.13362571</guid>', ""),
+            content_type="application/rss+xml",
+        )
         self.instance.provider = provider = {"config": {"url": "http://example.com/rss"}}
-        response = RssResponse()
-        response.content = nrk_xml.replace('<guid isPermaLink="false">1.13362571</guid>', "")
-        self.instance.session.get = MagicMock()
-        self.instance.session.get.return_value = response
         items = (await self.instance._update(provider, None))[0]
         self.assertEqual("tag:www.nrk.no:finnmark:stanset-ikke-for-fotgjenger-1.13362571", items[0]["guid"])
 

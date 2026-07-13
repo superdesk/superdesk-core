@@ -10,11 +10,13 @@
 
 
 from unittest import mock
-from httmock import urlmatch, HTTMock
 import os
-from superdesk.tests import TestCase
+from aioresponses import CallbackResult
+
 from superdesk.io.feeding_services import APMediaFeedingService
 from superdesk.io.feed_parsers import APMediaFeedParser
+from superdesk.tests import TestCase
+from superdesk.tests.http_mocks import mock_multiple_endpoints
 
 PREFIX = "test_superdesk_"
 PROVIDER = {
@@ -32,38 +34,45 @@ PROVIDER = {
 class APTestCase(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        # super().setUp()
-        self.setupMock(self)
-
-    #        with self.app.app_context():
-    #            vocab = [{}]
-    #            self.app.data.insert('vocabularies', vocab)
-
-    def setupMock(self, context):
-        context.mock = HTTMock(
-            *[self.feed_request],
-            *[self.item_request],
-            *[self.text_feed_request],
-            *[self.text_item_request],
-            *[self.nitf_item_request],
+        mock_multiple_endpoints(
+            self,
+            {
+                "a.b.c": {
+                    ("GET", "/media/v/content/feed"): self.mock_feed_request,
+                    ("GET", "/media/v/content/95e8bd71fed448cda1a0be35d8ddbd2f"): self.mock_item_request,
+                    ("GET", "/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9"): self.mock_text_item_request,
+                },
+                "d.e.f": {
+                    ("GET", "/media/v/content/feed"): self.mock_text_feed_request,
+                    (
+                        "GET",
+                        "/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9.0/download",
+                    ): self.mock_nitf_item_request,
+                },
+            },
         )
-        context.mock.__enter__()
 
-    @urlmatch(scheme="https", netloc="a.b.c", path="/media/v/content/feed")
-    def feed_request(self, url, request):
+    def mock_feed_request(self, url: str, **kwargs) -> CallbackResult:
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ap_media_feed.json"))
-        with open(fixture, "r") as f:
+        with open(fixture, "rb") as f:
             feed_raw = f.read()
-        return {"status_code": 200, "content": feed_raw}
+        return CallbackResult(
+            status=200,
+            body=feed_raw,
+            content_type="application/json",
+        )
 
-    @urlmatch(scheme="https", netloc="a.b.c", path="/media/v/content/95e8bd71fed448cda1a0be35d8ddbd2f")
-    def item_request(self, url, request):
+    def mock_item_request(self, url: str, **kwargs) -> CallbackResult:
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ap_media_item.json"))
-        with open(fixture, "r") as f:
+        with open(fixture, "rb") as f:
             feed_item = f.read()
-        return {"status_code": 200, "content": feed_item}
+        return CallbackResult(
+            status=200,
+            body=feed_item,
+            content_type="application/json",
+        )
 
     @mock.patch.object(APMediaFeedingService, "get_feed_parser")
     async def test_feeding(self, get_feed_parser):
@@ -76,29 +85,38 @@ class APTestCase(TestCase):
         self.assertEqual(len(items), 1)
         self.assertEqual(items[0].get("headline"), "headline")
 
-    @urlmatch(scheme="https", netloc="d.e.f", path="/media/v/content/feed")
-    def text_feed_request(self, url, request):
+    def mock_text_feed_request(self, url: str, **kwargs) -> CallbackResult:
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ap_media_text_feed.json"))
-        with open(fixture, "r") as f:
+        with open(fixture, "rb") as f:
             feed_raw = f.read()
-        return {"status_code": 200, "content": feed_raw}
+        return CallbackResult(
+            status=200,
+            body=feed_raw,
+            content_type="application/json",
+        )
 
-    @urlmatch(scheme="https", netloc="a.b.c", path="/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9")
-    def text_item_request(self, url, request):
+    def mock_text_item_request(self, url: str, **kwargs) -> CallbackResult:
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ap_media_text_item.json"))
-        with open(fixture, "r") as f:
+        with open(fixture, "rb") as f:
             feed_item = f.read()
-        return {"status_code": 200, "content": feed_item}
+        return CallbackResult(
+            status=200,
+            body=feed_item,
+            content_type="application/json",
+        )
 
-    @urlmatch(scheme="https", netloc="d.e.f", path="/media/v/content/5ee9b4b40ea5fe9c9ca60f890fb2e1d9.0/download")
-    def nitf_item_request(self, url, request):
+    def mock_nitf_item_request(self, url: str, **kwargs) -> CallbackResult:
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ap_media_text_nitf.xml"))
-        with open(fixture, "r") as f:
+        with open(fixture, "rb") as f:
             feed_item = f.read()
-        return {"status_code": 200, "content": feed_item}
+        return CallbackResult(
+            status=200,
+            body=feed_item,
+            content_type="application/xml",
+        )
 
     @mock.patch.object(APMediaFeedingService, "get_feed_parser")
     async def test_text_feeding(self, get_feed_parser):

@@ -24,6 +24,7 @@ from superdesk.tests.steps import (
 )
 from wooper.assertions import assert_equal
 from superdesk.publish_async.commands import transmit
+from .http_mocks import mock_http
 
 
 @when("we enqueue published")
@@ -75,10 +76,8 @@ def then_we_pushed_1_item(context):
 
 @then("we pushed {count} items")
 def then_we_pushed_x_items(context, count):
-    http_mock: aioresponses = context.http_mock
-    calls = [
-        json.loads(args_list.kwargs["data"]) for args_list in http_mock.requests.values() for args_list in args_list
-    ]
+    http_requests = mock_http(context).requests
+    calls = [json.loads(args_list.kwargs["data"]) for args_list in http_requests.values() for args_list in args_list]
 
     num_pushes = len(calls)
     assert count == num_pushes, f"there were {num_pushes} calls"
@@ -86,3 +85,5 @@ def then_we_pushed_x_items(context, count):
     if context.text:
         context_data = json.loads(apply_placeholders(context, context.text))
         assert_equal(json_match(context_data, calls), True, msg=str(context_data) + "\n != \n" + str(calls))
+
+    http_requests.clear()

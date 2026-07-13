@@ -11,10 +11,13 @@
 
 from unittest import mock
 import os
+import re
+
+from superdesk.io.feeding_services import ritzau
+from superdesk.io.feed_parsers import ritzau as ritzau_feed
 
 from superdesk.tests import TestCase
-from superdesk.io.feeding_services import ritzau, http_base_service
-from superdesk.io.feed_parsers import ritzau as ritzau_feed
+from superdesk.tests.http_mocks import mock_http
 
 PREFIX = "test_superdesk_"
 PROVIDER = {
@@ -31,14 +34,15 @@ class RitzauTestCase(TestCase):
         with open(fixture) as f:
             self.feed_raw = f.read()
 
-    @mock.patch.object(http_base_service, "requests")
     @mock.patch.object(ritzau.RitzauFeedingService, "get_feed_parser")
-    async def test_feeding(self, get_feed_parser, requests):
+    async def test_feeding(self, get_feed_parser):
         get_feed_parser.return_value = ritzau_feed.RitzauFeedParser()
         provider = PROVIDER.copy()
         service = ritzau.RitzauFeedingService()
         service.provider = provider
-        mock_get = service.session.get.return_value
-        mock_get.text = self.feed_raw
+
+        mock_http(self).get(
+            re.compile(r".*"), status=200, body=self.feed_raw, content_type="application/xml", repeat=True
+        )
         items = (await service._update(provider, {}))[0]
         self.assertEqual(len(items), 2)
