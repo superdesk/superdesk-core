@@ -132,7 +132,7 @@ async def download_file_from_url_async(
     if isinstance(request_kwargs.get("timeout"), tuple):
         # Convert timeout tuple into an aiohttp-compatible timeout object
         request_kwargs["timeout"] = aiohttp.ClientTimeout(
-            connect=request_kwargs["timeout"][0], total=request_kwargs["timeout"][1]
+            connect=request_kwargs["timeout"][0], sock_read=request_kwargs["timeout"][1]
         )
 
     close_session = False
