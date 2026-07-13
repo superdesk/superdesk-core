@@ -22,7 +22,7 @@ from superdesk import get_resource_service, etree
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError, ProviderError
 from superdesk.tests import TestCase, utils as test_utils, fixtures
-from superdesk.tests.setup_teardown import setup_providers, teardown_providers
+from superdesk.tests.setup_teardown import setup_providers
 from superdesk.io import get_feeding_service
 from superdesk.io.commands.remove_expired_content import RemoveExpiredContent, get_expired_items
 from superdesk.io.feeding_services.file_service import FileFeedingService
@@ -57,9 +57,6 @@ class UpdateIngestTest(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
         await setup_providers(self)
-
-    def tearDown(self):
-        teardown_providers(self)
 
     async def _get_provider(self, provider_name):
         return await test_utils.find_one("ingest_providers", name=provider_name)
