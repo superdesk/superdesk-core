@@ -262,8 +262,8 @@ class HTTPFeedingServiceBase(FeedingService, AsyncHttpClientSessionMixin):
             response.raise_for_status()
             try:
                 return json.loads(await response.text())
-            except Exception:
-                raise IngestApiError.apiRequestError(Exception("error parsing json response"))
+            except Exception as error:
+                raise IngestApiError.apiRequestError(error, self.provider)
 
     async def get_xml(self, url: str | None = None, **kwargs) -> etree._Element:
         async with self.get_url(url, **kwargs) as response:
