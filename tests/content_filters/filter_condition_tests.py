@@ -811,6 +811,29 @@ class FilterConditionTests(TestCase):
             self.assertEqual(1, docs.count())
             self.assertTrue("4" in doc_ids)
 
+    def test_filter_condition_parameters_keywords_only_once_with_vocabulary(self):
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {
+                    "_id": "keywords",
+                    "display_name": "Storytags",
+                    "type": "manageable",
+                    "selection_type": "multi selection",
+                    "unique_field": "qcode",
+                    "items": [{"name": "#", "qcode": "#", "is_active": True}],
+                }
+            ],
+        )
+
+        with self.app.app_context():
+            fields = list(get_resource_service("filter_condition_parameters").get(req=None, lookup={}))
+
+        keywords_fields = [field for field in fields if field["field"] == "keywords"]
+        self.assertEqual(1, len(keywords_fields))
+        self.assertEqual("Storytags", keywords_fields[0]["label"])
+        self.assertEqual("qcode", keywords_fields[0]["value_field"])
+
     def test_filter_condition_value_deserialized(self):
         desk_id = bson.ObjectId()
         field = FilterConditionDeskField("")

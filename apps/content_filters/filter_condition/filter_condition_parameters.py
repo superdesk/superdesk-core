@@ -40,6 +40,16 @@ class FilterConditionParametersResource(Resource):
 class FilterConditionParametersService(BaseService):
     def get(self, req, lookup):
         values = self._get_field_values()
+        keywords = values.get("keywords", {})
+        keywords_field = {
+            "field": "keywords",
+            "label": keywords.get("label") or _("Keywords"),
+            "operators": ["in", "nin"],
+        }
+        if keywords.get("items"):
+            keywords_field["values"] = keywords["items"]
+            keywords_field["value_field"] = "qcode"
+
         fields = [
             {
                 "field": "anpa_category",
@@ -76,7 +86,7 @@ class FilterConditionParametersService(BaseService):
                 "values": values.get("priority", []),
                 "value_field": "qcode",
             },
-            {"field": "keywords", "label": _("Keywords"), "operators": ["in", "nin"]},
+            keywords_field,
             {
                 "field": "slugline",
                 "label": _("Slugline"),
@@ -214,6 +224,11 @@ class FilterConditionParametersService(BaseService):
                 values[voc_id] = vocabularies_resource.find_one(req=None, _id=voc_id)["items"]
             except TypeError:
                 values[voc_id] = []
+        keywords = vocabularies_resource.find_one(req=None, _id="keywords")
+        values["keywords"] = {
+            "items": keywords.get("items", []) if keywords else [],
+            "label": keywords.get("display_name") if keywords else None,
+        }
         subject = vocabularies_resource.find_one(req=None, schema_field="subject")
         if subject:
             values["subject"] = subject["items"]
