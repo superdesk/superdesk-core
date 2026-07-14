@@ -10,51 +10,55 @@
 
 import os
 from os.path import basename
-from httmock import urlmatch, HTTMock
-from urllib.parse import parse_qs
+import re
+from yarl import URL
+from aioresponses import CallbackResult
+
+from .http_mocks import mock_http
 
 
-@urlmatch(scheme="https", netloc="commerce.reuters.com", path="/rmd/rest/xml/login")
-def login_request(url, request):
-    return {
-        "status_code": 200,
-        "content": '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><authToken>fake_token</authToken>',
-    }
-
-
-@urlmatch(scheme="http", netloc="rmb.reuters.com", path="/rmd/rest/xml/item")
-def item_request(url, request):
+def item_request(url: URL, **kwargs) -> CallbackResult:
     try:
-        params = parse_qs(url.query, keep_blank_values=True)
+        params = kwargs.get("params") or {}
         fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../tests/io/fixtures")
         if "channel" in params:
-            file = os.path.join(fixtures, params["channel"][0])
+            file = os.path.join(fixtures, params["channel"])
         else:
-            file = os.path.join(fixtures, params["id"][0].replace(":", "_version_"))
-        with open(file, "r") as stored_response:
+            file = os.path.join(fixtures, params["id"].replace(":", "_version_"))
+        with open(file, "rb") as stored_response:
             content = stored_response.read()
-            return {"status_code": 200, "content": content}
+            return CallbackResult(status=200, body=content, content_type="application/xml")
     except Exception:
-        return {"status_code": 404}
+        return CallbackResult(status=404)
 
 
-@urlmatch(scheme="http", netloc="content.reuters.com")
-def content_request(url, request):
+def content_request(url: URL, **kwargs) -> CallbackResult:
     try:
         fixtures = os.path.join(os.path.abspath(os.path.dirname(__file__)), "../../tests/io/fixtures")
         file = os.path.join(fixtures, basename(url.path))
         with open(file, "rb") as stored_response:
             content = stored_response.read()
-            return {"status_code": 200, "content": content}
+            return CallbackResult(status=200, body=content, content_type="application/xml")
     except Exception:
-        return {"status_code": 404}
+        return CallbackResult(status=404)
 
 
 def setup_reuters_mock(context):
-    context.mock = HTTMock(*[login_request, item_request, content_request])
-    context.mock.__enter__()
-
-
-def teardown_reuters_mock(context):
-    if hasattr(context, "mock"):
-        context.mock.__exit__(None, None, None)
+    mock = mock_http(context)
+    mock.get(
+        re.compile(r"https://commerce\.reuters\.com/rmd/rest/xml/login.*"),
+        status=200,
+        body='<?xml version="1.0" encoding="UTF-8" standalone="yes"?><authToken>fake_token</authToken>',
+        content_type="application/xml",
+        repeat=True,
+    )
+    mock.get(
+        re.compile(r"^http://rmb\.reuters\.com/rmd/rest/xml/item.*"),
+        callback=item_request,
+        repeat=True,
+    )
+    mock.get(
+        re.compile(r"^http://content\.reuters\.com.*"),
+        callback=content_request,
+        repeat=True,
+    )

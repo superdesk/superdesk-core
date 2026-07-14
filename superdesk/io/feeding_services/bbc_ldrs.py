@@ -10,13 +10,11 @@
 
 import re
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from superdesk.errors import IngestApiError, ParserError
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
-
-utcfromtimestamp = datetime.utcfromtimestamp
 
 
 class BBCLDRSFeedingService(HTTPFeedingServiceBase):
@@ -51,9 +49,6 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
     ]
     HTTP_AUTH = False
 
-    def __init__(self):
-        super().__init__()
-
     async def _test(self, provider):
         config = self.config
         url = config["url"]
@@ -64,7 +59,8 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
         params = {"limit": 1, "fields": "id"}
         headers = {"apikey": api_key}
 
-        await self.get_url(url, params=params, headers=headers)
+        async with self.get(url, params=params, headers=headers) as response:
+            response.raise_for_status()
 
     async def _update(self, provider, update):
         json_items = await self._fetch_data()
@@ -83,7 +79,9 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
         url = self.config["url"]
         api_key = self.config["api_key"]
 
-        last_update = self.provider.get("last_updated", utcfromtimestamp(0)).strftime("%Y-%m-%dT%H:%M:%S")
+        last_update = self.provider.get("last_updated", datetime.fromtimestamp(0, tz=timezone.utc)).strftime(
+            "%Y-%m-%dT%H:%M:%S"
+        )
 
         # Results are pagified so we'll read this many at a time
         offset_jump = 10
@@ -97,20 +95,22 @@ class BBCLDRSFeedingService(HTTPFeedingServiceBase):
         while True:
             params["offset"] = offset
 
-            response = await self.get_url(url, params=params, headers=headers)
+            async with self.get_url(url, params=params, headers=headers) as response:
+                response_text = await response.text()
+
             # The total number of results are given to us in json, get them
             # via a regex to read the field so we don't have to convert the
             # whole thing to json pointlessly
-            item_ident = re.search('"total": *[0-9]*', response.text).group()
+            item_ident = re.search('"total": *[0-9]*', response_text).group()
             results_str = re.search("[0-9]+", item_ident).group()
 
             if results_str is None:
-                raise await IngestApiError.apiGeneralError(Exception(response.text), self.provider).send_notifications()
+                raise await IngestApiError.apiGeneralError(Exception(response_text), self.provider).send_notifications()
 
             num_results = int(results_str)
 
             if num_results > 0:
-                items.append(response.text)
+                items.append(response_text)
 
             if offset >= num_results:
                 return items

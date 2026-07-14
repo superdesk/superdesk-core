@@ -14,6 +14,23 @@ from superdesk.errors import IngestFtpError
 
 
 logger = logging.getLogger(__name__)
+all_ftp_errors = (
+    # aioftp-specific errors
+    aioftp.AIOFTPException,
+    # Timeout while connecting/reading/writing
+    asyncio.TimeoutError,
+    TimeoutError,
+    # DNS/host resolution error
+    socket.gaierror,
+    # TCP connection issues
+    ConnectionRefusedError,
+    ConnectionResetError,
+    BrokenPipeError,
+    # FTPS/TLS errors
+    ssl.SSLError,
+    # Other socket/OS-level errors
+    OSError,
+)
 
 
 class FTPClient(aioftp.Client):

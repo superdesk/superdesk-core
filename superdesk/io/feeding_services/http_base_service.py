@@ -8,16 +8,27 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import List, Dict, Optional, Tuple, Any
 from io import BytesIO
 import traceback
-import requests
+import asyncio
+import logging
+from contextlib import asynccontextmanager
+from collections.abc import AsyncIterator
+
+import aiohttp
+
 from superdesk.errors import IngestApiError, SuperdeskIngestError
+from superdesk.etree import etree, ParseError
+from superdesk.core import json
+from superdesk.core.web import AsyncHttpClientSessionMixin
 from superdesk.io.feeding_services import FeedingService
-from superdesk.media.media_operations import download_file_from_url, download_file_from_url_async
+from superdesk.media.media_operations import download_file_from_url_async
 
 
-class HTTPFeedingServiceBase(FeedingService):
+logger = logging.getLogger(__name__)
+
+
+class HTTPFeedingServiceBase(FeedingService, AsyncHttpClientSessionMixin):
     """
     Base class for feeding services using HTTP.
 
@@ -67,7 +78,7 @@ class HTTPFeedingServiceBase(FeedingService):
     ]
 
     # override this parameter with the main URL to use
-    HTTP_URL: Optional[str] = None
+    HTTP_URL: str | None = None
     # timeout in seconds
     HTTP_TIMEOUT = 30
     # if some parameters are used in every request, put them here
@@ -75,16 +86,16 @@ class HTTPFeedingServiceBase(FeedingService):
     # Set to True if authentication is mandatory, False if there is no authentication
     # and None to add authentication if user and password are defined.
     # If auth_required is defined in config fields, it will override this value.
-    HTTP_AUTH: Optional[bool] = True
+    HTTP_AUTH: bool | None = True
 
     # use this when auth is always required
-    AUTH_FIELDS: List[Dict] = [
+    AUTH_FIELDS: list[dict] = [
         {"id": "username", "type": "text", "label": "Username", "placeholder": "Username", "required": True},
         {"id": "password", "type": "password", "label": "Password", "placeholder": "Password", "required": True},
     ]
 
     # use this when auth depends of a "auth_required" flag (set by user)
-    AUTH_REQ_FIELDS: List[Dict] = [
+    AUTH_REQ_FIELDS: list[dict] = [
         {
             "id": "auth_required",
             "type": "boolean",
@@ -113,16 +124,14 @@ class HTTPFeedingServiceBase(FeedingService):
     def __init__(self):
         super().__init__()
         self.token = None
-        self.session = requests.Session()
 
     @property
-    def auth_info(self):
+    def auth_info(self) -> tuple[str | None, str | None]:
         """Helper method to retrieve a dict with username and password when set"""
-        username = self.config.get("username", "")
-        password = self.config.get("password", "")
-        if not username or not password:
-            return None
-        return {"username": username, "password": password}
+        username: str | None = self.config.get("username", "")
+        password: str | None = self.config.get("password", "")
+
+        return username.strip() if username else None, password.strip() if password else None
 
     @property
     def config(self):
@@ -150,40 +159,49 @@ class HTTPFeedingServiceBase(FeedingService):
                 Exception("URL must be a valid HTTP link.")
             ).send_notifications()
 
-    def get_request_kwargs(self) -> Dict[str, Any]:
+    def get_request_kwargs(self) -> dict:
         return {}
 
-    async def get_url(self, url=None, **kwargs):
-        """Do an HTTP Get on URL
+    @classmethod
+    def _create_http_session(cls) -> aiohttp.ClientSession:
+        if isinstance(cls.HTTP_TIMEOUT, tuple):
+            cls.http_timeout = aiohttp.ClientTimeout(connect=cls.HTTP_TIMEOUT[0], sock_read=cls.HTTP_TIMEOUT[1])
+        elif isinstance(cls.HTTP_TIMEOUT, int):
+            cls.http_timeout = aiohttp.ClientTimeout(total=cls.HTTP_TIMEOUT)
 
-        :param string url: url to use (None to use self.HTTP_URL)
-        :param **kwargs: extra parameter for requests
-        :return requests.Response: response
-        """
-        if not url:
-            url = self.HTTP_URL
-        config = self.config
-        user = config.get("username")
-        password = config.get("password")
-        if user:
-            user = user.strip()
-        if password:
-            password = password.strip()
+        return super()._create_http_session()
 
-        auth_required = config.get("auth_required", self.HTTP_AUTH)
+    async def get_auth_header(self) -> aiohttp.BasicAuth | None:
+        username, password = self.auth_info
+        auth_required = self.config.get("auth_required", self.HTTP_AUTH)
+
         if auth_required is None:
             # auth_required may not be user in the feeding service
             # in this case with use authentification only if user
             # and password are set.
-            auth_required = bool(user and password)
+            auth_required = bool(username and password)
 
         if auth_required:
-            if not user:
+            if not username:
                 raise await SuperdeskIngestError.notConfiguredError("user is not configured").send_notifications()
             if not password:
                 raise await SuperdeskIngestError.notConfiguredError("password is not configured").send_notifications()
-            kwargs.setdefault("auth", (user, password))
 
+            return aiohttp.BasicAuth(username, password)
+
+        return None
+
+    @asynccontextmanager
+    async def get(self, url: str | None = None, **kwargs) -> AsyncIterator[aiohttp.ClientResponse]:
+        """Do an HTTP Get on URL and yield the response"""
+
+        if not url:
+            url = self.HTTP_URL
+
+        if not url:
+            raise await SuperdeskIngestError.notConfiguredError("url is not configured").send_notifications()
+
+        auth_header = await self.get_auth_header()
         params = kwargs.pop("params", {})
         if params or self.HTTP_DEFAULT_PARAMETERS:
             # if we have default parameters, we want them to be overriden
@@ -195,42 +213,74 @@ class HTTPFeedingServiceBase(FeedingService):
         # Let the provided ``kwargs`` override the feeding service's ``kwargs``
         request_kwargs = self.get_request_kwargs()
         request_kwargs.update(kwargs)
-        request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
+        if auth_header:
+            request_kwargs["auth"] = auth_header
 
         try:
-            response = self.session.get(url, **request_kwargs)
-        except requests.exceptions.Timeout as exception:
+            http_client = await self.http_session()
+            async with http_client.get(url, **request_kwargs) as response:
+                yield response
+        except (asyncio.TimeoutError, TimeoutError) as exception:
             raise await IngestApiError.apiTimeoutError(exception, self.provider).send_notifications()
-        except requests.exceptions.ConnectionError as exception:
+        except aiohttp.ClientConnectionError as exception:
             raise await IngestApiError.apiConnectionError(exception, self.provider).send_notifications()
-        except requests.exceptions.RequestException as exception:
+        except aiohttp.ClientError as exception:
             raise await IngestApiError.apiRequestError(exception, self.provider).send_notifications()
+        except asyncio.CancelledError:
+            logger.exception("HTTPPush Asyncio Task Cancelled")
+            raise
+        except IngestApiError as exception:
+            # Don't trap these errors, just re-raise them.
+            raise await exception.send_notifications()
         except Exception as exception:
             traceback.print_exc()
             raise await IngestApiError.apiGeneralError(exception, self.provider).send_notifications()
 
-        if not response.ok:
-            exc = Exception(response.reason)
-            if response.status_code in (401, 403):
-                raise await IngestApiError.apiAuthError(exc, self.provider).send_notifications()
-            elif response.status_code == 404:
-                raise await IngestApiError.apiNotFoundError(exc, self.provider).send_notifications()
-            else:
-                raise await IngestApiError.apiGeneralError(exc, self.provider).send_notifications()
+    @asynccontextmanager
+    async def get_url(self, url: str | None = None, **kwargs) -> AsyncIterator[aiohttp.ClientResponse]:
+        """Do an HTTP Get on URL
 
-        return response
+        :param string url: url to use (None to use self.HTTP_URL)
+        :param **kwargs: extra parameter for requests
+        :return requests.Response: response
+        """
 
-    def download_file(self, url: str, **kwargs: Dict[str, Any]) -> Tuple[BytesIO, str, str]:
-        request_kwargs = self.get_request_kwargs()
-        request_kwargs.update(kwargs)
-        request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
-        return download_file_from_url(url, request_kwargs, self.session)
+        async with self.get(url, **kwargs) as response:
+            if not response.ok:
+                exc = Exception(response.reason)
+                if response.status in (401, 403):
+                    raise IngestApiError.apiAuthError(exc, self.provider)
+                elif response.status == 404:
+                    raise IngestApiError.apiNotFoundError(exc, self.provider)
+                else:
+                    raise IngestApiError.apiGeneralError(exc, self.provider)
+
+            yield response
+
+    async def get_json(self, url: str | None = None, **kwargs) -> dict:
+        async with self.get_url(url, **kwargs) as response:
+            response.raise_for_status()
+            try:
+                return json.loads(await response.text())
+            except Exception as error:
+                raise IngestApiError.apiRequestError(error, self.provider)
+
+    async def get_xml(self, url: str | None = None, **kwargs) -> etree._Element:
+        async with self.get_url(url, **kwargs) as response:
+            response.raise_for_status()
+            try:
+                return etree.fromstring(await response.read())
+            except UnicodeEncodeError as error:
+                raise IngestApiError.apiUnicodeError(error, self.provider)
+            except ParseError as error:
+                raise IngestApiError.apiParseError(error, self.provider)
+            except Exception as error:
+                raise IngestApiError.apiRequestError(error, self.provider)
 
     async def download_file_async(self, url: str, **kwargs) -> tuple[BytesIO, str, str]:
         request_kwargs = self.get_request_kwargs()
         request_kwargs.update(kwargs)
-        request_kwargs.setdefault("timeout", self.HTTP_TIMEOUT)
-        return await download_file_from_url_async(url, request_kwargs)
+        return await download_file_from_url_async(url, request_kwargs, session=await self.http_session())
 
     async def update(self, provider, update):
         self.provider = provider

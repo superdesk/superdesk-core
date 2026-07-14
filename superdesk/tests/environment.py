@@ -22,7 +22,7 @@ from superdesk.default_settings import PUBLISH_MODULES
 from superdesk.tests import setup_auth_user, stop_storage_mocks
 from superdesk.tests.mocks import TestSearchProvider
 from superdesk.tests.steps import get_macro_path
-from superdesk.tests.setup_teardown import setup_providers, teardown_providers
+from superdesk.tests.setup_teardown import setup_providers
 
 
 logger = logging.getLogger(__name__)
@@ -156,9 +156,6 @@ def before_scenario(context, scenario):
 
 
 def after_scenario(context, scenario):
-    if "provider" in scenario.tags:
-        teardown_providers(context)
-
     if "notification" in scenario.tags:
         tests.teardown_notification(context)
 

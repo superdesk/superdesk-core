@@ -14,7 +14,6 @@ import logging
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_base_service import HTTPFeedingServiceBase
 from superdesk.errors import IngestApiError, SuperdeskIngestError
-from lxml import etree
 
 logger = logging.getLogger(__name__)
 NS = {"iptc": "http://iptc.org/std/nar/2006-10-01/"}
@@ -102,13 +101,7 @@ class APFeedingService(HTTPFeedingServiceBase):
             params["sortOrder"] = "chronological"
             chronological = True
 
-        r = await self.get_url(params=params)
-
-        try:
-            root_elt = etree.fromstring(r.content)
-        except Exception:
-            raise await IngestApiError.apiRequestError(Exception("error while doing the request")).send_notifications()
-
+        root_elt = await self.get_xml(params=params)
         parser = await self.get_feed_parser(provider)
         items = await parser.parse(root_elt, provider)
         if not chronological:

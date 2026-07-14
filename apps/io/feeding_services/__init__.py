@@ -10,4 +10,3 @@
 
 
 import apps.io.feeding_services.reuters  # NOQA
-import apps.io.feeding_services.wufoo  # NOQA

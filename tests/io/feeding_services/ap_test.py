@@ -11,11 +11,15 @@
 
 import os
 from unittest import mock
-from superdesk.tests import TestCase
-from superdesk.io.feeding_services import http_base_service
+from copy import deepcopy
+import re
+
 from superdesk.io.feeding_services import ap
 from superdesk.io.feed_parsers import newsml_2_0
-from copy import deepcopy
+
+from superdesk.tests import TestCase
+from superdesk.tests.http_mocks import mock_http, CallbackResult
+
 
 PREFIX = "test_superdesk_"
 PROVIDER = {
@@ -33,28 +37,31 @@ PROVIDER = {
 class APTestCase(TestCase):
     async def asyncSetUp(self):
         await super().asyncSetUp()
-        vocab = [{}]
-        self.app.data.insert("vocabularies", vocab)
+        mock_http(self).get(re.compile(r".*"), callback=self.mock_requests, repeat=True)
+
+    def mock_requests(self, url, **kwargs) -> CallbackResult:
         dirname = os.path.dirname(os.path.realpath(__file__))
         fixture = os.path.normpath(os.path.join(dirname, "../fixtures", "ap.xml"))
         with open(fixture, "rb") as f:
-            self.feed_raw = f.read()
+            feed_raw = f.read()
 
-    @mock.patch.object(http_base_service, "requests")
+        return CallbackResult(
+            status=200,
+            body=feed_raw,
+            content_type="application/xml",
+        )
+
     @mock.patch.object(ap.APFeedingService, "get_feed_parser")
-    async def test_feeding(self, get_feed_parser, requests):
+    async def test_feeding(self, get_feed_parser):
         get_feed_parser.return_value = newsml_2_0.NewsMLTwoFeedParser()
         provider = deepcopy(PROVIDER)
         service = ap.APFeedingService()
         service.provider = provider
-        mock_get = service.session.get.return_value
-        mock_get.content = self.feed_raw
         items = (await service._update(provider, {}))[0]
         self.assertEqual(len(items), 3)
 
-    @mock.patch.object(http_base_service, "requests")
     @mock.patch.object(ap.APFeedingService, "get_feed_parser")
-    async def test_items_order(self, get_feed_parser, requests):
+    async def test_items_order(self, get_feed_parser):
         """Test that items are reversed on first call (SDESK-4372)
 
         Items of a new provider must be in reverse chronological order
@@ -67,8 +74,6 @@ class APTestCase(TestCase):
         provider = deepcopy(PROVIDER)
         service = ap.APFeedingService()
         service.provider = provider
-        mock_get = service.session.get.return_value
-        mock_get.content = self.feed_raw
 
         self.assertNotIn("private", provider)
         with mock.patch.object(feed_parser, "parse"):

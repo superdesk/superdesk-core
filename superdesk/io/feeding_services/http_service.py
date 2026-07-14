@@ -8,21 +8,20 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from abc import ABCMeta
 from datetime import timedelta
 
 import arrow
-import requests
 
 from superdesk.resource_fields import ID_FIELD
 from superdesk import get_resource_service
 from superdesk.errors import IngestApiError
-from superdesk.io.feeding_services import FeedingService
 from superdesk.utc import utcnow
 from superdesk.etree import etree
 
+from .http_base_service import HTTPFeedingServiceBase
 
-class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
+
+class HTTPFeedingService(HTTPFeedingServiceBase):
     """
     Feeding Service class which can read article(s) using HTTP.
     """
@@ -37,6 +36,8 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
     ]
 
     label = "HTTP"
+
+    http_verify_ssl = False
 
     def __init__(self):
         super().__init__()
@@ -68,19 +69,13 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
         :rtype: str
         :raises: IngestApiError.apiGeneralError() if auth_url is missing in the Ingest Provider configuration
         """
-        session = requests.Session()
 
         auth_url = provider.get("config", {}).get("auth_url", None)
         if not auth_url:
             raise await IngestApiError.apiGeneralError(
                 provider=provider,
                 exception=KeyError(
-                    """
-                                                     Ingest Provider {} is missing Authentication URL.
-                                                     Please check the configuration.
-                                                     """.format(
-                        provider["name"]
-                    )
+                    f"Ingest Provider {provider['name']} is missing Authentication URL. Please check the configuration."
                 ),
             ).send_notifications()
 
@@ -89,18 +84,19 @@ class HTTPFeedingService(FeedingService, metaclass=ABCMeta):
             "password": provider.get("config", {}).get("password", ""),
         }
 
-        response = session.get(auth_url, params=payload, verify=False, timeout=30)
-        if response.status_code < 200 or response.status_code >= 300:
-            try:
-                response.raise_for_status()
-            except Exception:
-                err = IngestApiError.apiAuthError(provider=provider)
-                await self.close_provider(provider, err, force=True)
-                await err.send_notifications()
-                raise err
+        http_client = await self.http_session()
+        async with http_client.get(auth_url, params=payload) as response:
+            if response.status < 200 or response.status >= 300:
+                try:
+                    response.raise_for_status()
+                except Exception:
+                    err = IngestApiError.apiAuthError(provider=provider)
+                    await self.close_provider(provider, err, force=True)
+                    await err.send_notifications()
+                    raise err
 
-        tree = etree.fromstring(response.content)  # workaround for http mock lib
-        return tree.text
+            tree = etree.fromstring(await response.read())  # workaround for http mock lib
+            return tree.text
 
     def _is_valid_token(self, token):
         """Check if the given token is still valid.

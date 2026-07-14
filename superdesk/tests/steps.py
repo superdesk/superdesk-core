@@ -68,6 +68,7 @@ from authlib.jose import jwt
 from authlib.jose.errors import BadSignatureError
 
 from .utils import find_one, post_items, patch_item, system_update, delete_items, find_many, find_by_id
+from .http_mocks import mock_http
 
 external_url = "http://thumbs.dreamstime.com/z/digital-nature-10485007.jpg"
 DATETIME_FORMAT = "%Y-%m-%dT%H:%M:%S%z"
@@ -2506,21 +2507,19 @@ async def step_field_name_does_not_exist(context, field_name):
 @when('we publish "{item_id}" with "{pub_type}" type and "{state}" state')
 @async_run_until_complete
 async def step_impl_when_publish_url(context, item_id, pub_type, state):
-    with aioresponses(passthrough=["http://127.0.0.1", "http://localhost"]) as m:
-        context.http_mock = m
-        m.post(re.compile(r"^mock://.*"), payload={}, repeat=True)
-        item_id = apply_placeholders(context, item_id)
-        res = await get_res("/archive/" + item_id, context)
-        headers = if_match(context, res.get("_etag"))
-        context_data = {"state": state}
-        if context.text:
-            data = apply_placeholders(context, context.text)
-            context_data.update(json.loads(data))
-        data = json.dumps(context_data)
-        context.response = await context.client.patch(
-            get_prefixed_url(context.app, "/archive/{}/{}".format(pub_type, item_id)), data=data, headers=headers
-        )
-        await store_placeholder(context, "archive_{}".format(pub_type))
+    mock_http(context).post(re.compile(r"^mock://.*"), payload={}, repeat=True)
+    item_id = apply_placeholders(context, item_id)
+    res = await get_res("/archive/" + item_id, context)
+    headers = if_match(context, res.get("_etag"))
+    context_data = {"state": state}
+    if context.text:
+        data = apply_placeholders(context, context.text)
+        context_data.update(json.loads(data))
+    data = json.dumps(context_data)
+    context.response = await context.client.patch(
+        get_prefixed_url(context.app, "/archive/{}/{}".format(pub_type, item_id)), data=data, headers=headers
+    )
+    await store_placeholder(context, "archive_{}".format(pub_type))
 
 
 @then('the ingest item is routed based on routing scheme and rule "{rule_name}"')

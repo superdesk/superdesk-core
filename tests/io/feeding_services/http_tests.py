@@ -11,13 +11,15 @@
 
 import requests
 from datetime import timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
+import re
 
-import superdesk
 from superdesk.utc import utcnow
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feeding_services.http_service import HTTPFeedingService
+
 from superdesk.tests import TestCase, utils as test_utils
+from superdesk.tests.http_mocks import mock_http, CallbackResult
 from superdesk.errors import IngestApiError
 
 
@@ -96,8 +98,9 @@ class GetTokenTestCase(TestCase):
     async def test_generate_auth_token_raise_on_error(self):
         provider = setup_provider("abc", 24)
         provider["config"] = {"auth_url": "http://example.com"}
-        with patch("requests.Session", new=ErrorResponseSession):
-            service = TestFeedingService()
-            with self.assertRaises(IngestApiError) as cm:
-                await service._generate_auth_token(provider)
-            self.assertEqual(cm.exception.code, 4007)
+
+        mock_http(self).get(re.compile(r".*"), status=401, reason="invalid credentials")
+        service = TestFeedingService()
+        with self.assertRaises(IngestApiError) as cm:
+            await service._generate_auth_token(provider)
+        self.assertEqual(cm.exception.code, 4007)
