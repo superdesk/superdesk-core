@@ -270,6 +270,11 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
 
+    if app.config.get("LOGGING_CONTENT_FILTER_DEBUG"):
+        logging.getLogger("apps.publish.enqueue.enqueue_service").setLevel(logging.DEBUG)
+        logging.getLogger("apps.content_filters.content_filter.content_filter_service").setLevel(logging.DEBUG)
+        logger.info("LOGGING_CONTENT_FILTER_DEBUG is enabled")
+
     return app
 
 

@@ -22,6 +22,12 @@ from flask_babel import _
 logger = logging.getLogger(__name__)
 
 
+CONTENT_FILTER_REASON_FILTER_CONDITIONS_NO_MATCH = "filter_conditions_no_match"
+CONTENT_FILTER_REASON_NESTED_FILTER_NO_MATCH = "nested_filter_no_match"
+CONTENT_FILTER_REASON_MISSING_FILTER_CONDITION = "missing_filter_condition"
+CONTENT_FILTER_REASON_MISSING_NESTED_FILTER = "missing_nested_filter"
+
+
 class ContentFilterService(CacheableService):
     def get(self, req, lookup):
         if req is None:
@@ -204,6 +210,7 @@ class ContentFilterService(CacheableService):
         return getattr(flask.g, cache_id)
 
     def _does_match(self, content_filter, article, filters, cache=True):
+        failure_reasons = []
         for index, expression in enumerate(content_filter.get("content_filter", [])):
             if not expression.get("expression"):
                 raise SuperdeskApiError.badRequestError(
@@ -211,31 +218,96 @@ class ContentFilterService(CacheableService):
                 )
             if "fc" in expression.get("expression", {}):
                 if not self._does_filter_condition_match(content_filter, article, filters, expression, cache):
+                    failure_reasons.append(
+                        {"expression_index": index + 1, "reason_code": CONTENT_FILTER_REASON_FILTER_CONDITIONS_NO_MATCH}
+                    )
                     continue
             if "pf" in expression.get("expression", {}):
                 if not self._does_content_filter_match(content_filter, article, filters, expression, cache):
+                    failure_reasons.append(
+                        {"expression_index": index + 1, "reason_code": CONTENT_FILTER_REASON_NESTED_FILTER_NO_MATCH}
+                    )
                     continue
+
+            if logger.isEnabledFor(logging.DEBUG):
+                reason = self._build_match_reason(content_filter, expression, filters)
+                logger.debug(
+                    "Content filter matched: filter_id=%s filter_name=%s expression_index=%s item=%s reason=%s",
+                    content_filter.get("_id"),
+                    content_filter.get("name"),
+                    index + 1,
+                    article.get("_id") or article.get("guid"),
+                    reason,
+                )
             return True
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Content filter did not match: filter_id=%s filter_name=%s item=%s desk=%s stage=%s reason=%s",
+                content_filter.get("_id"),
+                content_filter.get("name"),
+                article.get("_id") or article.get("guid"),
+                (article.get("task") or {}).get("desk"),
+                (article.get("task") or {}).get("stage"),
+                failure_reasons,
+            )
         return False
+
+    def _build_match_reason(self, content_filter, expression, filters):
+        reason = {"filter_conditions": [], "nested_filters": []}
+
+        for fc_id in expression.get("expression", {}).get("fc", []):
+            fc = filters.get("filter_conditions", {}).get(fc_id, {}).get("fc") if filters else None
+            if not fc:
+                fc = get_resource_service("filter_conditions").get_cached_by_id(fc_id)
+
+            if not fc:
+                reason["filter_conditions"].append(
+                    {"id": str(fc_id), "reason_code": CONTENT_FILTER_REASON_MISSING_FILTER_CONDITION}
+                )
+                continue
+
+            reason["filter_conditions"].append(
+                {
+                    "id": str(fc.get("_id")),
+                    "field": fc.get("field"),
+                    "operator": fc.get("operator"),
+                    "value": fc.get("value"),
+                }
+            )
+
+        for pf_id in expression.get("expression", {}).get("pf", []):
+            pf = filters.get("content_filters", {}).get(pf_id, {}).get("cf") if filters else None
+            if not pf:
+                pf = self.get_cached_by_id(pf_id)
+
+            if not pf:
+                reason["nested_filters"].append(
+                    {"id": str(pf_id), "reason_code": CONTENT_FILTER_REASON_MISSING_NESTED_FILTER}
+                )
+                continue
+
+            reason["nested_filters"].append({"id": str(pf.get("_id")), "name": pf.get("name")})
+
+        return reason
 
     def _does_filter_condition_match(self, content_filter, article, filters, expression, cache=True) -> bool:
         filter_condition_service = get_resource_service("filter_conditions")
         for f in expression["expression"]["fc"]:
             cache_id = _cache_id("filter-condition-match", f, article)
             if not cache or not hasattr(flask.g, cache_id):
-                fc = (
-                    filters.get("filter_conditions", {}).get(f, {}).get("fc")
-                    if filters
-                    else filter_condition_service.get_cached_by_id(f)
-                )
+                fc = filters.get("filter_conditions", {}).get(f, {}).get("fc") if filters else None
+                if not fc:
+                    fc = filter_condition_service.get_cached_by_id(f)
                 if not fc:
                     logger.error("Missing filter condition %s in content filter %s", f, content_filter.get("name"))
                     return False
                 filter_condition = FilterCondition.parse(fc)
                 if not cache:
                     return filter_condition.does_match(article)
-                setattr(flask.g, cache_id, filter_condition.does_match(article))
-            if not getattr(flask.g, cache_id):
+                result = filter_condition.does_match(article)
+                setattr(flask.g, cache_id, result)
+            cached_result = getattr(flask.g, cache_id)
+            if not cached_result:
                 return False
         return True
 
@@ -243,13 +315,22 @@ class ContentFilterService(CacheableService):
         for f in expression["expression"]["pf"]:
             cache_id = _cache_id("content-filter-match", f, article)
             if not cache or not hasattr(flask.g, cache_id):
-                current_filter = (
-                    filters.get("content_filters", {}).get(f, {}).get("cf") if filters else self.get_cached_by_id(f)
-                )
+                current_filter = filters.get("content_filters", {}).get(f, {}).get("cf") if filters else None
+                if not current_filter:
+                    current_filter = self.get_cached_by_id(f)
+                if not current_filter:
+                    logger.error(
+                        "Missing nested content filter %s in content filter %s",
+                        f,
+                        content_filter.get("name"),
+                    )
+                    return False
                 if not cache:
                     return self.does_match(current_filter, article, filters=filters, cache=cache)
-                setattr(flask.g, cache_id, self.does_match(current_filter, article, filters=filters, cache=cache))
-            if not getattr(flask.g, cache_id):
+                nested_result = self.does_match(current_filter, article, filters=filters, cache=cache)
+                setattr(flask.g, cache_id, nested_result)
+            cached_result = getattr(flask.g, cache_id)
+            if not cached_result:
                 return False
         return True
 

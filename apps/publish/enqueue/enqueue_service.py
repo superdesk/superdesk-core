@@ -36,6 +36,26 @@ from flask_babel import _
 logger = logging.getLogger(__name__)
 
 
+SUBSCRIBER_DECISION_REASON_NO_DECISION = "no_decision"
+SUBSCRIBER_DECISION_REASON_TYPE_MISMATCH = "subscriber_type_mismatch"
+SUBSCRIBER_DECISION_REASON_TARGET_MISMATCH = "subscriber_target_mismatch"
+SUBSCRIBER_DECISION_REASON_GLOBAL_FILTER_BLOCKED = "global_filter_blocked"
+SUBSCRIBER_DECISION_REASON_DIRECT_TARGET_OVERRIDE = "direct_target_override"
+SUBSCRIBER_DECISION_REASON_MATCHED_PRODUCTS_AND_API_PRODUCTS = "matched_products_and_api_products"
+SUBSCRIBER_DECISION_REASON_MATCHED_PRODUCTS = "matched_products"
+SUBSCRIBER_DECISION_REASON_MATCHED_API_PRODUCTS = "matched_api_products"
+SUBSCRIBER_DECISION_REASON_SUBSCRIBER_ADDED = "subscriber_added"
+SUBSCRIBER_DECISION_REASON_NO_MATCHING_PRODUCTS = "no_matching_products"
+SUBSCRIBER_DECISION_REASON_MATCHED_GLOBAL_FILTER = "matched_global_filter"
+
+PRODUCT_FILTER_REASON_NO_FILTER_CONFIGURED = "no_filter_configured"
+PRODUCT_FILTER_REASON_FILTER_MISSING = "filter_missing"
+PRODUCT_FILTER_REASON_MATCHED_PERMITTING = "matched_permitting"
+PRODUCT_FILTER_REASON_MATCHED_BLOCKING = "matched_blocking"
+PRODUCT_FILTER_REASON_NOT_MATCHED_PERMITTING = "not_matched_permitting"
+PRODUCT_FILTER_REASON_NOT_MATCHED_BLOCKING = "not_matched_blocking"
+
+
 class EnqueueService:
     """
     Creates the corresponding entries in the publish queue for items marked for publishing
@@ -651,7 +671,22 @@ class EnqueueService:
         # apply global filters
         self.conforms_global_filter(global_filters, doc)
 
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Filtering subscribers for item=%s guid=%s state=%s desk=%s stage=%s target_media_type=%s candidates=%d",
+                doc.get(config.ID_FIELD),
+                doc.get("guid"),
+                doc.get("state"),
+                (doc.get("task") or {}).get("desk"),
+                (doc.get("task") or {}).get("stage"),
+                target_media_type,
+                len(subscribers or []),
+            )
+
         for subscriber in subscribers:
+            decision_reason = SUBSCRIBER_DECISION_REASON_NO_DECISION
+            decision_result = "rejected"
+
             if target_media_type and subscriber.get("subscriber_type", "") != SUBSCRIBER_TYPES.ALL:
                 can_send_digital = subscriber["subscriber_type"] == SUBSCRIBER_TYPES.DIGITAL
                 if (
@@ -660,21 +695,54 @@ class EnqueueService:
                     or target_media_type == SUBSCRIBER_TYPES.DIGITAL
                     and not can_send_digital
                 ):
+                    decision_reason = SUBSCRIBER_DECISION_REASON_TYPE_MISMATCH
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug(
+                            "Subscriber decision: subscriber_id=%s subscriber_name=%s result=%s reason=%s item=%s",
+                            subscriber.get(config.ID_FIELD),
+                            subscriber.get("name"),
+                            decision_result,
+                            decision_reason,
+                            doc.get(config.ID_FIELD),
+                        )
                     continue
 
             conforms, skip_filters = self.conforms_subscriber_targets(subscriber, doc)
             if not conforms:
+                decision_reason = SUBSCRIBER_DECISION_REASON_TARGET_MISMATCH
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(
+                        "Subscriber decision: subscriber_id=%s subscriber_name=%s result=%s reason=%s item=%s",
+                        subscriber.get(config.ID_FIELD),
+                        subscriber.get("name"),
+                        decision_result,
+                        decision_reason,
+                        doc.get(config.ID_FIELD),
+                    )
                 continue
 
             if not self.conforms_subscriber_global_filter(subscriber, global_filters):
+                decision_reason = SUBSCRIBER_DECISION_REASON_GLOBAL_FILTER_BLOCKED
+                if logger.isEnabledFor(logging.DEBUG):
+                    logger.debug(
+                        "Subscriber decision: subscriber_id=%s subscriber_name=%s result=%s reason=%s item=%s",
+                        subscriber.get(config.ID_FIELD),
+                        subscriber.get("name"),
+                        decision_result,
+                        decision_reason,
+                        doc.get(config.ID_FIELD),
+                    )
                 continue
 
             product_codes = self._get_codes(subscriber)
             subscriber_added = False
             subscriber["api_enabled"] = False
+            matched_products = False
+            matched_api_products = False
             # validate against direct products
             result, codes = self._validate_article_for_subscriber(doc, subscriber.get("products"), existing_products)
             if result:
+                matched_products = True
                 product_codes.extend(codes)
                 if not subscriber_added:
                     filtered_subscribers.append(subscriber)
@@ -686,6 +754,7 @@ class EnqueueService:
                     doc, subscriber.get("api_products"), existing_products
                 )
                 if result:
+                    matched_api_products = True
                     product_codes.extend(codes)
                     subscriber["api_enabled"] = True
                     if not subscriber_added:
@@ -698,10 +767,35 @@ class EnqueueService:
                     subscriber["api_enabled"] = True
                 filtered_subscribers.append(subscriber)
                 subscriber_added = True
+                decision_reason = SUBSCRIBER_DECISION_REASON_DIRECT_TARGET_OVERRIDE
 
             # unify the list of codes by removing duplicates
             if subscriber_added:
                 subscriber_codes[subscriber[config.ID_FIELD]] = list(set(product_codes))
+                decision_result = "accepted"
+                if decision_reason == SUBSCRIBER_DECISION_REASON_NO_DECISION:
+                    if matched_products and matched_api_products:
+                        decision_reason = SUBSCRIBER_DECISION_REASON_MATCHED_PRODUCTS_AND_API_PRODUCTS
+                    elif matched_products:
+                        decision_reason = SUBSCRIBER_DECISION_REASON_MATCHED_PRODUCTS
+                    elif matched_api_products:
+                        decision_reason = SUBSCRIBER_DECISION_REASON_MATCHED_API_PRODUCTS
+                    else:
+                        decision_reason = SUBSCRIBER_DECISION_REASON_SUBSCRIBER_ADDED
+            else:
+                decision_reason = SUBSCRIBER_DECISION_REASON_NO_MATCHING_PRODUCTS
+
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "Subscriber decision: subscriber_id=%s subscriber_name=%s result=%s reason=%s skip_filters=%s api_enabled=%s item=%s",
+                    subscriber.get(config.ID_FIELD),
+                    subscriber.get("name"),
+                    decision_result,
+                    decision_reason,
+                    skip_filters,
+                    subscriber.get("api_enabled"),
+                    doc.get(config.ID_FIELD),
+                )
 
         return filtered_subscribers, subscriber_codes
 
@@ -872,16 +966,81 @@ class EnqueueService:
         content_filter = product.get("content_filter")
 
         if content_filter is None or "filter_id" not in content_filter or content_filter["filter_id"] is None:
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "Product content filter decision: product_id=%s product_name=%s result=true reason=%s item=%s",
+                    product.get(config.ID_FIELD),
+                    product.get("name"),
+                    PRODUCT_FILTER_REASON_NO_FILTER_CONFIGURED,
+                    doc.get(config.ID_FIELD),
+                )
             return True
 
         service = get_resource_service("content_filters")
         filter = self.filters.get("content_filters", {}).get(content_filter["filter_id"], {}).get("cf")
-        does_match = service.does_match(filter, doc, self.filters)
+        if not filter:
+            logger.warning(
+                "Product content filter missing from cache: product_id=%s product_name=%s filter_id=%s filter_type=%s item=%s",
+                product.get(config.ID_FIELD),
+                product.get("name"),
+                content_filter.get("filter_id"),
+                content_filter.get("filter_type"),
+                doc.get(config.ID_FIELD),
+            )
+            filter = service.get_cached_by_id(content_filter.get("filter_id"))
 
-        if does_match:
-            return content_filter["filter_type"] == "permitting"
-        else:
-            return content_filter["filter_type"] == "blocking"
+        if not filter:
+            logger.warning(
+                "Product content filter missing from service cache: product_id=%s product_name=%s filter_id=%s filter_type=%s item=%s",
+                product.get(config.ID_FIELD),
+                product.get("name"),
+                content_filter.get("filter_id"),
+                content_filter.get("filter_type"),
+                doc.get(config.ID_FIELD),
+            )
+            if logger.isEnabledFor(logging.DEBUG):
+                logger.debug(
+                    "Product content filter decision: product_id=%s product_name=%s filter_id=%s filter_type=%s result=true reason=%s item=%s",
+                    product.get(config.ID_FIELD),
+                    product.get("name"),
+                    content_filter.get("filter_id"),
+                    content_filter.get("filter_type"),
+                    PRODUCT_FILTER_REASON_FILTER_MISSING,
+                    doc.get(config.ID_FIELD),
+                )
+            return True
+
+        does_match = service.does_match(filter, doc, self.filters)
+        result = (
+            content_filter["filter_type"] == "permitting" if does_match else content_filter["filter_type"] == "blocking"
+        )
+        decision_reason = (
+            PRODUCT_FILTER_REASON_MATCHED_PERMITTING
+            if does_match and content_filter["filter_type"] == "permitting"
+            else PRODUCT_FILTER_REASON_MATCHED_BLOCKING
+            if does_match and content_filter["filter_type"] == "blocking"
+            else PRODUCT_FILTER_REASON_NOT_MATCHED_PERMITTING
+            if content_filter["filter_type"] == "permitting"
+            else PRODUCT_FILTER_REASON_NOT_MATCHED_BLOCKING
+        )
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Product content filter decision: product_id=%s product_name=%s filter_id=%s filter_name=%s filter_type=%s does_match=%s result=%s reason=%s item=%s desk=%s stage=%s",
+                product.get(config.ID_FIELD),
+                product.get("name"),
+                content_filter.get("filter_id"),
+                (filter or {}).get("name"),
+                content_filter.get("filter_type"),
+                does_match,
+                result,
+                decision_reason,
+                doc.get(config.ID_FIELD),
+                (doc.get("task") or {}).get("desk"),
+                (doc.get("task") or {}).get("stage"),
+            )
+
+        return result
 
     def conforms_global_filter(self, global_filters, doc):
         """Check global filter
@@ -892,8 +1051,23 @@ class EnqueueService:
         :param doc: Document to test the global filter against
         """
         service = get_resource_service("content_filters")
+        evaluations = []
         for global_filter in global_filters:
             global_filter["does_match"] = service.does_match(global_filter, doc, self.filters)
+            evaluations.append(
+                {
+                    "id": str(global_filter.get(config.ID_FIELD)),
+                    "name": global_filter.get("name"),
+                    "does_match": bool(global_filter.get("does_match")),
+                }
+            )
+
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(
+                "Global filters evaluated: item=%s evaluations=%s",
+                doc.get(config.ID_FIELD),
+                evaluations,
+            )
 
     def conforms_subscriber_global_filter(self, subscriber, global_filters):
         """Check global filter for subscriber
@@ -913,6 +1087,15 @@ class EnqueueService:
             if gfs.get(str(global_filter[config.ID_FIELD]), True):
                 # Global filter applies to this subscriber
                 if global_filter.get("does_match"):
+                    if logger.isEnabledFor(logging.DEBUG):
+                        logger.debug(
+                            "Subscriber global filter decision: subscriber_id=%s subscriber_name=%s result=blocked reason=%s filter_id=%s filter_name=%s",
+                            subscriber.get(config.ID_FIELD),
+                            subscriber.get("name"),
+                            SUBSCRIBER_DECISION_REASON_MATCHED_GLOBAL_FILTER,
+                            global_filter.get(config.ID_FIELD),
+                            global_filter.get("name"),
+                        )
                     return False
         return True
 

@@ -32,7 +32,10 @@ class NewsroomNinjsFormatterTest(TestCase):
     def test_products(self):
         self.app.data.insert(
             "content_filters",
-            [{"_id": 3, "content_filter": [{"expression": {"pf": [1], "fc": [2]}}], "name": "soccer-only3"}],
+            [
+                {"_id": 1, "content_filter": [{"expression": {"fc": [1]}}], "name": "headline-test"},
+                {"_id": 3, "content_filter": [{"expression": {"pf": [1], "fc": [2]}}], "name": "soccer-only3"},
+            ],
         )
         self.app.data.insert(
             "filter_conditions",
