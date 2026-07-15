@@ -277,6 +277,34 @@ Feature: Subscribers
     """
     Then we get error 400
 
+  @auth
+  Scenario: Updating api-only subscriber with first destination succeeds
+    Given empty "subscribers"
+    When we post to "/products" with success
+    """
+    {
+      "name":"prod-1","codes":"abc,xyz", "product_type": "both"
+    }
+    """
+    And we post to "/subscribers" with success
+    """
+    {
+      "name":"News1",
+      "email": "test@test.com",
+      "is_active": true,
+      "subscriber_type": "digital","media_type":"media", "sequence_num_settings":{"min" : 1, "max" : 10},
+      "api_products": ["#products._id#"]
+    }
+    """
+    When we patch "/subscribers/#subscribers._id#"
+    """
+    {"destinations":[{"name":"destination1", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}}]}
+    """
+    Then we get updated response
+    """
+    {"destinations":[{"name":"destination1", "format": "nitf", "delivery_type":"email", "config":{"recipients":"abc@abc.com"}, "_id": "__any_value__"}]}
+    """
+
 
   @auth
   Scenario: Updating a Subscriber with no destinations should fail
