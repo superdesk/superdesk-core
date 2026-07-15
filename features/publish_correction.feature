@@ -362,3 +362,83 @@ Feature: Content Correction
         }
         """
 
+    @auth
+    Scenario: API mismatch archive correction vs published state is handled gracefully
+        Given config update
+        """
+        {"CORRECTIONS_WORKFLOW": true}
+        """
+        And "validators"
+        """
+        [
+            {"_id": "publish_text", "act": "publish", "type": "text", "schema": {}},
+            {"_id": "correct_text", "act": "correct", "type": "text", "schema": {}}
+        ]
+        """
+        And "desks"
+        """
+        [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
+        """
+        And "archive"
+        """
+        [{
+            "_id": "mismatch-123",
+            "guid": "mismatch-123",
+            "type": "text",
+            "headline": "Mismatch candidate",
+            "state": "fetched",
+            "_current_version": 1,
+            "task": {
+                "desk": "#desks._id#",
+                "stage": "#desks.incoming_stage#",
+                "user": "#CONTEXT_USER_ID#"
+            },
+            "subject": [{"qcode": "17004000", "name": "Statistics"}],
+            "body_html": "Body"
+        }]
+        """
+
+        When we publish "mismatch-123" with "publish" type and "published" state
+        Then we get OK response
+
+        When we publish "mismatch-123" with "correction" type and "correction" state
+        Then we get OK response
+
+        When we get "/archive/mismatch-123"
+        Then we get existing resource
+        """
+        {"state": "correction"}
+        """
+
+        When we get "/published/mismatch-123"
+        Then we get existing resource
+        """
+        {"state": "being_corrected"}
+        """
+
+        When we patch "/published/mismatch-123"
+        """
+        {"state": "published"}
+        """
+        Then we get updated response
+
+        When we publish "mismatch-123" with "correct" type and "corrected" state
+        Then we get response code 200
+
+        When we get "/archive/mismatch-123"
+        Then we get existing resource
+        """
+        {"state": "corrected"}
+        """
+
+        When we get "/published"
+        Then we get list with 2 items
+        """
+        {
+            "_items": [
+                {"guid": "mismatch-123", "state": "published"},
+                {"guid": "mismatch-123", "state": "corrected"}
+            ]
+        }
+        """
+

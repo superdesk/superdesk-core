@@ -18,14 +18,18 @@ from pytz import utc, timezone  # flake8: noqa
 tzinfo = getattr(datetime, "tzinfo", object)
 
 
-def utcnow():
-    """Get tz aware datetime object.
+def utcnow(microseconds=False):
+    """Get a UTC timezone-aware datetime.
 
-    Remove microseconds which can't be persisted by mongo so we have
-    the values consistent in both mongo and elastic.
+    By default, microseconds are truncated to keep timestamp precision
+    consistent with storage/index paths that persist second-level values.
+
+    :param bool microseconds: When ``True``, return full microsecond precision.
+        When ``False`` (default), return the same timestamp with microseconds
+        set to ``0``.
     """
     now = datetime.datetime.now(tz=utc)
-    return now.replace(microsecond=0)
+    return now if microseconds else now.replace(microsecond=0)
 
 
 def get_date(date_or_string) -> Optional[datetime.datetime]:

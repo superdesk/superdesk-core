@@ -11,6 +11,7 @@ from superdesk.utc import utcnow
 from superdesk.resource_fields import LAST_UPDATED
 from superdesk.publish import registered_transmitters
 from superdesk.publish_async.utils import compute_retry_timeout_minutes
+from superdesk.lifecycle_timing import duration_ms, to_epoch_ms, duration_ms_from_epoch
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +74,15 @@ class AsyncioPublishConsumer(PublishConsumer):
             item_headline=task.headline,
         )
         if task.state not in [PublishQueueState.ROUTING, PublishQueueState.PENDING, PublishQueueState.RETRYING]:
-            logger.warning("Transmit State is not pending/retrying for queue item", extra=log_extra)
+            logger.warning(
+                "Transmit State is not pending/retrying for queue item "
+                "(task_id=%s item_id=%s item_version=%s state=%s)",
+                task.id,
+                task.item_id,
+                task.item_version,
+                task.state,
+                extra=log_extra,
+            )
             return False
         elif task.destination is None:
             logger.error("Destination not defined in queue item", extra=log_extra)
@@ -97,7 +106,25 @@ class AsyncioPublishConsumer(PublishConsumer):
                 # otherwise it will halt the processing of other transmission requests
                 # while waiting for network responses
                 await response
+
+            completed_now = utcnow(microseconds=True)
+            completed_at = completed_now.replace(microsecond=0)
+            completed_ms: int = to_epoch_ms(completed_now)
+            success_update: dict[str, object] = {
+                "state": PublishQueueState.SUCCESS,
+                "completed_at": completed_at,
+                "completed_ms": completed_ms,
+            }
+            if isinstance(task.lifecycle_started_ms, int):
+                success_update["lifecycle_to_transmit_ms"] = duration_ms_from_epoch(
+                    task.lifecycle_started_ms, completed_ms
+                )
+            elif task.lifecycle_started_at:
+                success_update["lifecycle_to_transmit_ms"] = duration_ms(task.lifecycle_started_at, completed_now)
+
+            await PublishQueueResource.get_service().update(task.id, success_update, task.etag, task)
             logger.info(f"Transmit completed for queue item {log_msg}")
+
             return True
         except Exception as e:
             logger.exception("Failed to transmit queue item", extra=log_extra)

@@ -159,3 +159,45 @@ class ExchangeFactoryTestCase(TestCase):
         tasks = await get_exchange_factory().get_subscriber_tasks(self.subscribers[1].id)
         task_ids = [task.id for task in tasks]
         self.assertEqual(sorted(task_ids), [self.queue_items[1].id])
+
+    async def test_stale_routing_items_are_included_in_subscriber_tasks(self):
+        """
+        Queue items stuck in ``routing`` state older than 5 minutes should be
+        returned by get_subscriber_tasks() so the background worker retries them.
+        A freshly-created ``routing`` item (within the lock TTL window) must NOT
+        be returned yet.
+        """
+        await SubscribersResource.get_service().create(self.subscribers)
+
+        stale_routing = PublishQueueResource(  # type: ignore[call-arg]
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="d1"),
+            subscriber_id=self.subscribers[0].id,
+            state=PublishQueueState.ROUTING,
+            item_id="stale-routing",
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        )
+        fresh_routing = PublishQueueResource(  # type: ignore[call-arg]
+            destination=SubscriberDestination(format="ninjs", delivery_type="ftp", config={}, name="d1"),
+            subscriber_id=self.subscribers[0].id,
+            state=PublishQueueState.ROUTING,
+            item_id="fresh-routing",
+            publishing_action="publish",
+            item_version=1,
+            formatted_item="",
+        )
+
+        await PublishQueueResource.get_service().create([stale_routing, fresh_routing])
+
+        # Back-date the stale item so it falls outside the 5-minute lock window
+        await PublishQueueResource.get_service().update(
+            stale_routing.id,
+            {"_created": utcnow() - timedelta(minutes=6)},
+        )
+
+        tasks = await get_exchange_factory().get_subscriber_tasks(self.subscribers[0].id)
+        task_ids = [task.id for task in tasks]
+
+        self.assertIn(stale_routing.id, task_ids, "stale routing item should be picked up for retry")
+        self.assertNotIn(fresh_routing.id, task_ids, "fresh routing item should not be picked up yet")
