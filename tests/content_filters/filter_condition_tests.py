@@ -834,6 +834,32 @@ class FilterConditionTests(TestCase):
         self.assertEqual("Storytags", keywords_fields[0]["label"])
         self.assertEqual("qcode", keywords_fields[0]["value_field"])
 
+    def test_filter_condition_parameters_subject_replaced_by_schema_field_vocabulary(self):
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {
+                    "_id": "custom_subject",
+                    "display_name": "Topics",
+                    "type": "manageable",
+                    "schema_field": "subject",
+                    "selection_type": "multi selection",
+                    "unique_field": "qcode",
+                    "items": [{"name": "Politics", "qcode": "politics", "is_active": True}],
+                }
+            ],
+        )
+
+        with self.app.app_context():
+            fields = list(get_resource_service("filter_condition_parameters").get(req=None, lookup={}))
+
+        subject_fields = [field for field in fields if field["field"] == "subject"]
+        custom_subject_fields = [field for field in fields if field["field"] == "custom_subject"]
+        self.assertEqual(1, len(subject_fields))
+        self.assertEqual(0, len(custom_subject_fields))
+        self.assertEqual("Topics", subject_fields[0]["label"])
+        self.assertEqual("qcode", subject_fields[0]["value_field"])
+
     def test_filter_condition_value_deserialized(self):
         desk_id = bson.ObjectId()
         field = FilterConditionDeskField("")
