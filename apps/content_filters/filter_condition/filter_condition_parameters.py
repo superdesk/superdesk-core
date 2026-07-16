@@ -39,8 +39,9 @@ class FilterConditionParametersResource(Resource):
 
 class FilterConditionParametersService(BaseService):
     def get(self, req, lookup):
-        values = self._get_field_values()
+        values, excluded_vocabulary_ids = self._get_field_values()
         keywords = values.get("keywords", {})
+        subject = values.get("subject", {})
         keywords_field = {
             "field": "keywords",
             "label": keywords.get("label") or _("Keywords"),
@@ -49,6 +50,13 @@ class FilterConditionParametersService(BaseService):
         if keywords.get("items"):
             keywords_field["values"] = keywords["items"]
             keywords_field["value_field"] = "qcode"
+        subject_field = {
+            "field": "subject",
+            "label": subject.get("label") or _("Subject"),
+            "operators": ["in", "nin"],
+            "values": subject.get("items", []),
+            "value_field": "qcode",
+        }
 
         fields = [
             {
@@ -72,13 +80,7 @@ class FilterConditionParametersService(BaseService):
                 "values": values.get("genre", []),
                 "value_field": "qcode",
             },
-            {
-                "field": "subject",
-                "label": _("Subject"),
-                "operators": ["in", "nin"],
-                "values": values.get("subject", []),
-                "value_field": "qcode",
-            },
+            subject_field,
             {
                 "field": "priority",
                 "label": _("Priority"),
@@ -185,15 +187,16 @@ class FilterConditionParametersService(BaseService):
                 }
             )
 
-        fields.extend(self._get_vocabulary_fields(values))
+        fields.extend(self._get_vocabulary_fields(values, excluded_vocabulary_ids))
         return ListCursor(fields)
 
     def get_from_mongo(self, req, lookup, projection=None):
         return self.get(req, lookup)
 
-    def _get_vocabulary_fields(self, values):
+    def _get_vocabulary_fields(self, values, excluded_vocabulary_ids=None):
         excluded_vocabularies = copy.copy(app.config.get("EXCLUDED_VOCABULARY_FIELDS", []))
         excluded_vocabularies.extend(values)
+        excluded_vocabularies.extend(excluded_vocabulary_ids or [])
         lookup = {"_id": {"$nin": excluded_vocabularies}, "type": "manageable"}
         for vocabulary in get_resource_service("vocabularies").get_from_mongo(req=None, lookup=lookup):
             field = {"field": vocabulary[config.ID_FIELD], "label": vocabulary["display_name"]}
@@ -211,6 +214,7 @@ class FilterConditionParametersService(BaseService):
 
     def _get_field_values(self):
         values = {}
+        excluded_vocabulary_ids = []
         vocabularies_resource = get_resource_service("vocabularies")
         categories_cv = vocabularies_resource.find_one(req=None, _id="categories")
         values["anpa_category"] = categories_cv.get("items") if categories_cv else []
@@ -229,11 +233,17 @@ class FilterConditionParametersService(BaseService):
             "items": keywords.get("items", []) if keywords else [],
             "label": keywords.get("display_name") if keywords else None,
         }
+        if keywords:
+            excluded_vocabulary_ids.append(keywords.get(config.ID_FIELD))
         subject = vocabularies_resource.find_one(req=None, schema_field="subject")
         if subject:
-            values["subject"] = subject["items"]
+            values["subject"] = {
+                "items": subject["items"],
+                "label": subject.get("display_name"),
+            }
+            excluded_vocabulary_ids.append(subject.get(config.ID_FIELD))
         else:
-            values["subject"] = get_subjectcodeitems()
+            values["subject"] = {"items": get_subjectcodeitems(), "label": None}
         values["desk"] = list(get_resource_service("desks").get(None, {}))
         values["stage"] = self._get_stage_field_values(values["desk"])
         values["sms"] = [{"qcode": 0, "name": "False"}, {"qcode": 1, "name": "True"}]
@@ -247,7 +257,7 @@ class FilterConditionParametersService(BaseService):
             values["place"] = []
         values["ingest_provider"] = list(get_resource_service("ingest_providers").get(None, {}))
         values["featuremedia"] = [{"qcode": 1, "name": "True"}, {"qcode": 0, "name": "False"}]
-        return values
+        return values, [vocabulary_id for vocabulary_id in excluded_vocabulary_ids if vocabulary_id]
 
     def _get_stage_field_values(self, desks):
         stages = list(get_resource_service("stages").get(None, {}))
