@@ -4,7 +4,7 @@ types-aioboto3==15.5.0
 types-aiofiles==25.1.0.20260518
 types-chardet~=5.0.4
 types-click==7.1.8
-types-croniter~=6.0.0
+types-croniter~=6.2.3
 types-python-dateutil~=2.9.0
 types-pytz~=2025.2.0
 types-PyYAML~=6.0.12
