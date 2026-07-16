@@ -45,8 +45,12 @@ class PublishQueueResource(ResourceModelWithObjectId):
     unique_name: str | None = None
     content_type: str | None = None
     headline: str | None = None
+    lifecycle_started_at: datetime | None = None
+    lifecycle_started_ms: int | None = None
+    lifecycle_to_transmit_ms: int | None = None
     transmit_started_at: datetime | None = None
     completed_at: datetime | None = None
+    completed_ms: int | None = None
     error_message: str | None = None
 
     # to indicate the queue item is moved to legal

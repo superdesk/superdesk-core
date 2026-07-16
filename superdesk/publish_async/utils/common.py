@@ -34,6 +34,18 @@ ERROR_MESSAGE = "error_message"
 logger = logging.getLogger(__name__)
 
 
+def compute_retry_timeout_minutes(
+    retry_attempt: int,
+    initial_retry_delay_minutes: int,
+    max_retry_delay_minutes: int,
+) -> int:
+    retry_attempt = max(0, retry_attempt)
+    return min(
+        max(1, max_retry_delay_minutes),
+        max(1, initial_retry_delay_minutes) * (2**retry_attempt),
+    )
+
+
 def get_publish_request_from_item(item: dict, operation_override: str | None = None) -> PublishRequest:
     return PublishRequest(
         item=item,

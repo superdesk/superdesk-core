@@ -17,14 +17,16 @@ import lxml.etree as etree
 
 from datetime import datetime
 from urllib.parse import urlparse
+import aiofiles
+import aiofiles.os
 
 from superdesk.core import get_app_config
 from superdesk.io.registry import register_feeding_service
 from superdesk.io.feed_parsers import XMLFeedParser
-from superdesk.utc import utc, utcnow
+from superdesk.utc import utc
 from superdesk.io.feeding_services import FeedingService
 from superdesk.errors import IngestFtpError
-from superdesk.ftp import ftp_connect
+from superdesk.ftp import ftp_connect, FTPClient, all_ftp_errors
 
 
 logger = logging.getLogger(__name__)
@@ -134,16 +136,17 @@ class FTPFeedingService(FeedingService):
         config = provider.get("config", {})
         try:
             async with ftp_connect(config) as ftp:
-                ftp.mlsd()
+                list_iterator = ftp.list()
+                try:
+                    await anext(list_iterator)
+                except StopAsyncIteration:
+                    pass
         except IngestFtpError:
             raise
         except Exception as ex:
-            if "500" in str(ex):
-                ftp.nlst()
-            else:
-                raise await IngestFtpError.ftpError(ex, provider).send_notifications()
+            raise await IngestFtpError.ftpError(ex, provider).send_notifications()
 
-    def _move(self, ftp, src, dest, file_modify, failed):
+    async def _move(self, ftp: FTPClient, src, dest, file_modify, failed):
         """Move distant file
 
         file won't be moved if it is failed and last modification was made
@@ -169,11 +172,11 @@ class FTPFeedingService(FeedingService):
             )
             return
         try:
-            ftp.rename(src, dest)
-        except ftplib.all_errors as e:
+            await ftp.rename(src, dest)
+        except all_ftp_errors as e:
             logger.warning("Can't move file from {src} to {dest}: {reason}".format(src=src, dest=dest, reason=e))
 
-    def _create_if_missing(self, ftp, path):
+    async def _create_if_missing(self, ftp: FTPClient, path):
         """Check if a dir exists, and create it else
 
         :param ftp: FTP instance to use
@@ -181,25 +184,25 @@ class FTPFeedingService(FeedingService):
         :param src: dir path to check
         :type src: str
         """
-        base_path = ftp.pwd()
+        base_path = await ftp.get_current_directory()
         try:
-            ftp.cwd(path)
-        except ftplib.all_errors:
+            await ftp.change_directory(path)
+        except all_ftp_errors:
             # path probably doesn't exist
             # catching all_errors is a bit overkill,
             # but ftplib doesn't really have precise error
             # for missing directory
             if path.startswith("./"):
-                ftp.cwd("/")
-                ftp.mkd(path)
+                await ftp.change_directory("/")
+                await ftp.make_directory(path)
             elif not path.startswith("/"):
-                ftp.mkd("/" + path)
+                await ftp.make_directory("/" + path)
             else:
-                ftp.mkd(path)
+                await ftp.make_directory(path)
         finally:
-            ftp.cwd(base_path)
+            await ftp.change_directory(base_path)
 
-    def _create_move_folders(self, config, ftp):
+    async def _create_move_folders(self, config, ftp):
         if not config.get("ftp_move_path"):
             logger.debug("missing move_path, default will be used")
         move_path = os.path.join(config.get("path", ""), config.get("ftp_move_path") or DEFAULT_SUCCESS_PATH)
@@ -209,9 +212,9 @@ class FTPFeedingService(FeedingService):
         move_path_error = os.path.join(config.get("path", ""), config.get("move_path_error") or DEFAULT_FAILURE_PATH)
 
         try:
-            self._create_if_missing(ftp, move_path)
-            self._create_if_missing(ftp, move_path_error)
-        except ftplib.all_errors as e:
+            await self._create_if_missing(ftp, move_path)
+            await self._create_if_missing(ftp, move_path_error)
+        except all_ftp_errors as e:
             logger.error("Can't create move directory: {reason}".format(reason=e))
             raise e
 
@@ -222,22 +225,20 @@ class FTPFeedingService(FeedingService):
         _, ext = os.path.splitext(filename)
         return ext.lower() in allowed_ext
 
-    def _is_empty(self, file_path):
+    async def _is_empty(self, file_path):
         """Test if given file path is empty, return True if a file is empty"""
-        return not (os.path.isfile(file_path) and os.path.getsize(file_path) > 0)
+        return not (await aiofiles.os.path.isfile(file_path) and await aiofiles.os.path.getsize(file_path) > 0)
 
-    async def _list_files(self, ftp, provider):
+    async def _list_files(self, ftp: FTPClient, provider) -> list[tuple[str, str]]:
         self._timer.start("ftp_list")
         try:
-            data = ftp.mlsd()
-            print(data)
-            return [(filename, facts["modify"]) for filename, facts in data if facts.get("type") == "file"]
+            files: list[tuple[str, str]] = []
+            async for path, facts in ftp.list():
+                if facts.get("type") == "file":
+                    files.append((path.name, facts.get("modify")))
+            return files
         except Exception as ex:
-            if "500" in str(ex):
-                now = utcnow()
-                return [(file_name, now) for file_name in ftp.nlst()]
-            else:
-                raise await IngestFtpError.ftpError(ex, provider).send_notifications()
+            raise await IngestFtpError.ftpError(ex, provider).send_notifications()
         finally:
             self._log_msg("FTP list files. Exec time: {:.4f} secs.".format(self._timer.stop("ftp_list")))
 
@@ -247,31 +248,36 @@ class FTPFeedingService(FeedingService):
         self._log_msg("Sort {} files. Exec time: {:.4f} secs.".format(len(files), self._timer.stop("sort_files")))
         return files
 
-    async def _retrieve_and_parse(self, ftp, config, filename, provider, registered_parser):
+    async def _retrieve_and_parse(self, ftp: FTPClient, config, filename, provider, registered_parser):
         self._timer.start("retrieve_parse")
 
         if "dest_path" not in config:
             config["dest_path"] = tempfile.mkdtemp(prefix="superdesk_ingest_")
         local_file_path = os.path.join(config["dest_path"], filename)
 
-        with open(local_file_path, "wb") as f:
+        async with aiofiles.open(local_file_path, "wb") as local_file:
             try:
-                ftp.retrbinary("RETR %s" % filename, f.write)
+                async with ftp.download_stream(filename) as ftp_stream:
+                    async for chunk in ftp_stream.iter_by_block():
+                        await local_file.write(chunk)
+
                 self._log_msg(
                     "Download finished. Exec time: {:.4f} secs. Size: {} bytes. File: {}.".format(
-                        self._timer.split("retrieve_parse"), os.path.getsize(local_file_path), filename
+                        self._timer.split("retrieve_parse"), await aiofiles.os.path.getsize(local_file_path), filename
                     )
                 )
-            except ftplib.all_errors as err:
+            except all_ftp_errors as err:
                 self._log_msg(
                     "Download failed. Exec time: {:.4f} secs. File: {}.".format(
                         self._timer.stop("retrieve_parse"), filename
                     )
                 )
-                os.remove(local_file_path)
-                raise Exception("Exception retrieving file from FTP server ({filename})".format(filename=filename))
+                await aiofiles.os.remove(local_file_path)
+                raise Exception(
+                    "Exception retrieving file from FTP server ({filename})".format(filename=filename)
+                ) from err
 
-        if self._is_empty(local_file_path):
+        if await self._is_empty(local_file_path):
             logger.info("ignoring empty file {filename}".format(filename=filename))
             raise EmptyFile(local_file_path)
 
@@ -310,7 +316,7 @@ class FTPFeedingService(FeedingService):
                 files = self._sort_files(await self._list_files(ftp, provider))
 
                 if do_move:
-                    move_path, move_path_error = self._create_move_folders(config, ftp)
+                    move_path, move_path_error = await self._create_move_folders(config, ftp)
 
                 self._timer.start("files_to_process")
 
@@ -361,7 +367,7 @@ class FTPFeedingService(FeedingService):
 
                         if do_move:
                             move_dest_file_path = os.path.join(move_path if not failed else move_path_error, filename)
-                            self._move(ftp, filename, move_dest_file_path, file_modify, failed=failed)
+                            await self._move(ftp, filename, move_dest_file_path, file_modify, failed=failed)
                     except EmptyFile:
                         continue
                     except Exception as e:
@@ -369,7 +375,7 @@ class FTPFeedingService(FeedingService):
 
                         if do_move:
                             move_dest_file_path_error = os.path.join(move_path_error, filename)
-                            self._move(ftp, filename, move_dest_file_path_error, file_modify, failed=True)
+                            await self._move(ftp, filename, move_dest_file_path_error, file_modify, failed=True)
 
                 self._log_msg(
                     "Processing finished. Exec time: {:.4f} secs.".format(self._timer.stop("start_processing"))

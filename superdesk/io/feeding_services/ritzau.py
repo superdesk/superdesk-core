@@ -68,14 +68,7 @@ class RitzauFeedingService(HTTPFeedingServiceBase):
         else:
             params = {"user": user, "password": password, "maksAntal": 50, "waitAcknowledge": "true"}
 
-        r = await self.get_url(url_override, params=params)
-
-        try:
-            root_elt = etree.fromstring(r.text)
-        except Exception:
-            raise await IngestApiError.apiRequestError(
-                Exception("error while parsing the request answer")
-            ).send_notifications()
+        root_elt = await self.get_xml(url_override, params=params)
 
         try:
             if root_elt.xpath("(//error/text())[1]")[0] != "0":
@@ -101,7 +94,8 @@ class RitzauFeedingService(HTTPFeedingServiceBase):
                         Exception("missing ServiceQueueId element")
                     ).send_notifications()
                 ack_params = {"user": user, "password": password, "servicequeueid": queue_id}
-                await self.get_url(URL_ACK, params=ack_params)
+                async with self.get_url(URL_ACK, params=ack_params) as response:
+                    pass
 
         return [items]
 

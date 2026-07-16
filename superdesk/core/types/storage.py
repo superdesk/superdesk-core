@@ -108,15 +108,27 @@ class SuperdeskAsyncFile(SuperdeskFile, ResponseBody):
             This should be used with care, as the data is stored entirely in server memory.
         """
 
+        return (await self.to_buffer_sync(buffer)).read()
+
+    async def to_buffer_sync(self, buffer: BytesIO | None = None) -> BytesIO:
+        """Asynchronously stream the entire file into a buffer and return the buffer instance
+
+        .. warning::
+            DO NOT USE WITH LARGE FILES
+            This should be used with care, as the data is stored entirely in server memory.
+        """
+
         if buffer is None:
             buffer = BytesIO()
+
+        current_position = buffer.tell()
 
         # Asynchronously stream the data to the buffer
         async for data in self:
             buffer.write(data)
 
-        # Return the data from the buffer
-        return buffer.read()
+        buffer.seek(current_position)
+        return buffer
 
     async def read(self, size: int = -1) -> bytes:  # type: ignore[override]
         return await self.buffer.read(size)

@@ -32,7 +32,7 @@ from superdesk.io import get_feeding_service
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
 from superdesk.lock import lock, unlock, touch
-from superdesk.media.renditions import update_renditions, transfer_renditions
+from superdesk.media.renditions import update_renditions_async, transfer_renditions
 from superdesk.metadata.item import (
     GUID_NEWSML,
     GUID_FIELD,
@@ -50,6 +50,7 @@ from superdesk.workflow import set_default_state
 from superdesk.errors import IngestFileError
 from superdesk.dates import get_naive_utc
 from copy import deepcopy
+from superdesk.lifecycle_timing import set_ingest_started_at, set_ingest_finished_at
 
 UPDATE_SCHEDULE_DEFAULT = {"minutes": 5}
 LAST_UPDATED = "last_updated"
@@ -589,6 +590,9 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
         ingest_collection = get_ingest_collection(feeding_service, item)
         ingest_service = superdesk.get_resource_service(ingest_collection)
 
+        # Initialize lifecycle timing if not already set by parser
+        set_ingest_started_at(item)
+
         try:
             _is_new_version = ingest_service.is_new_version
         except AttributeError:
@@ -660,7 +664,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                     href = await feeding_service.prepare_href_async(baseImageRend["href"], rend.get("mimetype"))
                 else:
                     href = feeding_service.prepare_href(baseImageRend["href"], rend.get("mimetype"))
-                update_renditions(item, href, old_item, feeding_service=feeding_service)
+                await update_renditions_async(item, href, old_item, feeding_service=feeding_service)
 
         # if the item has associated media
         for key, assoc in item.get("associations", {}).items():
@@ -678,7 +682,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                     if _is_new_version(assoc, ingested) and assoc.get("renditions"):  # new version
                         logger.info("new assoc version - re-transfer renditions for %s", assoc_name)
                         try:
-                            transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
+                            await transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
                         except SuperdeskApiError:
                             logger.exception(
                                 "failed to update associated item renditions",
@@ -694,7 +698,7 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
                     if assoc.get("renditions") and has_system_renditions(assoc):  # all set, just download
                         logger.info("new association with system renditions - transfer %s", assoc_name)
                         try:
-                            transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
+                            await transfer_renditions(assoc["renditions"], feeding_service=feeding_service)
                         except SuperdeskApiError:
                             logger.exception(
                                 "failed to download renditions",
@@ -717,6 +721,9 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             new_version = _is_new_version(item, old_item)
             updates = deepcopy(item)
             if new_version:
+                # Set ingest_finished_at before storing
+                set_ingest_finished_at(updates)
+
                 await ingest_service.patch_in_mongo(old_item[ID_FIELD], updates, old_item)
                 item.update(old_item)
                 item.update(updates)
@@ -724,6 +731,9 @@ async def ingest_item(item, provider, feeding_service, rule_set=None, routing_sc
             else:
                 item.update(old_item)
         else:
+            # New item - set finished time before saving
+            set_ingest_finished_at(item)
+
             if item.get("ingest_provider_sequence") is None:
                 if hasattr(ingest_service, "set_ingest_provider_sequence_async"):
                     await ingest_service.set_ingest_provider_sequence_async(item, provider)

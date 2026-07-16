@@ -5,7 +5,7 @@ from superdesk import get_resource_service
 from superdesk.io.feeding_services import FTPFeedingService
 from superdesk.io.commands.update_ingest import ingest_items
 
-from .mocks_reuters import setup_reuters_mock, teardown_reuters_mock
+from .mocks_reuters import setup_reuters_mock
 
 
 async def setup_providers(context):
@@ -129,7 +129,3 @@ async def setup_providers(context):
         context.providers["ninjs"] = result[5]
         context.providers["email"] = result[6]
         context.providers["ftp_ninjs"] = result[7]
-
-
-def teardown_providers(context):
-    teardown_reuters_mock(context)

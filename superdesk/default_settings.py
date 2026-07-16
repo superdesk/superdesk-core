@@ -317,7 +317,15 @@ CELERY_TASK_SERIALIZER = "context-aware/json"
 #:
 CELERY_TASK_PROTOCOL = 2
 
+# Enable Celery Task Results (used for Media file operation results)
+#:
+#: .. versionadded:: 3.6
+#:
 CELERY_TASK_IGNORE_RESULT = True
+CELERY_RESULT_BACKEND = env("CELERY_RESULT_URL", REDIS_URL)
+CELERY_RESULT_EXPIRES = 3600  # Delete results after 1 hour
+CELERY_RESULT_SERIALIZER = CELERY_TASK_SERIALIZER
+
 CELERY_TASK_SEND_EVENTS = False
 
 #: celery worker config
@@ -377,6 +385,7 @@ CELERY_TASK_QUEUES = (
         Exchange(HIGH_PRIORITY_QUEUE, type="direct"),
         routing_key=HIGH_PRIORITY_QUEUE,
     ),
+    Queue(celery_queue("media"), Exchange(celery_queue("media"), type="topic"), routing_key="media.#"),
 )
 
 CELERY_TASK_ROUTES = {
@@ -400,6 +409,7 @@ CELERY_TASK_ROUTES = {
         "queue": celery_queue("publish"),
         "routing_key": "publish.transmit",
     },
+    "superdesk.media.*": {"queue": celery_queue("media"), "routing_key": "media.operations"},
 }
 
 #: celery beat config
@@ -1040,8 +1050,21 @@ ORGANIZATION_NAME_ABBREVIATION = env("ORGANIZATION_NAME_ABBREVIATION", "Short na
 #: max retries when transmitting an item
 MAX_TRANSMIT_RETRY_ATTEMPT = int(env("MAX_TRANSMIT_RETRY_ATTEMPT", 10))
 
-#: delay between retry attempts
-TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES = int(env("TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES", 3))
+#: initial delay before retry attempts. Subsequent retries use exponential backoff.
+TRANSMIT_RETRY_INITIAL_DELAY_MINUTES = int(
+    env("TRANSMIT_RETRY_INITIAL_DELAY_MINUTES", env("TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES", 1))
+)
+
+#: maximum delay between retry attempts when exponential backoff is applied.
+TRANSMIT_RETRY_MAX_DELAY_MINUTES = int(
+    env("TRANSMIT_RETRY_MAX_DELAY_MINUTES", env("MAX_TRANSMIT_RETRY_DELAY_MINUTES", 120))
+)
+
+#: legacy alias kept for backwards compatibility.
+MAX_TRANSMIT_RETRY_DELAY_MINUTES = TRANSMIT_RETRY_MAX_DELAY_MINUTES
+
+#: legacy alias kept for backwards compatibility.
+TRANSMIT_RETRY_ATTEMPT_DELAY_MINUTES = TRANSMIT_RETRY_INITIAL_DELAY_MINUTES
 
 #: max transmit items to be fetched from mongo at once
 MAX_TRANSMIT_QUERY_LIMIT = int(env("MAX_TRANSMIT_QUERY_LIMIT", 500))

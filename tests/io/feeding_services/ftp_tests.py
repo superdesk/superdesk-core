@@ -18,7 +18,7 @@ import datetime
 import pytz
 
 from unittest import mock
-from superdesk.tests import setup, TestCase as CoreTestCase, markers
+from superdesk.tests import setup, TestCase as CoreTestCase
 from superdesk.io.feeding_services import ftp
 from superdesk.utc import utcnow, utc
 from superdesk.default_settings import FTP_INGEST_FILES_LIST_LIMIT
@@ -44,11 +44,14 @@ PROVIDER = {
 }
 
 
+class MockPath(str):
+    @property
+    def name(self):
+        return self
+
+
 def ftp_file(filename, modify):
-    facts = mock.Mock()
-    facts.get.return_value = "file"
-    facts.__getitem__ = mock.Mock(return_value=modify)
-    return [filename, facts]
+    return [MockPath(filename), {"type": "file", "modify": modify}]
 
 
 async def ingest_items(generator, ingest_status=True):
@@ -59,6 +62,17 @@ async def ingest_items(generator, ingest_status=True):
             failed = set([item["guid"]]) if not ingest_status else set()
         except StopAsyncIteration:
             break
+
+
+class FakeDownloadStream:
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        pass
+
+    async def iter_by_block(self):
+        yield b"binary"
 
 
 class FakeFTP(mock.AsyncMock):
@@ -85,7 +99,11 @@ class FakeFTP(mock.AsyncMock):
         pass
 
     async def list(self):
-        return iter(self.files)
+        for file in self.files:
+            yield file
+
+    def download_stream(self, filename):
+        return FakeDownloadStream()
 
 
 def mock_ftp_connect(ftp_class: type[FakeFTP] = FakeFTP):
@@ -109,6 +127,9 @@ class FakeFTPRecentFiles(FakeFTP):
         # adding extra time to make sure that the file won't expire before the test runs
         ftp_file("recent_file.xml", (datetime.datetime.today() + datetime.timedelta(hours=1)).strftime("%Y%m%d%H%M%S")),
     ]
+
+    def download_stream(self, filename):
+        raise Exception("Test exception")
 
 
 class FakeFeedParser(mock.AsyncMock):
@@ -135,8 +156,6 @@ class TestCase(CoreTestCase):
 
 
 class FTPTestCase(TestCase):
-    pytestmark = markers.to_be_done_in_another_task
-
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.app.config["FTP_INGEST_FILES_LIST_LIMIT"] = FTP_INGEST_FILES_LIST_LIMIT
@@ -178,7 +197,7 @@ class FTPTestCase(TestCase):
         """
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         await ingest_items(await service.update(provider, {}))
 
         mock_ftp = ftp_connect.return_value.ftp
@@ -199,7 +218,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider["config"]["ftp_move_path"] = ""
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         await ingest_items(await service.update(provider, {}))
 
         print("ftp_connect.return_value = ", ftp_connect.return_value)
@@ -220,7 +239,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider["config"]["ftp_move_path"] = ""
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         await ingest_items(await service.update(provider, {}), False)
         mock_ftp = ftp_connect.return_value.ftp
 
@@ -250,7 +269,7 @@ class FTPTestCase(TestCase):
         """Check that failing file is not moved if it's more recent thant INGEST_OLD_CONTENT_MINUTES"""
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         await ingest_items(await service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.ftp
 
@@ -272,7 +291,7 @@ class FTPTestCase(TestCase):
         """
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         await ingest_items(await service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.ftp
 
@@ -291,7 +310,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider["config"]["move_path_error"] = ""
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         await ingest_items(await service.update(provider, {}))
         mock_ftp = ftp_connect.return_value.ftp
 
@@ -327,7 +346,7 @@ class FTPTestCase(TestCase):
         provider = copy.deepcopy(PROVIDER)
         provider["config"]["move"] = False
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         mock_ftp = ftp_connect.return_value.ftp
 
         await ingest_items(await service.update(provider, update))
@@ -391,17 +410,20 @@ class FTPTestCase(TestCase):
         update = {}
         self.app.config["FTP_INGEST_FILES_LIST_LIMIT"] = 3
 
+        async def _file_list_generator(files: list[tuple[MockPath, dict]]):
+            for path, facts in files:
+                yield path, facts
+
         retrieve_and_parse, get_feed_parser, ftp_connect = mocks
         provider = copy.deepcopy(PROVIDER)
         service = ftp.FTPFeedingService()
-        service._is_empty = mock.MagicMock(return_value=False)
+        service._is_empty = mock.AsyncMock(return_value=False)
         mock_ftp = ftp_connect.return_value.ftp
 
         await ingest_items(await service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
-        mock_ftp.mlsd = mock.Mock()
-        mock_ftp.mlsd.return_value = iter(FakeFTP.files[3:])
+        mock_ftp.list = mock.Mock(return_value=_file_list_generator(FakeFTP.files[3:]))
 
         self.assertEqual(retrieve_and_parse.call_count, 3)
         self.assertEqual(
@@ -412,8 +434,7 @@ class FTPTestCase(TestCase):
         await ingest_items(await service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
-        mock_ftp.mlsd = mock.Mock()
-        mock_ftp.mlsd.return_value = iter(FakeFTP.files[6:])
+        mock_ftp.list = mock.Mock(return_value=_file_list_generator(FakeFTP.files[6:]))
 
         self.assertEqual(retrieve_and_parse.call_count, 6)
         self.assertEqual(
@@ -424,8 +445,7 @@ class FTPTestCase(TestCase):
         await ingest_items(await service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
-        mock_ftp.mlsd = mock.Mock()
-        mock_ftp.mlsd.return_value = iter(FakeFTP.files[9:])
+        mock_ftp.list = mock.Mock(return_value=_file_list_generator(FakeFTP.files[9:]))
 
         self.assertEqual(retrieve_and_parse.call_count, 9)
         self.assertEqual(
@@ -436,8 +456,7 @@ class FTPTestCase(TestCase):
         await ingest_items(await service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
-        mock_ftp.mlsd = mock.Mock()
-        mock_ftp.mlsd.return_value = iter(FakeFTP.files[12:])
+        mock_ftp.list = mock.Mock(return_value=_file_list_generator(FakeFTP.files[12:]))
 
         self.assertEqual(retrieve_and_parse.call_count, 12)
         self.assertEqual(
@@ -448,8 +467,7 @@ class FTPTestCase(TestCase):
         await ingest_items(await service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
-        mock_ftp.mlsd = mock.Mock()
-        mock_ftp.mlsd.return_value = iter(FakeFTP.files[15:])
+        mock_ftp.list = mock.Mock(return_value=_file_list_generator(FakeFTP.files[15:]))
 
         self.assertEqual(retrieve_and_parse.call_count, 15)
         self.assertEqual(
@@ -460,8 +478,7 @@ class FTPTestCase(TestCase):
         await ingest_items(await service.update(provider, update))
         provider.update(update)
         # emulate moving files by reducing list
-        mock_ftp.mlsd = mock.Mock()
-        mock_ftp.mlsd.return_value = iter(FakeFTP.files[16:])
+        mock_ftp.list = mock.Mock(return_value=_file_list_generator(FakeFTP.files[16:]))
 
         self.assertEqual(retrieve_and_parse.call_count, 16)
         self.assertEqual(

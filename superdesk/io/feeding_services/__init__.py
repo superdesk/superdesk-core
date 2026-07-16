@@ -222,7 +222,7 @@ class FeedingService(metaclass=ABCMeta):
     def localize_timestamps(self, item):
         """Make sure timestamps are in UTC."""
         for timestamp in ("firstcreated", "versioncreated"):
-            if item.get(timestamp):
+            if item.get(timestamp) and item[timestamp].tzinfo is None:
                 item[timestamp] = utc.localize(item[timestamp])
 
     def is_latest_content(self, last_updated, provider_last_updated=None):
@@ -299,7 +299,6 @@ from superdesk.io.feeding_services.ftp import FTPFeedingService  # NOQA
 from superdesk.io.feeding_services.ritzau import RitzauFeedingService  # NOQA
 from superdesk.io.feeding_services.http_service import HTTPFeedingService  # NOQA
 from superdesk.io.feeding_services.rss import RSSFeedingService  # NOQA
-from superdesk.io.feeding_services.twitter import TwitterFeedingService  # NOQA
 from superdesk.io.feeding_services.ap import APFeedingService  # NOQA
 from superdesk.io.feeding_services.bbc_ldrs import BBCLDRSFeedingService  # NOQA
 from superdesk.io.feeding_services.ap_media import APMediaFeedingService  # NOQA

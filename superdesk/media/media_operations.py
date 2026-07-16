@@ -130,9 +130,10 @@ async def download_file_from_url_async(
 
     request_kwargs = _set_default_request_headers(request_kwargs)
     if isinstance(request_kwargs.get("timeout"), tuple):
-        # Requests can use a tuple for timeouts - connection and read timeouts
-        # aiohttp doesn't have this capability, so we combine the two numbers together
-        request_kwargs["timeout"] = sum(request_kwargs["timeout"])
+        # Convert timeout tuple into an aiohttp-compatible timeout object
+        request_kwargs["timeout"] = aiohttp.ClientTimeout(
+            connect=request_kwargs["timeout"][0], sock_read=request_kwargs["timeout"][1]
+        )
 
     close_session = False
     if session is None:
@@ -144,7 +145,11 @@ async def download_file_from_url_async(
             if response.status not in (200, 201):
                 raise SuperdeskApiError.internalError(_("Failed to retrieve file from URL: {url}").format(url=url))
 
-            content = BytesIO(await response.read())
+            # Iterate through the response data in 1MB chunks
+            content = BytesIO()
+            async for chunk in response.content.iter_chunked(1024 * 1024):
+                content.write(chunk)
+            content.seek(0)
             name, content_type = _get_name_and_content_type_from_response(content, response.headers)
             return content, name, content_type
     finally:

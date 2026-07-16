@@ -12,7 +12,8 @@
 from superdesk.eve_async.service import AsyncBaseService
 from superdesk.resource_fields import ID_FIELD
 from superdesk.resource import Resource
-from superdesk.media.renditions import generate_renditions, get_renditions_spec
+from superdesk.media.renditions import generate_renditions, get_renditions_spec_async
+from superdesk.celery_app.task_result import AsyncTaskResult
 from superdesk import get_resource_service
 from superdesk import errors
 from superdesk.core import get_current_app
@@ -22,8 +23,87 @@ from io import BytesIO
 import os.path
 import uuid
 import logging
+from celery import shared_task
 
 logger = logging.getLogger(__name__)
+
+
+def transform(im, operation):
+    """Apply image transformation
+
+    :param Image im: image to transform
+    :param str operation: name of the operation to do
+    :param param: parameters of the operation
+    :return Image: resulting image
+    """
+    operation_type = operation[0]
+    param = operation[1]
+
+    if operation_type == "rotate":
+        return im.rotate(int(param), expand=1)
+
+    elif operation_type == "flip":
+        if param in ("vertical", "both"):
+            im = im.transpose(Image.FLIP_TOP_BOTTOM)
+        if param in ("horizontal", "both"):
+            im = im.transpose(Image.FLIP_LEFT_RIGHT)
+        return im
+
+    elif operation_type == "brightness":
+        return ImageEnhance.Brightness(im).enhance(float(param))
+
+    elif operation_type == "contrast":
+        return ImageEnhance.Contrast(im).enhance(float(param))
+
+    elif operation_type == "grayscale":
+        return im.convert("L")
+
+    elif operation_type == "saturation":
+        return ImageEnhance.Color(im).enhance(float(param))
+
+    logger.warning("unhandled operation: {operation} {param}".format(operation=operation_type, param=param))
+
+    return im
+
+
+@shared_task(store_async_result=True)
+async def perform_operations_in_celery(rendition: dict, operations: list[tuple[str, str | int | float]]):
+    app = get_current_app()
+    media_id = rendition["media"]
+    media_file = await app.media.get_async(media_id)
+    media_buf = await media_file.to_buffer_sync()
+    out = im = Image.open(media_buf)
+
+    # we apply all requested operations on original media
+    for operation in operations:
+        try:
+            out = transform(out, operation)
+        except ValueError:
+            # if the operation can't be applied just ignore it
+            logger.warning(
+                "failed to apply operation: {operation} {param} for media {id}".format(
+                    operation=operation[0], param=operation[1], id=media_id
+                )
+            )
+
+    buf = BytesIO()
+    out.save(buf, format=im.format)
+
+    # we set metadata
+    buf.seek(0)
+    content_type = rendition["mimetype"]
+    ext = os.path.splitext(rendition["href"])[1]
+    filename = str(uuid.uuid4()) + ext
+
+    # and save transformed media in database
+    media_id = await app.media.put_async(buf, filename=filename, content_type=content_type)
+    buf.seek(0)
+
+    renditions = generate_renditions(
+        buf, media_id, [], "image", content_type, await get_renditions_spec_async(), app.media.url_for_media
+    )
+
+    return renditions
 
 
 class MediaEditorResource(Resource):
@@ -51,46 +131,8 @@ class MediaEditorResource(Resource):
 class MediaEditorService(AsyncBaseService):
     """Service givin metadata on backend itself"""
 
-    def transform(self, im, operation):
-        """Apply image transformation
-
-        :param Image im: image to transform
-        :param str operation: name of the operation to do
-        :param param: parameters of the operation
-        :return Image: resulting image
-        """
-        operation_type = operation[0]
-        param = operation[1]
-
-        if operation_type == "rotate":
-            return im.rotate(int(param), expand=1)
-
-        elif operation_type == "flip":
-            if param in ("vertical", "both"):
-                im = im.transpose(Image.FLIP_TOP_BOTTOM)
-            if param in ("horizontal", "both"):
-                im = im.transpose(Image.FLIP_LEFT_RIGHT)
-            return im
-
-        elif operation_type == "brightness":
-            return ImageEnhance.Brightness(im).enhance(float(param))
-
-        elif operation_type == "contrast":
-            return ImageEnhance.Contrast(im).enhance(float(param))
-
-        elif operation_type == "grayscale":
-            return im.convert("L")
-
-        elif operation_type == "saturation":
-            return ImageEnhance.Color(im).enhance(float(param))
-
-        logger.warning("unhandled operation: {operation} {param}".format(operation=operation_type, param=param))
-
-        return im
-
     async def create_async(self, docs: list[dict], **kwargs) -> list:
         """Apply transformation requested in 'edit'"""
-        app = get_current_app()
         ids = []
         archive = get_resource_service("archive")
         for doc in docs:
@@ -113,39 +155,10 @@ class MediaEditorService(AsyncBaseService):
 
             # now we retrieve and load current original media
             rendition = item["renditions"]["original"]
-            media_id = rendition["media"]
-            media = app.media.get(media_id)
-            out = im = Image.open(media)
-
-            # we apply all requested operations on original media
-            for operation in edit:
-                try:
-                    out = self.transform(out, operation)
-                except ValueError:
-                    # if the operation can't be applied just ignore it
-                    logger.warning(
-                        "failed to apply operation: {operation} {param} for media {id}".format(
-                            operation=operation[0], param=operation[1], id=media_id
-                        )
-                    )
-            buf = BytesIO()
-            out.save(buf, format=im.format)
-
-            # we set metadata
-            buf.seek(0)
-            content_type = rendition["mimetype"]
-            ext = os.path.splitext(rendition["href"])[1]
-            filename = str(uuid.uuid4()) + ext
-
-            # and save transformed media in database
-            media_id = await app.media.put_async(buf, filename=filename, content_type=content_type)
-
-            # now we recreate other renditions based on transformed original media
-            buf.seek(0)
-            renditions = generate_renditions(
-                buf, media_id, [], "image", content_type, get_renditions_spec(), app.media.url_for_media
+            edit_result: AsyncTaskResult[dict] | dict = await perform_operations_in_celery.delay(rendition, edit)
+            renditions = (
+                await edit_result.get_result_async() if isinstance(edit_result, AsyncTaskResult) else edit_result
             )
-
             ids.append(item_id)
             doc["renditions"] = renditions
 

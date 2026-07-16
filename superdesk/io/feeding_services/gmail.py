@@ -7,13 +7,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import re
-import imaplib
 from typing import List
 from bson import ObjectId
 from os.path import join
 import time
 import logging
 from quart_babel import lazy_gettext as l_
+import aioimaplib
 import superdesk
 from superdesk.auth import oauth
 from superdesk.errors import IngestEmailError
@@ -86,31 +86,29 @@ class GMailFeedingService(EmailFeedingService):
     async def _test(self, provider):
         await self._update(provider, update=None, test=True)
 
-    async def authenticate(self, provider: dict, config: dict) -> imaplib.IMAP4_SSL:
+    async def authenticate(self, provider: dict, config: dict) -> aioimaplib.IMAP4_SSL:
         oauth2_token_service = superdesk.get_resource_service("oauth2_token")
-        token = oauth2_token_service.find_one(req=None, _id=ObjectId(provider["_id"]))
+        token = await oauth2_token_service.find_one_async(req=None, _id=ObjectId(provider["_id"]))
         if token is None:
             raise await IngestEmailError.notConfiguredError(
                 ValueError(l_("You need to log in first")), provider=provider
             ).send_notifications()
-        imap = imaplib.IMAP4_SSL("imap.gmail.com")
+
+        imap = await self.connect(provider, "imap.gmail.com")
 
         if token["expires_at"].replace(tzinfo=None).timestamp() < time.time() + 600:
             logger.info("Refreshing token for {provider_name}".format(provider_name=provider["name"]))
             token = oauth.refresh_google_token(token["_id"])
 
-        auth_string = "user={email}\x01auth=Bearer {token}\x01\x01".format(
-            email=token["email"], token=token["access_token"]
-        )
-        imap.authenticate("XOAUTH2", lambda __: auth_string.encode())
+        await imap.xoauth2(token["email"], token["access_token"])
         return imap
 
-    def parse_extra(self, imap: imaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
+    async def parse_extra(self, imap: aioimaplib.IMAP4_SSL, num: str, parsed_items: List[dict]) -> None:
         """Add GMail labels to parsed_items"""
         try:
             # we use GMail IMAP Extensions
             # https://developers.google.com/gmail/imap/imap-extensions#access_to_gmail_labels_x-gm-labels
-            _, data = imap.fetch(num, "(X-GM-LABELS)")
+            _, data = await imap.fetch(num, "(X-GM-LABELS)")
             # it seems that there is nothing to help parsing in standard lib
             # thus we use some regex to get our labels
             data_bytes = data[0]

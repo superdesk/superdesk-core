@@ -36,7 +36,6 @@ install_requires = [
     "PyYAML>=6.0.1",
     "lxml>=5.2.2,<5.4",
     "lxml_html_clean>=0.1.1,<0.5",
-    "python-twitter>=3.5,<3.6",
     "chardet<6.0",
     "pymongo>=4.9.1,<4.16",
     "croniter<6.1",
@@ -48,7 +47,7 @@ install_requires = [
     "flask-oidc-ex>=0.5.5,<0.7",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe>2.1",
-    "reportlab>=3.6.11,<4.6",
+    "reportlab>=3.6.11,<5.1",
     "pyjwt>=2.4.0,<2.14",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
@@ -68,6 +67,7 @@ install_requires = [
     "quart-flask-patch>=0.3.0,<0.4",
     "aiohttp<3.14",  # upload.feature tests are failing due to conflict with aioresponses 0.7.8
     "aioftp>=0.27.2,<0.28",
+    "aioimaplib>=2.0.1,<2.1",
 ]
 
 package_data = {
