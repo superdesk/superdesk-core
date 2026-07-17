@@ -26,7 +26,9 @@ class OpenApiSchemaGenerator(GenerateJsonSchema):
         def _process_node(node: dict) -> None:
             self._remove_none_from_optional_fields(node)
             for field in {"elastic_mapping", "include_in_parent", "nested"}:
-                node.pop(field, None)
+                value = node.pop(field, None)
+                if value:
+                    node[f"x-{field}"] = value
 
             if node.get("items"):
                 _process_node(node["items"])
@@ -386,7 +388,7 @@ class OpenAPISpec:
         self.add_path("/" + endpoint.url, endpoint_spec)
         return self
 
-    def add_model(self, model: type[BaseModel]) -> "OpenAPISpec":
+    def add_model(self, model: type[BaseModel], tags: list[str] | None = None) -> "OpenAPISpec":
         """
         Adds a given Pydantic based model to the OpenAPI specification and generates its schema.
 
@@ -401,6 +403,8 @@ class OpenAPISpec:
 
         schema = OpenApiSchemaGenerator.get_model_schema(model)
         self.add_schemas(schema.pop("$defs", {}))
+        if tags:
+            schema["x-tags"] = tags
         self.add_schema(model.__name__, schema)
         return self
 
