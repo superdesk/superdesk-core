@@ -219,6 +219,10 @@ class BasePublishService(AsyncBaseService):
         await update_refs(updates, original)
 
     async def on_updated_async(self, updates, original):
+        should_track_published_articles = (  # should be computed before re-fetching original
+            self.publish_type == ITEM_PUBLISH and not original.get("firstpublished") and not original.get("rewrite_of")
+        )
+
         original = await super().find_one_async(req=None, _id=original[ID_FIELD])
         updates.update(original)
 
@@ -237,7 +241,8 @@ class BasePublishService(AsyncBaseService):
         signals.item_published.send(self, item=original, after_scheduled=False)
         await signals.item_published_async.send(original, False)
 
-        self._track_published_articles(original)
+        if should_track_published_articles:
+            self._track_published_articles(original)
 
         packages = await self.package_service.get_packages_async(original[ID_FIELD])
         if packages and (await packages.count()) > 0:
