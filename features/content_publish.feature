@@ -178,6 +178,52 @@ Feature: Content Publishing
         ]
       }
       """
+      When we rewrite "123"
+      Then we get OK response
+      When we get "/user_metrics/"
+      Then we get existing resource
+      """
+      {"_items": [
+        {"name": "published_articles", "value": 1, "user": "#users._id#"}
+      ]}
+      """
+      When we publish "#archive._id#" with "correct" type and "corrected" state
+      """
+      {"headline": "test corrected"}
+      """
+      Then we get OK response
+      When we get "/user_metrics/"
+      Then we get existing resource
+      """
+      {"_items": [
+        {"name": "published_articles", "value": 1, "user": "#users._id#"}
+      ]}
+      """
+      When we publish "#archive._id#" with "unpublish" type and "unpublished" state
+      Then we get OK response
+      When we patch "/archive/#archive._id#"
+      """
+      {"state": "in_progress"}
+      """
+      Then we get OK response
+      When we publish "#archive._id#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/user_metrics/"
+      Then we get existing resource
+      """
+      {"_items": [
+        {"name": "published_articles", "value": 1, "user": "#users._id#"}
+      ]}
+      """
+      When we publish "#REWRITE_ID#" with "publish" type and "published" state
+      Then we get OK response
+      When we get "/user_metrics/"
+      Then we get existing resource
+      """
+      {"_items": [
+        {"name": "published_articles", "value": 1, "user": "#users._id#"}
+      ]}
+      """
 
     @auth
     @provider

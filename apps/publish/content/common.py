@@ -162,6 +162,10 @@ class BasePublishService(BaseService):
         update_refs(updates, original)
 
     def on_updated(self, updates, original):
+        should_track_published_articles = (  # should be computed before re-fetching original
+            self.publish_type == ITEM_PUBLISH and not original.get("firstpublished") and not original.get("rewrite_of")
+        )
+
         original = super().find_one(req=None, _id=original[config.ID_FIELD])
         updates.update(original)
 
@@ -177,7 +181,8 @@ class BasePublishService(BaseService):
         CropService().update_media_references(updates, original, True)
         signals.item_published.send(self, item=original, after_scheduled=False)
 
-        self._track_published_articles(original)
+        if should_track_published_articles:
+            self._track_published_articles(original)
 
         packages = self.package_service.get_packages(original[config.ID_FIELD])
         if packages and packages.count() > 0:
