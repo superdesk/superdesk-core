@@ -113,11 +113,11 @@ class ResourceModelTest(TestCase):
                             "scheme": {"type": "text"},
                         },
                     },
-                    "profile_id": {"type": "text"},
+                    "profile_id": {"type": "keyword"},
                     "related_items": {
                         "type": "nested",
                         "properties": {
-                            "_id": {"type": "text"},
+                            "_id": {"type": "keyword"},
                             "link_type": {"type": "keyword"},
                             "slugline": {"type": "text", "analyzer": "html_field_analyzer"},
                         },
