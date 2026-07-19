@@ -25,7 +25,7 @@ class OpenApiSchemaGenerator(GenerateJsonSchema):
 
         def _process_node(node: dict) -> None:
             self._remove_none_from_optional_fields(node)
-            for field in {"elastic_mapping", "include_in_parent", "nested"}:
+            for field in ("elastic_mapping", "include_in_parent", "nested"):
                 value = node.pop(field, None)
                 if value:
                     node[f"x-{field}"] = value

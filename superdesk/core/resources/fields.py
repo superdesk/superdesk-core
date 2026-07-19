@@ -151,7 +151,7 @@ else:
         elastic_mapping = {"type": "text", "analyzer": "html_field_analyzer"}
 
     class KeywordWithHTML(CustomStringField, str):
-        """Elasticsearch keyword field with a HTML sub-field"""
+        """Elasticsearch keyword field with an HTML sub-field"""
 
         json_schema = {"type": "string", "format": "html"}
         elastic_mapping = {
@@ -180,7 +180,7 @@ else:
     class ObjectId(BsonObjectId, CustomStringField[BsonObjectId]):
         """Elasticsearch ObjectId field"""
 
-        json_schema = {"type": "string", "format": "objectid", "examples": [str(BsonObjectId())]}
+        json_schema = {"type": "string", "format": "objectid", "examples": ["507f1f77bcf86cd799439011"]}
         elastic_mapping = {"type": "keyword"}
         core_type = BsonObjectId
 
