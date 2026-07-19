@@ -783,5 +783,7 @@ class UpdateIngestTest(TestCase):
 
         # update an event
         ingested, ids = await ingest_item(item, provider=provider, feeding_service={})
-        self.assertTrue(ingested)
+        # The Event was manually updated by a user (as it has a `version_creator` now)
+        # Therefore, the Event should not be updated upon ingesting
+        self.assertFalse(ingested)
         self.assertEqual([], ids)
