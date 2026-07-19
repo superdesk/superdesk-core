@@ -440,16 +440,8 @@ class OpenAPISpec:
             schema.pop("additionalProperties", None)
         return self
 
-    def to_string(self, output_format: str, pretty_print: bool = True) -> str:
-        """
-        Converts the specification to either JSON or YAML string format based on the provided
-        output format. Optionally, the output can be pretty-printed with indentation.
-
-        :param output_format: The desired output format for the specification. It must be either "json" or "yaml".
-        :param pretty_print: If True, the output will be formatted with indentation for better readability. Defaults to True.
-        :return str: The formatted specification as a string.
-        :raises ValueError: If the provided output format is neither "json" nor "yaml".
-        """
+    def to_dict(self) -> dict:
+        """Converts the specification to a dictionary, ready to turn into JSON or YAML."""
 
         spec = deepcopy(self.spec)
         for attribute in {"servers", "tags", "paths"}:
@@ -463,6 +455,20 @@ class OpenAPISpec:
         if not spec["components"]:
             spec.pop("components", None)
 
+        return spec
+
+    def to_string(self, output_format: str, pretty_print: bool = True) -> str:
+        """
+        Converts the specification to either JSON or YAML string format based on the provided
+        output format. Optionally, the output can be pretty-printed with indentation.
+
+        :param output_format: The desired output format for the specification. It must be either "json" or "yaml".
+        :param pretty_print: If True, the output will be formatted with indentation for better readability. Defaults to True.
+        :return str: The formatted specification as a string.
+        :raises ValueError: If the provided output format is neither "json" nor "yaml".
+        """
+
+        spec = self.to_dict()
         kwargs: dict = {} if not pretty_print else {"indent": 4}
         if output_format == "json":
             return json.dumps(spec, **kwargs)
