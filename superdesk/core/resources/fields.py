@@ -120,6 +120,8 @@ if TYPE_CHECKING:
     Keyword = Annotated[str, ...]
     TextWithKeyword = Annotated[str, ...]
     HTML = Annotated[str, ...]
+    KeywordWithHTML = Annotated[str, ...]
+    Slugline = Annotated[str, ...]
     ObjectId = Annotated[BsonObjectId, ...]
     DateWithOptionalTime = Annotated[str, ...]
 else:
@@ -148,11 +150,38 @@ else:
         json_schema = {"type": "string", "format": "html"}
         elastic_mapping = {"type": "text", "analyzer": "html_field_analyzer"}
 
+    class KeywordWithHTML(CustomStringField, str):
+        """Elasticsearch keyword field with an HTML sub-field"""
+
+        json_schema = {"type": "string", "format": "html"}
+        elastic_mapping = {
+            "type": "keyword",
+            "fields": {
+                "analyzed": {"type": "text", "analyzer": "html_field_analyzer"},
+            },
+        }
+
+    class Slugline(CustomStringField, str):
+        """Slugline field. Provides sub-fields for keyword, HTML & text with `phrase_prefix_analyzer`
+
+        Note: Due to performance and JVM heap issues, the `fielddata` option has been removed
+        """
+
+        json_schema = {"type": "string"}
+        elastic_mapping = {
+            "type": "text",
+            "fields": {
+                "phrase": {"type": "text", "analyzer": "phrase_prefix_analyzer"},
+                "keyword": {"type": "keyword"},
+                "text": {"type": "text", "analyzer": "html_field_analyzer"},
+            },
+        }
+
     class ObjectId(BsonObjectId, CustomStringField[BsonObjectId]):
         """Elasticsearch ObjectId field"""
 
-        json_schema = {"type": "string", "format": "objectid"}
-        elastic_mapping = {"type": "text"}
+        json_schema = {"type": "string", "format": "objectid", "examples": ["507f1f77bcf86cd799439011"]}
+        elastic_mapping = {"type": "keyword"}
         core_type = BsonObjectId
 
         @classmethod
@@ -167,11 +196,11 @@ else:
         json_schema = {
             "type": "string",
             "anyOf": [
-                {"title": "Date", "pattern": "^\d{4}-\d{2}-\d{2}$"},
-                {"title": "Date and time", "pattern": "^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?)$"},
+                {"title": "Date", "pattern": r"^\d{4}-\d{2}-\d{2}$"},
+                {"title": "Date and time", "pattern": r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?)$"},
                 {
                     "title": "Date, time and UTC offset",
-                    "pattern": "^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}(:?\d{2})?)?)?$",
+                    "pattern": r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}(:?\d{2})?)?)?$",
                 },
             ],
             "examples": [
