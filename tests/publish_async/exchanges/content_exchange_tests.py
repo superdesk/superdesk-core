@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from bson import ObjectId
 
 from superdesk.tests import TestCase
+from superdesk.resource_fields import VERSION
 from superdesk.types import PublishState
 from superdesk.publish_async.exchanges.content_exchange import ContentPublishExchange
 from superdesk.publish_async.utils import QUEUE_STATE, PUBLISHED
@@ -25,6 +26,75 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
         exchange._router = MagicMock()
         exchange.polling = False
         return exchange
+
+    async def test_has_publish_queue_items_checks_any_existing_row_for_item_version(self):
+        exchange = self._make_exchange()
+
+        request = MagicMock()
+        request.item = {VERSION: 7}
+        request.item_id = "test-item-1"
+
+        cursor = MagicMock()
+        cursor.to_list = AsyncMock(return_value=[{"state": "failed"}])
+
+        queue_service = MagicMock()
+        queue_service.find = AsyncMock(return_value=cursor)
+
+        with patch(
+            "superdesk.publish_async.exchanges.content_exchange.PublishQueueResource.get_service",
+            return_value=queue_service,
+        ):
+            has_queue_items = await exchange._has_publish_queue_items(request)
+
+        self.assertTrue(has_queue_items)
+        queue_service.find.assert_awaited_once_with(
+            {
+                "item_id": "test-item-1",
+                "item_version": 7,
+            },
+            max_results=1,
+        )
+
+    async def test_cancellation_cleanup_still_updates_state_when_cleanup_await_is_cancelled(self):
+        exchange = self._make_exchange()
+
+        published_service = MagicMock()
+        published_service.patch_async = AsyncMock()
+        request = MagicMock()
+        request.item = {"version": 7}
+        request.item_id = "test-item-1"
+        request.operation = "publish"
+
+        lookup_started = asyncio.Event()
+        finish_lookup = asyncio.Event()
+
+        async def delayed_updates(*args, **kwargs):
+            lookup_started.set()
+            await finish_lookup.wait()
+            return {QUEUE_STATE: PublishState.QUEUED, "error_message": "request cancelled"}
+
+        async def run_cleanup():
+            await exchange._reset_published_item_after_cancellation(
+                published_service,
+                ObjectId(),
+                request,
+                asyncio.CancelledError("request cancelled"),
+                MagicMock(),
+                "Publish request cancelled during routing",
+            )
+
+        with patch.object(exchange, "_get_cancellation_error_updates", side_effect=delayed_updates):
+            cleanup_await = asyncio.create_task(run_cleanup())
+            await lookup_started.wait()
+
+            cleanup_await.cancel()
+            await cleanup_await
+
+            finish_lookup.set()
+            await asyncio.sleep(0)
+            await asyncio.sleep(0)
+
+        published_service.patch_async.assert_awaited_once()
 
     async def test_cancellation_resets_queue_state_to_pending_when_no_queue_items_exist(self):
         exchange = self._make_exchange()
