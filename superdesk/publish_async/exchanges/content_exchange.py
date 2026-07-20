@@ -17,6 +17,8 @@ from superdesk.types import (
     PublishRequest,
     PublishRequestResponse,
     PublishState,
+    PublishQueueResource,
+    PublishQueueState,
     SubscribersResource,
     SubscriberType,
     PublishSenderType,
@@ -148,17 +150,48 @@ class ContentPublishExchange(BasicPublishExchange):
 
         except ConnectionTimeout as error:  # recoverable, set state to pending and retry next time
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            logger.warning(
+                "Publish request hit connection timeout; resetting published item to pending",
+                exc_info=True,
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except SoftTimeLimitExceeded as error:
             # A celery timeout error occurred
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            logger.warning(
+                "Publish request hit soft time limit; resetting published item to pending",
+                exc_info=True,
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except asyncio.CancelledError as error:
             # Request/task cancellation can be raised as Exception (py3.10) or BaseException (py3.11+).
-            # Keep the item retryable and protect the DB write from cancellation.
-            error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            # If queue items were already created, keep the published item queued so the
+            # enqueue beat does not create a second batch for the same item/subscriber.
+            error_updates = await self._get_cancellation_error_updates(request, str(error))
+            logger.warning(
+                "Publish request cancelled during routing",
+                exc_info=True,
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    resolved_queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             try:
                 await asyncio.shield(published_service.patch_async(published_item_id, error_updates))
             except Exception:
@@ -173,12 +206,32 @@ class ContentPublishExchange(BasicPublishExchange):
             else:
                 error_msg = str(error)
             error_updates = {QUEUE_STATE: PublishState.ERROR, ERROR_MESSAGE: error_msg}
+            logger.exception(
+                "Publish request failed with application error",
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except BaseException as error:
-            # Handle non-Exception base errors by resetting state so the item is retryable.
+            # Handle non-Exception base errors similarly to cancellations.
             # asyncio.shield() protects the DB update itself from being cancelled.
-            error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            error_updates = await self._get_cancellation_error_updates(request, str(error))
+            logger.error(
+                "Publish request interrupted by base exception",
+                exc_info=True,
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    exception_type=type(error).__name__,
+                    resolved_queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             try:
                 await asyncio.shield(published_service.patch_async(published_item_id, error_updates))
             except Exception:
@@ -187,6 +240,39 @@ class ContentPublishExchange(BasicPublishExchange):
                     extra=dict(item_id=request.item_id),
                 )
             raise
+
+    async def _get_cancellation_error_updates(self, request: PublishRequest, error_message: str) -> dict:
+        queue_state = PublishState.PENDING
+        if await self._has_publish_queue_items(request):
+            queue_state = PublishState.QUEUED
+
+        return {QUEUE_STATE: queue_state, ERROR_MESSAGE: error_message}
+
+    async def _has_publish_queue_items(self, request: PublishRequest) -> bool:
+        item_version = request.item.get(VERSION)
+        if item_version is None:
+            return False
+
+        queue_lookup = {
+            "item_id": request.item_id,
+            "item_version": item_version,
+            "state": {
+                "$in": [
+                    PublishQueueState.ROUTING,
+                    PublishQueueState.PENDING,
+                    PublishQueueState.IN_PROGRESS,
+                    PublishQueueState.RETRYING,
+                    PublishQueueState.SUCCESS,
+                ]
+            },
+        }
+        queue_items = await (
+            await PublishQueueResource.get_service().find(
+                queue_lookup,
+                max_results=1,
+            )
+        ).to_list()
+        return len(queue_items) > 0
 
     async def get_published_item_from_request(self, request: PublishRequest) -> dict | None:
         """
