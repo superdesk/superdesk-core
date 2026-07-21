@@ -1,6 +1,5 @@
-from typing import Awaitable
+import asyncio
 import logging
-from asyncio import as_completed
 from bson import ObjectId
 
 from superdesk.types import (
@@ -53,18 +52,57 @@ class AsyncioPublishRouter(PublishExchangeRouter):
         # Now send the tasks to the PublishConsumer(s)
 
         await PublishCache.init()
-        publish_tasks: list[Awaitable[None]] = []
+        publish_tasks: list[tuple[SubscribersResource, list[PublishQueueResource], asyncio.Task[None]]] = []
 
         for subscriber, tasks in self.group_tasks_by_subscriber(request, tasks):
-            publish_tasks.append(self.send_tasks_to_consumer(subscriber, tasks))
+            publish_tasks.append(
+                (subscriber, tasks, asyncio.create_task(self.send_tasks_to_consumer(subscriber, tasks)))
+            )
 
         if publish_tasks:
             failed = 0
-            for task in as_completed(publish_tasks):
+            task_metadata: dict[
+                asyncio.Task[None], tuple[SubscribersResource | None, list[PublishQueueResource] | None]
+            ] = {task: (subscriber, subscriber_tasks) for subscriber, subscriber_tasks, task in publish_tasks}
+            done, _ = await asyncio.wait([task for _, _, task in publish_tasks])
+            for task in done:
                 try:
                     await task
                 except Exception:
-                    logger.exception("Failed to process task")
+                    metadata = task_metadata.get(task)
+                    if metadata is None:
+                        logger.exception(
+                            "Failed to process routed publish tasks",
+                            extra=dict(
+                                item_id=request.item_id,
+                                operation=request.operation,
+                            ),
+                        )
+                        failed += 1
+                        continue
+                    subscriber_item: SubscribersResource | None
+                    subscriber_tasks_item: list[PublishQueueResource] | None
+                    subscriber_item, subscriber_tasks_item = metadata
+                    if subscriber_item is None or subscriber_tasks_item is None:
+                        logger.exception(
+                            "Failed to process routed publish tasks",
+                            extra=dict(
+                                item_id=request.item_id,
+                                operation=request.operation,
+                            ),
+                        )
+                        failed += 1
+                        continue
+                    logger.exception(
+                        "Failed to process routed publish tasks",
+                        extra=dict(
+                            item_id=request.item_id,
+                            operation=request.operation,
+                            subscriber_id=subscriber_item.id,
+                            task_ids=[str(queue_task.id) for queue_task in subscriber_tasks_item],
+                            queue_item_ids=[queue_task.item_id for queue_task in subscriber_tasks_item],
+                        ),
+                    )
                     failed += 1
 
             if not failed:
@@ -127,4 +165,11 @@ class AsyncioPublishRouter(PublishExchangeRouter):
             consumer = get_exchange_factory().get_subscriber_consumer(subscriber)
             await consumer.process_tasks(subscriber, tasks)
         except Exception:
-            logger.exception("Failed to process tasks for subscriber", extra=dict(subscriber_id=subscriber.id))
+            logger.exception(
+                "Failed to process tasks for subscriber",
+                extra=dict(
+                    subscriber_id=subscriber.id,
+                    task_ids=[str(task.id) for task in tasks],
+                    queue_item_ids=[task.item_id for task in tasks],
+                ),
+            )

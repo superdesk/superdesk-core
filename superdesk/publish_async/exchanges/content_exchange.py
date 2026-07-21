@@ -17,6 +17,8 @@ from superdesk.types import (
     PublishRequest,
     PublishRequestResponse,
     PublishState,
+    PublishQueueResource,
+    PublishQueueState,
     SubscribersResource,
     SubscriberType,
     PublishSenderType,
@@ -49,6 +51,9 @@ from .base_exchange import BasicPublishExchange
 logger = logging.getLogger(__name__)
 
 
+_pending_cancellation_cleanup_tasks: set[asyncio.Task[None]] = set()
+
+
 @dataclass
 class SubscriberPackageItems:
     subscriber: SubscribersResource
@@ -70,6 +75,12 @@ class ContentPublishExchange(BasicPublishExchange):
     """
 
     name = "content"
+
+    @staticmethod
+    def _track_cancellation_cleanup_task(cleanup_task: asyncio.Task[None]) -> asyncio.Task[None]:
+        _pending_cancellation_cleanup_tasks.add(cleanup_task)
+        cleanup_task.add_done_callback(_pending_cancellation_cleanup_tasks.discard)
+        return cleanup_task
 
     async def send(self, request: PublishRequest) -> PublishRequestResponse:
         """
@@ -148,24 +159,45 @@ class ContentPublishExchange(BasicPublishExchange):
 
         except ConnectionTimeout as error:  # recoverable, set state to pending and retry next time
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            logger.warning(
+                "Publish request hit connection timeout; resetting published item to pending",
+                exc_info=True,
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except SoftTimeLimitExceeded as error:
             # A celery timeout error occurred
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+            logger.warning(
+                "Publish request hit soft time limit; resetting published item to pending",
+                exc_info=True,
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except asyncio.CancelledError as error:
             # Request/task cancellation can be raised as Exception (py3.10) or BaseException (py3.11+).
-            # Keep the item retryable and protect the DB write from cancellation.
-            error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
-            try:
-                await asyncio.shield(published_service.patch_async(published_item_id, error_updates))
-            except Exception:
-                logger.error(
-                    "Failed to reset published item state after cancellation",
-                    extra=dict(item_id=request.item_id),
-                )
+            # If queue items were already created, keep the published item queued so the
+            # enqueue beat does not create a second batch for the same item/subscriber.
+            await self._reset_published_item_after_cancellation(
+                published_service,
+                published_item_id,
+                request,
+                error,
+                logger.warning,
+                "Publish request cancelled during routing",
+            )
             raise
         except Exception as error:
             if isinstance(error, KeyError):
@@ -173,20 +205,124 @@ class ContentPublishExchange(BasicPublishExchange):
             else:
                 error_msg = str(error)
             error_updates = {QUEUE_STATE: PublishState.ERROR, ERROR_MESSAGE: error_msg}
+            logger.exception(
+                "Publish request failed with application error",
+                extra=dict(
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_version=request.item.get(VERSION),
+                    queue_state=error_updates[QUEUE_STATE],
+                ),
+            )
             await published_service.patch_async(published_item_id, error_updates)
             raise
         except BaseException as error:
-            # Handle non-Exception base errors by resetting state so the item is retryable.
-            # asyncio.shield() protects the DB update itself from being cancelled.
-            error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
-            try:
-                await asyncio.shield(published_service.patch_async(published_item_id, error_updates))
-            except Exception:
-                logger.error(
-                    "Failed to reset published item state after cancellation",
-                    extra=dict(item_id=request.item_id),
-                )
+            # Handle non-Exception base errors similarly to cancellations.
+            # Run the whole reset path in a shielded task so lookup + update can finish.
+            await self._reset_published_item_after_cancellation(
+                published_service,
+                published_item_id,
+                request,
+                error,
+                logger.error,
+                "Publish request interrupted by base exception",
+                exception_type=type(error).__name__,
+            )
             raise
+
+    async def _reset_published_item_after_cancellation(
+        self,
+        published_service,
+        published_item_id: ObjectId,
+        request: PublishRequest,
+        error: BaseException,
+        log_method,
+        log_message: str,
+        **extra: str,
+    ) -> None:
+        cleanup_task = self._track_cancellation_cleanup_task(
+            asyncio.create_task(
+                self._finalize_published_item_after_cancellation(
+                    published_service,
+                    published_item_id,
+                    request,
+                    error,
+                    log_method,
+                    log_message,
+                    **extra,
+                )
+            )
+        )
+
+        try:
+            await asyncio.shield(cleanup_task)
+        except asyncio.CancelledError:
+            # The current task is still cancelled, but the cleanup task keeps running.
+            return
+
+    async def _finalize_published_item_after_cancellation(
+        self,
+        published_service,
+        published_item_id: ObjectId,
+        request: PublishRequest,
+        error: BaseException,
+        log_method,
+        log_message: str,
+        **extra: str,
+    ) -> None:
+        try:
+            error_updates = await self._get_cancellation_error_updates(request, str(error))
+        except Exception:
+            logger.error(
+                "Failed to inspect publish queue during cancellation; defaulting published item to pending",
+                exc_info=True,
+                extra=dict(item_id=request.item_id),
+            )
+            error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
+
+        log_method(
+            log_message,
+            exc_info=True,
+            extra=dict(
+                item_id=request.item_id,
+                operation=request.operation,
+                item_version=request.item.get(VERSION),
+                resolved_queue_state=error_updates[QUEUE_STATE],
+                **extra,
+            ),
+        )
+
+        try:
+            await published_service.patch_async(published_item_id, error_updates)
+        except Exception:
+            logger.error(
+                "Failed to reset published item state after cancellation",
+                extra=dict(item_id=request.item_id),
+            )
+
+    async def _get_cancellation_error_updates(self, request: PublishRequest, error_message: str) -> dict:
+        queue_state = PublishState.PENDING
+        if await self._has_publish_queue_items(request):
+            queue_state = PublishState.QUEUED
+
+        return {QUEUE_STATE: queue_state, ERROR_MESSAGE: error_message}
+
+    async def _has_publish_queue_items(self, request: PublishRequest) -> bool:
+        item_version = request.item.get(VERSION)
+        if item_version is None:
+            return False
+
+        queue_lookup = {
+            "item_id": request.item_id,
+            "item_version": item_version,
+        }
+        queue_items = await (
+            await PublishQueueResource.get_service().find(
+                queue_lookup,
+                max_results=1,
+            )
+        ).to_list()
+        return len(queue_items) > 0
 
     async def get_published_item_from_request(self, request: PublishRequest) -> dict | None:
         """
