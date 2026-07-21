@@ -72,7 +72,7 @@ class SubscribersService(AsyncResourceService[SubscribersResource]):
         # ensure all destinations have _id
         for destination_dict in updates_destinations:
             if destination_dict.get("_id") is None:
-                destination_dict["_id"] = get_subscriber_destination_id(destination)
+                destination_dict["_id"] = get_subscriber_destination_id(destination_dict)
 
     def _validate_seq_num_settings(self, subscriber: SubscribersResource) -> None:
         """
