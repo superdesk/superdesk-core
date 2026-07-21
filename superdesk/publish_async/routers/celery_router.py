@@ -1,4 +1,5 @@
 from bson import ObjectId
+import logging
 from quart_babel import gettext
 from superdesk.types import PublishQueueResource, SubscribersResource
 from superdesk.celery_app import celery
@@ -7,6 +8,9 @@ from superdesk.publish_async import get_exchange_factory
 
 from .asyncio_router import AsyncioPublishRouter
 from ..utils import ContentApiSubscriber
+
+
+logger = logging.getLogger(__name__)
 
 
 class CeleryPublishRouter(AsyncioPublishRouter):
@@ -35,13 +39,26 @@ class CeleryPublishRouter(AsyncioPublishRouter):
         """
 
         consumer = get_exchange_factory().get_subscriber_consumer(subscriber)
-        await send_task_to_consumer.apply_async(
-            args=[
-                consumer.name,
-                subscriber.id,
-                [task.id for task in tasks],
-            ]
-        )
+        task_ids = [task.id for task in tasks]
+        try:
+            await send_task_to_consumer.apply_async(  # type: ignore[attr-defined]
+                args=[
+                    consumer.name,
+                    subscriber.id,
+                    task_ids,
+                ]
+            )
+        except Exception:
+            logger.exception(
+                "Failed to enqueue publish tasks to celery consumer",
+                extra=dict(
+                    subscriber_id=subscriber.id,
+                    consumer_name=consumer.name,
+                    task_ids=[str(task_id) for task_id in task_ids],
+                    queue_item_ids=[task.item_id for task in tasks],
+                ),
+            )
+            raise
 
 
 @celery.task(soft_time_limit=600)
