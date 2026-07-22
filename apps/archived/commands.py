@@ -63,6 +63,9 @@ class UnarchiveItemCommand:
         :param dry_run: If True, simulate without making changes.
         :return: Dict with 'success' and 'failed' lists.
         """
+        if expiry_days is not None and expiry_days < 0:
+            raise ValueError("expiry_days must be >= 0")
+
         results: dict[str, list] = {"success": [], "failed": []}
 
         for item_id in item_ids:
@@ -112,8 +115,8 @@ class UnarchiveItemCommand:
         try:
             for item in restore_order:
                 await self._restore_to_archive(item, expiry_days)
-                await self._restore_to_published(item)
                 restored_item_ids.append(item["item_id"])
+                await self._restore_to_published(item)
         except Exception:
             await self._rollback_restored_items(restored_item_ids)
             raise
@@ -153,14 +156,12 @@ class UnarchiveItemCommand:
                 if not ref_id or ref_id in seen_ids:
                     continue
 
-                ref_items = await (
-                    await archived_service.get_from_mongo_async(req=None, lookup={"item_id": ref_id})
-                ).to_list()
-                if not ref_items:
+                try:
+                    ref_item = await self._get_latest_archived_item(archived_service, ref_id)
+                except ValueError:
                     raise ValueError("No archived item found for package ref: {}".format(ref_id))
 
-                ref_items.sort(key=lambda x: x.get(VERSION, 0), reverse=True)
-                items.append(ref_items[0])
+                items.append(ref_item)
                 seen_ids.add(ref_id)
 
         # Check if item is part of a takes package

@@ -1,3 +1,5 @@
+from unittest import mock
+
 from bson import ObjectId
 from superdesk.tests import TestCase, utils as test_utils
 from apps.archived.commands import UnarchiveItemCommand
@@ -156,3 +158,61 @@ class UnarchiveItemCommandTestCase(TestCase):
         assert len(results["failed"]) == 1
         assert await test_utils.count("archived", {"item_id": "coll"}) == 1
         assert await test_utils.count("published", {"item_id": "coll"}) == 0
+
+    async def test_unarchive_negative_expiry_days_is_rejected(self):
+        with self.assertRaises(ValueError):
+            await UnarchiveItemCommand().run(["whatever"], expiry_days=-1)
+
+    async def test_unarchive_rolls_back_on_partial_failure(self):
+        member_id = "rollback-member"
+        package_id = "rollback-package"
+
+        await test_utils.post_items(
+            "archived",
+            [
+                {
+                    "_id": ObjectId(),
+                    "item_id": member_id,
+                    "guid": member_id,
+                    "type": "text",
+                    "state": "published",
+                    "headline": "Member",
+                },
+                {
+                    "_id": ObjectId(),
+                    "item_id": package_id,
+                    "guid": package_id,
+                    "type": "composite",
+                    "state": "published",
+                    "headline": "Package",
+                    "groups": [
+                        {"id": "root", "refs": [{"idRef": "main"}], "role": "grpRole:NEP"},
+                        {
+                            "id": "main",
+                            "refs": [{"residRef": member_id, "location": "archive"}],
+                            "role": "grpRole:main",
+                        },
+                    ],
+                },
+            ],
+        )
+
+        original_restore_to_published = UnarchiveItemCommand._restore_to_published
+
+        async def flaky(self, item):
+            if item["item_id"] == package_id:
+                raise RuntimeError("boom")
+            return await original_restore_to_published(self, item)
+
+        with mock.patch.object(UnarchiveItemCommand, "_restore_to_published", flaky):
+            results = await UnarchiveItemCommand().run([package_id])
+
+        assert results["success"] == []
+        assert len(results["failed"]) == 1
+
+        # nothing left half-restored in archive or published
+        for item_id in [member_id, package_id]:
+            assert await test_utils.count("archive", {"_id": item_id}) == 0
+            assert await test_utils.count("published", {"item_id": item_id}) == 0
+            # archived is only cleaned up after a fully successful restore
+            assert await test_utils.count("archived", {"item_id": item_id}) == 1
