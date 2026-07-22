@@ -160,7 +160,7 @@ class UnarchiveItemCommandTestCase(TestCase):
         assert await test_utils.count("published", {"item_id": "coll"}) == 0
 
     async def test_unarchive_negative_expiry_days_is_rejected(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaisesRegex(ValueError, "expiry_days must be >= 0"):
             await UnarchiveItemCommand().run(["whatever"], expiry_days=-1)
 
     async def test_unarchive_rolls_back_on_partial_failure(self):
