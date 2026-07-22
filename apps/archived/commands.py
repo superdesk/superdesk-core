@@ -81,6 +81,9 @@ class UnarchiveItemCommand(superdesk.Command):
         """
         item_ids = list(item_ids)
 
+        if expiry_days is not None and expiry_days < 0:
+            raise ValueError("expiry_days must be >= 0")
+
         if not item_ids:
             print("No item IDs provided.")
             return {"success": [], "failed": []}
@@ -143,8 +146,8 @@ class UnarchiveItemCommand(superdesk.Command):
         try:
             for item in restore_order:
                 self._restore_to_archive(item, expiry_days)
-                self._restore_to_published(item)
                 restored_item_ids.append(item["item_id"])
+                self._restore_to_published(item)
         except Exception:
             self._rollback_restored_items(restored_item_ids)
             raise
@@ -182,12 +185,12 @@ class UnarchiveItemCommand(superdesk.Command):
                 if not ref_id or ref_id in seen_ids:
                     continue
 
-                ref_items = list(archived_service.get_from_mongo(req=None, lookup={"item_id": ref_id}))
-                if not ref_items:
+                try:
+                    ref_item = self._get_latest_archived_item(archived_service, ref_id)
+                except ValueError:
                     raise ValueError("No archived item found for package ref: {}".format(ref_id))
 
-                ref_items.sort(key=lambda x: x.get(config.VERSION, 0), reverse=True)
-                items.append(ref_items[0])
+                items.append(ref_item)
                 seen_ids.add(ref_id)
 
         # Check if item is part of a takes package
