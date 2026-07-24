@@ -27,7 +27,7 @@ jobs:
             - "6379:6379"
 
       mongo:
-        image: mongo:8
+        image: mongo:6
         ports:
             - "27017:27017"
 
@@ -95,7 +95,7 @@ jobs:
             - "6379:6379"
 
       mongo:
-        image: mongo:8
+        image: mongo:6
         ports:
             - "27017:27017"
 

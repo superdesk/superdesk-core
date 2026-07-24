@@ -15,10 +15,6 @@ services:
             - /usr/share/elasticsearch/data
         networks:
             - superdesk-core
-        ulimits:
-            nofile:
-                soft: 65535
-                hard: 65535
 
     redis:
         image: redis:8
@@ -28,20 +24,13 @@ services:
             - superdesk-core
 
     mongo:
-        image: mongo:8
+        image: mongo:6
         ports:
             - "27017:27017"
         tmpfs:
             - /data/db
         networks:
             - superdesk-core
-        ulimits:
-            nofile:
-                soft: 65535
-                hard: 65535
-            nproc:
-                soft: 65535
-                hard: 65535
 
 networks:
     superdesk-core:
