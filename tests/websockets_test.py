@@ -215,6 +215,8 @@ class WebsocketsTestCase(unittest.TestCase):
                     },
                 },
             )
+        importlib.reload(default_settings)
+        importlib.reload(websockets_comms)
 
     def test_celery_broker_transport_options_defaults(self):
         self.assertEqual(
@@ -244,4 +246,4 @@ class WebsocketsTestCase(unittest.TestCase):
                     "retry_on_timeout": True,
                 },
             )
-            importlib.reload(default_settings)
+        importlib.reload(default_settings)
