@@ -215,3 +215,33 @@ class WebsocketsTestCase(unittest.TestCase):
                     },
                 },
             )
+
+    def test_celery_broker_transport_options_defaults(self):
+        self.assertEqual(
+            default_settings.CELERY_BROKER_TRANSPORT_OPTIONS,
+            {
+                "socket_connect_timeout": 2.0,
+                "socket_timeout": 10.0,
+                "retry_on_timeout": True,
+            },
+        )
+
+    def test_celery_broker_transport_options_with_env_vars(self):
+        with patch.dict(
+            "os.environ",
+            {
+                "CELERY_BROKER_REDIS_CONNECT_TIMEOUT": "5",
+                "CELERY_BROKER_REDIS_TIMEOUT": "240",
+            },
+            clear=False,
+        ):
+            importlib.reload(default_settings)
+            self.assertEqual(
+                default_settings.CELERY_BROKER_TRANSPORT_OPTIONS,
+                {
+                    "socket_connect_timeout": 5.0,
+                    "socket_timeout": 240.0,
+                    "retry_on_timeout": True,
+                },
+            )
+            importlib.reload(default_settings)
