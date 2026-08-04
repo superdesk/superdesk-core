@@ -328,6 +328,14 @@ CELERY_RESULT_SERIALIZER = CELERY_TASK_SERIALIZER
 
 CELERY_TASK_SEND_EVENTS = False
 
+# Redis broker publish/connect calls are synchronous inside Celery's apply_async path.
+# Keep socket timeouts bounded so publish requests fail fast when the broker is unavailable.
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    "socket_connect_timeout": float(env("CELERY_BROKER_REDIS_CONNECT_TIMEOUT", 2)),
+    "socket_timeout": float(env("CELERY_BROKER_REDIS_TIMEOUT", 10)),
+    "retry_on_timeout": True,
+}
+
 #: celery worker config
 CELERY_WORKER_DISABLE_RATE_LIMITS = True
 CELERY_WORKER_TASK_SOFT_TIME_LIMIT = 300
