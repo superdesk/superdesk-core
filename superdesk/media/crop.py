@@ -260,7 +260,10 @@ class CropService:
             return
 
         update_renditions = updates.get("renditions", {})
-        renditions = deepcopy(original.get("renditions", {}))
+        # a freshly uploaded picture can have `renditions` set to None until the async
+        # rendition task populates it; normalise to a dict so the crop logic is safe.
+        original_renditions = original.get("renditions") or {}
+        renditions = deepcopy(original_renditions)
         # keep renditions updates (urls may have changed)
         renditions.update(update_renditions)
         renditions = {k: renditions[k] for k in renditions if renditions[k]}
@@ -269,7 +272,7 @@ class CropService:
             original_image = updates["renditions"]["original"]
         else:
             try:
-                original_image = original["renditions"]["original"]
+                original_image = original_renditions["original"]
             except KeyError:
                 return
 
@@ -277,7 +280,7 @@ class CropService:
             if not self.get_crop_by_name(key):
                 continue
 
-            original_crop = original.get("renditions", {}).get(key, {})
+            original_crop = original_renditions.get(key, {})
             fields = ("CropLeft", "CropTop", "CropRight", "CropBottom")
             crop_data = update_renditions.get(key, {})
             if any(crop_data.get(name) != original_crop.get(name) for name in fields) and not crop_data.get("media"):
@@ -334,7 +337,7 @@ class CropService:
         """
         update_renditions = updates.get("renditions", {})
         if original.get(ITEM_TYPE) == CONTENT_TYPE.PICTURE and update_renditions:
-            renditions = original.get("renditions", {})
+            renditions = original.get("renditions") or {}
             for key in update_renditions:
                 if self.get_crop_by_name(key) and update_renditions.get(key, {}).get("media") != renditions.get(
                     key, {}
