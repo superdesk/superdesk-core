@@ -24,6 +24,7 @@ from pydantic import (
 from pydantic.json_schema import JsonSchemaValue
 from pydantic.dataclasses import dataclass
 from bson import ObjectId as BsonObjectId
+from superdesk.core.utils import str_to_date, date_to_str
 
 DefaultModelConfig = ConfigDict(
     arbitrary_types_allowed=True,
@@ -101,13 +102,18 @@ class CustomStringField(Generic[CustomStringFieldType], BaseCustomField):
             ]
         )
 
+        python_schema = core_schema.union_schema(
+            [
+                core_schema.is_instance_schema(cls.core_type),
+                from_str_schema,
+            ]
+        )
+
         return core_schema.json_or_python_schema(
             json_schema=from_str_schema,
-            python_schema=core_schema.union_schema(
-                [
-                    core_schema.is_instance_schema(cls.core_type),
-                    from_str_schema,
-                ]
+            python_schema=core_schema.no_info_after_validator_function(
+                lambda v: v.strip() if isinstance(v, str) else v,
+                python_schema,
             ),
             serialization=core_schema.plain_serializer_function_ser_schema(
                 cls.serialise_value,
@@ -124,6 +130,7 @@ if TYPE_CHECKING:
     Slugline = Annotated[str, ...]
     ObjectId = Annotated[BsonObjectId, ...]
     DateWithOptionalTime = Annotated[str, ...]
+    Date = Annotated[str, ...]
 else:
 
     class Keyword(CustomStringField, str):
@@ -212,6 +219,40 @@ else:
             ],
         }
         elastic_mapping = {"type": "date"}
+
+    class Date(CustomStringField):
+        json_schema = {
+            "type": "string",
+            "title": "Date",
+            "format": "date",
+            "examples": ["2025-07-21"],
+        }
+        elastic_mapping = {"type": "date"}
+
+
+class _UTCDatetimeAnnotation(BaseCustomField):
+    core_type = datetime
+    elastic_mapping = {"type": "date"}
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls,
+        _source_type: Any,
+        _handler: GetCoreSchemaHandler,
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_before_validator_function(
+            str_to_date,
+            # core_schema.datetime_schema(tz_constraint="aware")
+            core_schema.datetime_schema(
+                tz_constraint="aware",
+                serialization=core_schema.plain_serializer_function_ser_schema(
+                    lambda dt: date_to_str(dt), when_used="json"
+                ),
+            ),
+        )
+
+
+UTCDatetime = Annotated[datetime, _UTCDatetimeAnnotation()]
 
 
 def elastic_mapping(mapping: dict[str, Any]) -> WithJsonSchema:

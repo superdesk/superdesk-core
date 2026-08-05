@@ -11,7 +11,7 @@
 from typing import TypeVar, cast, AsyncGenerator, Any
 from typing_extensions import Self
 from importlib import import_module
-from datetime import datetime, timezone
+from datetime import datetime, timezone, date, timedelta
 from uuid import uuid4
 import hashlib
 
@@ -66,12 +66,17 @@ def generate_guid(**hints) -> str:
     }
 
 
-def str_to_date(value: str | datetime | None) -> datetime | None:
+def str_to_date(value: str | datetime | date | None) -> datetime | None:
     """Convert a string to a datetime instance"""
 
     if isinstance(value, str):
-        value_dt = arrow.get(value).datetime
-        return value_dt if value_dt.tzinfo == timezone.utc else value_dt.astimezone(timezone.utc)
+        return arrow.get(value).datetime.astimezone(timezone.utc)
+    elif isinstance(value, datetime):
+        if value.tzinfo is None:
+            return value.replace(tzinfo=timezone.utc)
+        return value if value.tzinfo == timezone.utc else value.astimezone(timezone.utc)
+    elif isinstance(value, date):
+        return datetime(value.year, value.month, value.day, tzinfo=timezone.utc)
 
     return value
 
@@ -79,7 +84,11 @@ def str_to_date(value: str | datetime | None) -> datetime | None:
 def date_to_str(value: datetime | None) -> str | None:
     """Convert a datetime instance to a string"""
 
-    date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
+    try:
+        date_format: str = get_app_config("DATE_FORMAT") or "%Y-%m-%dT%H:%M:%S+0000"
+    except RuntimeError:
+        date_format = "%Y-%m-%dT%H:%M:%S+0000"
+
     return datetime.strftime(value, date_format) if value else None
 
 
