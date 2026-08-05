@@ -487,8 +487,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
             else:
                 response = await self.mongo_async.update_one(query, {"$set": updates_dict})
 
-            # if original.etag is not None and response and response.acknowledged and response.modified_count == 0:
-            #     raise RuntimeError("OriginalChangedError")
+            if original.etag is not None and response and response.acknowledged and response.modified_count == 0:
+                raise SuperdeskApiError.preconditionFailedError(_("Client and server etags don't match"))
 
         if update_elastic:
             try:
