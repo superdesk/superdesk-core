@@ -242,7 +242,6 @@ class _UTCDatetimeAnnotation(BaseCustomField):
     ) -> core_schema.CoreSchema:
         return core_schema.no_info_before_validator_function(
             str_to_date,
-            # core_schema.datetime_schema(tz_constraint="aware")
             core_schema.datetime_schema(
                 tz_constraint="aware",
                 serialization=core_schema.plain_serializer_function_ser_schema(
