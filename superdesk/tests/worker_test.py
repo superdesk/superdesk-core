@@ -37,6 +37,11 @@ def sync_task_test(data: dict) -> None:
     service.create([data])
 
 
+@shared_task(store_async_result=True)
+async def value_task_test(n: int) -> int:
+    return n * 2
+
+
 @shared_task(soft_time_limit=0.5, time_limit=2)
 async def async_task_timeout_test(task_duration: int, cleanup_duration: int) -> None:
     service = get_resource_service("system_messages")

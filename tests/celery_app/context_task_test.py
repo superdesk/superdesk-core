@@ -49,3 +49,22 @@ class TestHybridAppContextTask(AsyncFlaskTestCase):
             expected_exc = SuperdeskError("Async exception")
             expected_msg = f"Error handling task: {str(expected_exc)}"
             mock_logger.exception.assert_called_once_with(expected_msg)
+
+    async def test_configured_always_eager_follows_config(self):
+        @self.app.celery.task()
+        def some_task():
+            return "ok"
+
+        self.assertTrue(some_task._is_configured_always_eager())
+
+
+class TestEagerDispatchDecision(AsyncFlaskTestCase):
+    app_config = {"CELERY_TASK_ALWAYS_EAGER": False}
+
+    async def test_unbound_dispatch_is_config_driven(self):
+        @self.app.celery.task()
+        def some_task():
+            return "ok"
+
+        self.assertFalse(some_task._is_configured_always_eager())
+        self.assertTrue(some_task._is_always_eager())
