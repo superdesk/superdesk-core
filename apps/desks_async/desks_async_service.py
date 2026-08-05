@@ -1,5 +1,7 @@
 from typing import Any, Sequence
 import logging
+
+from bson import ObjectId
 from quart_babel import gettext as _
 
 from superdesk import get_resource_service
@@ -18,7 +20,9 @@ logger = logging.getLogger(__name__)
 class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
     notification_key = "desk"
 
-    async def create(self, docs: Sequence[DesksResourceModel | dict[str, Any]]) -> list[DesksResourceModel]:
+    async def create(
+        self, docs: Sequence[DesksResourceModel | dict[str, Any]], skip_signals: bool = False
+    ) -> list[DesksResourceModel]:
         """Creates new desk.
 
         Overriding to check if the desk being created has Working and Incoming Stages. If not then Working and Incoming
@@ -136,7 +140,7 @@ class DesksAsyncService(AsyncResourceService[DesksResourceModel]):
                 message=_("Cannot delete desk as it has article(s) or referenced by versions of the article(s).")
             )
 
-    async def delete_many(self, lookup: dict[str, Any]) -> list[str]:
+    async def delete_many(self, lookup: dict[str, Any]) -> list[str | ObjectId]:
         """
         Overriding to delete stages before deleting a desk
         """

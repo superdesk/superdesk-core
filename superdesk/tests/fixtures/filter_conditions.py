@@ -7,7 +7,7 @@ FILTER_CONDITION_VIDEO_ID = ObjectId()
 
 
 def filter_condition_text() -> FilterConditionsResource:
-    return FilterConditionsResource(
+    return FilterConditionsResource(  # type: ignore[call-arg]
         id=FILTER_CONDITION_TEXT_ID,
         name="All Text",
         field="type",
@@ -17,7 +17,7 @@ def filter_condition_text() -> FilterConditionsResource:
 
 
 def filter_condition_picture() -> FilterConditionsResource:
-    return FilterConditionsResource(
+    return FilterConditionsResource(  # type: ignore[call-arg]
         id=FILTER_CONDITION_PICTURE_ID,
         name="All Pictures",
         field="type",
@@ -27,7 +27,7 @@ def filter_condition_picture() -> FilterConditionsResource:
 
 
 def filter_condition_video() -> FilterConditionsResource:
-    return FilterConditionsResource(
+    return FilterConditionsResource(  # type: ignore[call-arg]
         id=FILTER_CONDITION_VIDEO_ID,
         name="All Videos",
         field="type",

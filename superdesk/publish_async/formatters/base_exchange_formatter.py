@@ -356,7 +356,7 @@ class BasePublishExchangeFormatter(PublishExchangeFormatter):
         if lifecycle_started_ms is None and lifecycle_started_at:
             lifecycle_started_ms = to_epoch_ms(lifecycle_started_at)
 
-        publish_queue_item = PublishQueueResource(
+        publish_queue_item = PublishQueueResource(  # type: ignore[call-arg]
             id=ObjectId(),
             state=queue_state,
             is_content_api=destination.delivery_type == "content_api",

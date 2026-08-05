@@ -403,6 +403,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         and MongoDB.
 
         :param docs: List of resources or dictionaries to create the registries
+        :param skip_signals: If `True`, will skip `on_create` and `on_created` signals
         :return: List of IDs for the created resources
         :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
@@ -554,6 +555,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param updates: Dictionary to update
         :param etag: Optional etag, if provided will check etag against original item
         :param original: Optional original item, if not provided the service will retrieve it
+        :param skip_signals: If `True`, will skip `on_update` and `on_updated` signals
         :raises SuperdeskApiError.notFoundError: If original item not found
         """
 

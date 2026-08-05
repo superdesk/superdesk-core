@@ -22,6 +22,7 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
         updates: dict[str, Any],
         etag: str | None = None,
         original: ContentFiltersResource | None = None,
+        skip_signals: bool = False,
     ) -> ContentFiltersResource:
         if isinstance(item_id, str):
             item_id = ObjectId(item_id)
@@ -33,7 +34,7 @@ class ContentFiltersService(AsyncResourceService[ContentFiltersResource]):
 
         updated = original.clone_with(updates)
         await self._validate_no_circular_reference(updated, item_id)
-        return await super().update(item_id, updates, etag, original)
+        return await super().update(item_id, updates, etag, original, skip_signals)
 
     async def on_delete(self, doc: ContentFiltersResource) -> None:
         # check if the filter is referenced by any subscribers...

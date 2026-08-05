@@ -136,7 +136,7 @@ class ArchivedService(AsyncResourceService[ArchivedResourceModel]):
     async def on_delete(self, doc: ArchivedResourceModel) -> None:
         await self.validate_delete_action(doc)
 
-    async def delete_many(self, lookup: dict[str, Any]) -> list[str]:
+    async def delete_many(self, lookup: dict[str, Any]) -> list[str | ObjectId]:
         if get_current_app().testing and len(lookup) == 0:
             return await super().delete_many(lookup)
         return []
@@ -166,6 +166,7 @@ class ArchivedService(AsyncResourceService[ArchivedResourceModel]):
         updates: dict[str, Any],
         etag: str | None = None,
         original: ArchivedResourceModel | None = None,
+        skip_signals: bool = False,
     ) -> ArchivedResourceModel:
         """Runs on update of archive item.
 

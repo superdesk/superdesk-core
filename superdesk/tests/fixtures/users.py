@@ -7,7 +7,7 @@ FOOBAR_USER_ID = ObjectId()
 
 
 def admin() -> UsersResourceModel:
-    return UsersResourceModel(
+    return UsersResourceModel(  # type: ignore[call-arg]
         id=ADMIN_USER_ID,
         username="admin",
         password="admin",
@@ -24,7 +24,7 @@ def admin() -> UsersResourceModel:
 
 
 def foobar() -> UsersResourceModel:
-    return UsersResourceModel(
+    return UsersResourceModel(  # type: ignore[call-arg]
         id=FOOBAR_USER_ID,
         username="foobar",
         password="admin",

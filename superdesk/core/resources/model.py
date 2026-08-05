@@ -32,6 +32,7 @@ from pydantic import (
     model_serializer,
     SerializerFunctionWrapHandler,
     RootModel,
+    AliasChoices,
 )
 from pydantic.dataclasses import dataclass as pydataclass
 from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
@@ -168,7 +169,9 @@ class ResourceModel(BaseModel):
     id: Annotated[
         Union[str, ObjectId],
         Field(
-            validation_alias="_id", serialization_alias="_id", default_factory=lambda: generate_guid(type=GUID_NEWSML)
+            validation_alias=AliasChoices("_id", "id"),
+            serialization_alias="_id",
+            default_factory=lambda: generate_guid(type=GUID_NEWSML),
         ),
     ]
 
@@ -364,7 +367,14 @@ class ResourceModelWithObjectId(ResourceModel):
     """Base ResourceModel class to be used, if the resource uses an ObjectId for it's ID"""
 
     #: ID of the document
-    id: Annotated[ObjectId, Field(alias="_id", default_factory=ObjectId)]
+    id: Annotated[
+        ObjectId,
+        Field(
+            validation_alias=AliasChoices("_id", "id"),
+            serialization_alias="_id",
+            default_factory=ObjectId,
+        ),
+    ]
 
 
 @dataclass

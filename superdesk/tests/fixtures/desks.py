@@ -7,7 +7,7 @@ SPORTS_DESK_ID = ObjectId()
 
 
 def sports_desk() -> DesksResourceModel:
-    return DesksResourceModel(
+    return DesksResourceModel(  # type: ignore[call-arg]
         id=SPORTS_DESK_ID,
         name="Sports",
     )

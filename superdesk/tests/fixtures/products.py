@@ -18,7 +18,7 @@ MEDIA_PRODUCT_ID = ObjectId()
 
 
 def text_product() -> ProductsResource:
-    return ProductsResource(
+    return ProductsResource(  # type: ignore[call-arg]
         id=TEXT_PRODUCT_ID,
         name="Text Product",
         product_type=ProductTypes.BOTH,
@@ -30,7 +30,7 @@ def text_product() -> ProductsResource:
 
 
 def nsw_product() -> ProductsResource:
-    return ProductsResource(
+    return ProductsResource(  # type: ignore[call-arg]
         id=NSW_PRODUCT_ID,
         name="NSW",
         geo_restrictions="NSW",
@@ -38,7 +38,7 @@ def nsw_product() -> ProductsResource:
 
 
 def abcdef_product() -> ProductsResource:
-    return ProductsResource(
+    return ProductsResource(  # type: ignore[call-arg]
         id=ABCDEF_PRODUCT_ID,
         name="abcdef",
         codes="abc,def",
@@ -46,7 +46,7 @@ def abcdef_product() -> ProductsResource:
 
 
 def xyz_product() -> ProductsResource:
-    return ProductsResource(
+    return ProductsResource(  # type: ignore[call-arg]
         id=XYZ_PRODUCT_ID,
         name="xyz",
         codes="xyz",
@@ -54,7 +54,7 @@ def xyz_product() -> ProductsResource:
 
 
 def picture_product() -> ProductsResource:
-    return ProductsResource(
+    return ProductsResource(  # type: ignore[call-arg]
         id=PICTURE_PRODUCT_ID,
         name="Picture Product",
         product_type=ProductTypes.BOTH,
@@ -66,7 +66,7 @@ def picture_product() -> ProductsResource:
 
 
 def video_product() -> ProductsResource:
-    return ProductsResource(
+    return ProductsResource(  # type: ignore[call-arg]
         id=VIDEO_PRODUCT_ID,
         name="Video Product",
         product_type=ProductTypes.BOTH,
@@ -78,7 +78,7 @@ def video_product() -> ProductsResource:
 
 
 def media_product() -> ProductsResource:
-    return ProductsResource(
+    return ProductsResource(  # type: ignore[call-arg]
         id=MEDIA_PRODUCT_ID,
         name="Picture & Video Product",
         product_type=ProductTypes.BOTH,
