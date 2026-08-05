@@ -93,8 +93,10 @@ class EveToPydanticDataLayer(EveBackend):
     async def find_and_modify_async(self, endpoint_name: str, **kwargs) -> dict | None:
         eve_mongo_backend = self._backend(endpoint_name, use_async=True)
 
-        if kwargs.get("query"):
-            kwargs["query"] = eve_mongo_backend._mongotize(kwargs["query"], endpoint_name)
+        query = kwargs.get("query") or kwargs.get("filter")
+        if query:
+            kwargs["filter"] = eve_mongo_backend._mongotize(query, endpoint_name)
+            kwargs.pop("query", None)
 
         return await self.get_service(endpoint_name).mongo_async.find_one_and_update(**kwargs)
 
