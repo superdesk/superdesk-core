@@ -11,6 +11,7 @@
 from typing import Any, Literal, cast
 from inspect import get_annotations
 
+from pydantic import BaseModel
 from pydantic.fields import FieldInfo
 from quart_babel import gettext
 
@@ -195,7 +196,7 @@ def get_model_annotations(model_class: type["ResourceModel"]) -> dict[str, Any]:
     Traverses the class hierarchy up to (but not including) ResourceModel to collect all annotations.
     Parent class annotations are overridden by child class annotations.
     """
-    from .model import ResourceModel
+    from .model import ResourceModel, Dataclass
 
     annotations = {}
 
@@ -203,7 +204,7 @@ def get_model_annotations(model_class: type["ResourceModel"]) -> dict[str, Any]:
     # so child class annotations override parent class annotations
     for base_class in reversed(model_class.__mro__):
         try:
-            if base_class != ResourceModel and issubclass(base_class, ResourceModel):
+            if base_class != ResourceModel and issubclass(base_class, (BaseModel, Dataclass)):
                 annotations.update(get_annotations(base_class))
         except (TypeError, AttributeError):
             # skip classes that don't support annotations or have attribute errors

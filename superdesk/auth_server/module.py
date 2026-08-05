@@ -27,16 +27,23 @@ class AuthServerClientService(AsyncResourceService[AuthServerClientResource]):
         original: AuthServerClientResource,
         updates: dict,
         validated_updates: dict,
+        replace: bool = False,
+        update_mongo: bool = True,
+        update_elastic: bool = True,
     ) -> dict:
         # We want to return to the client the provided/generated password
         # and not the hashed version stored in the DB
 
         if "password" not in updates:
-            return await super().update_in_dbs(item_id, original, updates, validated_updates)
+            return await super().update_in_dbs(
+                item_id, original, updates, validated_updates, replace, update_mongo, update_elastic
+            )
 
         unhashed_password = updates["password"]
         updates["password"] = bcrypt.hashpw(unhashed_password.encode(), bcrypt.gensalt()).decode()
-        updates_dict = await super().update_in_dbs(item_id, original, updates, validated_updates)
+        updates_dict = await super().update_in_dbs(
+            item_id, original, updates, validated_updates, replace, update_mongo, update_elastic
+        )
         updates_dict["password"] = unhashed_password
 
         return updates_dict
