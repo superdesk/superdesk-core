@@ -25,9 +25,14 @@ class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
         elif isinstance(obj, (Dataclass, BaseModel)):
             return obj.to_dict(mode="json")
         elif isinstance(obj, list):
-            return [self.default(item) for item in obj]
+            return [
+                item if isinstance(item, (str, int, float, bool, type(None))) else self.default(item) for item in obj
+            ]
         elif isinstance(obj, dict):
-            return {key: self.default(value) for key, value in obj.items()}
+            return {
+                key: (value if isinstance(value, (str, int, float, bool, type(None))) else self.default(value))
+                for key, value in obj.items()
+            }
         return super().default(obj)
 
 
