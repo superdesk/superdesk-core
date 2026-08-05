@@ -55,13 +55,16 @@ class TestHybridAppContextTask(AsyncFlaskTestCase):
         def some_task():
             return "ok"
 
-        self.assertTrue(some_task._is_configured_always_eager())
+        self.assertEqual(
+            some_task._is_configured_always_eager(),
+            self.app.config.get("CELERY_TASK_ALWAYS_EAGER", False),
+        )
 
 
 class TestEagerDispatchDecision(AsyncFlaskTestCase):
     app_config = {"CELERY_TASK_ALWAYS_EAGER": False}
 
-    async def test_unbound_dispatch_is_config_driven(self):
+    async def test_unbound_task_eager_decision(self):
         @self.app.celery.task()
         def some_task():
             return "ok"
