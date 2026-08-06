@@ -394,19 +394,23 @@ class AsyncResourceService(Generic[ResourceModelType]):
         # This will make sure values are of correct type for MongoDB (such as ObjectId)
         return model_instance.to_dict(context=self.get_storage_serialise_context())
 
-    async def create(self, docs: Sequence[ResourceModelType | dict]) -> List[ResourceModelType]:
+    async def create(
+        self, docs: Sequence[ResourceModelType | dict], skip_signals: bool = False
+    ) -> List[ResourceModelType]:
         """Creates a new resource
 
         Will automatically create the resource(s) in both Elasticsearch (if configured for this resource)
         and MongoDB.
 
         :param docs: List of resources or dictionaries to create the registries
+        :param skip_signals: If `True`, will skip `on_create` and `on_created` signals
         :return: List of IDs for the created resources
         :raises Pydantic.ValidationError: If any of the docs provided are not valid
         """
 
         instances = await self._convert_dicts_to_model(docs)
-        await self.on_create(instances)
+        if not skip_signals:
+            await self.on_create(instances)
 
         for index, doc in enumerate(instances):
             await self.validate_create(doc)
@@ -415,7 +419,12 @@ class AsyncResourceService(Generic[ResourceModelType]):
                 versioned_model.current_version = 1
 
             doc.id, doc.etag = await self.insert_into_dbs(doc)
-            docs_entry = docs[index]
+            try:
+                docs_entry = docs[index]
+            except IndexError:
+                # This can happen if `on_create` adds more docs to the instances list
+                docs_entry = None
+
             if isinstance(docs_entry, dict):
                 docs_entry.update(
                     dict(
@@ -424,7 +433,8 @@ class AsyncResourceService(Generic[ResourceModelType]):
                     )
                 )
 
-        await self.on_created(instances)
+        if not skip_signals:
+            await self.on_created(instances)
         return instances
 
     async def insert_into_dbs(self, doc: ResourceModelType) -> tuple[str | ObjectId, str]:
@@ -454,6 +464,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
         original: ResourceModelType,
         updates: dict,
         validated_updates: dict,
+        replace: bool = False,
+        update_mongo: bool = True,
+        update_elastic: bool = True,
     ) -> dict:
         updates_dict = {key: val for key, val in validated_updates.items() if key in updates}
         updates["_etag"] = updates_dict["_etag"] = self.generate_etag(validated_updates, self.config.etag_ignore_fields)
@@ -464,13 +477,27 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if model_has_versions(original):
             updates.pop("_latest_version", None)
             updates_dict.pop("_latest_version", None)
-        response = await self.mongo_async.update_one({"_id": item_id}, {"$set": updates_dict})
-        try:
-            await self.elastic.update(item_id, updates_dict)
-        except ElasticNotConfiguredForResource:
-            pass
 
-        if self.config.versioning:
+        query: dict = {"_id": item_id}
+        if original.etag is not None:
+            query["_etag"] = original.etag
+
+        if update_mongo:
+            if replace:
+                response = await self.mongo_async.replace_one(query, updates_dict)
+            else:
+                response = await self.mongo_async.update_one(query, {"$set": updates_dict})
+
+            if original.etag is not None and response and response.acknowledged and response.matched_count == 0:
+                raise SuperdeskApiError.preconditionFailedError(_("Client and server etags don't match"))
+
+        if update_elastic:
+            try:
+                await self.elastic.update(str(item_id), updates_dict)
+            except ElasticNotConfiguredForResource:
+                pass
+
+        if update_mongo and self.config.versioning:
             await self.mongo_versioned_async.insert_one(self._get_versioned_document(validated_updates))
 
         return updates_dict
@@ -517,6 +544,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         updates: Dict[str, Any],
         etag: str | None = None,
         original: ResourceModelType | None = None,
+        skip_signals: bool = False,
     ) -> ResourceModelType:
         """Updates an existing resource
 
@@ -527,6 +555,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         :param updates: Dictionary to update
         :param etag: Optional etag, if provided will check etag against original item
         :param original: Optional original item, if not provided the service will retrieve it
+        :param skip_signals: If `True`, will skip `on_update` and `on_updated` signals
         :raises SuperdeskApiError.notFoundError: If original item not found
         """
 
@@ -537,11 +566,13 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if original is None:
             raise SuperdeskApiError.notFoundError()
 
-        await self.on_update(updates, original)
+        if not skip_signals:
+            await self.on_update(updates, original)
         updates_dict = await self.update_in_dbs(
             item_id, original, updates, await self.validate_update(updates, original, etag)
         )
-        await self.on_updated(updates, original)
+        if not skip_signals:
+            await self.on_updated(updates, original)
 
         return original.clone_with(updates_dict)
 
@@ -578,7 +609,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             pass
         await self.on_deleted(doc)
 
-    async def delete_many(self, lookup: Dict[str, Any]) -> List[str]:
+    async def delete_many(self, lookup: Dict[str, Any]) -> List[str | ObjectId]:
         """Deletes resource(s) using a lookup
 
         :param lookup: Dictionary for the lookup to find items to delete
@@ -586,7 +617,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         """
 
         docs_to_delete = self.mongo_async.find(lookup).sort("_id", 1)
-        ids: List[str] = []
+        ids: List[str | ObjectId] = []
 
         async for data in docs_to_delete:
             doc = self.get_model_instance_from_dict(data)
@@ -774,7 +805,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
     @overload
     async def find(
-        self, req: SearchRequest
+        self, req: SearchRequest, *, use_mongo: bool = False
     ) -> ElasticsearchResourceCursorAsync[ResourceModelType] | MongoResourceCursorAsync[ResourceModelType]:
         ...
 

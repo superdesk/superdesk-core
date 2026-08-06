@@ -192,13 +192,35 @@ def merge_dicts_deep(dict1, dict2):
     unique_keys = set(dict1.keys()).union(dict2.keys())
 
     for k in unique_keys:
-        # need to merge
         if k in dict1 and k in dict2:
-            if isinstance(dict1[k], dict) and isinstance(dict2[k], dict):
-                yield (k, dict(merge_dicts_deep(dict1[k], dict2[k])))
+            val1, val2 = dict1[k], dict2[k]
+
+            if isinstance(val1, dict) and isinstance(val2, dict):
+                yield (k, dict(merge_dicts_deep(val1, val2)))
+
+            elif isinstance(val1, list) and isinstance(val2, list):
+                if not len(val1) or not len(val2):
+                    yield (k, val2)
+                else:
+                    merged_list = []
+                    for i in range(max(len(val1), len(val2))):
+                        if i >= len(val1):
+                            merged_list.append(val2[i])
+                        elif i >= len(val2):
+                            merged_list.append(val1[i])
+                        elif isinstance(val1[i], dict) and isinstance(val2[i], dict):
+                            merged_list.append(dict(merge_dicts_deep(val1[i], val2[i])))
+                        else:
+                            merged_list.append(val2[i])
+                    yield (k, merged_list)
+
+            elif isinstance(val1, set) and isinstance(val2, set):
+                yield (k, val1 | val2)
+
             else:
-                # if one of the values is not a dict - value from second dict overrides value from first one.
-                yield (k, dict2[k])
+                # Scalar or mismatched types — dict2 wins
+                yield (k, val2)
+
         elif k in dict1:
             yield (k, dict1[k])
         else:

@@ -229,7 +229,7 @@ async def content_filter_to_elastic_query(doc: ContentFiltersResource, matching:
     return {"bool": expressions}
 
 
-ContentApiSubscriber = SubscribersResource(
+ContentApiSubscriber = SubscribersResource(  # type: ignore[call-arg]
     id=ObjectId("67be81e46f53273f423a2801"),  # Use our own ID here, so it can be used across processes, restarts etc
     name="_Content_API_",
     subscriber_type=SubscriberType.ALL,

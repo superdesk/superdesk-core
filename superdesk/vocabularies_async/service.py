@@ -261,7 +261,7 @@ class VocabulariesService(AsyncResourceService[VocabulariesResourceModel]):
                 )
                 for keyword in keywords
             ]
-            cv = VocabulariesResourceModel(
+            cv = VocabulariesResourceModel(  # type: ignore[call-arg]
                 id=KEYWORDS_CV,
                 items=items,
                 management_type=CVAccessType.MANAGEABLE,

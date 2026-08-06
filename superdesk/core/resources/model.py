@@ -21,7 +21,6 @@ from typing import (
 )
 from inspect import get_annotations
 from copy import deepcopy
-from datetime import datetime
 from dataclasses import field as dataclass_field
 from typing_extensions import dataclass_transform, Self, overload
 
@@ -33,6 +32,7 @@ from pydantic import (
     model_serializer,
     SerializerFunctionWrapHandler,
     RootModel,
+    AliasChoices,
 )
 from pydantic.dataclasses import dataclass as pydataclass
 from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
@@ -42,7 +42,7 @@ from superdesk.core.utils import generate_guid, GUID_NEWSML
 from superdesk.utils import merge_dicts_deep
 
 from .utils import get_model_aliased_fields, get_model_annotations, gen_url_for_related_resource
-from .fields import ObjectId
+from .fields import ObjectId, UTCDatetime
 
 default_model_config = ConfigDict(
     arbitrary_types_allowed=True,
@@ -51,6 +51,7 @@ default_model_config = ConfigDict(
     revalidate_instances="always",
     extra="allow",  # Allow any fields not defined in the ResourceModel/dataclass
     protected_namespaces=(),
+    str_strip_whitespace=True,
 )
 
 
@@ -78,7 +79,11 @@ class DataclassBase:
         result = nxt(self)
 
         # Include extra fields that were not part of the schema for this class
-        for key, value in self.__dict__.items():
+        instance_dict = getattr(self, "__dict__", None)
+        if not isinstance(result, dict) or not isinstance(instance_dict, dict):
+            return result
+
+        for key, value in instance_dict.items():
             if key in result:
                 # This field is already in the result, no further processing required
                 continue
@@ -161,16 +166,23 @@ class ResourceModel(BaseModel):
         return self.model_resource_name
 
     #: ID of the document
-    id: Annotated[Union[str, ObjectId], Field(alias="_id", default_factory=lambda: generate_guid(type=GUID_NEWSML))]
+    id: Annotated[
+        Union[str, ObjectId],
+        Field(
+            validation_alias=AliasChoices("_id", "id"),
+            serialization_alias="_id",
+            default_factory=lambda: generate_guid(type=GUID_NEWSML),
+        ),
+    ]
 
     #: Etag of the document
     etag: Annotated[Optional[str], Field(alias="_etag")] = None
 
     #: Datetime the document was created
-    created: Annotated[Optional[datetime], Field(alias="_created")] = None
+    created: Annotated[UTCDatetime | None, Field(alias="_created")] = None
 
     #: Datetime the document was last updated
-    updated: Annotated[Optional[datetime], Field(alias="_updated")] = None
+    updated: Annotated[UTCDatetime | None, Field(alias="_updated")] = None
 
     def __init_subclass__(cls) -> None:
         """
@@ -355,7 +367,14 @@ class ResourceModelWithObjectId(ResourceModel):
     """Base ResourceModel class to be used, if the resource uses an ObjectId for it's ID"""
 
     #: ID of the document
-    id: Annotated[ObjectId, Field(alias="_id", default_factory=ObjectId)]
+    id: Annotated[
+        ObjectId,
+        Field(
+            validation_alias=AliasChoices("_id", "id"),
+            serialization_alias="_id",
+            default_factory=ObjectId,
+        ),
+    ]
 
 
 @dataclass

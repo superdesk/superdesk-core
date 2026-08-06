@@ -19,14 +19,14 @@ PRODUCT_IDS = [ObjectId(), ObjectId()]
 SUBSCRIBER_IDS = [ObjectId(), ObjectId(), ObjectId()]
 
 FILTER_CONDITIONS = [
-    FilterConditionsResource(
+    FilterConditionsResource(  # type: ignore[call-arg]
         id=FILTER_CONDITION_IDS[0],
         field="headline",
         operator=FilterConditionOperator.LIKE,
         value="weather",
         name="filter-weather",
     ),
-    FilterConditionsResource(
+    FilterConditionsResource(  # type: ignore[call-arg]
         id=FILTER_CONDITION_IDS[1],
         field="anpa_category",
         operator=FilterConditionOperator.IN,
@@ -36,12 +36,12 @@ FILTER_CONDITIONS = [
 ]
 
 CONTENT_FILTERS = [
-    ContentFiltersResource(
+    ContentFiltersResource(  # type: ignore[call-arg]
         id=CONTENT_FILTER_IDS[0],
         content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_IDS[0]]))],
         name="content-filter-weather",
     ),
-    ContentFiltersResource(
+    ContentFiltersResource(  # type: ignore[call-arg]
         id=CONTENT_FILTER_IDS[1],
         content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_IDS[1]]))],
         name="content-filter-sports",
@@ -49,13 +49,13 @@ CONTENT_FILTERS = [
 ]
 
 PRODUCTS = [
-    ProductsResource(
+    ProductsResource(  # type: ignore[call-arg]
         id=PRODUCT_IDS[0],
         content_filter=ProductContentFilter(filter_id=CONTENT_FILTER_IDS[0], filter_type=ProductFilterType.PERMITTING),
         name="product-weather",
         codes="prod-weather1,prod-weather2",
     ),
-    ProductsResource(
+    ProductsResource(  # type: ignore[call-arg]
         id=PRODUCT_IDS[1],
         content_filter=ProductContentFilter(filter_id=CONTENT_FILTER_IDS[1], filter_type=ProductFilterType.PERMITTING),
         name="product-sports",
@@ -64,7 +64,7 @@ PRODUCTS = [
 ]
 
 SUBSCRIBERS = [
-    SubscribersResource(
+    SubscribersResource(  # type: ignore[call-arg]
         id=SUBSCRIBER_IDS[0],
         products=[PRODUCT_IDS[0]],
         name="subscriber-weather",
@@ -80,7 +80,7 @@ SUBSCRIBERS = [
         ],
         codes="sub-weather1,sub-weather2",
     ),
-    SubscribersResource(
+    SubscribersResource(  # type: ignore[call-arg]
         id=SUBSCRIBER_IDS[1],
         products=[PRODUCT_IDS[1]],
         name="subscriber-sports",
@@ -96,7 +96,7 @@ SUBSCRIBERS = [
         ],
         codes="sub-sports1,sub-sports2",
     ),
-    SubscribersResource(
+    SubscribersResource(  # type: ignore[call-arg]
         id=SUBSCRIBER_IDS[2],
         products=[PRODUCT_IDS[0], PRODUCT_IDS[1]],
         name="subscriber-all",

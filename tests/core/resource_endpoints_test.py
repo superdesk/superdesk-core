@@ -402,13 +402,14 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
 
     @mock.patch("superdesk.core.resources.service.utcnow", return_value=NOW)
     async def test_endpoint(self, mock_utcnow):
+        self.maxDiff = None
         # Populate the users resource
         test_user = john_doe()
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
             dict(
-                _created=format_time(NOW) + "Z",
-                _updated=format_time(NOW) + "Z",
+                _created=format_time(NOW) + "+0000",
+                _updated=format_time(NOW) + "+0000",
             )
         )
 

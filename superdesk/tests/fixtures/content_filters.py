@@ -10,7 +10,7 @@ CONTENT_FILTER_MEDIA_ID = ObjectId()
 
 
 def content_filter_text() -> ContentFiltersResource:
-    return ContentFiltersResource(
+    return ContentFiltersResource(  # type: ignore[call-arg]
         id=CONTENT_FILTER_TEXT_ID,
         name="Text Content Filter",
         content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_TEXT_ID]))],
@@ -18,7 +18,7 @@ def content_filter_text() -> ContentFiltersResource:
 
 
 def content_filter_pictures() -> ContentFiltersResource:
-    return ContentFiltersResource(
+    return ContentFiltersResource(  # type: ignore[call-arg]
         id=CONTENT_FILTER_PICTURES_ID,
         name="Picture Content Filter",
         content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_PICTURE_ID]))],
@@ -26,7 +26,7 @@ def content_filter_pictures() -> ContentFiltersResource:
 
 
 def content_filter_videos() -> ContentFiltersResource:
-    return ContentFiltersResource(
+    return ContentFiltersResource(  # type: ignore[call-arg]
         id=CONTENT_FILTER_VIDEOS_ID,
         name="Video Content Filter",
         content_filter=[ContentFilter(expression=ContentFilterExpression(fc=[FILTER_CONDITION_VIDEO_ID]))],
@@ -34,7 +34,7 @@ def content_filter_videos() -> ContentFiltersResource:
 
 
 def content_filter_media() -> ContentFiltersResource:
-    return ContentFiltersResource(
+    return ContentFiltersResource(  # type: ignore[call-arg]
         id=CONTENT_FILTER_MEDIA_ID,
         name="Picture & Video Content Filter",
         content_filter=[

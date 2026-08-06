@@ -138,3 +138,15 @@ class BaseModel(PydanticModel):
         cloned_data = deepcopy(self.to_dict())
         cloned_data = dict(merge_dicts_deep(cloned_data, updates))
         return self.from_dict(cloned_data)
+
+    def update_from_dict(self, updates: dict, deep: bool = False) -> None:
+        if not deep:
+            for key, value in updates.items():
+                setattr(self, key, value)
+        else:
+            # First clone a new model instance with the updates deeply applied
+            temp_model = self.clone_with(updates)
+
+            # Then update the root level fields from the temporary model instance
+            for key in updates.keys():
+                setattr(self, key, getattr(temp_model, key))

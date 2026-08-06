@@ -15,10 +15,24 @@ class SuperdeskJSONEncoder(MongoJSONEncoder, ElasticJSONSerializer):
     """Custom JSON encoder for elastic that can handle `bson.ObjectId`s."""
 
     def default(self, obj):
+        # Need to import here, cyclic import error
+        from superdesk.core.resources import Dataclass, BaseModel
+
         if isinstance(obj, LazyString):
             return str(obj)
         elif isinstance(obj, datetime.datetime):
             return obj.strftime(DATE_FORMAT)
+        elif isinstance(obj, (Dataclass, BaseModel)):
+            return obj.to_dict(mode="json")
+        elif isinstance(obj, list):
+            return [
+                item if isinstance(item, (str, int, float, bool, type(None))) else self.default(item) for item in obj
+            ]
+        elif isinstance(obj, dict):
+            return {
+                key: (value if isinstance(value, (str, int, float, bool, type(None))) else self.default(value))
+                for key, value in obj.items()
+            }
         return super().default(obj)
 
 

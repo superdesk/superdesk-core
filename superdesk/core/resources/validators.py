@@ -223,8 +223,8 @@ def validate_unique_value_async(
         resource_config = app.resources.get_config(resource_name if resource_name else item.model_resource_name)
         collection = app.mongo.get_collection_async(resource_config.name)
 
-        query = {"_id": {"$ne": item.id}, field_name: {"$in": name} if isinstance(name, list) else name}
-        if await collection.find_one(query):
+        query: dict = {"_id": {"$ne": item.id}, field_name: {"$in": name} if isinstance(name, list) else name}
+        if await collection.count_documents(query) > 0:
             raise PydanticCustomError("unique", str(error_string) if error_string else gettext("Value must be unique"))
 
     return AsyncValidator(validate_unique_value_in_resource)
@@ -251,7 +251,7 @@ def validate_iunique_value_async(
         resource_config = app.resources.get_config(resource_name)
         collection = app.mongo.get_collection_async(resource_config.name)
 
-        query = {
+        query: dict = {
             "_id": {"$ne": item.id},
             field_name: (
                 {"$in": [re.compile("^{}$".format(re.escape(value.strip())), re.IGNORECASE) for value in name]}
@@ -260,7 +260,7 @@ def validate_iunique_value_async(
             ),
         }
 
-        if await collection.find_one(query):
+        if await collection.count_documents(query) > 0:
             raise PydanticCustomError("unique", str(error_string) if error_string else gettext("Value must be unique"))
 
     return AsyncValidator(validate_iunique_value_in_resource)
@@ -269,7 +269,7 @@ def validate_iunique_value_async(
 def convert_pydantic_validation_error_for_response(validation_error: ValidationError) -> Dict[str, Any]:
     return {
         "_status": "ERR",
-        "_error": {"code": 403, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
+        "_error": {"code": 400, "message": "Insertion failure: 1 document(s) contain(s) error(s)"},
         "_issues": get_field_errors_from_pydantic_validation_error(validation_error),
     }
 

@@ -20,6 +20,7 @@ from eve_elastic import Elastic, InvalidSearchString  # noqa
 from superdesk.core import get_current_async_app, get_config
 from superdesk.lock import lock, unlock
 from superdesk.json_utils import SuperdeskJSONEncoder
+from superdesk.eve_async.eve_to_pydantic_datalayer import EveToPydanticDataLayer
 
 from .eve_async import MongoAsync, ElasticAsync
 
@@ -143,7 +144,9 @@ class SuperdeskDataLayer(DataLayer):
 
     async def insert_async(self, resource, docs, **kwargs):
         service = superdesk.get_resource_service(resource)
-        if hasattr(service, "create_async"):
+        if isinstance(service.backend, EveToPydanticDataLayer):
+            return await service.create_async(docs, skip_signals=False, **kwargs)
+        elif hasattr(service, "create_async"):
             return await service.create_async(docs, **kwargs)
         return service.create(docs, **kwargs)
 
@@ -152,6 +155,8 @@ class SuperdeskDataLayer(DataLayer):
 
     async def update_async(self, resource, id_, updates, original):
         service = superdesk.get_resource_service(resource)
+        if isinstance(service.backend, EveToPydanticDataLayer):
+            return await service.update_async(id=id_, updates=updates, original=original, skip_signals=False)
         if hasattr(service, "update_async"):
             return await service.update_async(id=id_, updates=updates, original=original)
         return service.update(id=id_, updates=updates, original=original)
