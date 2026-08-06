@@ -37,7 +37,7 @@ class NewsroomNinjsFormatterTest(TestCase):
 
         cf_ids = await test_utils.post_items(
             "content_filters",
-            [{"content_filter": [{"expression": {"pf": [fc_ids[0]], "fc": [fc_ids[1]]}}], "name": "soccer-only3"}],
+            [{"content_filter": [{"expression": {"fc": [fc_ids[0], fc_ids[1]]}}], "name": "soccer-only3"}],
         )
 
         product_ids = await test_utils.post_items(
