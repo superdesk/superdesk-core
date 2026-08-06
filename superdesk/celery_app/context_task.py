@@ -122,13 +122,8 @@ class HybridAppContextTask(Task):
         # async with self.get_current_app().app_context():
         self.handle_exception(exc)
 
-    def _is_always_eager(self):
-        current_request = getattr(self, "request", None)
-        if current_request is None or not getattr(current_request, "id", None):
-            # If this task has not been bound to a request, then we're to process it directly
-            # This can happen when the task is called directly, instead of using `.delay` or `.apply_async`
-            return True
-
+    def _is_configured_always_eager(self):
+        """Return the configured eager flag, independent of request binding."""
         # Prefer Celery's canonical flag because task execution can happen outside
         # the expected app-context resolution path on some runtimes.
         task_app = getattr(self, "app", None)
@@ -141,6 +136,15 @@ class HybridAppContextTask(Task):
 
         app = self.get_current_app()
         return bool(app.config.get("CELERY_TASK_ALWAYS_EAGER", False))
+
+    def _is_always_eager(self):
+        current_request = getattr(self, "request", None)
+        if current_request is None or not getattr(current_request, "id", None):
+            # If this task has not been bound to a request, then we're to process it directly
+            # This can happen when the task is called directly, instead of using `.delay` or `.apply_async`
+            return True
+
+        return self._is_configured_always_eager()
 
     def AsyncResult(self, task_id, **kwargs):
         return AsyncTaskResult(task_id, backend=self.backend, app=self.app, **kwargs)
@@ -158,8 +162,8 @@ class HybridAppContextWorkerTask(HybridAppContextTask):
         """
         Schedules the task asynchronously. Awaits the result if `CELERY_TASK_ALWAYS_EAGER` is True.
         """
-        # directly run and await the task if eager
-        if self._is_always_eager():
+        # dispatch is eager based on configuration only, not on request binding
+        if self._is_configured_always_eager():
             async_result = super().apply_async(args=args, kwargs=kwargs, **other_kwargs)
             eager_result = async_result.get()
             return await eager_result if isawaitable(eager_result) else eager_result
