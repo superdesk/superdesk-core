@@ -14,9 +14,8 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
     """
     Tests that asyncio.CancelledError (a BaseException, not Exception) during
     _publish_item() does not leave published.queue_state permanently stuck at
-    in_progress. The handler should reset the item to ``pending`` when no
-    queue rows were created, but keep it ``queued`` when routing already
-    produced publish_queue items.
+    in_progress. The handler should reset the item to ``pending`` and clean up
+    any incomplete publish_queue rows for the same item/version.
     """
 
     def _make_exchange(self):
@@ -49,8 +48,20 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
         self.assertTrue(has_queue_items)
         queue_service.find.assert_awaited_once_with(
             {
-                "item_id": "test-item-1",
-                "item_version": 7,
+                "$and": [
+                    {"item_id": "test-item-1"},
+                    {"item_version": 7},
+                    {
+                        "state": {
+                            "$in": [
+                                "routing",
+                                "pending",
+                                "in-progress",
+                                "retrying",
+                            ]
+                        }
+                    },
+                ]
             },
             max_results=1,
         )
@@ -71,7 +82,7 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
         async def delayed_updates(*args, **kwargs):
             lookup_started.set()
             await finish_lookup.wait()
-            return {QUEUE_STATE: PublishState.QUEUED, "error_message": "request cancelled"}
+            return {QUEUE_STATE: PublishState.PENDING, "error_message": "request cancelled"}
 
         async def run_cleanup():
             await exchange._reset_published_item_after_cancellation(
@@ -170,7 +181,7 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
             "queue_state must be reset to 'pending' so the background worker can retry",
         )
 
-    async def test_cancellation_keeps_queue_state_queued_when_queue_items_exist(self):
+    async def test_cancellation_resets_to_pending_and_cleans_incomplete_queue_items_when_rows_exist(self):
         exchange = self._make_exchange()
 
         published_item_id = ObjectId()
@@ -224,14 +235,21 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
                         ):
                             with patch.object(
                                 exchange,
-                                "_publish_item",
+                                "_clear_incomplete_publish_queue_items",
                                 new_callable=AsyncMock,
-                                side_effect=asyncio.CancelledError("request cancelled"),
-                            ):
-                                with self.assertRaises(asyncio.CancelledError):
-                                    await exchange.send(request)
+                            ) as clear_queue_items:
+                                with patch.object(
+                                    exchange,
+                                    "_publish_item",
+                                    new_callable=AsyncMock,
+                                    side_effect=asyncio.CancelledError("request cancelled"),
+                                ):
+                                    with self.assertRaises(asyncio.CancelledError):
+                                        await exchange.send(request)
+
+        clear_queue_items.assert_awaited_once_with(request)
 
         self.assertTrue(len(captured_patches) >= 1)
         last_patch_id, last_patch_updates = captured_patches[-1]
         self.assertEqual(last_patch_id, published_item_id)
-        self.assertEqual(last_patch_updates[QUEUE_STATE], PublishState.QUEUED)
+        self.assertEqual(last_patch_updates[QUEUE_STATE], PublishState.PENDING)
