@@ -13,6 +13,9 @@ from .models import ContentList, ContentListItem
 from .webhooks import enqueue_webhook_deliveries
 
 ITEMS_UPDATED_EVENT = "content_list:items_updated"
+LIST_CREATED_EVENT = "content_list:created"
+LIST_UPDATED_EVENT = "content_list:updated"
+LIST_DELETED_EVENT = "content_list:deleted"
 
 
 class ContentListsService(AsyncResourceService[ContentList]):
@@ -23,16 +26,19 @@ class ContentListsService(AsyncResourceService[ContentList]):
     async def on_created(self, docs: list[ContentList]) -> None:
         await super().on_created(docs)
         for doc in docs:
-            push_notification("content_list:created", _id=str(doc.id), extension="content-lists")
+            push_notification(LIST_CREATED_EVENT, _id=str(doc.id), extension="content-lists")
+            await enqueue_webhook_deliveries(LIST_CREATED_EVENT, doc.id)
 
     async def on_updated(self, updates: dict[str, Any], original: ContentList) -> None:
         await super().on_updated(updates, original)
-        push_notification("content_list:updated", _id=str(original.id), extension="content-lists")
+        push_notification(LIST_UPDATED_EVENT, _id=str(original.id), extension="content-lists")
+        await enqueue_webhook_deliveries(LIST_UPDATED_EVENT, original.id)
 
     async def on_deleted(self, doc: ContentList) -> None:
         await ContentListItemsService().delete_many({"list_id": doc.id})
         await super().on_deleted(doc)
-        push_notification("content_list:deleted", _id=str(doc.id), extension="content-lists")
+        push_notification(LIST_DELETED_EVENT, _id=str(doc.id), extension="content-lists")
+        await enqueue_webhook_deliveries(LIST_DELETED_EVENT, doc.id)
 
 
 class ContentListItemsService(AsyncResourceService[ContentListItem]):
@@ -99,6 +105,7 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         assert result is not None
 
         push_notification(ITEMS_UPDATED_EVENT, list_id=str(list_id), extension="content-lists")
+        await enqueue_webhook_deliveries(ITEMS_UPDATED_EVENT, list_id)
 
         return result
 
