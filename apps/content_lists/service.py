@@ -68,10 +68,11 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         if list_items_updated_at and list_items_updated_at.strftime(DATE_FORMAT) != data["updatedAt"]:
             raise SuperdeskApiError.conflictError("Content list items have been modified")
 
-        await self._validate_no_duplicates(list_id, data["items"])
+        items = self._cancel_pending_add_deletes(data["items"])
+        await self._validate_no_duplicates(list_id, items)
 
         touched_contents: list[str] = []
-        for item_data in data["items"]:
+        for item_data in items:
             action = item_data.get("action")
             content_id = str(item_data["contentId"])
 
@@ -117,6 +118,31 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         push_notification(ITEMS_UPDATED_EVENT, list_id=str(list_id), extension="content-lists")
         await enqueue_webhook_deliveries(ITEMS_UPDATED_EVENT, list_id)
 
+        return result
+
+    @staticmethod
+    def _cancel_pending_add_deletes(items: list[dict]) -> list[dict]:
+        """Drop add/delete pairs for the same content that cancel out.
+
+        Clients keep unsaved actions queued: adding an article and then
+        removing it again before saving arrives as an ``add`` followed by a
+        ``delete`` for the same content. The added row never existed on the
+        server, so the pair is a no-op — applying the add literally would
+        duplicate an existing item. The reverse order (``delete`` followed by
+        ``add``, re-adding existing content at a new position) is left intact.
+        """
+        result: list[dict] = []
+        for item_data in items:
+            if item_data.get("action") == "delete":
+                content_id = str(item_data["contentId"])
+                for index in range(len(result) - 1, -1, -1):
+                    if result[index].get("action") == "add" and str(result[index]["contentId"]) == content_id:
+                        del result[index]
+                        break
+                else:
+                    result.append(item_data)
+            else:
+                result.append(item_data)
         return result
 
     async def _validate_no_duplicates(self, list_id: ObjectId, items: list[dict]) -> None:

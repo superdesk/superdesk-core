@@ -213,6 +213,56 @@ class ContentListBulkPatchTestCase(TestCase):
         # Added items anchor at their declared positions.
         self.assertEqual(await self._positions(), {"article-1": 0, "article-2": 2})
 
+    async def test_add_then_delete_of_existing_content_cancels_out(self):
+        # A client resending a rejected duplicate ``add`` together with the
+        # ``delete`` that removed it again must succeed as a no-op, keeping
+        # the existing item untouched.
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        result = await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "add", "contentId": "article-1", "position": 2},
+                    {"action": "delete", "contentId": "article-1"},
+                ],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        self.assertIsNotNone(result.content_list_items_updated_at)
+        self.assertEqual(await self._positions(), {"article-1": 0})
+
+    async def test_add_then_delete_of_new_content_is_noop(self):
+        result = await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "add", "contentId": "article-1", "position": 0},
+                    {"action": "delete", "contentId": "article-1"},
+                ],
+                "updatedAt": "initial",
+            }
+        )
+        self.assertIsNotNone(result.content_list_items_updated_at)
+        self.assertEqual(await self._positions(), {})
+
+    async def test_cancelled_pair_does_not_block_other_actions(self):
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "add", "contentId": "article-1", "position": 2},
+                    {"action": "delete", "contentId": "article-1"},
+                    {"action": "add", "contentId": "article-2", "position": 1},
+                ],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        self.assertEqual(await self._positions(), {"article-1": 0, "article-2": 1})
+
     async def test_delete_and_readd_same_content_in_one_batch(self):
         await self._bulk_patch(
             {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
