@@ -2,6 +2,7 @@ from typing import Any
 
 from bson import ObjectId
 from pymongo import UpdateOne
+from pymongo.errors import DuplicateKeyError
 
 from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
@@ -16,6 +17,8 @@ ITEMS_UPDATED_EVENT = "content_list:items_updated"
 LIST_CREATED_EVENT = "content_list:created"
 LIST_UPDATED_EVENT = "content_list:updated"
 LIST_DELETED_EVENT = "content_list:deleted"
+
+DUPLICATE_ITEMS_ERROR = "Content list cannot be saved because it contains duplicated items"
 
 
 class ContentListsService(AsyncResourceService[ContentList]):
@@ -65,24 +68,31 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         if list_items_updated_at and list_items_updated_at.strftime(DATE_FORMAT) != data["updatedAt"]:
             raise SuperdeskApiError.conflictError("Content list items have been modified")
 
+        await self._validate_no_duplicates(list_id, data["items"])
+
         touched_contents: list[str] = []
         for item_data in data["items"]:
             action = item_data.get("action")
             content_id = str(item_data["contentId"])
 
             if action == "add":
-                await self.create(
-                    [
-                        {
-                            "list_id": list_id,
-                            "content": content_id,
-                            "position": item_data.get("position"),
-                            "sticky": item_data.get("sticky", False),
-                            "sticky_position": item_data.get("stickyPosition"),
-                            "enabled": True,
-                        }
-                    ]
-                )
+                try:
+                    await self.create(
+                        [
+                            {
+                                "list_id": list_id,
+                                "content": content_id,
+                                "position": item_data.get("position"),
+                                "sticky": item_data.get("sticky", False),
+                                "sticky_position": item_data.get("stickyPosition"),
+                                "enabled": True,
+                            }
+                        ]
+                    )
+                except DuplicateKeyError:
+                    # Concurrent request added the same content between the
+                    # upfront validation and this insert.
+                    raise SuperdeskApiError.badRequestError(DUPLICATE_ITEMS_ERROR)
                 touched_contents.append(content_id)
             elif action == "move":
                 existing = await self.find_one(req=None, list_id=list_id, content=content_id)
@@ -108,6 +118,26 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         await enqueue_webhook_deliveries(ITEMS_UPDATED_EVENT, list_id)
 
         return result
+
+    async def _validate_no_duplicates(self, list_id: ObjectId, items: list[dict]) -> None:
+        """Reject the whole batch upfront when an add would duplicate an item.
+
+        Replays the batch actions against the list's current contents, so a
+        duplicate is caught before any change is applied — the batch stays
+        retryable once the client drops the duplicate — while deleting and
+        re-adding the same content within one batch remains valid.
+        """
+        docs = await self.mongo_async.find({"list_id": list_id}, projection={"content": 1}).to_list(None)
+        contents = {doc["content"] for doc in docs}
+        for item_data in items:
+            action = item_data.get("action")
+            content_id = str(item_data["contentId"])
+            if action == "add":
+                if content_id in contents:
+                    raise SuperdeskApiError.badRequestError(DUPLICATE_ITEMS_ERROR)
+                contents.add(content_id)
+            elif action == "delete":
+                contents.discard(content_id)
 
     async def _renumber(self, list_id: ObjectId, touched_contents: list[str]) -> None:
         """Reassign positions so every item has a unique slot.

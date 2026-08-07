@@ -15,7 +15,7 @@ from superdesk.default_settings import DATE_FORMAT
 from superdesk.core.auth.user_auth import UserAuthProtocol
 from superdesk.core.types import Request
 
-from apps.content_lists.service import ContentListsService, ContentListItemsService
+from apps.content_lists.service import ContentListsService, ContentListItemsService, DUPLICATE_ITEMS_ERROR
 
 
 class StubUserAuth(UserAuthProtocol):
@@ -131,6 +131,22 @@ class ContentListsRestTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         response = await self.test_client.patch(url, json={"items": [], "updatedAt": "stale"})
         self.assertEqual(response.status_code, 409)
+
+    async def test_bulk_patch_duplicate_item_returns_message(self):
+        await self._seed_archive("article-1")
+        content_list = await self._create_list()
+        await self._add_item(content_list.id, "article-1")
+        content_list = await self.lists_service.find_by_id(content_list.id)
+
+        response = await self.test_client.patch(
+            f"/api/content_lists/{content_list.id}/items",
+            json={
+                "items": [{"action": "add", "contentId": "article-1", "position": 1}],
+                "updatedAt": content_list.content_list_items_updated_at.strftime(DATE_FORMAT),
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual((await response.get_json())["_message"], DUPLICATE_ITEMS_ERROR)
 
     async def test_items_response_includes_article_content(self):
         collection = self.async_app.mongo.get_collection_async("archive")

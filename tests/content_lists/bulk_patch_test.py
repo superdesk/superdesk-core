@@ -17,7 +17,12 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.tests import TestCase
 from superdesk.default_settings import DATE_FORMAT
 
-from apps.content_lists.service import ContentListsService, ContentListItemsService, ITEMS_UPDATED_EVENT
+from apps.content_lists.service import (
+    ContentListsService,
+    ContentListItemsService,
+    ITEMS_UPDATED_EVENT,
+    DUPLICATE_ITEMS_ERROR,
+)
 
 
 class ContentListBulkPatchTestCase(TestCase):
@@ -155,6 +160,76 @@ class ContentListBulkPatchTestCase(TestCase):
         result = await self._bulk_patch({"items": [], "updatedAt": "initial"})
         self.assertIsNotNone(result.content_list_items_updated_at)
         self.assertIsNotNone(await self._stored_updated_at())
+
+    async def test_add_existing_item_rejected_with_duplicate_message(self):
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch(
+                {
+                    "items": [{"action": "add", "contentId": "article-1", "position": 1}],
+                    "updatedAt": stored.strftime(DATE_FORMAT),
+                }
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertEqual(ctx.exception.message, DUPLICATE_ITEMS_ERROR)
+
+    async def test_duplicate_add_rejects_whole_batch_before_any_change(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch(
+                {
+                    "items": [
+                        {"action": "add", "contentId": "article-1", "position": 0},
+                        {"action": "add", "contentId": "article-2", "position": 1},
+                        {"action": "add", "contentId": "article-2", "position": 2},
+                    ],
+                    "updatedAt": "initial",
+                }
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertEqual(ctx.exception.message, DUPLICATE_ITEMS_ERROR)
+        # Nothing was applied: no residue items, timestamp untouched.
+        self.assertEqual(await self._positions(), {})
+        self.assertIsNone(await self._stored_updated_at())
+
+    async def test_batch_succeeds_after_removing_duplicate(self):
+        duplicated = {
+            "items": [
+                {"action": "add", "contentId": "article-1", "position": 0},
+                {"action": "add", "contentId": "article-1", "position": 1},
+                {"action": "add", "contentId": "article-2", "position": 2},
+            ],
+            "updatedAt": "initial",
+        }
+        with self.assertRaises(SuperdeskApiError):
+            await self._bulk_patch(duplicated)
+
+        # Dropping the duplicate from the batch must make it saveable.
+        del duplicated["items"][1]
+        result = await self._bulk_patch(duplicated)
+        self.assertIsNotNone(result.content_list_items_updated_at)
+        # Added items anchor at their declared positions.
+        self.assertEqual(await self._positions(), {"article-1": 0, "article-2": 2})
+
+    async def test_delete_and_readd_same_content_in_one_batch(self):
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "delete", "contentId": "article-1"},
+                    {"action": "add", "contentId": "article-1", "position": 2, "sticky": True},
+                ],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        item = await self.items_service.find_one(req=None, list_id=self.list_id, content="article-1")
+        self.assertEqual(item.position, 2)
+        self.assertTrue(item.sticky)
 
     async def test_push_notification_emitted(self):
         with mock.patch("apps.content_lists.service.push_notification") as push_mock:
