@@ -530,6 +530,7 @@ MODULES = [
     "superdesk.publish_async.module",
     "superdesk.auth_server.oauth2",
     "superdesk.auth_server.module",
+    "apps.content_lists",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
