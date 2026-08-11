@@ -1,5 +1,7 @@
+import asyncio
 import logging
 from datetime import timedelta
+from uuid import uuid4
 
 from bson import ObjectId
 from quart_babel import gettext
@@ -255,15 +257,26 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
 
         try:
             exchange = self.get_exchange(request)
-            logger.info(f"Sending request for {request.item_id} to {exchange}")
+            if request.request_id is None:
+                request.request_id = str(uuid4())
+            logger.info(
+                "Sending publish request_id=%s item_id=%s to %s",
+                request.request_id,
+                request.item_id,
+                exchange,
+                extra={"publish_request_id": request.request_id},
+            )
             response = await exchange.send(request)
             logger.info(
-                "Completed request for %s via %s (routed=%s, subscribers=%s, content_api_subscribers=%s)",
+                "Completed publish request_id=%s item_id=%s via %s "
+                "(routed=%s, subscribers=%s, content_api_subscribers=%s)",
+                request.request_id,
                 request.item_id,
                 exchange,
                 response.routed,
                 len(response.subscribers),
                 len(response.content_api_subscribers),
+                extra={"publish_request_id": request.request_id},
             )
             return response
         except KeyError as e:
@@ -271,6 +284,32 @@ class DefaultPublishExchangeFactory(PublishExchangeFactory, SingletonInstance):
             raise SuperdeskApiError.badRequestError(
                 message=gettext(f"Key is missing on article to be published: {e}"),
             ) from e
+        except asyncio.CancelledError as e:
+            logger.warning(
+                "Publish request cancelled in exchange factory "
+                "(request_id=%s, item_id=%s, operation=%s, item_type=%s, sender_type=%s, exchange=%s, "
+                "cancellation_type=%s, cancellation_message=%s)",
+                request.request_id,
+                request.item_id,
+                request.operation,
+                request.item_type,
+                request.sender_type,
+                exchange,
+                type(e).__name__,
+                str(e),
+                exc_info=True,
+                extra=dict(
+                    publish_request_id=request.request_id,
+                    item_id=request.item_id,
+                    operation=request.operation,
+                    item_type=request.item_type,
+                    sender_type=request.sender_type,
+                    exchange=str(exchange),
+                    cancellation_type=type(e).__name__,
+                    cancellation_message=str(e),
+                ),
+            )
+            raise
         except Exception as e:
             logger.exception("Something bad happened while publishing item", extra=dict(item_id=request.item_id))
             raise SuperdeskApiError.internalError(

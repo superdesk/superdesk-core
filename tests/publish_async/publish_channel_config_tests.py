@@ -76,3 +76,28 @@ class PublishChannelConfigTestCase(TestCase):
                 polling=False,
             ),
         )
+
+    async def test_publish_channel_config_with_associations(self):
+        self.assertEqual(
+            get_publish_channel_config({}, ContentType.TEXT, "publish", "api"),
+            ExchangeConfig(
+                exchange="content",
+                filter="content",
+                formatter="default",
+                router="asyncio",
+                polling=False,
+            ),
+        )
+
+        self.assertEqual(
+            get_publish_channel_config(
+                {"associations": {"test": {"_id": "item_2"}}}, ContentType.TEXT, "publish", "api"
+            ),
+            ExchangeConfig(
+                exchange="content",
+                filter="content",
+                formatter="default",
+                router="celery",
+                polling=True,
+            ),
+        )
