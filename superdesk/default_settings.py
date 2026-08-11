@@ -580,6 +580,20 @@ PUBLISH_CHANNELS: list[PublishChannelConfig] = [
         ),
     },
     {
+        # If the request is coming from the Web API and has associations
+        # then we handle this publish request via a celery task (aka `polling`)
+        # otherwise a Web API request might timeout and be cancelled
+        "item_types": ["text", "preformatted"],
+        "sender_types": ["api"],
+        "filter": lambda item: len(item.get("associations") or {}) > 0,
+        "config": ExchangeConfig(
+            exchange="content",
+            filter="content",
+            router="celery",
+            polling=True,
+        ),
+    },
+    {
         # If the request is coming from the Web API and has no associations
         # then we can handle this publish request via asyncio (aka instant publishing)
         "item_types": ["text", "preformatted"],
