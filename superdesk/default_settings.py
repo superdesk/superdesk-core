@@ -21,6 +21,7 @@ import pytz
 import tzlocal
 from urllib.parse import urlparse
 import logging
+import socket
 
 from datetime import timedelta, datetime
 from celery.schedules import crontab
@@ -315,11 +316,36 @@ CELERY_TASK_SEND_EVENTS = False
 
 # Redis broker publish/connect calls are synchronous inside Celery's apply_async path.
 # Keep socket timeouts bounded so publish requests fail fast when the broker is unavailable.
-CELERY_BROKER_TRANSPORT_OPTIONS = {
+CELERY_BROKER_TRANSPORT_OPTIONS: dict = {
     "socket_connect_timeout": float(env("CELERY_BROKER_REDIS_CONNECT_TIMEOUT", 2)),
     "socket_timeout": float(env("CELERY_BROKER_REDIS_TIMEOUT", 10)),
     "retry_on_timeout": True,
 }
+
+if "socket_keepalive" not in CELERY_BROKER_TRANSPORT_OPTIONS:
+    # Enable Socket Keepalive (in Linux or macOS only)
+    if hasattr(socket, "TCP_KEEPIDLE"):
+        # Linux specifics
+        CELERY_BROKER_TRANSPORT_OPTIONS.update(
+            {
+                # Enable socket keepalive,
+                "socket_keepalive": True,
+                "socket_keepalive_options": {
+                    socket.TCP_KEEPIDLE: int(env("CELERY_BROKER_REDIS_KEEPALIVE_IDLE", 30)),
+                    socket.TCP_KEEPINTVL: int(env("CELERY_BROKER_REDIS_KEEPALIVE_INTERVAL", 10)),
+                    socket.TCP_KEEPCNT: int(env("CELERY_BROKER_REDIS_KEEPALIVE_COUNT", 3)),
+                },
+            }
+        )
+    elif hasattr(socket, "TCP_KEEPALIVE"):
+        # macOS specifics
+        CELERY_BROKER_TRANSPORT_OPTIONS.update(
+            {
+                # Enable socket keepalive,
+                "socket_keepalive": True,
+                "socket_keepalive_options": {socket.TCP_KEEPALIVE: int(env("CELERY_BROKER_REDIS_KEEPALIVE_IDLE", 30))},
+            }
+        )
 
 #: celery worker config
 CELERY_WORKER_DISABLE_RATE_LIMITS = True
