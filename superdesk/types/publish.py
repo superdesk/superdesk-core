@@ -80,6 +80,9 @@ class PublishRequest(Dataclass):
     # Used by the PublishAction to specifically send to these subscribers only
     subscribers: list[SubscribersResource] | None = None
 
+    #: Correlation ID for linking exchange send/cancel/complete logs for one publish request
+    request_id: str | None = None
+
 
 class PublishRequestResponse(Dataclass):
     """

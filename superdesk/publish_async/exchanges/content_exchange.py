@@ -76,6 +76,19 @@ class ContentPublishExchange(BasicPublishExchange):
 
     name = "content"
 
+    def _get_current_task_context(self) -> dict:
+        task = asyncio.current_task()
+        if task is None:
+            return {"task_name": None, "task_cancelled": None, "task_cancelling": None}
+
+        task_name = task.get_name() if hasattr(task, "get_name") else None
+        cancelling_count = task.cancelling() if hasattr(task, "cancelling") else None
+        return {
+            "task_name": task_name,
+            "task_cancelled": task.cancelled(),
+            "task_cancelling": cancelling_count,
+        }
+
     @staticmethod
     def _track_cancellation_cleanup_task(cleanup_task: asyncio.Task[None]) -> asyncio.Task[None]:
         _pending_cancellation_cleanup_tasks.add(cleanup_task)
@@ -197,6 +210,9 @@ class ContentPublishExchange(BasicPublishExchange):
                 error,
                 logger.warning,
                 "Publish request cancelled during routing",
+                cancellation_type=type(error).__name__,
+                cancellation_message=str(error),
+                **self._get_current_task_context(),
             )
             raise
         except Exception as error:
@@ -227,6 +243,8 @@ class ContentPublishExchange(BasicPublishExchange):
                 logger.error,
                 "Publish request interrupted by base exception",
                 exception_type=type(error).__name__,
+                exception_message=str(error),
+                **self._get_current_task_context(),
             )
             raise
 
@@ -280,14 +298,32 @@ class ContentPublishExchange(BasicPublishExchange):
             )
             error_updates = {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: str(error)}
 
+        error_type = type(error).__name__
+        error_args = [str(arg) for arg in getattr(error, "args", ())]
+
+        detailed_log_message = (
+            "%s (request_id=%s, item_id=%s, operation=%s, item_version=%s, "
+            "resolved_queue_state=%s, cancellation_error_type=%s, cancellation_error_args=%s)"
+        )
         log_method(
+            detailed_log_message,
             log_message,
+            request.request_id,
+            request.item_id,
+            request.operation,
+            request.item.get(VERSION),
+            error_updates[QUEUE_STATE],
+            error_type,
+            error_args,
             exc_info=True,
             extra=dict(
+                publish_request_id=request.request_id,
                 item_id=request.item_id,
                 operation=request.operation,
                 item_version=request.item.get(VERSION),
                 resolved_queue_state=error_updates[QUEUE_STATE],
+                cancellation_error_type=error_type,
+                cancellation_error_args=error_args,
                 **extra,
             ),
         )
@@ -301,21 +337,54 @@ class ContentPublishExchange(BasicPublishExchange):
             )
 
     async def _get_cancellation_error_updates(self, request: PublishRequest, error_message: str) -> dict:
-        queue_state = PublishState.PENDING
         if await self._has_publish_queue_items(request):
-            queue_state = PublishState.QUEUED
+            await self._clear_incomplete_publish_queue_items(request)
 
-        return {QUEUE_STATE: queue_state, ERROR_MESSAGE: error_message}
+        return {QUEUE_STATE: PublishState.PENDING, ERROR_MESSAGE: error_message}
+
+    def _get_incomplete_publish_queue_lookup(self, request: PublishRequest, item_version: int) -> dict:
+        return {
+            "$and": [
+                {"item_id": request.item_id},
+                {"item_version": item_version},
+                {
+                    "state": {
+                        "$in": [
+                            PublishQueueState.ROUTING,
+                            PublishQueueState.PENDING,
+                            PublishQueueState.IN_PROGRESS,
+                            PublishQueueState.RETRYING,
+                        ]
+                    }
+                },
+            ]
+        }
+
+    async def _clear_incomplete_publish_queue_items(self, request: PublishRequest) -> None:
+        item_version = request.item.get(VERSION)
+        if item_version is None:
+            return
+
+        queue_lookup = self._get_incomplete_publish_queue_lookup(request, item_version)
+        logger.info(
+            "Clearing incomplete publish_queue rows after cancellation " "(request_id=%s, item_id=%s, item_version=%s)",
+            request.request_id,
+            request.item_id,
+            item_version,
+            extra=dict(
+                publish_request_id=request.request_id,
+                item_id=request.item_id,
+                item_version=item_version,
+            ),
+        )
+        await PublishQueueResource.get_service().delete_many(queue_lookup)
 
     async def _has_publish_queue_items(self, request: PublishRequest) -> bool:
         item_version = request.item.get(VERSION)
         if item_version is None:
             return False
 
-        queue_lookup = {
-            "item_id": request.item_id,
-            "item_version": item_version,
-        }
+        queue_lookup = self._get_incomplete_publish_queue_lookup(request, item_version)
         queue_items = await (
             await PublishQueueResource.get_service().find(
                 queue_lookup,
