@@ -34,7 +34,7 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
         request.item_id = "test-item-1"
 
         cursor = MagicMock()
-        cursor.to_list = AsyncMock(return_value=[{"state": "failed"}])
+        cursor.to_list = AsyncMock(return_value=[{"state": "pending"}])
 
         queue_service = MagicMock()
         queue_service.find = AsyncMock(return_value=cursor)
