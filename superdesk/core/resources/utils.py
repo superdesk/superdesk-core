@@ -71,11 +71,11 @@ def get_projection_arg(projection_data: ProjectedFieldArg | str | None) -> tuple
     :raises SuperdeskApiError.badRequestError: If the projection param is of an unsupported type
     """
 
+    if isinstance(projection_data, str):
+        projection_data = json.loads(projection_data)
     if not projection_data:
         # No projection will be used
         return None, None
-    elif isinstance(projection_data, str):
-        projection_data = json.loads(projection_data)
 
     if isinstance(projection_data, (list, set)):
         # Projection: include these fields only
