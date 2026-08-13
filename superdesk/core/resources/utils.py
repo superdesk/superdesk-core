@@ -51,7 +51,7 @@ def get_projection_from_request(req: SearchRequest) -> tuple[bool, list[str]] | 
     return get_projection_arg(projection_data)
 
 
-def get_projection_arg(projection_data: ProjectedFieldArg | None) -> tuple[bool, list[str]] | tuple[None, None]:
+def get_projection_arg(projection_data: ProjectedFieldArg | str | None) -> tuple[bool, list[str]] | tuple[None, None]:
     """Get normalized projection argument from request
 
     Processes the given projection data and determines the type of projection to apply
@@ -74,7 +74,10 @@ def get_projection_arg(projection_data: ProjectedFieldArg | None) -> tuple[bool,
     if not projection_data:
         # No projection will be used
         return None, None
-    elif isinstance(projection_data, (list, set)):
+    elif isinstance(projection_data, str):
+        projection_data = json.loads(projection_data)
+
+    if isinstance(projection_data, (list, set)):
         # Projection: include these fields only
         return True, list(set(projection_data) | SYSTEM_FIELDS)
     elif isinstance(projection_data, dict):
