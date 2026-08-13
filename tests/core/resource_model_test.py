@@ -1,3 +1,4 @@
+from typing import Annotated
 from unittest import TestCase
 
 from pydantic import ValidationError
@@ -180,3 +181,31 @@ class ResourceModelTest(TestCase):
 
         # current class
         self.assertIn("power", RingOfPower._related_field_definitions)
+
+    def test_resource_field_with_disabled_dynamic_mapping(self):
+        class Place(Dataclass):
+            scheme: fields.Keyword | None = None
+            qcode: fields.Keyword | None = None
+            name: fields.Keyword | None = None
+
+        class Item(ResourceModel):
+            place: Annotated[list[Place] | None, fields.elastic_mapping({"type": "object", "dynamic": False})] = None
+
+        self.assertEqual(
+            get_elastic_mapping_from_model("item", Item),
+            {
+                "properties": {
+                    "_created": {"type": "date"},
+                    "_updated": {"type": "date"},
+                    "_etag": {"type": "text"},
+                    "place": {
+                        "dynamic": False,
+                        "properties": {
+                            "scheme": {"type": "keyword"},
+                            "qcode": {"type": "keyword"},
+                            "name": {"type": "keyword"},
+                        },
+                    },
+                },
+            },
+        )
