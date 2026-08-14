@@ -190,9 +190,19 @@ class ContentListsRestTestCase(TestCase):
         self.assertIsNone(data.get("content_list_items_updated_at"))
 
     async def test_webhooks_resource_requires_privilege(self):
+        response = await self.test_client.post("/api/content_list_webhooks", json={"url": "https://example.com/hook"})
+        self.assertEqual(response.status_code, 201)
+        webhook_id = (await response.get_json())["_id"]
         response = await self.test_client.get("/api/content_list_webhooks")
         self.assertEqual(response.status_code, 200)
 
         self.async_app.auth = StubUserAuth(PLAIN_USER)
+        webhook_url = f"/api/content_list_webhooks/{webhook_id}"
         response = await self.test_client.get("/api/content_list_webhooks")
+        self.assertEqual(response.status_code, 403)
+        response = await self.test_client.post("/api/content_list_webhooks", json={"url": "https://other.example.com/"})
+        self.assertEqual(response.status_code, 403)
+        response = await self.test_client.patch(webhook_url, json={"enabled": False})
+        self.assertEqual(response.status_code, 403)
+        response = await self.test_client.delete(webhook_url)
         self.assertEqual(response.status_code, 403)
