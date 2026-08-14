@@ -19,7 +19,9 @@ logger = logging.getLogger(__name__)
 def _get_field_type_from_json_schema(
     schema: Dict[str, Any], props: Dict[str, Any], parent_props: Optional[Dict[str, Any]] = None
 ) -> Optional[Dict[str, Any]]:
-    if props.get("elastic_mapping"):
+    if props.get("elastic_mapping") and (
+        props["elastic_mapping"].get("dynamic") is not False or props["elastic_mapping"].get("properties")
+    ):
         return props["elastic_mapping"]
 
     if props.get("$ref"):
@@ -89,6 +91,13 @@ def _get_field_type_from_json_schema(
 
             if props.get("dynamic") is not None:
                 mapping["dynamic"] = props["dynamic"]
+
+            if (
+                parent_props is not None
+                and parent_props.get("elastic_mapping")
+                and parent_props["elastic_mapping"].get("dynamic") is not None
+            ):
+                mapping["dynamic"] = parent_props["elastic_mapping"]["dynamic"]
 
             return mapping
         except KeyError:

@@ -1,3 +1,4 @@
+import asyncio
 from datetime import timedelta
 from unittest import mock
 
@@ -201,3 +202,47 @@ class ExchangeFactoryTestCase(TestCase):
 
         self.assertIn(stale_routing.id, task_ids, "stale routing item should be picked up for retry")
         self.assertNotIn(fresh_routing.id, task_ids, "fresh routing item should not be picked up yet")
+
+    async def test_send_propagates_cancelled_error(self):
+        factory = DefaultPublishExchangeFactory()
+
+        request = PublishRequest(
+            item={"_id": "item-1", "type": "text"},
+            item_id="item-1",
+            item_type="text",
+            operation="publish",
+            published_state="published",
+            sender_type=PublishSenderType.API,
+        )
+
+        mock_exchange = mock.AsyncMock()
+        mock_exchange.send.side_effect = asyncio.CancelledError("cancelled")
+
+        with mock.patch.object(factory, "get_exchange", return_value=mock_exchange):
+            with self.assertRaises(asyncio.CancelledError):
+                await factory.send(request)
+
+    async def test_send_returns_response_when_exchange_send_succeeds(self):
+        factory = DefaultPublishExchangeFactory()
+
+        request = PublishRequest(
+            item={"_id": "item-1", "type": "text"},
+            item_id="item-1",
+            item_type="text",
+            operation="publish",
+            published_state="published",
+            sender_type=PublishSenderType.API,
+        )
+
+        response = mock.MagicMock()
+        response.routed = True
+        response.subscribers = []
+        response.content_api_subscribers = set()
+
+        mock_exchange = mock.AsyncMock()
+        mock_exchange.send.return_value = response
+
+        with mock.patch.object(factory, "get_exchange", return_value=mock_exchange):
+            result = await factory.send(request)
+
+        self.assertIs(result, response)

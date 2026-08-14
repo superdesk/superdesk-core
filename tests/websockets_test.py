@@ -225,6 +225,12 @@ class WebsocketsTestCase(unittest.TestCase):
                 "socket_connect_timeout": 2.0,
                 "socket_timeout": 10.0,
                 "retry_on_timeout": True,
+                "socket_keepalive": True,
+                "socket_keepalive_options": {
+                    socket.TCP_KEEPIDLE: 30,
+                    socket.TCP_KEEPINTVL: 10,
+                    socket.TCP_KEEPCNT: 3,
+                },
             },
         )
 
@@ -234,6 +240,9 @@ class WebsocketsTestCase(unittest.TestCase):
             {
                 "CELERY_BROKER_REDIS_CONNECT_TIMEOUT": "5",
                 "CELERY_BROKER_REDIS_TIMEOUT": "240",
+                "CELERY_BROKER_REDIS_KEEPALIVE_IDLE": "60",
+                "CELERY_BROKER_REDIS_KEEPALIVE_INTERVAL": "30",
+                "CELERY_BROKER_REDIS_KEEPALIVE_COUNT": "10",
             },
             clear=False,
         ):
@@ -244,6 +253,12 @@ class WebsocketsTestCase(unittest.TestCase):
                     "socket_connect_timeout": 5.0,
                     "socket_timeout": 240.0,
                     "retry_on_timeout": True,
+                    "socket_keepalive": True,
+                    "socket_keepalive_options": {
+                        socket.TCP_KEEPIDLE: 60,
+                        socket.TCP_KEEPINTVL: 30,
+                        socket.TCP_KEEPCNT: 10,
+                    },
                 },
             )
         importlib.reload(default_settings)
