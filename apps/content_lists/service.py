@@ -1,6 +1,7 @@
 from typing import Any
 
 from bson import ObjectId
+from pydantic import ValidationError
 from pymongo import UpdateOne
 from pymongo.errors import DuplicateKeyError
 
@@ -8,9 +9,16 @@ from superdesk.utc import utcnow
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
 from superdesk.core.resources import AsyncResourceService
+from superdesk.core.resources.validators import get_field_errors_from_pydantic_validation_error
 from superdesk.default_settings import DATE_FORMAT
 
-from .models import ContentList, ContentListItem
+from .models import (
+    ContentList,
+    ContentListItem,
+    ContentListBulkActions,
+    ContentListBulkActionItem,
+    ContentListItemAction,
+)
 from .webhooks import enqueue_webhook_deliveries
 
 ITEMS_UPDATED_EVENT = "content_list:items_updated"
@@ -52,12 +60,12 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         the standard etag header. Updates ``content_list_items_updated_at`` directly via
         MongoDB to bypass the ``on_update`` hook, which strips that field from all updates.
         """
-        if not data:
-            raise SuperdeskApiError.badRequestError("Request body is required")
-        if "items" not in data:
-            raise SuperdeskApiError.badRequestError("items field is required")
-        if "updatedAt" not in data:
-            raise SuperdeskApiError.badRequestError("updatedAt field is required")
+        try:
+            actions = ContentListBulkActions.from_dict(data or {})
+        except ValidationError as validation_error:
+            raise SuperdeskApiError.badRequestError(
+                payload=get_field_errors_from_pydantic_validation_error(validation_error)
+            )
 
         lists_service = ContentListsService()
         content_list = await lists_service.find_by_id(list_id)
@@ -65,27 +73,24 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
             raise SuperdeskApiError.notFoundError(f"Content list {list_id} not found")
 
         list_items_updated_at = content_list.content_list_items_updated_at
-        if list_items_updated_at and list_items_updated_at.strftime(DATE_FORMAT) != data["updatedAt"]:
+        if list_items_updated_at and list_items_updated_at.strftime(DATE_FORMAT) != actions.updated_at:
             raise SuperdeskApiError.conflictError("Content list items have been modified")
 
-        items = self._cancel_pending_add_deletes(data["items"])
+        items = self._cancel_pending_add_deletes(actions.items)
         await self._validate_no_duplicates(list_id, items)
 
         touched_contents: list[str] = []
-        for item_data in items:
-            action = item_data.get("action")
-            content_id = str(item_data["contentId"])
-
-            if action == "add":
+        for item in items:
+            if item.action == ContentListItemAction.ADD:
                 try:
                     await self.create(
                         [
                             {
                                 "list_id": list_id,
-                                "content": content_id,
-                                "position": item_data.get("position"),
-                                "sticky": item_data.get("sticky", False),
-                                "sticky_position": item_data.get("stickyPosition"),
+                                "content": item.content_id,
+                                "position": item.position,
+                                "sticky": item.sticky or False,
+                                "sticky_position": item.sticky_position,
                                 "enabled": True,
                             }
                         ]
@@ -94,15 +99,15 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
                     # Concurrent request added the same content between the
                     # upfront validation and this insert.
                     raise SuperdeskApiError.badRequestError(DUPLICATE_ITEMS_ERROR)
-                touched_contents.append(content_id)
-            elif action == "move":
-                existing = await self.find_one(req=None, list_id=list_id, content=content_id)
+                touched_contents.append(item.content_id)
+            elif item.action == ContentListItemAction.MOVE:
+                existing = await self.find_one(req=None, list_id=list_id, content=item.content_id)
                 if existing:
-                    new_sticky = item_data.get("sticky", existing.sticky)
-                    await self.update(existing.id, {"position": item_data.get("position"), "sticky": new_sticky})
-                    touched_contents.append(content_id)
-            elif action == "delete":
-                existing = await self.find_one(req=None, list_id=list_id, content=content_id)
+                    new_sticky = item.sticky if item.sticky is not None else existing.sticky
+                    await self.update(existing.id, {"position": item.position, "sticky": new_sticky})
+                    touched_contents.append(item.content_id)
+            elif item.action == ContentListItemAction.DELETE:
+                existing = await self.find_one(req=None, list_id=list_id, content=item.content_id)
                 if existing:
                     await self.delete(existing)
 
@@ -121,7 +126,7 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         return result
 
     @staticmethod
-    def _cancel_pending_add_deletes(items: list[dict]) -> list[dict]:
+    def _cancel_pending_add_deletes(items: list[ContentListBulkActionItem]) -> list[ContentListBulkActionItem]:
         """Drop add/delete pairs for the same content that cancel out.
 
         Clients keep unsaved actions queued: adding an article and then
@@ -131,21 +136,23 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         duplicate an existing item. The reverse order (``delete`` followed by
         ``add``, re-adding existing content at a new position) is left intact.
         """
-        result: list[dict] = []
-        for item_data in items:
-            if item_data.get("action") == "delete":
-                content_id = str(item_data["contentId"])
+        result: list[ContentListBulkActionItem] = []
+        for item in items:
+            if item.action == ContentListItemAction.DELETE:
                 for index in range(len(result) - 1, -1, -1):
-                    if result[index].get("action") == "add" and str(result[index]["contentId"]) == content_id:
+                    if (
+                        result[index].action == ContentListItemAction.ADD
+                        and result[index].content_id == item.content_id
+                    ):
                         del result[index]
                         break
                 else:
-                    result.append(item_data)
+                    result.append(item)
             else:
-                result.append(item_data)
+                result.append(item)
         return result
 
-    async def _validate_no_duplicates(self, list_id: ObjectId, items: list[dict]) -> None:
+    async def _validate_no_duplicates(self, list_id: ObjectId, items: list[ContentListBulkActionItem]) -> None:
         """Reject the whole batch upfront when an add would duplicate an item.
 
         Replays the batch actions against the list's current contents, so a
@@ -155,15 +162,13 @@ class ContentListItemsService(AsyncResourceService[ContentListItem]):
         """
         docs = await self.mongo_async.find({"list_id": list_id}, projection={"content": 1}).to_list(None)
         contents = {doc["content"] for doc in docs}
-        for item_data in items:
-            action = item_data.get("action")
-            content_id = str(item_data["contentId"])
-            if action == "add":
-                if content_id in contents:
+        for item in items:
+            if item.action == ContentListItemAction.ADD:
+                if item.content_id in contents:
                     raise SuperdeskApiError.badRequestError(DUPLICATE_ITEMS_ERROR)
-                contents.add(content_id)
-            elif action == "delete":
-                contents.discard(content_id)
+                contents.add(item.content_id)
+            elif item.action == ContentListItemAction.DELETE:
+                contents.discard(item.content_id)
 
     async def _renumber(self, list_id: ObjectId, touched_contents: list[str]) -> None:
         """Reassign positions so every item has a unique slot.

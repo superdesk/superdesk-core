@@ -64,6 +64,26 @@ class ContentListBulkPatchTestCase(TestCase):
             await self._bulk_patch({"items": []})
         self.assertEqual(ctx.exception.status_code, 400)
 
+    async def test_unknown_action_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({"items": [{"action": "explode", "contentId": "article-1"}], "updatedAt": "initial"})
+        self.assertEqual(ctx.exception.status_code, 400)
+
+    async def test_missing_content_id_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({"items": [{"action": "add"}], "updatedAt": "initial"})
+        self.assertEqual(ctx.exception.status_code, 400)
+
+    async def test_invalid_position_type_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch(
+                {
+                    "items": [{"action": "add", "contentId": "article-1", "position": "first"}],
+                    "updatedAt": "initial",
+                }
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+
     async def test_unknown_list_404(self):
         with self.assertRaises(SuperdeskApiError) as ctx:
             await self.items_service.bulk_patch(ObjectId(), {"items": [], "updatedAt": "x"})
