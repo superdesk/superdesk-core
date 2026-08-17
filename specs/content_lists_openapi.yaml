@@ -1,0 +1,691 @@
+openapi: '3.0.2'
+
+info:
+  title: Superdesk Content Lists API
+  version: "1.0"
+  description: >
+    Manage content lists, their items, and the webhooks notified when a
+    list's items change. All endpoints require an authenticated session
+    (`Authorization` header) and are served under the configured `URL_PREFIX`
+    (e.g. `/api`). Responses follow the standard Superdesk/Eve envelope:
+    collections are wrapped in `_items`/`_meta`, and every document carries
+    `_id`, `_created`, `_updated`, and `_etag`.
+
+paths:
+
+  /content_lists:
+    get:
+      summary: List content lists
+      tags:
+        - Content Lists
+      parameters:
+        - $ref: '#/components/parameters/where'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/maxResults'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentList'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+    post:
+      summary: Create a content list
+      tags:
+        - Content Lists
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentList'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentList'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+  /content_lists/{listId}:
+    parameters:
+      - $ref: '#/components/parameters/listId'
+    get:
+      summary: Get a content list
+      tags:
+        - Content Lists
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentList'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update a content list
+      description: >
+        `content_list_items_updated_at` is server-managed and ignored if sent.
+      tags:
+        - Content Lists
+      parameters:
+        - $ref: '#/components/parameters/ifMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentList'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentList'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+    delete:
+      summary: Delete a content list
+      description: Cascades to delete all items belonging to the list.
+      tags:
+        - Content Lists
+      parameters:
+        - $ref: '#/components/parameters/ifMatch'
+      responses:
+        '204':
+          description: No content
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+
+  /content_lists/{listId}/items:
+    parameters:
+      - $ref: '#/components/parameters/listId'
+    get:
+      summary: List items in a content list
+      description: >
+        Each item is enriched with an `article_content` summary of the
+        referenced archive item.
+      tags:
+        - Content List Items
+      parameters:
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/maxResults'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentListItem'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+    patch:
+      summary: Bulk add / move / delete items
+      description: >
+        Applies a batch of item actions atomically and renumbers positions so
+        every item has a unique slot. Uses `updatedAt` in the body for
+        optimistic concurrency instead of the `If-Match` etag header: pass the
+        list's current `content_list_items_updated_at` (or `null` for the first
+        edit). Returns the updated content list.
+      tags:
+        - Content List Items
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkPatchRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentList'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          description: Content list items have been modified (stale `updatedAt`).
+
+  /content_lists/{listId}/items/{itemId}:
+    parameters:
+      - $ref: '#/components/parameters/listId'
+      - $ref: '#/components/parameters/itemId'
+    get:
+      summary: Get a single content list item
+      tags:
+        - Content List Items
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentListItem'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update a single content list item
+      tags:
+        - Content List Items
+      parameters:
+        - $ref: '#/components/parameters/ifMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentListItem'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentListItem'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+
+  /content_list_webhooks:
+    description: >
+      All webhook endpoints (including reads, since webhook URLs may embed
+      auth tokens) require the `content_lists` privilege.
+    get:
+      summary: List webhooks
+      tags:
+        - Content List Webhooks
+      parameters:
+        - $ref: '#/components/parameters/where'
+        - $ref: '#/components/parameters/sort'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/maxResults'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentListWebhook'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      summary: Create a webhook
+      tags:
+        - Content List Webhooks
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentListWebhook'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentListWebhook'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content_list_webhooks/{webhookId}:
+    parameters:
+      - $ref: '#/components/parameters/webhookId'
+    get:
+      summary: Get a webhook
+      tags:
+        - Content List Webhooks
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentListWebhook'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      summary: Update a webhook
+      tags:
+        - Content List Webhooks
+      parameters:
+        - $ref: '#/components/parameters/ifMatch'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ContentListWebhook'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ContentListWebhook'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+    delete:
+      summary: Delete a webhook
+      tags:
+        - Content List Webhooks
+      parameters:
+        - $ref: '#/components/parameters/ifMatch'
+      responses:
+        '204':
+          description: No content
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '412':
+          $ref: '#/components/responses/PreconditionFailed'
+        '428':
+          $ref: '#/components/responses/PreconditionRequired'
+
+components:
+
+  parameters:
+
+    listId:
+      in: path
+      name: listId
+      description: Content list id
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      required: true
+
+    itemId:
+      in: path
+      name: itemId
+      description: Content list item id
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      required: true
+
+    webhookId:
+      in: path
+      name: webhookId
+      description: Webhook id
+      schema:
+        $ref: '#/components/schemas/ObjectId'
+      required: true
+
+    ifMatch:
+      in: header
+      name: If-Match
+      description: Current `_etag` of the document, required for updates and deletes.
+      schema:
+        type: string
+      required: true
+
+    where:
+      in: query
+      name: where
+      description: 'MongoDB-style filter, e.g. {"enabled": true}.'
+      schema:
+        type: string
+
+    sort:
+      in: query
+      name: sort
+      description: Sort expression, e.g. `position` or `[("name", 1)]`.
+      schema:
+        type: string
+
+    page:
+      in: query
+      name: page
+      schema:
+        type: integer
+        default: 1
+
+    maxResults:
+      in: query
+      name: max_results
+      schema:
+        type: integer
+        default: 25
+
+  schemas:
+
+    ObjectId:
+      type: string
+      example: 6a0ce307233d76adba4d8ca8
+
+    Meta:
+      type: object
+      properties:
+        page:
+          type: integer
+          example: 1
+        max_results:
+          type: integer
+          example: 25
+        total:
+          type: integer
+          example: 3
+
+    ContentList:
+      type: object
+      required:
+        - name
+        - type
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        name:
+          type: string
+          example: Breaking News
+        type:
+          type: string
+          enum: [automatic, manual, bucket]
+          example: manual
+        description:
+          type: string
+          nullable: true
+          example: Top stories for the homepage
+        limit:
+          type: integer
+          nullable: true
+          example: 20
+        cache_life_time:
+          type: integer
+          nullable: true
+          description: Cache lifetime in seconds.
+          example: 300
+        filters:
+          type: object
+          nullable: true
+          additionalProperties: true
+          example: {"category": "sport"}
+        enabled:
+          type: boolean
+          default: true
+        content_list_items_updated_at:
+          type: string
+          format: date-time
+          nullable: true
+          readOnly: true
+          description: >
+            Server-managed timestamp of the last item change; used as the
+            optimistic-concurrency token for the bulk items endpoint.
+        _created:
+          type: string
+          format: date-time
+          readOnly: true
+        _updated:
+          type: string
+          format: date-time
+          readOnly: true
+        _etag:
+          type: string
+          readOnly: true
+
+    ContentListItem:
+      type: object
+      required:
+        - content
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        list_id:
+          $ref: '#/components/schemas/ObjectId'
+        content:
+          type: string
+          description: Id of the referenced archive item.
+          example: urn:newsml:localhost:article-1
+        position:
+          type: integer
+          nullable: true
+          example: 0
+        sticky:
+          type: boolean
+          default: false
+        sticky_position:
+          type: integer
+          nullable: true
+        enabled:
+          type: boolean
+          default: true
+        article_content:
+          $ref: '#/components/schemas/ArticleContent'
+        _created:
+          type: string
+          format: date-time
+          readOnly: true
+        _updated:
+          type: string
+          format: date-time
+          readOnly: true
+        _etag:
+          type: string
+          readOnly: true
+
+    ArticleContent:
+      type: object
+      readOnly: true
+      nullable: true
+      description: >
+        Summary of the referenced archive item, attached on GET responses.
+      properties:
+        title:
+          type: string
+          description: Article headline.
+        state:
+          type: string
+        thumbnail:
+          oneOf:
+            - type: string
+              description: URL of the first inline image.
+            - type: object
+              description: Featuremedia thumbnail rendition.
+              additionalProperties: true
+        anpa_category:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        subject:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        firstpublished:
+          type: string
+          format: date-time
+        _created:
+          type: string
+          format: date-time
+        _updated:
+          type: string
+          format: date-time
+
+    ContentListWebhook:
+      type: object
+      required:
+        - url
+      properties:
+        _id:
+          $ref: '#/components/schemas/ObjectId'
+        url:
+          type: string
+          format: uri
+          description: >
+            Must be an HTTP(S) URL. Stored in WHATWG-canonical form: a bare
+            domain gains a trailing slash (`https://x.com` →
+            `https://x.com/`), the scheme and host are lowercased, default
+            ports are dropped, dot segments are resolved, and reserved
+            characters are percent-encoded.
+          example: https://example.com/hook
+        name:
+          type: string
+          nullable: true
+          example: Homepage cache invalidation
+        enabled:
+          type: boolean
+          default: true
+        excluded_lists:
+          type: array
+          description: Lists for which this webhook is NOT fired.
+          items:
+            $ref: '#/components/schemas/ObjectId'
+        _created:
+          type: string
+          format: date-time
+          readOnly: true
+        _updated:
+          type: string
+          format: date-time
+          readOnly: true
+        _etag:
+          type: string
+          readOnly: true
+
+    BulkPatchRequest:
+      type: object
+      required:
+        - updatedAt
+        - items
+      properties:
+        updatedAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: >
+            The list's current `content_list_items_updated_at`, or `null` for
+            the first edit. A stale value yields `409`.
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/BulkPatchAction'
+
+    BulkPatchAction:
+      type: object
+      required:
+        - action
+        - contentId
+      properties:
+        action:
+          type: string
+          enum: [add, move, delete]
+        contentId:
+          type: string
+          description: Id of the referenced archive item.
+          example: urn:newsml:localhost:article-1
+        position:
+          type: integer
+          description: Target position (for `add` and `move`).
+          example: 0
+        sticky:
+          type: boolean
+          description: Pin the item to its position (for `add` and `move`).
+        stickyPosition:
+          type: integer
+          description: Explicit sticky slot (for `add`).
+
+    Error:
+      type: object
+      properties:
+        _status:
+          type: string
+          example: ERR
+        _error:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+
+  responses:
+
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Missing the `content_lists` privilege.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    PreconditionRequired:
+      description: Missing `If-Match` header.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    PreconditionFailed:
+      description: Stale `If-Match` etag.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Content Lists
+    description: Content list documents.
+  - name: Content List Items
+    description: Items within a content list.
+  - name: Content List Webhooks
+    description: >
+      Endpoints notified when a list's items change. Each enabled webhook
+      whose `excluded_lists` does not contain the changed list receives a
+      `POST` with a JSON body of
+      `{"event": "content_list:items_updated", "list_id": "<id>"}` and
+      `Content-Type: application/json`. Failed deliveries (connection errors
+      or non-2xx responses) are retried up to 3 times at 60-second intervals,
+      then dropped; deliveries are queued asynchronously and never fail the
+      API request that triggered them.

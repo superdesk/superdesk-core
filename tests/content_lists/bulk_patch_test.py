@@ -1,0 +1,337 @@
+# -*- coding: utf-8; -*-
+#
+# This file is part of Superdesk.
+#
+# Copyright 2013 to present Sourcefabric z.u. and contributors.
+#
+# For the full copyright and license information, please see the
+# AUTHORS and LICENSE files distributed with this source code, or
+# at https://www.sourcefabric.org/superdesk/license
+
+from unittest import mock
+
+from bson import ObjectId
+
+from superdesk.utc import utcnow
+from superdesk.errors import SuperdeskApiError
+from superdesk.tests import TestCase
+from superdesk.default_settings import DATE_FORMAT
+
+from apps.content_lists.service import (
+    ContentListsService,
+    ContentListItemsService,
+    ITEMS_UPDATED_EVENT,
+    DUPLICATE_ITEMS_ERROR,
+)
+
+
+class ContentListBulkPatchTestCase(TestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self.lists_service = ContentListsService()
+        self.items_service = ContentListItemsService()
+        self.content_list = (await self.lists_service.create([{"name": "Test list", "type": "manual"}]))[0]
+        self.list_id = self.content_list.id
+        archive = self.async_app.mongo.get_collection_async("archive")
+        await archive.insert_many(
+            [{"_id": f"article-{i}", "guid": f"article-{i}", "type": "text"} for i in range(1, 5)]
+        )
+
+    async def _bulk_patch(self, data):
+        return await self.items_service.bulk_patch(self.list_id, data)
+
+    async def _stored_updated_at(self):
+        content_list = await self.lists_service.find_by_id(self.list_id)
+        assert content_list is not None
+        return content_list.content_list_items_updated_at
+
+    async def _positions(self):
+        items = await self.items_service.get_all_list({"list_id": self.list_id})
+        return {item.content: item.position for item in items}
+
+    async def test_empty_body_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({})
+        self.assertEqual(ctx.exception.status_code, 400)
+
+    async def test_missing_items_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({"updatedAt": "2026-01-01T00:00:00+0000"})
+        self.assertEqual(ctx.exception.status_code, 400)
+
+    async def test_missing_updated_at_ok_for_fresh_list(self):
+        # A fresh list has no stored timestamp, so omitting updatedAt (or
+        # sending null) means "no prior version" and passes the check.
+        result = await self._bulk_patch({"items": []})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_null_updated_at_ok_for_fresh_list(self):
+        result = await self._bulk_patch({"items": [], "updatedAt": None})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_missing_updated_at_conflicts_once_timestamp_stored(self):
+        await self._bulk_patch({"items": []})
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({"items": []})
+        self.assertEqual(ctx.exception.status_code, 409)
+
+    async def test_unknown_action_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({"items": [{"action": "explode", "contentId": "article-1"}], "updatedAt": "initial"})
+        self.assertEqual(ctx.exception.status_code, 400)
+
+    async def test_missing_content_id_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({"items": [{"action": "add"}], "updatedAt": "initial"})
+        self.assertEqual(ctx.exception.status_code, 400)
+
+    async def test_invalid_position_type_400(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch(
+                {
+                    "items": [{"action": "add", "contentId": "article-1", "position": "first"}],
+                    "updatedAt": "initial",
+                }
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+
+    async def test_unknown_list_404(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self.items_service.bulk_patch(ObjectId(), {"items": [], "updatedAt": "x"})
+        self.assertEqual(ctx.exception.status_code, 404)
+
+    async def test_stale_updated_at_409(self):
+        await self.lists_service.mongo_async.update_one(
+            {"_id": self.list_id},
+            {"$set": {"content_list_items_updated_at": utcnow()}},
+        )
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch({"items": [], "updatedAt": "2000-01-01T00:00:00+0000"})
+        self.assertEqual(ctx.exception.status_code, 409)
+
+    async def test_none_stored_timestamp_accepts_any_updated_at(self):
+        # A list whose items were never patched has no stored timestamp, so
+        # the optimistic concurrency check passes for any updatedAt value.
+        self.assertIsNone(await self._stored_updated_at())
+        result = await self._bulk_patch({"items": [], "updatedAt": "whatever"})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_matching_updated_at_passes(self):
+        await self._bulk_patch({"items": [], "updatedAt": "irrelevant"})
+        stored = await self._stored_updated_at()
+        result = await self._bulk_patch({"items": [], "updatedAt": stored.strftime(DATE_FORMAT)})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_add_move_delete_actions_and_renumber(self):
+        await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "add", "contentId": "article-1", "position": 0},
+                    {"action": "add", "contentId": "article-2", "position": 1},
+                    {"action": "add", "contentId": "article-3", "position": 2},
+                ],
+                "updatedAt": "initial",
+            }
+        )
+        self.assertEqual(await self._positions(), {"article-1": 0, "article-2": 1, "article-3": 2})
+
+        stored = await self._stored_updated_at()
+        await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "move", "contentId": "article-3", "position": 0},
+                    {"action": "delete", "contentId": "article-2"},
+                ],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        self.assertEqual(await self._positions(), {"article-3": 0, "article-1": 1})
+
+    async def test_move_preserves_sticky_when_omitted(self):
+        await self._bulk_patch(
+            {
+                "items": [{"action": "add", "contentId": "article-1", "position": 0, "sticky": True}],
+                "updatedAt": "initial",
+            }
+        )
+        stored = await self._stored_updated_at()
+        await self._bulk_patch(
+            {
+                "items": [{"action": "move", "contentId": "article-1", "position": 2}],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        item = await self.items_service.find_one(req=None, list_id=self.list_id, content="article-1")
+        self.assertTrue(item.sticky)
+        self.assertEqual(item.position, 2)
+
+    async def test_move_unknown_item_is_noop(self):
+        result = await self._bulk_patch(
+            {
+                "items": [{"action": "move", "contentId": "article-1", "position": 0}],
+                "updatedAt": "initial",
+            }
+        )
+        self.assertEqual(await self._positions(), {})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_delete_unknown_item_is_noop(self):
+        result = await self._bulk_patch(
+            {
+                "items": [{"action": "delete", "contentId": "article-1"}],
+                "updatedAt": "initial",
+            }
+        )
+        self.assertEqual(await self._positions(), {})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_timestamp_written_despite_on_update_strip(self):
+        # ``on_update`` strips ``content_list_items_updated_at`` from regular
+        # updates; bulk_patch must still manage to write it via mongo directly.
+        result = await self._bulk_patch({"items": [], "updatedAt": "initial"})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+        self.assertIsNotNone(await self._stored_updated_at())
+
+    async def test_add_existing_item_rejected_with_duplicate_message(self):
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch(
+                {
+                    "items": [{"action": "add", "contentId": "article-1", "position": 1}],
+                    "updatedAt": stored.strftime(DATE_FORMAT),
+                }
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertEqual(ctx.exception.message, DUPLICATE_ITEMS_ERROR)
+
+    async def test_duplicate_add_rejects_whole_batch_before_any_change(self):
+        with self.assertRaises(SuperdeskApiError) as ctx:
+            await self._bulk_patch(
+                {
+                    "items": [
+                        {"action": "add", "contentId": "article-1", "position": 0},
+                        {"action": "add", "contentId": "article-2", "position": 1},
+                        {"action": "add", "contentId": "article-2", "position": 2},
+                    ],
+                    "updatedAt": "initial",
+                }
+            )
+        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertEqual(ctx.exception.message, DUPLICATE_ITEMS_ERROR)
+        # Nothing was applied: no residue items, timestamp untouched.
+        self.assertEqual(await self._positions(), {})
+        self.assertIsNone(await self._stored_updated_at())
+
+    async def test_batch_succeeds_after_removing_duplicate(self):
+        duplicated = {
+            "items": [
+                {"action": "add", "contentId": "article-1", "position": 0},
+                {"action": "add", "contentId": "article-1", "position": 1},
+                {"action": "add", "contentId": "article-2", "position": 2},
+            ],
+            "updatedAt": "initial",
+        }
+        with self.assertRaises(SuperdeskApiError):
+            await self._bulk_patch(duplicated)
+
+        # Dropping the duplicate from the batch must make it saveable.
+        del duplicated["items"][1]
+        result = await self._bulk_patch(duplicated)
+        self.assertIsNotNone(result.content_list_items_updated_at)
+        # Added items anchor at their declared positions.
+        self.assertEqual(await self._positions(), {"article-1": 0, "article-2": 2})
+
+    async def test_add_then_delete_of_existing_content_cancels_out(self):
+        # A client resending a rejected duplicate ``add`` together with the
+        # ``delete`` that removed it again must succeed as a no-op, keeping
+        # the existing item untouched.
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        result = await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "add", "contentId": "article-1", "position": 2},
+                    {"action": "delete", "contentId": "article-1"},
+                ],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        self.assertIsNotNone(result.content_list_items_updated_at)
+        self.assertEqual(await self._positions(), {"article-1": 0})
+
+    async def test_add_then_delete_of_new_content_is_noop(self):
+        result = await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "add", "contentId": "article-1", "position": 0},
+                    {"action": "delete", "contentId": "article-1"},
+                ],
+                "updatedAt": "initial",
+            }
+        )
+        self.assertIsNotNone(result.content_list_items_updated_at)
+        self.assertEqual(await self._positions(), {})
+
+    async def test_cancelled_pair_does_not_block_other_actions(self):
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "add", "contentId": "article-1", "position": 2},
+                    {"action": "delete", "contentId": "article-1"},
+                    {"action": "add", "contentId": "article-2", "position": 1},
+                ],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        self.assertEqual(await self._positions(), {"article-1": 0, "article-2": 1})
+
+    async def test_delete_and_readd_same_content_in_one_batch(self):
+        await self._bulk_patch(
+            {"items": [{"action": "add", "contentId": "article-1", "position": 0}], "updatedAt": "initial"}
+        )
+        stored = await self._stored_updated_at()
+        await self._bulk_patch(
+            {
+                "items": [
+                    {"action": "delete", "contentId": "article-1"},
+                    {"action": "add", "contentId": "article-1", "position": 2, "sticky": True},
+                ],
+                "updatedAt": stored.strftime(DATE_FORMAT),
+            }
+        )
+        item = await self.items_service.find_one(req=None, list_id=self.list_id, content="article-1")
+        self.assertEqual(item.position, 2)
+        self.assertTrue(item.sticky)
+
+    async def test_push_notification_emitted(self):
+        with mock.patch("apps.content_lists.service.push_notification") as push_mock:
+            await self._bulk_patch({"items": [], "updatedAt": "initial"})
+        push_mock.assert_called_once_with(ITEMS_UPDATED_EVENT, list_id=str(self.list_id), extension="content-lists")
+
+    async def test_enqueue_webhook_deliveries_called(self):
+        with mock.patch(
+            "apps.content_lists.service.enqueue_webhook_deliveries", new_callable=mock.AsyncMock
+        ) as enqueue_mock:
+            await self._bulk_patch({"items": [], "updatedAt": "initial"})
+        enqueue_mock.assert_awaited_once_with(ITEMS_UPDATED_EVENT, self.list_id)
+
+    async def test_enqueue_not_called_on_conflict(self):
+        await self.lists_service.mongo_async.update_one(
+            {"_id": self.list_id},
+            {"$set": {"content_list_items_updated_at": utcnow()}},
+        )
+        with mock.patch(
+            "apps.content_lists.service.enqueue_webhook_deliveries", new_callable=mock.AsyncMock
+        ) as enqueue_mock:
+            with self.assertRaises(SuperdeskApiError):
+                await self._bulk_patch({"items": [], "updatedAt": "2000-01-01T00:00:00+0000"})
+        enqueue_mock.assert_not_awaited()
