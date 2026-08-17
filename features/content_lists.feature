@@ -473,7 +473,7 @@ Feature: Content Lists
         Then we get error 400
 
     @auth
-    Scenario: Bulk patch without updatedAt field returns 400
+    Scenario: Bulk patch without updatedAt field succeeds on a fresh list
         When we post to "/content_lists"
         """
         {"name": "Breaking News", "type": "manual"}
@@ -483,7 +483,7 @@ Feature: Content Lists
         """
         {"items": []}
         """
-        Then we get error 400
+        Then we get OK response
 
     @auth
     Scenario: Bulk patch on an unknown list returns 404

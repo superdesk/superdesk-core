@@ -66,11 +66,12 @@ class ContentListBulkActions(BaseModel):
     ``updated_at`` stays a plain string: the optimistic concurrency check
     compares it verbatim against the ``strftime(DATE_FORMAT)`` rendering the
     server handed out, so parsing it as a datetime would change precision and
-    break the comparison.
+    break the comparison. ``None`` means the client has no prior version
+    (fresh list with no items yet).
     """
 
     items: list[ContentListBulkActionItem]
-    updated_at: Annotated[str, Field(alias="updatedAt")]
+    updated_at: Annotated[str | None, Field(alias="updatedAt")] = None
 
 
 class ContentListWebhook(ResourceModelWithObjectId):

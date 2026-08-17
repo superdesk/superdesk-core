@@ -59,10 +59,21 @@ class ContentListBulkPatchTestCase(TestCase):
             await self._bulk_patch({"updatedAt": "2026-01-01T00:00:00+0000"})
         self.assertEqual(ctx.exception.status_code, 400)
 
-    async def test_missing_updated_at_400(self):
+    async def test_missing_updated_at_ok_for_fresh_list(self):
+        # A fresh list has no stored timestamp, so omitting updatedAt (or
+        # sending null) means "no prior version" and passes the check.
+        result = await self._bulk_patch({"items": []})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_null_updated_at_ok_for_fresh_list(self):
+        result = await self._bulk_patch({"items": [], "updatedAt": None})
+        self.assertIsNotNone(result.content_list_items_updated_at)
+
+    async def test_missing_updated_at_conflicts_once_timestamp_stored(self):
+        await self._bulk_patch({"items": []})
         with self.assertRaises(SuperdeskApiError) as ctx:
             await self._bulk_patch({"items": []})
-        self.assertEqual(ctx.exception.status_code, 400)
+        self.assertEqual(ctx.exception.status_code, 409)
 
     async def test_unknown_action_400(self):
         with self.assertRaises(SuperdeskApiError) as ctx:
