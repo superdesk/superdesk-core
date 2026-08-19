@@ -97,7 +97,12 @@ class CustomStringField(Generic[CustomStringFieldType], BaseCustomField):
     ) -> core_schema.CoreSchema:
         from_str_schema = core_schema.chain_schema(
             [
-                core_schema.str_schema(),
+                core_schema.no_info_before_validator_function(
+                    lambda value: (
+                        str(value) if isinstance(value, BsonObjectId) and cls.core_type != BsonObjectId else value
+                    ),
+                    core_schema.str_schema(),
+                ),
                 core_schema.no_info_plain_validator_function(cls._validate),
             ]
         )

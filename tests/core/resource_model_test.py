@@ -4,7 +4,8 @@ from unittest import TestCase
 from pydantic import ValidationError
 from bson import ObjectId
 
-from superdesk.core.resources import fields, ResourceModel, ResourceModelWithObjectId, dataclass, Dataclass
+from superdesk.core import json
+from superdesk.core.resources import fields, ResourceModel, ResourceModelWithObjectId, dataclass, Dataclass, BaseModel
 from superdesk.core.elastic.resources import get_elastic_mapping_from_model
 from tests.core.modules.module_related_resources import RingOfPower
 
@@ -209,3 +210,50 @@ class ResourceModelTest(TestCase):
                 },
             },
         )
+
+    def test_string_field_with_objectid_value(self):
+        class Templates(BaseModel):
+            single_id: fields.Keyword
+            single_oid: fields.ObjectId
+            list_ids: list[fields.Keyword]
+            list_oids: list[fields.ObjectId]
+
+        ids = [ObjectId() for _ in range(3)]
+        item = Templates(
+            single_id=ids[0],
+            single_oid=ids[0],
+            list_ids=ids[1:],
+            list_oids=ids[1:],
+        )
+        self.assertEqual(item.single_id, str(ids[0]))
+        self.assertEqual(item.single_oid, ids[0])
+        self.assertEqual(item.list_ids, [str(ids[1]), str(ids[2])])
+        self.assertEqual(item.list_oids, [ids[1], ids[2]])
+
+        item = Templates.from_dict(
+            dict(
+                single_id=ids[0],
+                single_oid=ids[0],
+                list_ids=ids[1:],
+                list_oids=ids[1:],
+            )
+        )
+        self.assertEqual(item.single_id, str(ids[0]))
+        self.assertEqual(item.single_oid, ids[0])
+        self.assertEqual(item.list_ids, [str(ids[1]), str(ids[2])])
+        self.assertEqual(item.list_oids, [ids[1], ids[2]])
+
+        item = Templates.from_json(
+            json.dumps(
+                dict(
+                    single_id=str(ids[0]),
+                    single_oid=str(ids[0]),
+                    list_ids=[str(ids[1]), str(ids[2])],
+                    list_oids=[str(ids[1]), str(ids[2])],
+                )
+            )
+        )
+        self.assertEqual(item.single_id, str(ids[0]))
+        self.assertEqual(item.single_oid, ids[0])
+        self.assertEqual(item.list_ids, [str(ids[1]), str(ids[2])])
+        self.assertEqual(item.list_oids, [ids[1], ids[2]])
