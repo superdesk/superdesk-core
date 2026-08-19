@@ -67,7 +67,6 @@ class PublishServiceBase:
                 transmit_response = self._transmit(queue_item, subscriber) or []
                 if isawaitable(transmit_response):
                     await transmit_response
-                await self.update_item_status(queue_item["_id"], "success")
             except SuperdeskPublishError as error:
                 await self.update_item_status(queue_item["_id"], "error", error)
                 await self.close_transmitter(subscriber, error)
