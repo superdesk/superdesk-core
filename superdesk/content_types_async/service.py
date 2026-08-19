@@ -125,8 +125,9 @@ class ContentTypesService(AsyncCacheableService[ContentTypesResourceModel]):
         item_id: str | ObjectId,
         version: int | None = None,
         projection: ProjectedFieldArg | None = None,
+        use_elastic: bool = False,
     ) -> dict | None:
-        doc_dict = await super().find_by_id_raw(item_id, version, projection)
+        doc_dict = await super().find_by_id_raw(item_id, version, projection, use_elastic)
         if not doc_dict:
             return None
 

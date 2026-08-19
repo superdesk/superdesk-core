@@ -5,7 +5,7 @@ from superdesk.utils import format_time
 
 from superdesk.tests import AsyncFlaskTestCase
 
-from .modules.users import UserResourceService
+from .modules.users import UserResourceService, User
 from .fixtures.users import john_doe, jane_doe
 
 
@@ -67,8 +67,8 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
             dict(
-                _created=format_time(NOW) + "+00:00",
-                _updated=format_time(NOW) + "+00:00",
+                _created=format_time(NOW) + "+0000",
+                _updated=format_time(NOW) + "+0000",
                 _etag=json_data["_etag"],
                 _links={"self": {"title": "User", "href": "users_async/user_1"}},
             )
@@ -98,8 +98,8 @@ class ResourceEndpointsTestCase(AsyncFlaskTestCase):
         test_user_dict = self.test_client.model_instance_to_json(test_user)
         test_user_dict.update(
             dict(
-                _created=format_time(NOW) + "+00:00",
-                _updated=format_time(NOW) + "+00:00",
+                _created=format_time(NOW) + "+0000",
+                _updated=format_time(NOW) + "+0000",
                 _etag=json_data["_etag"],
                 first_name="Foo",
                 last_name="Bar",

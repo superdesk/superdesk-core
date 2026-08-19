@@ -296,9 +296,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                 ANY,
                 Response(
                     {
-                        **test_user.to_dict(),
-                        "_created": format_time(NOW) + "+00:00",
-                        "_updated": format_time(NOW) + "+00:00",
+                        **test_user.to_dict(context={"use_objectid": True}),
                         "_links": {"self": {"title": "User", "href": "users_async/user_1"}},
                     },
                     200,

@@ -234,16 +234,18 @@ class AsyncResourceService(Generic[ResourceModelType]):
         item_id: Union[str, ObjectId],
         version: int | None = None,
         projection: ProjectedFieldArg | None = None,
+        use_elastic: bool = False,
     ) -> Optional[ResourceModelType]:
         """Find a resource by ID
 
         :param item_id: ID of item to find
         :param version: Optional version to get
         :param projection: The field projections to be applied
+        :param use_elastic: If ``True`` will use Elasticsearch to get the document, else will use MongoDB by default
         :return: ``None`` if resource not found, otherwise an instance of ``ResourceModel`` for this resource
         """
 
-        item = await self.find_by_id_raw(item_id, version, projection)
+        item = await self.find_by_id_raw(item_id, version, projection, use_elastic)
         return None if item is None else self.get_model_instance_from_dict(item)
 
     async def find_by_id_raw(
@@ -251,19 +253,26 @@ class AsyncResourceService(Generic[ResourceModelType]):
         item_id: Union[str, ObjectId],
         version: int | None = None,
         projection: ProjectedFieldArg | None = None,
-    ) -> Optional[Dict[str, Any]]:
+        use_elastic: bool = False,
+    ) -> dict | None:
         """Find a resource by ID
 
         :param item_id: ID of item to find
         :param version: Optional version to get
         :param projection: The field projections to be applied
+        :param use_elastic: If ``True`` will use Elasticsearch to get the document, else will use MongoDB by default
         :return: ``None`` if resource not found, otherwise a dictionary of the item
         """
 
         item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
-        try:
-            item = await self.elastic.find_by_id(item_id, projection=projection)
-        except ElasticNotConfiguredForResource:
+        item: dict | None = None
+        if use_elastic:
+            try:
+                item = await self.elastic.find_by_id(str(item_id), projection=projection)
+            except ElasticNotConfiguredForResource:
+                pass
+
+        if item is None:
             projection_arg = self._get_mongo_projection_argument(SearchRequest(projection=projection))
             kwargs = {} if not projection_arg else {"projection": projection_arg}
             item = await self.mongo_async.find_one({"_id": item_id}, **kwargs)
