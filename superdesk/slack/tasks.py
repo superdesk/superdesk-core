@@ -32,9 +32,7 @@ from .resources import SlackUserLinksService
 
 logger = logging.getLogger(__name__)
 
-CONNECT_MESSAGE = (
-    "Connect your Slack account to Superdesk to see previews of Superdesk links." " Only you can see this message."
-)
+CONNECT_MESSAGE = "Connect your Slack account to Superdesk to preview its links here. Only you can see this message."
 
 COMPOSER_SOURCE = "composer"
 
