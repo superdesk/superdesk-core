@@ -269,11 +269,12 @@ class SlackEventsTestCase(AsyncFlaskTestCase):
                 "links": [{"url": "https://example.com/a"}],
             }
         )
-        with self.assertLogs("superdesk.slack.tasks", level="INFO") as logs:
+        # The link is not a Superdesk client URL, so the task stops right after resolving it
+        with self.assertLogs("superdesk.slack.tasks", level="DEBUG") as logs:
             response = await self.post_signed(payload)
 
         self.assertEqual(response.status_code, 200)
-        self.assertIn("slack unfurl_links event_id=Ev123 team=T123 user=U123 links=1", logs.output[0])
+        self.assertIn("slack unfurl event_id=Ev123 carries no supported link", logs.output[0])
 
 
 class SlackNotConfiguredTestCase(AsyncFlaskTestCase):

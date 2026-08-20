@@ -20,7 +20,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.flask import render_template
 
 from .config import get_app_id, get_team_id, is_configured
-from .linking import consume_link_token, notify_slack_user, peek_link_token
+from .linking import consume_link_token, notify_slack_user, peek_link_token, pop_pending_unfurl
 from .resources import LINK_METHOD_BROWSER, SlackLinkConflict, SlackUserLinksService
 from .signature import verify_slack_request
 from .tasks import unfurl_links
@@ -275,11 +275,29 @@ async def slack_link_submit(request: Request) -> Any:
         team_id,
     )
 
+    replayed = False
+    pending = pop_pending_unfurl(team_id, slack_user_id)
+    if pending:
+        try:
+            await enqueue_unfurl(**pending)
+            replayed = True
+        except Exception:
+            logger.warning(
+                "could not replay the pending slack unfurl slack_user=%s team=%s",
+                slack_user_id,
+                team_id,
+                exc_info=True,
+            )
+
     await notify_slack_user(
         data.get("channel"),
         slack_user_id,
         f"Your Slack account is now connected to Superdesk user {user.get('username')}. "
-        "Paste the link again to see its preview.",
+        + (
+            "The preview of the link you shared will appear shortly."
+            if replayed
+            else "Paste the link again to see its preview."
+        ),
     )
 
     return await _html(

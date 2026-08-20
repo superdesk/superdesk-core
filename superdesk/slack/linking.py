@@ -25,9 +25,15 @@ LINK_TOKEN_TTL = 600
 
 REDIS_KEY_PREFIX = "slack:link:"
 
+PENDING_KEY_PREFIX = "slack:pending:"
+
 
 def _redis_key(token: str) -> str:
     return f"{REDIS_KEY_PREFIX}{token}"
+
+
+def _pending_key(team_id: str, slack_user_id: str) -> str:
+    return f"{PENDING_KEY_PREFIX}{team_id}:{slack_user_id}"
 
 
 def _decode(raw: Any) -> dict | None:
@@ -66,6 +72,23 @@ def consume_link_token(token: str) -> dict | None:
     """Read a link token and delete it, so a token can only create one link."""
 
     return _decode(get_current_app().redis.getdel(_redis_key(token)))
+
+
+def store_pending_unfurl(team_id: str, slack_user_id: str, payload: dict) -> None:
+    """Keep the ``link_shared`` event of an unlinked Slack user until they connect their account.
+
+    ``payload`` is the keyword arguments of the unfurl task, so connecting can replay the event
+    instead of asking the user to paste the link again. It lives as long as the link token, one
+    entry per Slack user: only the last link they shared is worth replaying.
+    """
+
+    get_current_app().redis.set(_pending_key(team_id, slack_user_id), json.dumps(payload), ex=LINK_TOKEN_TTL)
+
+
+def pop_pending_unfurl(team_id: str, slack_user_id: str) -> dict | None:
+    """Read the pending unfurl of a Slack user and delete it, so it is replayed at most once."""
+
+    return _decode(get_current_app().redis.getdel(_pending_key(team_id, slack_user_id)))
 
 
 def get_link_url(token: str) -> str:

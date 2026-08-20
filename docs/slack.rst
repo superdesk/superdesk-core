@@ -7,7 +7,8 @@ Superdesk can answer Slack's `Events API`_ so that links to Superdesk content pa
 expanded into a rich preview. One Slack app is installed per Superdesk instance, and its bot posts
 the previews through the ``chat.unfurl`` API, which means a preview is visible to everybody in the
 channel where the link was shared. A preview is only produced for a Slack user who is linked to a
-Superdesk account, see `Account linking`_ below. Rendering the previews comes in a later phase.
+Superdesk account, see `Account linking`_ below. What ends up in a preview is explained in
+`How previews are decided`_.
 
 The endpoints used in Superdesk live under ``/api/slack/``, the Slack app itself only talks to
 ``/api/slack/events``. They all answer ``404`` while ``SLACK_SIGNING_SECRET`` is unset, so an
@@ -155,3 +156,44 @@ the API are not on the same host. The Slack user id is the one starting with ``U
 ``--team`` defaults to ``SLACK_TEAM_ID`` and is required when that setting is empty. The commands
 fail with a non zero exit code when the user does not exist, or when either side of the link is
 already taken by somebody else.
+
+.. _How previews are decided:
+
+How previews are decided
+------------------------
+
+Every ``link_shared`` event is handled the same way, one link at a time:
+
+1. The Slack user who shared the link is looked up in ``slack_user_links``. Without a link nothing
+   is resolved and the bot answers with the connect prompt described above.
+2. The URL is resolved to an entity. Only URLs on the ``CLIENT_URL`` host that a handler
+   recognises are considered, anything else is dropped without a word to Slack.
+3. The entity is loaded, and the visibility check runs the same search Superdesk itself runs, as
+   the linked user. It goes through the same filters as the monitoring and search views, so a
+   preview never shows an item the user could not open in Superdesk.
+4. The external preview policy decides how much of the entity may leave Superdesk, because the
+   preview is read by everybody in the channel and not only by the person who shared the link.
+5. What is left is rendered as a Block Kit card and posted with ``chat.unfurl``.
+
+There are three possible outcomes:
+
+* a full card with the metadata listed below,
+* a generic *Details are restricted* card, naming only the item type, for an item under a future
+  embargo, marked for legal or not for publication, or in a spiked, killed or recalled state,
+* nothing at all, when the item does not exist or the linked user would not see it in Superdesk.
+  The link stays a plain link in Slack, which does not tell the channel whether the item exists.
+
+A full card shows the headline (falling back to the slugline), the item type and state, the desk
+and stage, the author and the slugline, the time of the last version, and a link back to
+Superdesk. It never shows the body, the abstract or description, editorial notes, the SMS text,
+embargo or publish schedule dates, the item flags, or who holds the lock. These fields are not
+merely skipped by the renderer: the preview is built from an allow list of item fields, so a field
+that is not on the list cannot reach Slack.
+
+Because ``chat.unfurl`` posts into the channel, a preview is visible to everybody who can read that
+channel, including people with no Superdesk account. It is decided by the permissions of the person
+who pasted the link, the way forwarding a screenshot would be.
+
+When the sharing Slack user is not linked yet, the event is kept in Redis for ten minutes. Once
+they connect their account through the prompt, that event is replayed automatically and the preview
+appears under the message they already sent, so there is no need to paste the link again.
