@@ -51,6 +51,7 @@ install_requires = [
     "pyjwt>=2.4.0,<2.14",
     "pymemcache>=4.0,<4.1",
     "xmlsec>=1.3.13,<1.3.15",
+    "slack_sdk>=3.33,<4",
     # Async libraries
     "motor>=3.4.0,<4.0",
     # There's a breaking change in 2.13 that's affecting our usage, so pinning to 2.12

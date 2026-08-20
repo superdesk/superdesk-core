@@ -658,6 +658,44 @@ Default: ``''``
 
 Default: ``''``
 
+.. _settings.slack:
+
+Slack Settings
+--------------
+
+.. versionadded:: 3.6
+
+See :doc:`slack` for how to create the Slack app these settings come from.
+
+``SLACK_SIGNING_SECRET``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+Slack app signing secret, used to verify the requests Slack sends to the server. The Slack module
+is inert unless this is set.
+
+``SLACK_BOT_TOKEN``
+^^^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+Bot user OAuth token, used to call the Slack API to post the unfurls.
+
+``SLACK_TEAM_ID``
+^^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+Optional. If set, events coming from other Slack workspaces are ignored.
+
+``SLACK_APP_ID``
+^^^^^^^^^^^^^^^^
+
+Default: ``''``
+
+Optional. If set, events coming from other Slack apps are ignored.
+
 SAML Auth Settings
 ------------------
 

@@ -76,6 +76,7 @@ works and can be developed further.
     contentapi
     editor
     auth_server
+    slack
     production_api
     video_server
     extending

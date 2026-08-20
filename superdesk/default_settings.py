@@ -557,6 +557,7 @@ MODULES = [
     "superdesk.auth_server.oauth2",
     "superdesk.auth_server.module",
     "apps.content_lists.module",
+    "superdesk.slack",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
@@ -1182,6 +1183,20 @@ GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 # Google login will only be activated if both GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are set
 GOOGLE_LOGIN = True
 GOOGLE_GMAIL = True
+
+# Slack settings
+#: Slack app signing secret, used to verify the requests Slack sends to the server.
+#: The Slack module is inert unless this is set.
+SLACK_SIGNING_SECRET = env("SLACK_SIGNING_SECRET")
+
+#: Bot user OAuth token, used to call the Slack API (unfurls)
+SLACK_BOT_TOKEN = env("SLACK_BOT_TOKEN")
+
+#: Optional. If set, events coming from other Slack workspaces are ignored
+SLACK_TEAM_ID = env("SLACK_TEAM_ID")
+
+#: Optional. If set, events coming from other Slack apps are ignored
+SLACK_APP_ID = env("SLACK_APP_ID")
 
 PREFERRED_URL_SCHEME = env("PREFERRED_URL_SCHEME")
 
