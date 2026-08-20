@@ -88,10 +88,15 @@ class AsyncioPublishConsumer(PublishConsumer):
             logger.error("Destination not defined in queue item", extra=log_extra)
             return False
 
+        # Every update regenerates the item's etag, so the stored version is tracked separately
+        # from `task`: each state update below is checked against the etag it is given and fails
+        # with a 412 once that etag is no longer the one held in the database.
+        current = task
+
         try:
             # Update the status of the task to in-progress
             task_update = {"state": PublishQueueState.IN_PROGRESS, "transmit_started_at": utcnow()}
-            await PublishQueueResource.get_service().update(task.id, task_update, task.etag, task)
+            current = await PublishQueueResource.get_service().update(task.id, task_update, current.etag, current)
             logger.info(f"Transmitting queue item {log_msg}")
 
             try:
@@ -122,7 +127,7 @@ class AsyncioPublishConsumer(PublishConsumer):
             elif task.lifecycle_started_at:
                 success_update["lifecycle_to_transmit_ms"] = duration_ms(task.lifecycle_started_at, completed_now)
 
-            await PublishQueueResource.get_service().update(task.id, success_update, task.etag, task)
+            await PublishQueueResource.get_service().update(task.id, success_update, current.etag, current)
             logger.info(f"Transmit completed for queue item {log_msg}")
 
             return True
@@ -160,7 +165,7 @@ class AsyncioPublishConsumer(PublishConsumer):
                 else:
                     updates["state"] = PublishQueueState.FAILED
 
-                await PublishQueueResource.get_service().update(task.id, updates, task.etag, task)
+                await PublishQueueResource.get_service().update(task.id, updates, current.etag, current)
                 return False
             except Exception:
                 logger.error("Failed to set the state for failed publish queue item.", extra=log_extra)
