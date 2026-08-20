@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Superdesk{% endblock %}</title>
+<style>
+body { margin: 0; padding: 3rem 1rem; background: #f4f5f7; color: #23282d;
+       font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 15px; }
+.card { max-width: 32rem; margin: 0 auto; padding: 2rem; background: #fff;
+        border-radius: 3px; box-shadow: 0 1px 4px rgba(0, 0, 0, .16); }
+h1 { margin: 0 0 1rem; font-size: 1.25rem; }
+p { margin: 0 0 1rem; line-height: 1.5; }
+a { color: #2c6b83; }
+button { padding: .6rem 1.4rem; border: 0; border-radius: 3px; background: #2c6b83;
+         color: #fff; font-size: 1rem; cursor: pointer; }
+button.secondary { background: #fff; color: #2c6b83; border: 1px solid #2c6b83; }
+</style>
+</head>
+<body>
+<div class="card">
+{% block content %}{% endblock %}
+</div>
+</body>
+</html>

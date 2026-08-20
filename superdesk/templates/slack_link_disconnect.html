@@ -1,0 +1,12 @@
+{% extends "slack_link_layout.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block content %}
+<h1>{{ title }}</h1>
+<p>{{ message }}</p>
+{% if nonce %}
+<form method="post" action="{{ action }}">
+<input type="hidden" name="nonce" value="{{ nonce }}">
+<button type="submit">Disconnect</button>
+</form>
+{% endif %}
+{% endblock %}

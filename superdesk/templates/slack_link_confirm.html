@@ -1,0 +1,17 @@
+{% extends "slack_link_layout.html" %}
+{% block title %}Connect Slack to Superdesk{% endblock %}
+{% block content %}
+<h1>Connect Slack to Superdesk</h1>
+<p>You are logged in to Superdesk as <strong>{{ user_name }}</strong>.</p>
+{% if linked_slack_user_id %}
+<p>This account is already connected to Slack user <strong>{{ linked_slack_user_id }}</strong>.
+To connect a different Slack user, <a href="{{ disconnect_url }}">disconnect this one</a> first.</p>
+{% else %}
+<p>Slack user <strong>{{ slack_user_id }}</strong> (workspace {{ team_id }}) will be linked to this account.</p>
+<form method="post" action="{{ action }}">
+<input type="hidden" name="t" value="{{ token }}">
+<input type="hidden" name="nonce" value="{{ nonce }}">
+<button type="submit">Connect</button>
+</form>
+{% endif %}
+{% endblock %}

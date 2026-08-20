@@ -6,12 +6,12 @@ Slack Link Previews
 Superdesk can answer Slack's `Events API`_ so that links to Superdesk content pasted in Slack are
 expanded into a rich preview. One Slack app is installed per Superdesk instance, and its bot posts
 the previews through the ``chat.unfurl`` API, which means a preview is visible to everybody in the
-channel where the link was shared. This first phase only implements the plumbing: the endpoint that
-receives and verifies the Slack events, and the background task that will render the previews.
-Rendering the previews and linking Slack users to Superdesk accounts come in later phases.
+channel where the link was shared. A preview is only produced for a Slack user who is linked to a
+Superdesk account, see `Account linking`_ below. Rendering the previews comes in a later phase.
 
-The endpoint used in Superdesk is ``/api/slack/events``. It answers ``404`` while
-``SLACK_SIGNING_SECRET`` is unset, so an instance that has not configured a Slack app is unaffected.
+The endpoints used in Superdesk live under ``/api/slack/``, the Slack app itself only talks to
+``/api/slack/events``. They all answer ``404`` while ``SLACK_SIGNING_SECRET`` is unset, so an
+instance that has not configured a Slack app is unaffected.
 
 .. _Events API: https://docs.slack.dev/apis/events-api/
 
@@ -85,3 +85,73 @@ After creating the app, install it in the workspace, then copy:
 Restart the ``rest`` and ``work`` processes for the new settings to take effect. App unfurls do not
 require the bot to be a member of the channel; if previews do not show up in a private channel,
 inviting the bot (``/invite @Superdesk``) is the first thing to try.
+
+.. _Account linking:
+
+Account linking
+---------------
+
+Superdesk only renders a preview for a Slack user who has been linked to a Superdesk account. The
+link says "this Slack user is that Superdesk user", and the preview is then built with that user's
+permissions. Links are stored in the ``slack_user_links`` collection, which the server writes on
+its own: there is no REST endpoint for it, and users cannot create a link through the API. A Slack
+user and a Superdesk user can each take part in at most one link.
+
+Running ``python manage.py app:initialize_data`` creates the two unique indexes of the collection,
+one over ``team_id`` and ``slack_user_id``, the other over ``team_id`` and ``user``.
+
+Linking in the browser
+~~~~~~~~~~~~~~~~~~~~~~
+
+When an unlinked Slack user shares a Superdesk link, the bot answers with an ephemeral message
+holding a one-time URL, ``<SERVER_URL>/slack/link?t=<token>``. The token is random, lives in Redis
+for ten minutes and only names the Slack side of the link (workspace, Slack user and the channel
+the prompt was sent to).
+
+Opening that URL in the browser where the user is already logged into Superdesk gives the server
+both sides: the Slack side from the token, the Superdesk side from the session. Superdesk sets a
+``session_token`` cookie on every authenticated API request, and the token authentication accepts
+that cookie when there is no ``Authorization`` header. This assumes the client and the API are
+served from the same host, which is the usual production setup, because the cookie is
+``SameSite=Lax`` and is only sent to its own site. When they are not, use the CLI instead.
+
+Three endpoints implement the flow, all of them plain HTML pages, none of them used by the
+Superdesk client:
+
+===================================  =========================================================
+endpoint                             what it does
+===================================  =========================================================
+``GET /api/slack/link?t=<token>``    Shows who would be linked to whom and a *Connect* button.
+                                     Redirects to ``CLIENT_URL`` when there is no session, so
+                                     the user can log in and click the button in Slack again.
+``POST /api/slack/link``             Creates the link, consumes the token and tells the Slack
+                                     user about it.
+``/api/slack/link/disconnect``       Removes the link of the logged in user, ``GET`` asks for
+                                     confirmation and ``POST`` performs the removal.
+===================================  =========================================================
+
+The two mutations are ``POST`` requests carrying a nonce from the signed session cookie, because a
+``GET`` that mutates would be triggerable from any other site: ``SameSite=Lax`` still sends the
+session cookie on a top level navigation.
+
+No OAuth is involved anywhere, and the flow only works in one direction. The endpoints read a
+Superdesk session that already exists, they never create one, so Slack cannot log anybody into
+Superdesk, and a link never grants access to a Superdesk account.
+
+Linking from the command line
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The same links can be managed by an administrator, which is also the way out when the client and
+the API are not on the same host. The Slack user id is the one starting with ``U``, visible under
+*View full profile* > *Copy member ID* in Slack.
+
+.. code-block:: bash
+
+    $ python manage.py slack:link_user --user jdoe --slack-user U012ABCDEF
+    $ python manage.py slack:link_user --user jdoe --slack-user U012ABCDEF --team T012ABCDEF
+    $ python manage.py slack:unlink_user --user jdoe
+    $ python manage.py slack:list_links
+
+``--team`` defaults to ``SLACK_TEAM_ID`` and is required when that setting is empty. The commands
+fail with a non zero exit code when the user does not exist, or when either side of the link is
+already taken by somebody else.

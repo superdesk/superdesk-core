@@ -14,10 +14,14 @@ from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.module import Module
 
 from .config import get_bot_token, get_signing_secret
+from .resources import slack_user_links_config
 from .views import slack_endpoints
 
 # Imported so Celery registers the tasks when the module is loaded
 from . import tasks  # noqa: F401
+
+# Imported so the CLI commands are registered when the module is loaded
+from . import commands  # noqa: F401
 
 
 logger = logging.getLogger(__name__)
@@ -30,4 +34,9 @@ def init_slack(app: SuperdeskAsyncApp) -> None:
         logger.info("Slack module is inactive, set SLACK_SIGNING_SECRET and SLACK_BOT_TOKEN to enable it")
 
 
-module = Module(name="superdesk.slack", init=init_slack, endpoints=[slack_endpoints])
+module = Module(
+    name="superdesk.slack",
+    init=init_slack,
+    resources=[slack_user_links_config],
+    endpoints=[slack_endpoints],
+)

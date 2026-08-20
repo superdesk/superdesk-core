@@ -1,0 +1,11 @@
+{% extends "slack_link_layout.html" %}
+{% block title %}Connected to Slack{% endblock %}
+{% block content %}
+<h1>Connected</h1>
+<p>Superdesk account <strong>{{ user_name }}</strong> is now linked to Slack user
+<strong>{{ slack_user_id }}</strong>. You can close this window.</p>
+<form method="post" action="{{ disconnect_url }}">
+<input type="hidden" name="nonce" value="{{ nonce }}">
+<button type="submit" class="secondary">Disconnect</button>
+</form>
+{% endblock %}
