@@ -6,6 +6,7 @@ import threading
 
 from superdesk import get_resource_service
 from superdesk.celery_app.async_worker import CeleryAsyncWorkerThread
+from superdesk.celery_app.task_result import AsyncTaskResult
 
 from superdesk.tests import TestCase, AsyncFlaskTestCase
 from superdesk.tests import worker_test
@@ -90,6 +91,12 @@ class CeleryAsyncWorkerTaskTestCase(TestCase):
                 "message": "Testing async celery worker and task",
             },
         )
+
+    async def test_delay_returns_async_result_handle(self):
+        # dispatched with no bound request and eager off: must return an async
+        # result handle for the broker, not run eager and drop it
+        result = await worker_test.value_task_test.delay(21)
+        self.assertIsInstance(result, AsyncTaskResult)
 
     async def test_task_no_timeout(self):
         service = get_resource_service("system_messages")

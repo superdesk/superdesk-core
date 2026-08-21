@@ -123,6 +123,14 @@ class CropTestCase(TestCase):
         self.assertEqual(ex.message, "Original file couldn't be found")
         self.assertEqual(ex.status_code, 400)
 
+    def test_create_multiple_crops_when_original_has_no_renditions(self):
+        updates = {"headline": "foo"}
+        original = {"type": "picture", "renditions": None}
+
+        self.service.create_multiple_crops(updates, original)
+
+        self.assertNotIn("renditions", updates)
+
     def test_validate_crop_converts_to_int(self):
         crop = {"width": "300", "height": 200}
         self.service._validate_values(crop)
