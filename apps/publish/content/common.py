@@ -18,6 +18,7 @@ from quart_babel import gettext as _
 from superdesk.types import PublishRequest, PublishSenderType, SubscriberType, DesksResourceModel, PublishOperation
 from superdesk.publish_async.commands import publish_item
 from superdesk.publish_async.utils import get_utc_publish_schedule, SCHEDULE_SETTINGS, PUBLISH_SCHEDULE, get_residrefs
+from superdesk.lifecycle_timing import to_epoch_ms
 import superdesk.users.user_metrics as user_metrics
 
 from apps.archive.resource import ArchiveResource
@@ -217,6 +218,26 @@ class BasePublishService(AsyncBaseService):
         await self._process_publish_updates(original, updates)
         await self._mark_media_item_as_used(updates, original)
         await update_refs(updates, original)
+        self._reset_lifecycle_started_at_for_action(updates, original)
+
+    def _reset_lifecycle_started_at_for_action(self, updates: dict, original: dict) -> None:
+        """Restart lifecycle timing for this publish action (correct/kill/takedown/resend, etc).
+
+        The very first publish keeps its own timing (possibly from ingest), set separately
+        in ``ArchivePublishService``. Any subsequent publishing action should measure
+        ``lifecycle_to_transmit_ms`` from when that action was initiated, not from the
+        item's original first publish/creation.
+        """
+        if not original.get("firstpublished"):
+            return
+
+        lifecycle_timing = dict(original.get("lifecycle_timing") or {})
+        lifecycle_timing.update(updates.get("lifecycle_timing") or {})
+
+        action_started_at = utcnow(microseconds=True)
+        lifecycle_timing["lifecycle_started_at"] = action_started_at
+        lifecycle_timing["lifecycle_started_ms"] = to_epoch_ms(action_started_at)
+        updates["lifecycle_timing"] = lifecycle_timing
 
     async def on_updated_async(self, updates, original):
         should_track_published_articles = (  # should be computed before re-fetching original
