@@ -33,7 +33,7 @@ from apps.archive.common import (
     get_dateline_city,
     transtype_metadata,
 )
-from apps.publish.content import publish
+from apps.publish.content import publish, common
 from apps.search_providers import register_search_provider, registered_search_providers
 
 from werkzeug.datastructures import ImmutableMultiDict
@@ -397,6 +397,43 @@ class ArchiveTestCase(TestCase):
         self.assertEqual(to_epoch_ms(first_publish_at), published["lifecycle_timing"]["first_published_ms"])
         self.assertEqual(to_epoch_ms(first_publish_at), published["lifecycle_timing"]["lifecycle_started_ms"])
         self.assertEqual(0, published["lifecycle_timing"]["lifecycle_to_first_publish_ms"])
+
+    async def test_correction_resets_lifecycle_started_at_to_action_time(self):
+        await test_utils.post_items("products", fixtures.products.all_products())
+        await test_utils.post_items("subscribers", [fixtures.subscribers.sub5_subscriber()])
+
+        archive_service = superdesk.get_resource_service("archive")
+        publish_service = superdesk.get_resource_service("archive_publish")
+        correct_service = superdesk.get_resource_service("archive_correct")
+        item = {
+            "_id": "foo-correct",
+            "guid": "foo-correct",
+            "unique_name": "foo-correct",
+            "type": "text",
+            "state": CONTENT_STATE.SUBMITTED,
+            "_current_version": 1,
+            "headline": "foo-correct",
+        }
+
+        await archive_service.create_async([item])
+
+        first_publish_at = utcnow() + timedelta(seconds=30)
+        with mock.patch.object(publish, "utcnow", lambda **kwargs: first_publish_at):
+            await publish_service.patch_async("foo-correct", {"body_html": "original"})
+
+        published = self.app.data.find_one("archive", req=None, _id="foo-correct")
+        self.assertEqual(first_publish_at, published["lifecycle_timing"]["lifecycle_started_at"])
+
+        correction_at = first_publish_at + timedelta(hours=5)
+        with mock.patch.object(common, "utcnow", lambda **kwargs: correction_at):
+            await correct_service.patch_async("foo-correct", {"body_html": "corrected"})
+
+        corrected = self.app.data.find_one("archive", req=None, _id="foo-correct")
+        # firstpublished must be untouched, but lifecycle timing restarts for this correction
+        self.assertEqual(first_publish_at, corrected["firstpublished"])
+        self.assertEqual(correction_at, corrected["lifecycle_timing"]["lifecycle_started_at"])
+        self.assertEqual(to_epoch_ms(correction_at), corrected["lifecycle_timing"]["lifecycle_started_ms"])
+        self.assertNotEqual(first_publish_at, corrected["lifecycle_timing"]["lifecycle_started_at"])
 
     async def test_first_publish_preserves_existing_lifecycle_timing_fields(self):
         await test_utils.post_items("products", fixtures.products.all_products())
