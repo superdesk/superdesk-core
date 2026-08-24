@@ -135,7 +135,7 @@ class FTPFeedingService(FeedingService):
     async def _test(self, provider):
         config = provider.get("config", {})
         try:
-            async with ftp_connect(config) as ftp:
+            async with ftp_connect(config, provider=provider) as ftp:
                 list_iterator = ftp.list()
                 try:
                     await anext(list_iterator)
@@ -307,7 +307,7 @@ class FTPFeedingService(FeedingService):
 
         try:
             self._timer.start("ftp_connect")
-            async with ftp_connect(config) as ftp:
+            async with ftp_connect(config, provider=provider) as ftp:
                 ftp.encoding = "UTF-8"
                 self._log_msg(
                     "Connected to FTP server. Exec time: {:.4f} secs.".format(self._timer.stop("ftp_connect"))
@@ -370,8 +370,8 @@ class FTPFeedingService(FeedingService):
                             await self._move(ftp, filename, move_dest_file_path, file_modify, failed=failed)
                     except EmptyFile:
                         continue
-                    except Exception as e:
-                        logger.error("Error while parsing {filename}: {msg}".format(filename=filename, msg=e))
+                    except Exception:
+                        logger.exception("Error while parsing FTP file", extra={"ftp_filename": filename})
 
                         if do_move:
                             move_dest_file_path_error = os.path.join(move_path_error, filename)

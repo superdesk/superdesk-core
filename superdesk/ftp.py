@@ -53,7 +53,7 @@ class FTPClient(aioftp.Client):
 
 
 @asynccontextmanager
-async def ftp_connect(config) -> AsyncIterator[FTPClient]:
+async def ftp_connect(config, provider=None) -> AsyncIterator[FTPClient]:
     """Get ftp connection for given config.
 
     use with `with`
@@ -88,27 +88,27 @@ async def ftp_connect(config) -> AsyncIterator[FTPClient]:
         received_code = getattr(ex, "received_code", None)
 
         if received_code in {"332", "430", "530"}:
-            raise await IngestFtpError.ftpAuthError(exception=ex).send_notifications()
+            raise await IngestFtpError.ftpAuthError(exception=ex, provider=provider).send_notifications()
 
-        raise await IngestFtpError.ftpError(exception=ex).send_notifications()
+        raise await IngestFtpError.ftpError(exception=ex, provider=provider).send_notifications()
     except aioftp.AIOFTPException as ex:
         # aioftp-specific connection/data-channel condition failure.
-        raise await IngestFtpError.ftpError(exception=ex).send_notifications()
+        raise await IngestFtpError.ftpError(exception=ex, provider=provider).send_notifications()
     except (asyncio.TimeoutError, TimeoutError) as ex:
         # Connect/read/write/path timeout.
-        raise await IngestFtpError.ftpTimeoutError(exception=ex).send_notifications()
+        raise await IngestFtpError.ftpTimeoutError(exception=ex, provider=provider).send_notifications()
     except socket.gaierror as ex:
         # DNS/host resolution failed.
-        raise await IngestFtpError.ftpHostError(exception=ex).send_notifications()
+        raise await IngestFtpError.ftpHostError(exception=ex, provider=provider).send_notifications()
     except (ConnectionRefusedError, ConnectionResetError, BrokenPipeError) as ex:
         # TCP connection refused, reset, or broken while transferring.
-        raise await IngestFtpError.ftpHostError(exception=ex).send_notifications()
+        raise await IngestFtpError.ftpHostError(exception=ex, provider=provider).send_notifications()
     except ssl.SSLError as ex:
         # FTPS/TLS negotiation or certificate problem.
-        raise await IngestFtpError.ftpSSLError(exception=ex).send_notifications()
+        raise await IngestFtpError.ftpSSLError(exception=ex, provider=provider).send_notifications()
     except OSError as ex:
         # Other network/socket-level failures.
-        raise await IngestFtpError.ftpError(exception=ex).send_notifications()
+        raise await IngestFtpError.ftpError(exception=ex, provider=provider).send_notifications()
     except asyncio.CancelledError as ex:
         # Important: do not swallow task cancellation.
         logger.exception(ex)
