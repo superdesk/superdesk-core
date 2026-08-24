@@ -27,7 +27,7 @@ from superdesk.types import UsersResourceModel, UserTypeEnum, ContentFiltersReso
 from superdesk.activity import ACTIVITY_EVENT, notify_and_add_activity
 from superdesk.celery_app import celery
 from superdesk.celery_task_utils import get_lock_id
-from superdesk.errors import ProviderError, SuperdeskApiError
+from superdesk.errors import ProviderError, SuperdeskApiError, SuperdeskIngestError
 from superdesk.io import get_feeding_service
 from superdesk.io.registry import registered_feeding_services, registered_feed_parsers
 from superdesk.io.iptc import subject_codes
@@ -359,6 +359,9 @@ async def update_provider(provider, rule_set=None, routing_scheme=None, sync=Fal
 
         if LAST_ITEM_UPDATE in update:  # Only push a notification if there has been an update
             push_notification("ingest:update", provider_id=str(provider[ID_FIELD]))
+    except SuperdeskIngestError as e:
+        await e.send_notifications()
+        raise
     except Exception as e:
         logger.error("Failed to ingest file: {error}".format(error=e))
         raise await IngestFileError(3000, e, provider).send_notifications()
@@ -580,7 +583,7 @@ async def ingest_items(items, provider, feeding_service, rule_set=None, routing_
     app = get_current_app()
     app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
     if failed_items:
-        logger.error("Failed to ingest the following items: %s", failed_items)
+        logger.error("Failed to ingest items", extra={"failed_items": list(failed_items)})
     return failed_items
 
 
