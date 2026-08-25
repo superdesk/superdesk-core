@@ -115,7 +115,7 @@ def get_meta(file_stream):
                 for vk, vv in rv.get_ifd(k).items()
                 if is_serializable(vv)
             }
-            logger.debug(value)
+            logger.debug("GPSInfo value: %s", value)
             exif_meta[key] = value
         elif is_serializable(v):
             value = v.decode("UTF-8") if isinstance(v, bytes) else v
