@@ -9,7 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import os
-from unittest.mock import Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 from superdesk import json
 from superdesk.publish.transmitters.email import EmailPublishService
@@ -99,3 +99,49 @@ class EmailPublishServiceTest(TestCase):
                 attachments.append((part.get_filename(), part.get_content_type(), content_id))
 
             self.assertEqual(attachments, [(MOCK_FILENAME, MOCK_CONTENT_TYPE, "<MainImage>")])
+
+
+class EmailPublishServiceAsyncWorkerTest(TestCase):
+    app_config = {"CELERY_USE_ASYNC_WORKER": True}
+
+    async def test_transmit_uses_in_process_email_sender(self):
+        self.assertTrue(self.app.config["CELERY_USE_ASYNC_WORKER"])
+        self.assertFalse(self.app.config["CELERY_TASK_ALWAYS_EAGER"])
+
+        item = {
+            "message_text": "Test",
+            "message_html": "<p>Test</p>",
+            "message_subject": "Test Subject",
+        }
+        queue_item = {
+            "item_id": "123",
+            "destination": {
+                "delivery_type": "email",
+                "config": {"recipients": "a@b.c.d"},
+                "name": "Email",
+                "format": "Email",
+            },
+            "formatted_item": json.dumps(item),
+        }
+
+        transmitter = EmailPublishService()
+        send_email_async = AsyncMock()
+
+        def fail_if_task_is_called(*args, **kwargs):
+            raise AssertionError("EmailPublishService must not await the Celery send_email task directly")
+
+        with patch("superdesk.publish.transmitters.email.send_email_async", send_email_async), patch(
+            "superdesk.publish.transmitters.email.send_email", side_effect=fail_if_task_is_called, create=True
+        ):
+            await transmitter._transmit(queue_item=queue_item, subscriber={})
+
+        send_email_async.assert_awaited_once_with(
+            subject="Test Subject",
+            sender=self.app.config["ADMINS"][0],
+            recipients=["a@b.c.d"],
+            text_body="Test",
+            html_body="<p>Test</p>",
+            bcc=[],
+            attachments=[],
+            raise_exceptions=True,
+        )
