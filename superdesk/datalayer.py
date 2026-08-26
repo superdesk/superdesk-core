@@ -165,13 +165,13 @@ class SuperdeskDataLayer(DataLayer):
         datasource = self.datasource(resource)
         driver = self._backend(resource).driver
         collection = driver.db[datasource[0]]
-        return collection.update(query, {"$set": updates}, multi=True)
+        return collection.update_many(query, {"$set": updates})
 
     async def update_all_async(self, resource, query, updates):
         datasource = self.datasource(resource)
         driver = self._backend(resource, use_async=True).driver
         collection = driver.db[datasource[0]]
-        return collection.update(query, {"$set": updates}, multi=True)
+        return collection.update_many(query, {"$set": updates})
 
     def replace(self, resource, id_, document, original):
         return superdesk.get_resource_service(resource).replace(id=id_, document=document, original=original)
