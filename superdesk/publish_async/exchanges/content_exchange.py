@@ -454,10 +454,13 @@ class ContentPublishExchange(BasicPublishExchange):
 
         request_timing = (request.item or {}).get("lifecycle_timing") or {}
         published_timing = published_item.get("lifecycle_timing") or {}
-        if not request_timing or request_timing == published_timing:
+        if not request_timing:
             return
 
         merged_timing = {**published_timing, **request_timing}
+        if merged_timing == published_timing:
+            return
+
         published_item["lifecycle_timing"] = merged_timing
         await get_resource_service(PUBLISHED).patch_async(published_item_id, {"lifecycle_timing": merged_timing})
 
