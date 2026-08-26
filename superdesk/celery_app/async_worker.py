@@ -181,7 +181,7 @@ class CeleryAsyncWorkerThread(threading.Thread):
         finally:
             self._cleanup()
 
-    def _push_task(self, task: asyncio.Task):
+    def _push_task(self, task: asyncio.Task | None):
         """
         Adds a new asyncio task to the internal task tracker.
 
@@ -193,7 +193,8 @@ class CeleryAsyncWorkerThread(threading.Thread):
 
         with self._task_tracker_lock:
             self._num_tasks += 1
-            self._tasks.add(task)
+            if task is not None:
+                self._tasks.add(task)
 
     def _pop_task(self, task: asyncio.Task | None):
         """
@@ -280,10 +281,12 @@ class CeleryAsyncWorkerThread(threading.Thread):
                     return task_result
 
                 if not isinstance(task, CeleryAsyncWorkerTask):
+                    self._push_task(execution_task)
                     return None, await _run()
 
                 soft_limit, hard_limit = self._get_task_timeouts(task)
                 if not soft_limit:
+                    self._push_task(execution_task)
                     return None, await _run()
 
                 # Create a asyncio.Task for this, which allows us to inject exceptions into it later
