@@ -121,6 +121,7 @@ class ContentPublishExchange(BasicPublishExchange):
             return PublishRequestResponse(routed=False)
 
         published_item_id = ObjectId(published_item[ID_FIELD])
+        await self._merge_request_lifecycle_timing(request, published_item, published_item_id)
 
         if self.polling and published_item.get(QUEUE_STATE) == PublishState.PUSHED:
             # This request will be processed by ``PublishExchangeFactory.send_scheduled_or_pending_content``
@@ -440,6 +441,25 @@ class ContentPublishExchange(BasicPublishExchange):
                 request.target_media_type = SubscriberType.DIGITAL
 
         return response if response else await super().send(request)
+
+    async def _merge_request_lifecycle_timing(
+        self, request: PublishRequest, published_item: dict, published_item_id: ObjectId
+    ) -> None:
+        """Apply the request item lifecycle timing onto the published item.
+
+        The published document keeps the timing of the action which created it, so an action
+        restarting it (eg. resend) would lose its own start time once ``request.item`` gets
+        replaced by the published document.
+        """
+
+        request_timing = (request.item or {}).get("lifecycle_timing") or {}
+        published_timing = published_item.get("lifecycle_timing") or {}
+        if not request_timing or request_timing == published_timing:
+            return
+
+        merged_timing = {**published_timing, **request_timing}
+        published_item["lifecycle_timing"] = merged_timing
+        await get_resource_service(PUBLISHED).patch_async(published_item_id, {"lifecycle_timing": merged_timing})
 
     async def set_published_item_pending(self, item_id: ObjectId) -> None:
         """

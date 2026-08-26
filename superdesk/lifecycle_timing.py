@@ -38,6 +38,15 @@ def set_lifecycle_started_at(item: dict, started_at: datetime | None = None) -> 
     return started
 
 
+def reset_lifecycle_started_at(item: dict, started_at: datetime | None = None) -> datetime:
+    """Restart lifecycle timing, overriding any value kept from a previous publishing action."""
+    timing = ensure_lifecycle_timing(item)
+    started = started_at or utcnow(microseconds=True)
+    timing["lifecycle_started_at"] = started
+    timing["lifecycle_started_ms"] = to_epoch_ms(started)
+    return started
+
+
 def set_ingest_started_at(item: dict, started_at: datetime | None = None) -> datetime:
     return set_lifecycle_started_at(item, started_at)
 
