@@ -12,6 +12,7 @@ from superdesk.core.resources import (
 
 from .config import config
 from .models import AIProvider
+from .rest_endpoints import AIProvidersEndpoints
 from .service import AIProvidersService
 
 #: Grants access to the AI configuration: the providers and, later, the actions built on them
@@ -36,6 +37,7 @@ ai_providers_config = ResourceConfig(
         item_methods=["GET", "PATCH", "DELETE"],
         auth=[required_privilege_rule(AI_STUDIO_PRIVILEGE)],
         exclude_fields_in_response={"GET": ["api_key"], "POST": ["api_key"], "PATCH": ["api_key"]},
+        endpoints_class=AIProvidersEndpoints,
     ),
 )
 

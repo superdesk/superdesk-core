@@ -1,5 +1,9 @@
 import enum
 
+from quart_babel import gettext
+
+from superdesk.errors import SuperdeskApiError
+
 
 class AIErrorKind(str, enum.Enum):
     """Reason an AI provider request failed, used to pick the HTTP status to answer with"""
@@ -24,3 +28,24 @@ class AIProviderError(Exception):
         self.kind = kind
         self.message = message
         self.status_code = status_code
+
+
+def to_api_error(error: AIProviderError) -> SuperdeskApiError:
+    """Convert a provider failure into the HTTP error to answer the client with
+
+    An ``auth`` failure is answered with a gateway error rather than a 401 or 403: the request
+    itself was authenticated, it is the stored provider credentials that an administrator has to
+    fix, and a 401 would send the client to the login screen.
+    """
+
+    if error.kind == AIErrorKind.RATE_LIMIT:
+        return SuperdeskApiError(status_code=429, message=error.message)
+    elif error.kind == AIErrorKind.TIMEOUT:
+        return SuperdeskApiError(status_code=504, message=error.message)
+    elif error.kind == AIErrorKind.AUTH:
+        return SuperdeskApiError(
+            status_code=502,
+            message=gettext("The AI provider rejected the configured credentials"),
+        )
+
+    return SuperdeskApiError(status_code=502, message=error.message)
