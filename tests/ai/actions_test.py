@@ -282,11 +282,6 @@ class AIActionRunTestCase(TestCase):
         self.assertEqual(body["model"], "gpt-4o-mini-2024-07-18")
         self.assertEqual(body["usage"], {"prompt_tokens": 42, "completion_tokens": 7})
 
-    async def test_run_reports_no_event_id_while_there_is_no_event_log(self):
-        body = await self._run_action()
-
-        self.assertIsNone(body["event_id"])
-
     async def test_the_run_record_identifies_the_item_without_holding_its_text(self):
         records = await self._capture_run_records()
 

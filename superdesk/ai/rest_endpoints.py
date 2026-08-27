@@ -17,6 +17,15 @@ from .providers import get_client
 from .service import AIActionsService
 
 
+def get_request_user_id(request: Request) -> str | None:
+    """ID of the authenticated user as text, for the run log"""
+
+    user = request.user
+    user_id = user.get("_id") if isinstance(user, dict) else None
+
+    return str(user_id) if user_id else None
+
+
 class AIProvidersEndpoints(ResourceRestEndpoints):
     """Adds the routes an administrator needs to check a provider before saving actions against it"""
 
@@ -110,7 +119,7 @@ class AIActionsEndpoints(ResourceRestEndpoints):
         service = cast(AIActionsService, self.service)
 
         try:
-            result = await service.run(action, payload)
+            result = await service.run(action, payload, user_id=get_request_user_id(request))
         except AIProviderError as error:
             raise to_api_error(error)
 

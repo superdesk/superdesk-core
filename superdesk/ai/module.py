@@ -11,10 +11,10 @@ from superdesk.core.resources import (
 )
 
 from .config import config
-from .models import AIAction, AIProvider
+from .models import AIAction, AIEvent, AIProvider
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
 from .rest_endpoints import AIActionsEndpoints, AIProvidersEndpoints
-from .service import AIActionsService, AIProvidersService
+from .service import AIActionsService, AIEventsService, AIProvidersService
 
 ai_providers_config = ResourceConfig(
     name="ai_providers",
@@ -53,9 +53,29 @@ ai_actions_config = ResourceConfig(
     ),
 )
 
+ai_events_config = ResourceConfig(
+    name="ai_events",
+    data_class=AIEvent,
+    service=AIEventsService,
+    mongo=MongoResourceConfig(
+        indexes=[
+            MongoIndexOptions(name="item_id_1", keys=[("item_id", 1)], unique=False),
+            MongoIndexOptions(name="action_id_1", keys=[("action_id", 1)], unique=False),
+            MongoIndexOptions(name="user_id_1", keys=[("user_id", 1)], unique=False),
+            MongoIndexOptions(name="requested_at_1", keys=[("requested_at", 1)], unique=False),
+        ]
+    ),
+    rest_endpoints=RestEndpointConfig(
+        # Entries are written by a run, never by a client, and never deleted through the API
+        resource_methods=["GET"],
+        item_methods=["GET"],
+        auth=[required_privilege_rule(AI_STUDIO_PRIVILEGE)],
+    ),
+)
+
 module = Module(
     name="superdesk.ai",
-    resources=[ai_providers_config, ai_actions_config],
+    resources=[ai_providers_config, ai_actions_config, ai_events_config],
     config=config,
     config_prefix="AI",
     privileges=[

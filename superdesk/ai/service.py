@@ -1,3 +1,4 @@
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, List
@@ -5,13 +6,22 @@ from typing import Any, List
 from quart_babel import gettext
 
 from superdesk.core import get_current_async_app
-from superdesk.core.resources import AsyncResourceService
+from superdesk.core.resources import AsyncResourceService, fields
 from superdesk.errors import SuperdeskApiError
 from superdesk.text_utils import get_text
 from superdesk.utc import utcnow
 
 from .errors import AIErrorKind, AIProviderError
-from .models import AIAction, AIActionType, AIProvider, RunActionPayload
+from .models import (
+    SHORT_OUTPUT_ACTION_TYPES,
+    AIAction,
+    AIActionType,
+    AIEvent,
+    AIEventSource,
+    AIEventStatus,
+    AIProvider,
+    RunActionPayload,
+)
 from .prompts import (
     SUPPORTED_ACTION_TYPES,
     parse_suggestions,
@@ -21,6 +31,8 @@ from .prompts import (
 )
 from .providers import get_client
 from .providers.base import CompletionMessage, CompletionRequest, CompletionResult
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -47,6 +59,9 @@ class AIRunRecord:
     input_chars: int
     content_profile: str | None = None
     language: str | None = None
+    user_id: str | None = None
+    desk_id: str | None = None
+    source: AIEventSource = AIEventSource.API
     result: CompletionResult | None = None
     suggestions: list[str] = field(default_factory=list)
     error_kind: AIErrorKind | None = None
@@ -60,14 +75,70 @@ class AIRunRecord:
         return len(self.result.content) if self.result is not None else 0
 
 
+def build_event(record: AIRunRecord) -> AIEvent:
+    """Turn the record of one run into the ``ai_events`` entry for it
+
+    Only the fields the log needs are taken from the provider: it holds the credentials the run was
+    made with, and every holder of ``ai_studio`` can read the log.
+    """
+
+    result = record.result
+    keeps_suggestions = record.action.action_type in SHORT_OUTPUT_ACTION_TYPES
+
+    return AIEvent(
+        # The ID is generated here rather than left to the field's default factory: the pydantic
+        # mypy plugin runs with ``warn_required_dynamic_aliases``, which makes a field with alias
+        # choices, as the resource ID has, a required argument of the constructor.
+        id=fields.ObjectId(),
+        item_id=record.item_id,
+        action_id=record.action.id,
+        action_type=record.action.action_type,
+        provider_id=record.provider.id,
+        provider_type=record.provider.provider_type,
+        model_requested=record.model_requested,
+        model_reported=result.model if result is not None else None,
+        user_id=record.user_id,
+        desk_id=record.desk_id,
+        content_profile=record.content_profile,
+        language=record.language,
+        source=record.source,
+        requested_at=record.requested_at,
+        responded_at=record.responded_at,
+        latency_ms=record.latency_ms,
+        input_chars=record.input_chars,
+        output_chars=record.output_chars,
+        prompt_tokens=result.prompt_tokens if result is not None else None,
+        completion_tokens=result.completion_tokens if result is not None else None,
+        status=AIEventStatus.ERROR if record.error_kind is not None else AIEventStatus.OK,
+        error_kind=record.error_kind,
+        suggestions=list(record.suggestions) if keeps_suggestions else [],
+    )
+
+
 async def record_run(record: AIRunRecord) -> str | None:
     """Store the log entry for one run of an AI action and return its ID
 
-    The resource holding these entries does not exist yet, so nothing is stored and callers report
-    no event ID to the client.
+    Never raises. It is awaited on the success path, where a failure would turn a good run into a
+    500, and while a provider failure is being handled, where it would hide the error the client
+    has to be told about. A run that could not be logged is answered with no event ID.
     """
 
-    return None
+    try:
+        event = build_event(record)
+        await AIEventsService().create([event])
+    except Exception:
+        logger.exception("Failed to write the ai_events entry of an AI action run")
+        return None
+
+    return str(event.id)
+
+
+class AIEventsService(AsyncResourceService[AIEvent]):
+    """Service for the ``ai_events`` resource.
+
+    Entries are written by the run flow and are a record of what happened, so nothing about the run
+    itself can be edited afterwards.
+    """
 
 
 class AIProvidersService(AsyncResourceService[AIProvider]):
@@ -106,11 +177,12 @@ class AIActionsService(AsyncResourceService[AIAction]):
 
         await super().on_update(updates, original)
 
-    async def run(self, action: AIAction, payload: RunActionPayload) -> dict[str, Any]:
+    async def run(self, action: AIAction, payload: RunActionPayload, user_id: str | None = None) -> dict[str, Any]:
         """Run an action against one item and return the suggestions it produced
 
         :param action: The action to run
         :param payload: The item to run it against, with the text the client currently holds
+        :param user_id: ID of the user the run is made for, stored on the event
         :raises SuperdeskApiError: If the action, the item or the provider cannot be used as asked
         :raises AIProviderError: If the provider does not produce a usable answer
         """
@@ -164,6 +236,9 @@ class AIActionsService(AsyncResourceService[AIAction]):
             responded_at=utcnow(),
             input_chars=sum(len(text) for text in texts.values()),
             language=language,
+            user_id=user_id,
+            desk_id=self._get_desk_id(item),
+            source=payload.source,
         )
 
         try:
@@ -235,6 +310,14 @@ class AIActionsService(AsyncResourceService[AIAction]):
             raise SuperdeskApiError.notFoundError(gettext("Item with ID '{item_id}' not found").format(item_id=item_id))
 
         return item
+
+    def _get_desk_id(self, item: dict[str, Any]) -> str | None:
+        """ID of the desk the item sits on, ``None`` for an item that is not on one"""
+
+        task = item.get("task")
+        desk_id = task.get("desk") if isinstance(task, dict) else None
+
+        return str(desk_id) if desk_id else None
 
     def _check_content_profile(self, action: AIAction, item: dict[str, Any]) -> None:
         if action.content_profiles and item.get("profile") not in action.content_profiles:

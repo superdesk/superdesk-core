@@ -13,6 +13,7 @@ from superdesk.core.resources.validators import (
     validate_not_empty,
 )
 
+from .errors import AIErrorKind
 from .providers import allowed_provider_types
 
 _http_url_adapter: TypeAdapter = TypeAdapter(AnyHttpUrl)
@@ -60,6 +61,12 @@ class AIActionType(str, enum.Enum):
     TRANSLATION = "translation"
 
 
+#: Action types whose answers are a headline or a paragraph, short enough to keep on the run log
+#: next to the outcome a client reports later. A rewrite or a translation answers with the whole
+#: article, so storing its answers would make the log a second copy of the content.
+SHORT_OUTPUT_ACTION_TYPES = frozenset({AIActionType.SUGGESTION, AIActionType.SUMMARY})
+
+
 @dataclass
 class AIActionParameters(Dataclass):
     temperature: float = 0.7
@@ -94,6 +101,74 @@ class AIAction(ResourceModelWithObjectId):
     parameters: AIActionParameters = Field(default_factory=AIActionParameters)
 
 
+class AIEventSource(str, enum.Enum):
+    """Where a run was started from, so editor use can be told apart from integrations"""
+
+    AUTHORING = "authoring"
+    API = "api"
+
+
+class AIEventStatus(str, enum.Enum):
+    OK = "ok"
+    ERROR = "error"
+
+
+class AIEventOutcome(str, enum.Enum):
+    """What was done with the answers of a run, reported by the client after the fact"""
+
+    PENDING = "pending"
+    ACCEPTED = "accepted"
+    EDITED = "edited"
+    DISCARDED = "discarded"
+
+
+class AIEvent(ResourceModelWithObjectId):
+    """One run of an AI action, written whether the run succeeded or failed.
+
+    The article text is never part of an event, only ``input_chars`` and ``output_chars``. An entry
+    is written per run, so holding the text would make the log a copy of the content of every item
+    an action is run against.
+
+    ``user_id`` and ``desk_id`` are stored as text: they are copied from a session and from an item
+    rather than taken from a validated model, so the type they are stored with elsewhere is not
+    guaranteed. The action and provider ids keep the type they have on their own resources.
+    """
+
+    item_id: str
+    action_id: fields.ObjectId
+    action_type: AIActionType
+    provider_id: fields.ObjectId
+    provider_type: str
+    model_requested: str
+
+    #: Model the provider answered with, which can be a dated snapshot of the one asked for
+    model_reported: str | None = None
+
+    user_id: str | None = None
+    desk_id: str | None = None
+    content_profile: str | None = None
+    language: str | None = None
+    source: AIEventSource = AIEventSource.API
+
+    requested_at: fields.UTCDatetime
+    responded_at: fields.UTCDatetime
+    latency_ms: int
+    input_chars: int
+    output_chars: int
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+
+    status: AIEventStatus
+    error_kind: AIErrorKind | None = None
+
+    #: Answers of the run, kept for the types listed in ``SHORT_OUTPUT_ACTION_TYPES`` only
+    suggestions: list[str] = Field(default_factory=list)
+
+    outcome: AIEventOutcome = AIEventOutcome.PENDING
+    applied_index: int | None = None
+    outcome_at: fields.UTCDatetime | None = None
+
+
 class RunActionPayload(BaseModel):
     """Body of a request to run an AI action against one item"""
 
@@ -105,3 +180,6 @@ class RunActionPayload(BaseModel):
 
     #: Language to answer in, falls back to the language of the item
     language: str | None = None
+
+    #: Where the run was started from, kept on the event the run writes
+    source: AIEventSource = AIEventSource.API
