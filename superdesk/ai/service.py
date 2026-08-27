@@ -17,6 +17,7 @@ from .models import (
     AIAction,
     AIActionType,
     AIEvent,
+    AIEventOutcome,
     AIEventSource,
     AIEventStatus,
     AIProvider,
@@ -137,8 +138,88 @@ class AIEventsService(AsyncResourceService[AIEvent]):
     """Service for the ``ai_events`` resource.
 
     Entries are written by the run flow and are a record of what happened, so nothing about the run
-    itself can be edited afterwards.
+    itself can be edited afterwards. The only update a client can make is reporting what was done
+    with the answers, which is what ``outcome`` and ``applied_index`` are for.
     """
+
+    #: Fields a client may send in an update, every other one is rejected
+    OUTCOME_FIELDS = frozenset({"outcome", "applied_index"})
+
+    #: Outcomes that mean one of the answers was used, so ``applied_index`` can name which. A tuple
+    #: rather than a set: membership then compares with ``==``, which matches the plain string of a
+    #: payload against the enum member, where a set would compare hashes and never match.
+    APPLIED_OUTCOMES = (AIEventOutcome.ACCEPTED, AIEventOutcome.EDITED)
+
+    async def on_update(self, updates: dict[str, Any], original: AIEvent) -> None:
+        rejected = sorted(set(updates) - self.OUTCOME_FIELDS)
+        if rejected:
+            raise SuperdeskApiError.badRequestError(
+                gettext("Only the outcome of an AI event can be updated, not: {fields}").format(
+                    fields=", ".join(rejected)
+                )
+            )
+
+        self._validate_outcome(updates, original)
+
+        # Stamped by the server so the delay between a run and the decision about it can be
+        # measured from entries a client cannot backdate
+        updates["outcome_at"] = utcnow()
+
+        await super().on_update(updates, original)
+
+    def _validate_outcome(self, updates: dict[str, Any], original: AIEvent) -> None:
+        """Check a report against the answers the run it is about produced
+
+        An outcome can be reported more than once, an accepted suggestion that is later edited for
+        instance, but never back to ``pending``: that is the state of an event nobody has decided
+        about yet, so reporting it would erase a decision rather than record one.
+
+        An outcome that means no answer was used clears ``applied_index``, so an index an earlier
+        report left behind cannot outlive the outcome it belonged to.
+
+        :raises SuperdeskApiError: If the report says nothing was decided, carries an index while
+            saying no answer was used, or names a suggestion the run did not produce
+        """
+
+        outcome = updates.get("outcome", original.outcome)
+        if isinstance(outcome, AIEventOutcome):
+            outcome = outcome.value
+
+        if outcome == AIEventOutcome.PENDING:
+            raise SuperdeskApiError.badRequestError(
+                gettext("'pending' is the state of an AI event before its outcome is known, not an outcome to report")
+            )
+
+        applied_index = updates.get("applied_index")
+
+        if outcome not in self.APPLIED_OUTCOMES:
+            if applied_index is not None:
+                raise SuperdeskApiError.badRequestError(
+                    gettext(
+                        "'applied_index' belongs to an outcome of 'accepted' or 'edited', not to '{outcome}'"
+                    ).format(outcome=outcome)
+                )
+
+            updates["applied_index"] = None
+            return
+
+        if applied_index is None:
+            return
+
+        # ``True`` is an ``int`` in Python and would otherwise pass as the index of the first answer
+        if not isinstance(applied_index, int) or isinstance(applied_index, bool):
+            raise SuperdeskApiError.badRequestError(
+                gettext("'applied_index' must be the position of a suggestion, not '{value}'").format(
+                    value=applied_index
+                )
+            )
+
+        if not 0 <= applied_index < len(original.suggestions):
+            raise SuperdeskApiError.badRequestError(
+                gettext("'applied_index' {index} names none of the {count} suggestions of this AI event").format(
+                    index=applied_index, count=len(original.suggestions)
+                )
+            )
 
 
 class AIProvidersService(AsyncResourceService[AIProvider]):

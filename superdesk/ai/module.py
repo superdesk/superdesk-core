@@ -1,6 +1,6 @@
 from quart_babel import lazy_gettext as _
 
-from superdesk.core.auth.privilege_rules import required_privilege_rule
+from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules, required_privilege_rule
 from superdesk.core.module import Module
 from superdesk.core.privileges import Privilege
 from superdesk.core.resources import (
@@ -13,7 +13,7 @@ from superdesk.core.resources import (
 from .config import config
 from .models import AIAction, AIEvent, AIProvider
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
-from .rest_endpoints import AIActionsEndpoints, AIProvidersEndpoints
+from .rest_endpoints import AIActionsEndpoints, AIEventsEndpoints, AIProvidersEndpoints
 from .service import AIActionsService, AIEventsService, AIProvidersService
 
 ai_providers_config = ResourceConfig(
@@ -57,6 +57,10 @@ ai_events_config = ResourceConfig(
     name="ai_events",
     data_class=AIEvent,
     service=AIEventsService,
+    # Reporting an outcome is the only update, and the client that reports it holds ``ai`` alone,
+    # which cannot read the entry an etag would have to come from. Nothing else races for the
+    # field, so requiring ``If-Match`` here would only make the report impossible to send.
+    uses_etag=False,
     mongo=MongoResourceConfig(
         indexes=[
             MongoIndexOptions(name="item_id_1", keys=[("item_id", 1)], unique=False),
@@ -68,8 +72,15 @@ ai_events_config = ResourceConfig(
     rest_endpoints=RestEndpointConfig(
         # Entries are written by a run, never by a client, and never deleted through the API
         resource_methods=["GET"],
-        item_methods=["GET"],
-        auth=[required_privilege_rule(AI_STUDIO_PRIVILEGE)],
+        item_methods=["GET", "PATCH"],
+        # Reading the log is a configuration right, reporting what happened to a suggestion is part
+        # of running actions, so the editor doing it needs nothing more than ``ai``. ``HEAD`` is
+        # answered by the ``GET`` handler and a method these rules do not name keeps the login rule
+        # alone, so it has to be listed next to ``GET`` rather than left out.
+        auth=http_method_privilege_based_rules(
+            {"GET": AI_STUDIO_PRIVILEGE, "HEAD": AI_STUDIO_PRIVILEGE, "PATCH": AI_PRIVILEGE}
+        ),
+        endpoints_class=AIEventsEndpoints,
     ),
 )
 
