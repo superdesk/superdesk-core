@@ -15,6 +15,17 @@ class AIErrorKind(str, enum.Enum):
     INVALID_RESPONSE = "invalid_response"
 
 
+class NotSupportedError(SuperdeskApiError):
+    """Raised when a request is valid but asks for something this version does not implement.
+
+    Answered with a 400 rather than a 501: the stored configuration allows the request, so the
+    client has to change what it asks for, and retrying the same request will not start working.
+    """
+
+    def __init__(self, message: str) -> None:
+        super().__init__(status_code=400, message=message)
+
+
 class AIProviderError(Exception):
     """Raised by provider clients when a request to the provider does not produce a usable result.
 

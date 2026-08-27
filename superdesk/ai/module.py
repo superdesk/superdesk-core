@@ -11,11 +11,11 @@ from superdesk.core.resources import (
 )
 
 from .config import config
-from .models import AIProvider
+from .models import AIAction, AIProvider
 from .rest_endpoints import AIProvidersEndpoints
-from .service import AIProvidersService
+from .service import AIActionsService, AIProvidersService
 
-#: Grants access to the AI configuration: the providers and, later, the actions built on them
+#: Grants access to the AI configuration: the providers and the actions built on them
 AI_STUDIO_PRIVILEGE = "ai_studio"
 
 #: Grants the right to run AI actions on content
@@ -41,9 +41,25 @@ ai_providers_config = ResourceConfig(
     ),
 )
 
+ai_actions_config = ResourceConfig(
+    name="ai_actions",
+    data_class=AIAction,
+    service=AIActionsService,
+    mongo=MongoResourceConfig(
+        indexes=[
+            MongoIndexOptions(name="provider_1", keys=[("provider", 1)], unique=False),
+        ]
+    ),
+    rest_endpoints=RestEndpointConfig(
+        resource_methods=["GET", "POST"],
+        item_methods=["GET", "PATCH", "DELETE"],
+        auth=[required_privilege_rule(AI_STUDIO_PRIVILEGE)],
+    ),
+)
+
 module = Module(
     name="superdesk.ai",
-    resources=[ai_providers_config],
+    resources=[ai_providers_config, ai_actions_config],
     config=config,
     config_prefix="AI",
     privileges=[
