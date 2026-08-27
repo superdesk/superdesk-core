@@ -557,6 +557,7 @@ MODULES = [
     "superdesk.auth_server.oauth2",
     "superdesk.auth_server.module",
     "apps.content_lists.module",
+    "superdesk.ai",
 ]
 
 ASYNC_AUTH_CLASS = "superdesk.core.auth.token_auth:TokenAuthorization"
@@ -1143,6 +1144,9 @@ INGEST_OLD_CONTENT_MINUTES = 10
 
 #: default timeout for email connections
 EMAIL_TIMEOUT = 10
+
+#: seconds to wait for a response from an AI provider before the request is aborted
+AI_REQUEST_TIMEOUT = int(env("AI_REQUEST_TIMEOUT", 60))
 
 #: This setting is used to overide the desk/stage expiry for items when spiked
 #:
