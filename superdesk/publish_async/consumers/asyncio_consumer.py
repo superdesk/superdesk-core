@@ -147,7 +147,10 @@ class AsyncioPublishConsumer(PublishConsumer):
                 get_config(int, "MAX_TRANSMIT_RETRY_DELAY_MINUTES", 120),
             )
             try:
-                retry_attempt = task.retry_attempt or 0
+                # transmitters may update the queue item themselves (e.g. to store an error message),
+                # so re-read it to get the current etag
+                latest_task = await publish_queue_service.find_by_id(task.id) or current_task
+                retry_attempt = latest_task.retry_attempt or 0
                 timeout_minutes = compute_retry_timeout_minutes(
                     retry_attempt,
                     initial_retry_delay_minutes,
@@ -155,10 +158,10 @@ class AsyncioPublishConsumer(PublishConsumer):
                 )
                 updates: dict[str, object] = {LAST_UPDATED: utcnow()}
 
-                if task.retry_attempt < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
+                if retry_attempt < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
                     updates.update(
                         {
-                            "retry_attempt": task.retry_attempt + 1,
+                            "retry_attempt": retry_attempt + 1,
                             "state": PublishQueueState.RETRYING,
                             "next_retry_attempt_at": utcnow() + timedelta(minutes=timeout_minutes),
                         }
@@ -166,7 +169,7 @@ class AsyncioPublishConsumer(PublishConsumer):
                 else:
                     updates["state"] = PublishQueueState.FAILED
 
-                await publish_queue_service.update(task.id, updates, current_task.etag, current_task)
+                await publish_queue_service.update(latest_task.id, updates, latest_task.etag, latest_task)
                 return False
             except Exception:
                 logger.error("Failed to set the state for failed publish queue item.", extra=log_extra)
