@@ -5,7 +5,7 @@ from pydantic import AfterValidator, AnyHttpUrl, BeforeValidator, Field, TypeAda
 from pydantic_core import PydanticCustomError
 from quart_babel import gettext
 
-from superdesk.core.resources import Dataclass, ResourceModelWithObjectId, dataclass, fields
+from superdesk.core.resources import BaseModel, Dataclass, ResourceModelWithObjectId, dataclass, fields
 from superdesk.core.resources.validators import (
     validate_data_relation_async,
     validate_maxlength,
@@ -92,3 +92,16 @@ class AIAction(ResourceModelWithObjectId):
     model: str | None = None
 
     parameters: AIActionParameters = Field(default_factory=AIActionParameters)
+
+
+class RunActionPayload(BaseModel):
+    """Body of a request to run an AI action against one item"""
+
+    item_id: Annotated[str, validate_not_empty()]
+
+    #: Text of the input fields as the client currently has them, used instead of the stored item.
+    #: The editor the run is started from usually holds changes that were never saved.
+    fields: dict[str, str] | None = None
+
+    #: Language to answer in, falls back to the language of the item
+    language: str | None = None

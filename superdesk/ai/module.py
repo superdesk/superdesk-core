@@ -12,14 +12,9 @@ from superdesk.core.resources import (
 
 from .config import config
 from .models import AIAction, AIProvider
-from .rest_endpoints import AIProvidersEndpoints
+from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
+from .rest_endpoints import AIActionsEndpoints, AIProvidersEndpoints
 from .service import AIActionsService, AIProvidersService
-
-#: Grants access to the AI configuration: the providers and the actions built on them
-AI_STUDIO_PRIVILEGE = "ai_studio"
-
-#: Grants the right to run AI actions on content
-AI_PRIVILEGE = "ai"
 
 ai_providers_config = ResourceConfig(
     name="ai_providers",
@@ -54,6 +49,7 @@ ai_actions_config = ResourceConfig(
         resource_methods=["GET", "POST"],
         item_methods=["GET", "PATCH", "DELETE"],
         auth=[required_privilege_rule(AI_STUDIO_PRIVILEGE)],
+        endpoints_class=AIActionsEndpoints,
     ),
 )
 

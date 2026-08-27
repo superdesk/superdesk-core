@@ -1,13 +1,20 @@
+from typing import cast
+
+from pydantic import ValidationError
 from quart_babel import gettext
 
+from superdesk.core.auth.privilege_rules import required_privilege_rule
 from superdesk.core.resources import ResourceRestEndpoints
+from superdesk.core.resources.validators import get_field_errors_from_pydantic_validation_error
 from superdesk.core.types import Request, Response
 from superdesk.core.web import Endpoint
 from superdesk.errors import SuperdeskApiError
 
 from .errors import AIProviderError, to_api_error
-from .models import AIProvider
+from .models import AIAction, AIProvider, RunActionPayload
+from .privileges import AI_PRIVILEGE
 from .providers import get_client
+from .service import AIActionsService
 
 
 class AIProvidersEndpoints(ResourceRestEndpoints):
@@ -69,3 +76,53 @@ class AIProvidersEndpoints(ResourceRestEndpoints):
             )
 
         return provider
+
+
+class AIActionsEndpoints(ResourceRestEndpoints):
+    """Adds the route that runs an action against an item"""
+
+    def add_endpoints(self):
+        super().add_endpoints()
+        self.endpoints.append(
+            Endpoint(
+                url=f"{self.get_item_url()}/run",
+                name="ai_action_run",
+                func=self.run,
+                methods=["POST"],
+                # Configuring the actions and running them are separate rights: an editor runs them
+                # without being trusted with the provider credentials behind them
+                auth=[required_privilege_rule(AI_PRIVILEGE)],
+                parent=self,
+            )
+        )
+
+    async def run(self, request: Request) -> Response:
+        action = await self._get_action(request)
+
+        try:
+            payload = RunActionPayload.model_validate(await request.get_json() or {})
+        except ValidationError as error:
+            raise SuperdeskApiError.badRequestError(
+                message=gettext("Invalid payload"),
+                payload=get_field_errors_from_pydantic_validation_error(error),
+            )
+
+        service = cast(AIActionsService, self.service)
+
+        try:
+            result = await service.run(action, payload)
+        except AIProviderError as error:
+            raise to_api_error(error)
+
+        return Response(body=result, status_code=200)
+
+    async def _get_action(self, request: Request) -> AIAction:
+        item_id = request.get_view_args("item_id")
+        action = await self.service.find_by_id(item_id) if item_id else None
+
+        if action is None:
+            raise SuperdeskApiError.notFoundError(
+                gettext("AI action with ID '{action_id}' not found").format(action_id=item_id)
+            )
+
+        return cast(AIAction, action)
