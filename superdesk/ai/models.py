@@ -46,6 +46,12 @@ class AIProvider(ResourceModelWithObjectId):
     base_url: BaseUrlStr
     api_key: str | None = None
     default_model: str | None = None
+
+    #: Models of the provider's catalogue that may be used, an empty list allowing all of them. A
+    #: gateway answers with hundreds of models, most of which an administrator has no intention of
+    #: paying for, so this is the shortlist actions are meant to be built on.
+    available_models: list[str] = Field(default_factory=list)
+
     is_default: bool = False
     active: bool = True
 

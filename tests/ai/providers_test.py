@@ -71,6 +71,13 @@ class AIProvidersRestTestCase(TestCase):
         self.assertEqual(response.status_code, 201, await response.get_data())
         return await response.get_json()
 
+    async def _patch_provider(self, created, **updates):
+        return await self.test_client.patch(
+            f"/api/ai_providers/{created['_id']}",
+            json=updates,
+            headers={"If-Match": created["_etag"]},
+        )
+
     async def test_post_response_does_not_contain_the_api_key(self):
         created = await self._create_provider()
 
@@ -192,6 +199,119 @@ class AIProvidersRestTestCase(TestCase):
         self.assertTrue(provider.active)
         self.assertFalse(provider.is_default)
         self.assertEqual(provider.config, {})
+        self.assertEqual(provider.available_models, [])
+
+    async def test_creating_a_provider_whose_default_model_is_not_available_is_rejected(self):
+        response = await self.test_client.post(
+            "/api/ai_providers",
+            json={**PROVIDER, "available_models": ["openai/gpt-4o"]},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        message = (await response.get_json())["_message"]
+        self.assertIn("default_model", message)
+        self.assertIn("available_models", message)
+
+    async def test_creating_a_provider_whose_default_model_is_available_is_accepted(self):
+        created = await self._create_provider(available_models=["openai/gpt-4o", "openai/gpt-4o-mini"])
+
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertEqual(provider.available_models, ["openai/gpt-4o", "openai/gpt-4o-mini"])
+        self.assertEqual(provider.default_model, "openai/gpt-4o-mini")
+
+    async def test_an_empty_available_models_allows_any_default_model(self):
+        created = await self._create_provider(available_models=[], default_model="a-model-nobody-listed")
+
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertEqual(provider.default_model, "a-model-nobody-listed")
+
+    async def test_available_models_without_a_default_model_is_accepted(self):
+        created = await self._create_provider(available_models=["openai/gpt-4o"], default_model=None)
+
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertIsNone(provider.default_model)
+
+    async def test_patch_setting_a_default_model_outside_available_models_is_rejected(self):
+        created = await self._create_provider(available_models=["openai/gpt-4o-mini"])
+
+        response = await self._patch_provider(created, default_model="openai/gpt-4o")
+
+        self.assertEqual(response.status_code, 400)
+        message = (await response.get_json())["_message"]
+        self.assertIn("default_model", message)
+        self.assertIn("available_models", message)
+
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertEqual(provider.default_model, "openai/gpt-4o-mini")
+
+    async def test_patch_dropping_the_default_model_from_available_models_is_rejected(self):
+        created = await self._create_provider(available_models=["openai/gpt-4o", "openai/gpt-4o-mini"])
+
+        response = await self._patch_provider(created, available_models=["openai/gpt-4o"])
+
+        self.assertEqual(response.status_code, 400)
+        message = (await response.get_json())["_message"]
+        self.assertIn("default_model", message)
+        self.assertIn("available_models", message)
+
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertEqual(provider.available_models, ["openai/gpt-4o", "openai/gpt-4o-mini"])
+
+    async def test_patch_moving_the_default_model_and_the_list_together_is_accepted(self):
+        created = await self._create_provider(available_models=["openai/gpt-4o-mini"])
+
+        response = await self._patch_provider(
+            created, available_models=["openai/gpt-4o"], default_model="openai/gpt-4o"
+        )
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertEqual(provider.available_models, ["openai/gpt-4o"])
+        self.assertEqual(provider.default_model, "openai/gpt-4o")
+
+    async def test_patch_emptying_available_models_lifts_the_restriction(self):
+        created = await self._create_provider(available_models=["openai/gpt-4o-mini"])
+
+        response = await self._patch_provider(created, available_models=[], default_model="a-model-nobody-listed")
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertEqual(provider.available_models, [])
+        self.assertEqual(provider.default_model, "a-model-nobody-listed")
+
+    async def test_patch_clearing_the_default_model_with_a_null_accepts_any_shortlist(self):
+        """An explicit ``null`` clears the default model, so no shortlist can be in conflict with it"""
+
+        created = await self._create_provider(available_models=["openai/gpt-4o-mini"])
+
+        response = await self._patch_provider(created, available_models=["openai/gpt-4o"], default_model=None)
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertIsNone(provider.default_model)
+        self.assertEqual(provider.available_models, ["openai/gpt-4o"])
+
+    async def test_patch_of_a_malformed_available_models_is_a_field_error(self):
+        """The cross-field check runs before the payload is validated, so it has to survive any shape"""
+
+        created = await self._create_provider(available_models=["openai/gpt-4o-mini"])
+
+        for available_models in ([123], ["openai/gpt-4o", None], "openai/gpt-4o", None, 5):
+            with self.subTest(available_models=available_models):
+                response = await self._patch_provider(created, available_models=available_models)
+
+                self.assertEqual(response.status_code, 400, await response.get_data())
+                provider = await self.service.find_by_id(created["_id"])
+                self.assertEqual(provider.available_models, ["openai/gpt-4o-mini"])
+
+    async def test_patch_of_an_unrelated_field_keeps_available_models(self):
+        created = await self._create_provider(available_models=["openai/gpt-4o-mini"])
+
+        response = await self._patch_provider(created, name="OpenRouter free")
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        provider = await self.service.find_by_id(created["_id"])
+        self.assertEqual(provider.available_models, ["openai/gpt-4o-mini"])
 
     async def test_user_without_the_ai_studio_privilege_cannot_read_providers(self):
         self.async_app.auth = StubUserAuth(USER_WITHOUT_PRIVILEGES)

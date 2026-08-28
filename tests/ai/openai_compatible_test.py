@@ -269,6 +269,23 @@ class AIProviderEndpointsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(await response.get_json(), {"models": ["gpt-4o-mini", "gpt-4o"]})
 
+    async def test_models_endpoint_returns_the_full_catalogue_when_available_models_is_set(self):
+        """The endpoint is what an administrator picks ``available_models`` from, so it never filters"""
+
+        self.http_mock.get(MODELS_URL, payload=MODELS_PAYLOAD)
+
+        patched = await self.test_client.patch(
+            f"/api/ai_providers/{self.provider_id}",
+            json={"available_models": ["gpt-4o-mini"], "default_model": "gpt-4o-mini"},
+            headers={"If-Match": self.provider_etag},
+        )
+        self.assertEqual(patched.status_code, 200, await patched.get_data())
+
+        response = await self.test_client.get(f"/api/ai_providers/{self.provider_id}/models")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(await response.get_json(), {"models": ["gpt-4o-mini", "gpt-4o"]})
+
     async def test_models_endpoint_answers_404_for_an_unknown_provider(self):
         response = await self.test_client.get("/api/ai_providers/6543210987654321098765ab/models")
 

@@ -49,6 +49,9 @@ Three resources make it up:
     ``openai_compatible``, which covers OpenAI itself as well as OpenRouter, Azure style gateways
     and local runtimes. ``GET /api/ai_providers/<id>/models`` lists the models a stored provider
     offers and ``POST /api/ai_providers/<id>/test`` reports whether it answers at all.
+    ``available_models`` narrows that catalogue to the models the installation is prepared to use,
+    and ``default_model`` has to be one of them; leaving it empty allows every model the provider
+    offers.
 
 ``ai_actions``
     What to ask for and of which provider: the item fields to send, the field the answers are
@@ -76,7 +79,10 @@ report what the editor did with the answers. ``$TOKEN`` is a Superdesk session t
     AUTH="Authorization: Bearer $TOKEN"
     JSON="Content-Type: application/json"
 
-Register the provider. The key is stored but never returned, by this call or any other:
+Register the provider. The key is stored but never returned, by this call or any other.
+``available_models`` is the shortlist actions may be run with, so the hundreds of models a gateway
+offers do not all become usable; ``GET /api/ai_providers/<id>/models`` keeps listing the whole
+catalogue, which is what an administrator picks the shortlist from:
 
 .. code:: sh
 
@@ -85,6 +91,7 @@ Register the provider. The key is stored but never returned, by this call or any
         "provider_type": "openai_compatible",
         "base_url": "https://openrouter.ai/api/v1",
         "api_key": "sk-or-v1-...",
+        "available_models": ["openai/gpt-4o-mini", "anthropic/claude-3.5-haiku"],
         "default_model": "openai/gpt-4o-mini"
     }'
 
