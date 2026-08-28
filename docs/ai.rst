@@ -151,3 +151,34 @@ it holds ``ai``, which is not enough to read the entry itself.
 
     {"_id": "68af1c0e2b1a4c0f9a3d1e03", "outcome": "accepted", "applied_index": 0,
      "outcome_at": "2026-08-27T10:00:14+0000"}
+
+Using a provider from code
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The provider layer is not tied to the editorial actions. Any server-side feature (a macro, an
+automation, a validation step) can send content to a configured provider directly:
+
+.. code:: python
+
+    from superdesk.core import get_current_async_app
+    from superdesk.ai.providers import get_client
+    from superdesk.ai.providers.base import CompletionMessage, CompletionRequest
+
+    providers = get_current_async_app().resources.get_resource_service("ai_providers")
+    provider = await providers.find_by_id(provider_id)
+
+    result = await get_client(provider).complete(
+        CompletionRequest(
+            model=provider.default_model,
+            messages=[CompletionMessage(role="user", content="Summarise: ...")],
+        )
+    )
+    result.content, result.prompt_tokens, result.completion_tokens
+
+Failures raise ``AIProviderError`` with a ``kind`` (``auth``, ``rate_limit``, ``timeout``,
+``upstream``, ``invalid_response``); the request timeout comes from ``AI_REQUEST_TIMEOUT``. The
+call is async only.
+
+Two conventions for new callers: keep the call server side, the browser never talks to a model
+directly, and write an ``ai_events`` entry with your own ``source`` value so the usage shows up
+next to the editorial actions in the log.
