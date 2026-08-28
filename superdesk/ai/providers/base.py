@@ -24,8 +24,8 @@ class CompletionRequest:
 class CompletionResult:
     content: str
     model: str
-    prompt_tokens: int | None = None
-    completion_tokens: int | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
     raw_usage: dict[str, Any] = field(default_factory=dict)
 
 

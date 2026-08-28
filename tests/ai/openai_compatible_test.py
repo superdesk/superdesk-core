@@ -69,8 +69,8 @@ class OpenAICompatibleClientTestCase(TestCase):
 
         self.assertEqual(result.content, "A headline")
         self.assertEqual(result.model, "gpt-4o-mini-2024-07-18")
-        self.assertEqual(result.prompt_tokens, 42)
-        self.assertEqual(result.completion_tokens, 7)
+        self.assertEqual(result.input_tokens, 42)
+        self.assertEqual(result.output_tokens, 7)
         self.assertEqual(result.raw_usage, {"prompt_tokens": 42, "completion_tokens": 7})
 
     async def test_complete_sends_the_api_key_as_a_bearer_token(self):

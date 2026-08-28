@@ -108,8 +108,8 @@ def build_event(record: AIRunRecord) -> AIEvent:
         latency_ms=record.latency_ms,
         input_chars=record.input_chars,
         output_chars=record.output_chars,
-        prompt_tokens=result.prompt_tokens if result is not None else None,
-        completion_tokens=result.completion_tokens if result is not None else None,
+        input_tokens=result.input_tokens if result is not None else None,
+        output_tokens=result.output_tokens if result is not None else None,
         status=AIEventStatus.ERROR if record.error_kind is not None else AIEventStatus.OK,
         error_kind=record.error_kind,
         suggestions=list(record.suggestions) if keeps_suggestions else [],
@@ -357,8 +357,8 @@ class AIActionsService(AsyncResourceService[AIAction]):
             "provider": str(provider.id),
             "model": result.model,
             "usage": {
-                "prompt_tokens": result.prompt_tokens,
-                "completion_tokens": result.completion_tokens,
+                "input_tokens": result.input_tokens,
+                "output_tokens": result.output_tokens,
             },
         }
 

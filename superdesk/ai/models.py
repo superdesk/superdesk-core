@@ -155,8 +155,8 @@ class AIEvent(ResourceModelWithObjectId):
     latency_ms: int
     input_chars: int
     output_chars: int
-    prompt_tokens: int | None = None
-    completion_tokens: int | None = None
+    input_tokens: int | None = None
+    output_tokens: int | None = None
 
     status: AIEventStatus
     error_kind: AIErrorKind | None = None

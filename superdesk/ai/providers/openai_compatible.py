@@ -45,8 +45,11 @@ class OpenAICompatibleClient(AIProviderClient):
         return CompletionResult(
             content=content or "",
             model=data.get("model") or request.model,
-            prompt_tokens=usage.get("prompt_tokens"),
-            completion_tokens=usage.get("completion_tokens"),
+            # The OpenAI-compatible wire format spells the counts ``prompt_tokens`` and
+            # ``completion_tokens``. ``CompletionResult`` carries the neutral names every provider
+            # type maps onto, so the two spellings differ on purpose.
+            input_tokens=usage.get("prompt_tokens"),
+            output_tokens=usage.get("completion_tokens"),
             raw_usage=usage,
         )
 

@@ -280,7 +280,7 @@ class AIActionRunTestCase(TestCase):
 
         self.assertEqual(body["provider"], self.provider_id)
         self.assertEqual(body["model"], "gpt-4o-mini-2024-07-18")
-        self.assertEqual(body["usage"], {"prompt_tokens": 42, "completion_tokens": 7})
+        self.assertEqual(body["usage"], {"input_tokens": 42, "output_tokens": 7})
 
     async def test_the_run_record_identifies_the_item_without_holding_its_text(self):
         records = await self._capture_run_records()

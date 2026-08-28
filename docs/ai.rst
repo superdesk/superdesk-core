@@ -127,7 +127,7 @@ answer longer than ``max_characters`` is returned whole and flagged, never cut:
         "event_id": "68af1c0e2b1a4c0f9a3d1e03",
         "provider": "68af1c0e2b1a4c0f9a3d1e01",
         "model": "gpt-4o-mini-2024-07-18",
-        "usage": {"prompt_tokens": 412, "completion_tokens": 37}
+        "usage": {"input_tokens": 412, "output_tokens": 37}
     }
 
 Report what happened to the answers, against the ``event_id`` the run returned. ``outcome`` is
@@ -173,7 +173,7 @@ automation, a validation step) can send content to a configured provider directl
             messages=[CompletionMessage(role="user", content="Summarise: ...")],
         )
     )
-    result.content, result.prompt_tokens, result.completion_tokens
+    result.content, result.input_tokens, result.output_tokens
 
 Failures raise ``AIProviderError`` with a ``kind`` (``auth``, ``rate_limit``, ``timeout``,
 ``upstream``, ``invalid_response``); the request timeout comes from ``AI_REQUEST_TIMEOUT``. The
