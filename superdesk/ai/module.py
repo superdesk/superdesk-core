@@ -57,9 +57,7 @@ ai_events_config = ResourceConfig(
     name="ai_events",
     data_class=AIEvent,
     service=AIEventsService,
-    # Reporting an outcome is the only update, and the client that reports it holds ``ai`` alone,
-    # which cannot read the entry an etag would have to come from. Nothing else races for the
-    # field, so requiring ``If-Match`` here would only make the report impossible to send.
+    # No concurrency risk: reporting an outcome is the only update and nothing races for it.
     uses_etag=False,
     mongo=MongoResourceConfig(
         indexes=[
