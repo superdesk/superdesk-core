@@ -68,7 +68,7 @@ class AsyncioPublishConsumerTestCase(TestCase):
         expected_duration_ms = to_epoch_ms(transmit_completed_at) - to_epoch_ms(lifecycle_started_at)
         self.assertEqual(expected_duration_ms, second_update_args[1]["lifecycle_to_transmit_ms"])
 
-    async def test_uses_latest_etag_when_transmitter_updated_the_queue_item(self):
+    async def test_uses_in_progress_etag_for_retry_update_without_rereading(self):
         self.app.config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 4
         consumer = AsyncioPublishConsumer()
 
@@ -90,12 +90,10 @@ class AsyncioPublishConsumerTestCase(TestCase):
         queue_id = ObjectId()
         task = make_task("etag-pending", PublishQueueState.PENDING, 0)
         in_progress_task = make_task("etag-in-progress", PublishQueueState.IN_PROGRESS, 0)
-        # the transmitter stores an error message on the queue item, which regenerates the etag
-        transmitter_updated_task = make_task("etag-from-transmitter", PublishQueueState.PENDING, 0)
 
         queue_service = Mock()
         queue_service.update = AsyncMock(return_value=in_progress_task)
-        queue_service.find_by_id = AsyncMock(return_value=transmitter_updated_task)
+        queue_service.find_by_id = AsyncMock()
 
         transmitter = Mock()
         transmitter.transmit = Mock(side_effect=Exception("boom"))
@@ -111,10 +109,11 @@ class AsyncioPublishConsumerTestCase(TestCase):
 
         self.assertFalse(result)
         self.assertEqual(2, queue_service.update.await_count)
+        queue_service.find_by_id.assert_not_awaited()
 
         failure_update_args = queue_service.update.await_args_list[1].args
         self.assertEqual(queue_id, failure_update_args[0])
         self.assertEqual(PublishQueueState.RETRYING, failure_update_args[1]["state"])
         self.assertEqual(1, failure_update_args[1]["retry_attempt"])
-        self.assertEqual("etag-from-transmitter", failure_update_args[2])
-        self.assertEqual(transmitter_updated_task, failure_update_args[3])
+        self.assertEqual("etag-in-progress", failure_update_args[2])
+        self.assertEqual(in_progress_task, failure_update_args[3])

@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from superdesk.types import PublishQueueResource, PublishQueueState, SubscribersResource, PublishConsumer
 from superdesk.core import get_config
-from superdesk.errors import PublishHTTPPushClientError
+from superdesk.errors import PublishHTTPPushClientError, SuperdeskPublishError
 from superdesk.utc import utcnow
 from superdesk.resource_fields import LAST_UPDATED
 from superdesk.publish import registered_transmitters
@@ -103,7 +103,11 @@ class AsyncioPublishConsumer(PublishConsumer):
             try:
                 transmitter = registered_transmitters[task.destination.delivery_type]
             except KeyError:
-                print(task.destination.delivery_type not in registered_transmitters)
+                logger.error(
+                    "No transmitter registered for delivery type %s",
+                    task.destination.delivery_type,
+                    extra=log_extra,
+                )
                 raise
 
             response = transmitter.transmit(task.to_dict(context={"use_objectid": True}))
@@ -147,16 +151,15 @@ class AsyncioPublishConsumer(PublishConsumer):
                 get_config(int, "MAX_TRANSMIT_RETRY_DELAY_MINUTES", 120),
             )
             try:
-                # transmitters may update the queue item themselves (e.g. to store an error message),
-                # so re-read it to get the current etag
-                latest_task = await publish_queue_service.find_by_id(task.id) or current_task
-                retry_attempt = latest_task.retry_attempt or 0
+                retry_attempt = current_task.retry_attempt or 0
                 timeout_minutes = compute_retry_timeout_minutes(
                     retry_attempt,
                     initial_retry_delay_minutes,
                     max_retry_delay_minutes,
                 )
                 updates: dict[str, object] = {LAST_UPDATED: utcnow()}
+                if isinstance(e, SuperdeskPublishError):
+                    updates["error_message"] = f"{e}:{e.system_exception}"
 
                 if retry_attempt < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
                     updates.update(
@@ -169,7 +172,7 @@ class AsyncioPublishConsumer(PublishConsumer):
                 else:
                     updates["state"] = PublishQueueState.FAILED
 
-                await publish_queue_service.update(latest_task.id, updates, latest_task.etag, latest_task)
+                await publish_queue_service.update(current_task.id, updates, current_task.etag, current_task)
                 return False
             except Exception:
                 logger.error("Failed to set the state for failed publish queue item.", extra=log_extra)
