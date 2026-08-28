@@ -80,9 +80,9 @@ report what the editor did with the answers. ``$TOKEN`` is a Superdesk session t
     JSON="Content-Type: application/json"
 
 Register the provider. The key is stored but never returned, by this call or any other.
-``available_models`` is the shortlist actions may be run with, so the hundreds of models a gateway
-offers do not all become usable; ``GET /api/ai_providers/<id>/models`` keeps listing the whole
-catalogue, which is what an administrator picks the shortlist from:
+``available_models`` is the shortlist ``default_model`` has to be picked from, so the hundreds of
+models a gateway offers do not all become the default; ``GET /api/ai_providers/<id>/models`` keeps
+listing the whole catalogue, which is what an administrator picks the shortlist from:
 
 .. code:: sh
 
