@@ -3,13 +3,12 @@ from typing import cast
 from pydantic import ValidationError
 from quart_babel import gettext
 
-from superdesk.core.auth.privilege_rules import required_privilege_rule
+from superdesk.core.auth.privilege_rules import request_user_has_privilege, required_privilege_rule
 from superdesk.core.resources import ResourceRestEndpoints
 from superdesk.core.resources.validators import get_field_errors_from_pydantic_validation_error
 from superdesk.core.types import Request, Response
 from superdesk.core.web import Endpoint, ItemRequestViewArgs
 from superdesk.errors import SuperdeskApiError
-from superdesk.users.async_service import get_privileges, is_admin
 
 from .actions_service import AIActionsService
 from .errors import AIProviderError, to_api_error
@@ -19,28 +18,17 @@ from .providers import get_client
 
 
 def get_request_user_id(request: Request) -> str | None:
-    """ID of the authenticated user as text, for the run log"""
+    """ID of the authenticated user as text, for the run log
+
+    Not ``apps.auth.get_user_id``, which reads ``g.user``. Only ``set_user_request_auth_data``
+    fills that in, so it is empty under any authentication class that does not go through it,
+    while ``request.user`` is set by ``UserAuthProtocol.continue_session`` for all of them.
+    """
 
     user = request.user
     user_id = user.get("_id") if isinstance(user, dict) else None
 
     return str(user_id) if user_id else None
-
-
-def request_user_has_privilege(request: Request, privilege: str) -> bool:
-    """Whether the authenticated user holds a privilege, an administrator holding every one
-
-    Same resolution as ``required_privilege_rule``, but as an answer rather than as a rejection, for
-    checks that depend on which item is being touched and so cannot be made before the route runs.
-    """
-
-    user = request.user
-    if not isinstance(user, dict):
-        return False
-    if is_admin(user):
-        return True
-
-    return bool(get_privileges(user, request.storage.request.get("role")).get(privilege))
 
 
 class AIProvidersEndpoints(ResourceRestEndpoints):
