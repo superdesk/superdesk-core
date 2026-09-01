@@ -532,16 +532,11 @@ class ContentPublishExchange(BasicPublishExchange):
         # insert into version.
         await insert_into_versions_async(item_id, doc=None)
 
-        # update archive history
-        app = get_current_app().as_any()
-
-        await app.on_archive_item_updated.call_async(item_updates, archive_item, ITEM_PUBLISH)
-        # import to legal archive
-        await import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": item_id})
         logger.info(f"Modified the version of scheduled item: {published_item_id}")
 
         logger.info(f"Publishing scheduled item_id: {published_item_id}")
-        # update the published collection
+        # update the published collection right away, so the item is no longer reported as
+        # "scheduled" even if one of the best-effort side effects below fails
         published_update = {QUEUE_STATE: PublishState.IN_PROGRESS, "last_queue_event": utcnow()}
         published_update.update(item_updates)
         published_item.update(
@@ -551,17 +546,33 @@ class ContentPublishExchange(BasicPublishExchange):
                 VERSION: item_updates[VERSION],
             }
         )
-        # send a notification to the clients
-        push_content_notification([{"_id": str(published_item["item_id"]), "task": published_item.get("task", None)}])
-        #  apply internal destinations
-        original = archive_service.find_one(req=None, _id=published_item["item_id"])
-        signals.item_published.send(
-            self,
-            item=original,
-            after_scheduled=True,
-        )
-        await signals.item_published_async.send(original, True)
         await get_resource_service(PUBLISHED).patch_async(published_item_id, published_update)
+
+        # the following are best-effort side effects; failures here must not leave the
+        # published item stuck reporting the (now stale) "scheduled" state
+        try:
+            # update archive history
+            app = get_current_app().as_any()
+            await app.on_archive_item_updated.call_async(item_updates, archive_item, ITEM_PUBLISH)
+            # import to legal archive
+            await import_into_legal_archive.apply_async(countdown=3, kwargs={"item_id": item_id})
+            # send a notification to the clients
+            push_content_notification(
+                [{"_id": str(published_item["item_id"]), "task": published_item.get("task", None)}]
+            )
+            #  apply internal destinations
+            original = await archive_service.find_one_async(req=None, _id=published_item["item_id"])
+            signals.item_published.send(
+                self,
+                item=original,
+                after_scheduled=True,
+            )
+            await signals.item_published_async.send(original, True)
+        except Exception:
+            logger.exception(
+                "Failed to run post-publish side effects for scheduled item",
+                extra=dict(item_id=item_id, published_item_id=str(published_item_id)),
+            )
 
     async def _publish_package_items(self, request: PublishRequest) -> PublishRequestResponse | None:
         items = get_residrefs(request.item)
