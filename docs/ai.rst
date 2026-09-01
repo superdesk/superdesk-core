@@ -67,6 +67,19 @@ action and reporting what was done with its answers need ``ai``, which is the ri
 holds: provider credentials are stored unencrypted, so ``ai_studio`` amounts to access to every
 key and belongs to administrators only.
 
+Timeouts
+^^^^^^^^
+
+``AI_REQUEST_TIMEOUT``, 60 seconds by default, is how long Superdesk waits for a provider before it
+gives up on a run and answers with a ``timeout`` error.
+
+It is not the only timeout in the path. Hypercorn and whatever proxy sits in front of it, usually
+nginx, each have their own request timeout, and a run is one HTTP request the client holds open for
+as long as the provider takes. The shortest of the three wins: when the proxy gives up first the
+editor gets a gateway error instead of the ``timeout`` message, and the run carries on server side
+until the provider answers. Large models and long articles take tens of seconds, so raising
+``AI_REQUEST_TIMEOUT`` has no effect unless the proxy and server timeouts are above it.
+
 Walkthrough
 ^^^^^^^^^^^
 

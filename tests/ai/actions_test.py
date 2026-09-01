@@ -15,7 +15,7 @@ from unittest.mock import patch
 
 import aiohttp
 
-from superdesk.ai.service import AIActionsService
+from superdesk.ai.actions_service import AIActionsService
 from superdesk.tests import TestCase
 from superdesk.tests.http_mocks import mock_http
 
@@ -258,7 +258,7 @@ class AIActionRunTestCase(TestCase):
             records.append(record)
             return None
 
-        patcher = patch("superdesk.ai.service.record_run", record_run)
+        patcher = patch("superdesk.ai.actions_service.record_run", record_run)
         patcher.start()
         self.addCleanup(patcher.stop)
 

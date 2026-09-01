@@ -22,7 +22,7 @@ from superdesk.ai.providers import (
 )
 from superdesk.ai.providers.base import AIProviderClient, CompletionRequest, CompletionResult
 from superdesk.ai.providers.openai_compatible import OpenAICompatibleClient
-from superdesk.ai.service import AIProvidersService
+from superdesk.ai.providers_service import AIProvidersService
 from superdesk.core.auth.user_auth import UserAuthProtocol
 from superdesk.core.types import Request
 from superdesk.default_settings import AI_REQUEST_TIMEOUT

@@ -11,11 +11,11 @@ from superdesk.core.web import Endpoint, ItemRequestViewArgs
 from superdesk.errors import SuperdeskApiError
 from superdesk.users.async_service import get_privileges, is_admin
 
+from .actions_service import AIActionsService
 from .errors import AIProviderError, to_api_error
 from .models import AIAction, AIEvent, AIProvider, RunActionPayload
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
 from .providers import get_client
-from .service import AIActionsService
 
 
 def get_request_user_id(request: Request) -> str | None:
@@ -126,7 +126,7 @@ class AIActionsEndpoints(ResourceRestEndpoints):
         action = await self._get_action(request)
 
         try:
-            payload = RunActionPayload.model_validate(await request.get_json() or {})
+            payload = RunActionPayload.from_dict(await request.get_json() or {})
         except ValidationError as error:
             raise SuperdeskApiError.badRequestError(
                 message=gettext("Invalid payload"),

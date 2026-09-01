@@ -5,7 +5,7 @@ from pydantic import AfterValidator, AnyHttpUrl, BeforeValidator, Field, TypeAda
 from pydantic_core import PydanticCustomError
 from quart_babel import gettext
 
-from superdesk.core.resources import BaseModel, Dataclass, ResourceModelWithObjectId, dataclass, fields
+from superdesk.core.resources import BaseModel, Dataclass, ResourceModelWithObjectId, fields
 from superdesk.core.resources.validators import (
     validate_data_relation_async,
     validate_maxlength,
@@ -73,7 +73,6 @@ class AIActionType(str, enum.Enum):
 SHORT_OUTPUT_ACTION_TYPES = frozenset({AIActionType.SUGGESTION, AIActionType.SUMMARY})
 
 
-@dataclass
 class AIActionParameters(Dataclass):
     temperature: float = 0.7
 

@@ -16,10 +16,12 @@ from unittest.mock import patch
 import aiohttp
 from bson import ObjectId
 
+from superdesk.ai.actions_service import AIActionsService
 from superdesk.ai.errors import AIErrorKind
+from superdesk.ai.events_service import AIEventsService, AIRunRecord, build_event
 from superdesk.ai.models import AIActionType, AIEventSource
-from superdesk.ai.service import AIActionsService, AIEventsService, AIProvidersService, AIRunRecord, build_event
 from superdesk.ai.providers.base import CompletionResult
+from superdesk.ai.providers_service import AIProvidersService
 from superdesk.tests import TestCase
 from superdesk.tests.http_mocks import mock_http
 from superdesk.utc import utcnow

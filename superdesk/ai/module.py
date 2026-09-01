@@ -1,3 +1,13 @@
+"""Configuration of the AI providers Superdesk talks to, and the actions built on top of them.
+
+Security boundary: provider credentials are stored unencrypted, the way ingest and search provider
+credentials are. The ``ai_studio`` privilege is therefore equivalent to access to every stored key.
+A holder can point a provider's ``base_url`` at a host they control and have the key sent there,
+and can narrow a key down by sorting a listing on ``api_key``, even though the key itself is never
+returned in a response. Grant the privilege only to users already trusted with the system's
+credentials.
+"""
+
 from quart_babel import lazy_gettext as _
 
 from superdesk.core.auth.privilege_rules import http_method_privilege_based_rules, required_privilege_rule
@@ -10,11 +20,13 @@ from superdesk.core.resources import (
     RestEndpointConfig,
 )
 
+from .actions_service import AIActionsService
 from .config import config
+from .events_service import AIEventsService
 from .models import AIAction, AIEvent, AIProvider
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
+from .providers_service import AIProvidersService
 from .rest_endpoints import AIActionsEndpoints, AIEventsEndpoints, AIProvidersEndpoints
-from .service import AIActionsService, AIEventsService, AIProvidersService
 
 ai_providers_config = ResourceConfig(
     name="ai_providers",
