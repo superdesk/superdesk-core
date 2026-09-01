@@ -67,3 +67,53 @@ class AsyncioPublishConsumerTestCase(TestCase):
 
         expected_duration_ms = to_epoch_ms(transmit_completed_at) - to_epoch_ms(lifecycle_started_at)
         self.assertEqual(expected_duration_ms, second_update_args[1]["lifecycle_to_transmit_ms"])
+
+    async def test_uses_in_progress_etag_for_retry_update_without_rereading(self):
+        self.app.config["MAX_TRANSMIT_RETRY_ATTEMPT"] = 4
+        consumer = AsyncioPublishConsumer()
+
+        def make_task(etag, state, retry_attempt):
+            return PublishQueueResource(
+                id=queue_id,
+                etag=etag,
+                state=state,
+                retry_attempt=retry_attempt,
+                item_id="item-1",
+                item_version=1,
+                headline="headline",
+                publishing_action="published",
+                formatted_item="formatted",
+                subscriber_id=ObjectId(),
+                destination=SubscriberDestination(_id="d1", name="dest", format="ninjs", delivery_type="file"),
+            )
+
+        queue_id = ObjectId()
+        task = make_task("etag-pending", PublishQueueState.PENDING, 0)
+        in_progress_task = make_task("etag-in-progress", PublishQueueState.IN_PROGRESS, 0)
+
+        queue_service = Mock()
+        queue_service.update = AsyncMock(return_value=in_progress_task)
+        queue_service.find_by_id = AsyncMock()
+
+        transmitter = Mock()
+        transmitter.transmit = Mock(side_effect=Exception("boom"))
+
+        with patch(
+            "superdesk.publish_async.consumers.asyncio_consumer.PublishQueueResource.get_service",
+            return_value=queue_service,
+        ):
+            with patch(
+                "superdesk.publish_async.consumers.asyncio_consumer.registered_transmitters", {"file": transmitter}
+            ):
+                result = await consumer.transmit_item(task)
+
+        self.assertFalse(result)
+        self.assertEqual(2, queue_service.update.await_count)
+        queue_service.find_by_id.assert_not_awaited()
+
+        failure_update_args = queue_service.update.await_args_list[1].args
+        self.assertEqual(queue_id, failure_update_args[0])
+        self.assertEqual(PublishQueueState.RETRYING, failure_update_args[1]["state"])
+        self.assertEqual(1, failure_update_args[1]["retry_attempt"])
+        self.assertEqual("etag-in-progress", failure_update_args[2])
+        self.assertEqual(in_progress_task, failure_update_args[3])
