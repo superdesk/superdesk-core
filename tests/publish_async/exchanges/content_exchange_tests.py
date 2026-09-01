@@ -4,8 +4,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from bson import ObjectId
 
 from superdesk.tests import TestCase
-from superdesk.resource_fields import VERSION
+from superdesk.resource_fields import VERSION, ITEM_STATE
 from superdesk.types import PublishState
+from superdesk.metadata.item import CONTENT_STATE
 from superdesk.publish_async.exchanges.content_exchange import ContentPublishExchange
 from superdesk.publish_async.utils import QUEUE_STATE, PUBLISHED
 
@@ -253,3 +254,75 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
         last_patch_id, last_patch_updates = captured_patches[-1]
         self.assertEqual(last_patch_id, published_item_id)
         self.assertEqual(last_patch_updates[QUEUE_STATE], PublishState.PENDING)
+
+
+class ContentExchangeUpdatedScheduledItemTestCase(TestCase):
+    """
+    Tests that ``updated_scheduled_item`` marks the ``published`` collection item as
+    "published" even when one of the best-effort side effects (notifications, legal
+    archive import, signals, etc.) raises. Regression test for items staying stuck
+    reporting "scheduled" state forever after they were actually published.
+    """
+
+    def _make_exchange(self):
+        exchange = ContentPublishExchange.__new__(ContentPublishExchange)
+        exchange._filter = MagicMock()
+        exchange._formatter = MagicMock()
+        exchange._router = MagicMock()
+        exchange.polling = False
+        return exchange
+
+    async def test_published_state_is_set_even_when_side_effects_raise(self):
+        exchange = self._make_exchange()
+
+        published_item_id = ObjectId()
+        published_item = {
+            "_id": published_item_id,
+            "item_id": "test-item-1",
+            "state": "scheduled",
+            "queue_state": "pending",
+            VERSION: 1,
+        }
+
+        archive_service = MagicMock()
+        archive_service.find_one_async = AsyncMock(return_value={"_id": "test-item-1"})
+        archive_service.system_update_async = AsyncMock()
+
+        published_service = MagicMock()
+        published_patches = []
+
+        async def fake_patch(item_id, updates):
+            published_patches.append((item_id, updates.copy()))
+
+        published_service.patch_async = AsyncMock(side_effect=fake_patch)
+
+        def resource_service_lookup(name):
+            return archive_service if name == "archive" else published_service
+
+        with (
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.get_resource_service",
+                side_effect=resource_service_lookup,
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.insert_into_versions_async",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.get_current_app",
+                side_effect=Exception("boom: on_archive_item_updated blew up"),
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.import_into_legal_archive",
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.push_content_notification",
+            ),
+        ):
+            # side effects raising must not prevent/undo the published-state patch
+            await exchange.updated_scheduled_item(published_item)
+
+        self.assertTrue(len(published_patches) >= 1, "published collection should have been patched")
+        patched_id, patched_updates = published_patches[0]
+        self.assertEqual(patched_id, published_item_id)
+        self.assertEqual(patched_updates[ITEM_STATE], CONTENT_STATE.PUBLISHED)
