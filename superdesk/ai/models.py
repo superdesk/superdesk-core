@@ -74,11 +74,21 @@ SHORT_OUTPUT_ACTION_TYPES = frozenset({AIActionType.SUGGESTION, AIActionType.SUM
 
 
 class AIActionParameters(Dataclass):
+    """How an action asks for its answers, as opposed to which fields it is wired to.
+
+    Everything that tunes a run lives here so that a new knob does not become a new field on
+    the resource. A PATCH of ``parameters`` is merged onto the stored ones by
+    ``AIActionsService``, the way a PATCH of the action itself is merged onto the action.
+    """
+
     temperature: float = 0.7
 
     #: Replaces the system prompt built from the action type, leaving the instructions that carry
     #: the answer format in place
     system_prompt: str | None = None
+
+    max_characters: int | None = None
+    suggestions_count: Annotated[int, validate_minlength(1), validate_maxlength(10)] = 3
 
 
 class AIAction(ResourceModelWithObjectId):
@@ -91,9 +101,6 @@ class AIAction(ResourceModelWithObjectId):
 
     #: Name of the item field the suggestions are written back to by the client
     output_field: Annotated[str, validate_not_empty()]
-
-    max_characters: int | None = None
-    suggestions_count: Annotated[int, validate_minlength(1), validate_maxlength(10)] = 3
 
     #: Content profiles the action is offered for, an empty list means every profile
     content_profiles: list[str] = Field(default_factory=list)

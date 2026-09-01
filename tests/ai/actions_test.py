@@ -27,7 +27,7 @@ ACTION = {
     "action_type": "suggestion",
     "input_fields": ["body_html"],
     "output_field": "headline",
-    "max_characters": 60,
+    "parameters": {"max_characters": 60},
 }
 
 ITEM_ID = "urn:newsml:localhost:article-1"
@@ -85,7 +85,7 @@ class AIActionsRestTestCase(TestCase):
 
         action = await self.service.find_by_id(created["_id"])
         self.assertTrue(action.active)
-        self.assertEqual(action.suggestions_count, 3)
+        self.assertEqual(action.parameters.suggestions_count, 3)
         self.assertEqual(action.content_profiles, [])
         self.assertIsNone(action.model)
         self.assertEqual(action.parameters.temperature, 0.7)
@@ -97,6 +97,37 @@ class AIActionsRestTestCase(TestCase):
         action = await self.service.find_by_id(created["_id"])
         self.assertEqual(action.parameters.temperature, 0.2)
         self.assertEqual(action.parameters.system_prompt, "Be brief")
+
+    async def test_patching_one_parameter_leaves_the_others_alone(self):
+        created = await self._create_action(
+            parameters={"temperature": 0.2, "system_prompt": "Be brief", "suggestions_count": 5}
+        )
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{created['_id']}",
+            json={"parameters": {"temperature": 0.9}},
+            headers={"If-Match": created["_etag"]},
+        )
+        self.assertEqual(response.status_code, 200, await response.get_data())
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertEqual(action.parameters.temperature, 0.9)
+        self.assertEqual(action.parameters.system_prompt, "Be brief")
+        self.assertEqual(action.parameters.suggestions_count, 5)
+
+    async def test_a_parameter_patched_to_null_is_cleared(self):
+        created = await self._create_action(parameters={"system_prompt": "Be brief", "max_characters": 60})
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{created['_id']}",
+            json={"parameters": {"system_prompt": None}},
+            headers={"If-Match": created["_etag"]},
+        )
+        self.assertEqual(response.status_code, 200, await response.get_data())
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertIsNone(action.parameters.system_prompt)
+        self.assertEqual(action.parameters.max_characters, 60)
 
     async def test_action_provider_is_stored_as_the_provider_id(self):
         created = await self._create_action()
@@ -133,11 +164,12 @@ class AIActionsRestTestCase(TestCase):
             with self.subTest(suggestions_count=suggestions_count):
                 response = await self.test_client.post(
                     "/api/ai_actions",
-                    json=self._payload(suggestions_count=suggestions_count),
+                    json=self._payload(parameters={"suggestions_count": suggestions_count}),
                 )
 
                 self.assertEqual(response.status_code, 400)
-                self.assertIn("suggestions_count", (await response.get_json())["_issues"])
+                issues = (await response.get_json())["_issues"]
+                self.assertIn("suggestions_count", issues["parameters"])
 
     async def test_a_provider_that_does_not_exist_is_rejected(self):
         response = await self.test_client.post(
@@ -149,13 +181,13 @@ class AIActionsRestTestCase(TestCase):
         self.assertIn("provider", (await response.get_json())["_issues"])
 
     async def test_a_summary_action_is_created_with_a_single_suggestion(self):
-        created = await self._create_action(action_type="summary", suggestions_count=5)
+        created = await self._create_action(action_type="summary", parameters={"suggestions_count": 5})
 
         action = await self.service.find_by_id(created["_id"])
-        self.assertEqual(action.suggestions_count, 1)
+        self.assertEqual(action.parameters.suggestions_count, 1)
 
     async def test_turning_an_action_into_a_summary_drops_it_to_a_single_suggestion(self):
-        created = await self._create_action(suggestions_count=5)
+        created = await self._create_action(parameters={"suggestions_count": 5})
 
         response = await self.test_client.patch(
             f"/api/ai_actions/{created['_id']}",
@@ -165,26 +197,26 @@ class AIActionsRestTestCase(TestCase):
         self.assertEqual(response.status_code, 200, await response.get_data())
 
         action = await self.service.find_by_id(created["_id"])
-        self.assertEqual(action.suggestions_count, 1)
+        self.assertEqual(action.parameters.suggestions_count, 1)
 
     async def test_a_summary_action_cannot_be_patched_to_several_suggestions(self):
         created = await self._create_action(action_type="summary")
 
         response = await self.test_client.patch(
             f"/api/ai_actions/{created['_id']}",
-            json={"suggestions_count": 4},
+            json={"parameters": {"suggestions_count": 4}},
             headers={"If-Match": created["_etag"]},
         )
         self.assertEqual(response.status_code, 200, await response.get_data())
 
         action = await self.service.find_by_id(created["_id"])
-        self.assertEqual(action.suggestions_count, 1)
+        self.assertEqual(action.parameters.suggestions_count, 1)
 
     async def test_a_suggestion_action_keeps_the_requested_suggestions_count(self):
-        created = await self._create_action(suggestions_count=5)
+        created = await self._create_action(parameters={"suggestions_count": 5})
 
         action = await self.service.find_by_id(created["_id"])
-        self.assertEqual(action.suggestions_count, 5)
+        self.assertEqual(action.parameters.suggestions_count, 5)
 
     async def test_user_without_the_ai_studio_privilege_cannot_head_actions(self):
         """A HEAD request is answered by the GET handler, so it has to be refused with it"""
@@ -369,7 +401,7 @@ class AIActionRunTestCase(TestCase):
 
         body = await self._run_action(content)
 
-        self.assertGreater(len(long_suggestion), ACTION["max_characters"])
+        self.assertGreater(len(long_suggestion), ACTION["parameters"]["max_characters"])
         self.assertEqual(
             body["suggestions"],
             [
@@ -389,7 +421,7 @@ class AIActionRunTestCase(TestCase):
     async def test_no_more_suggestions_than_the_action_asks_for_are_returned(self):
         content = json.dumps({"suggestions": ["One", "Two", "Three", "Four"]})
 
-        body = await self._run_action(content, action=await self._create_action(suggestions_count=2))
+        body = await self._run_action(content, action=await self._create_action(parameters={"suggestions_count": 2}))
 
         self.assertEqual([suggestion["text"] for suggestion in body["suggestions"]], ["One", "Two"])
 

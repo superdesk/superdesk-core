@@ -25,7 +25,7 @@ Feature: AI events
             "action_type": "suggestion",
             "input_fields": ["body_html"],
             "output_field": "headline",
-            "max_characters": 60,
+            "parameters": {"max_characters": 60},
             "provider": "#ai_providers._id#"
         }
         """

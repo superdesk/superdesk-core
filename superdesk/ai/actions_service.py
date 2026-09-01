@@ -35,18 +35,32 @@ class AIActionsService(AsyncResourceService[AIAction]):
     async def on_create(self, docs: List[AIAction]) -> None:
         for doc in docs:
             if doc.action_type == AIActionType.SUMMARY:
-                doc.suggestions_count = 1
+                doc.parameters.suggestions_count = 1
 
         await super().on_create(docs)
 
     async def on_update(self, updates: dict[str, Any], original: AIAction) -> None:
-        action_type = updates.get("action_type", original.action_type)
-        suggestions_count = updates.get("suggestions_count", original.suggestions_count)
+        self._merge_parameters(updates, original)
 
-        if action_type == AIActionType.SUMMARY and suggestions_count != 1:
-            updates["suggestions_count"] = 1
+        if updates.get("action_type", original.action_type) == AIActionType.SUMMARY:
+            parameters = updates.setdefault("parameters", original.parameters.to_dict())
+            parameters["suggestions_count"] = 1
 
         await super().on_update(updates, original)
+
+    def _merge_parameters(self, updates: dict[str, Any], original: AIAction) -> None:
+        """Apply a partial ``parameters`` payload onto the stored ones
+
+        A nested value is written whole, so a client sending one parameter would otherwise reset
+        every other one to its default. Merging keeps patching a parameter meaning what patching a
+        field of the action means, with an explicit ``null`` still clearing.
+        """
+
+        parameters = updates.get("parameters")
+        if not isinstance(parameters, dict):
+            return
+
+        updates["parameters"] = {**original.parameters.to_dict(), **parameters}
 
     async def run(self, action: AIAction, payload: RunActionPayload, user_id: str | None = None) -> dict[str, Any]:
         """Run an action against one item and return the suggestions it produced
@@ -85,8 +99,8 @@ class AIActionsService(AsyncResourceService[AIAction]):
                     content=render_system_prompt(
                         action.action_type,
                         output_field=action.output_field,
-                        count=action.suggestions_count,
-                        max_characters=action.max_characters,
+                        count=action.parameters.suggestions_count,
+                        max_characters=action.parameters.max_characters,
                         language=language,
                         system_prompt=action.parameters.system_prompt,
                     ),
@@ -135,7 +149,8 @@ class AIActionsService(AsyncResourceService[AIAction]):
                 "text": text,
                 # An answer that is too long is reported in full rather than cut, so the client can
                 # show the editor what the provider wrote and let them shorten it
-                "over_limit": action.max_characters is not None and len(text) > action.max_characters,
+                "over_limit": action.parameters.max_characters is not None
+                and len(text) > action.parameters.max_characters,
             }
             for text in answers
         ]
@@ -165,7 +180,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
                 gettext("The AI provider answered with an empty completion"),
             )
 
-        return parse_suggestions(result.content, action.suggestions_count)
+        return parse_suggestions(result.content, action.parameters.suggestions_count)
 
     async def _get_item(self, item_id: str) -> dict[str, Any]:
         """Load the item as stored, without validating it against the archive model.

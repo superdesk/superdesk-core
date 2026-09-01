@@ -20,7 +20,7 @@ Feature: AI actions
             "action_type": "suggestion",
             "input_fields": ["body_html"],
             "output_field": "headline",
-            "max_characters": 60,
+            "parameters": {"max_characters": 60},
             "provider": "#ai_providers._id#"
         }
         """
@@ -32,8 +32,7 @@ Feature: AI actions
             "action_type": "suggestion",
             "input_fields": ["body_html"],
             "output_field": "headline",
-            "max_characters": 60,
-            "suggestions_count": 3,
+            "parameters": {"max_characters": 60, "suggestions_count": 3, "temperature": 0.7},
             "content_profiles": [],
             "active": true
         }
@@ -90,7 +89,7 @@ Feature: AI actions
             "action_type": "suggestion",
             "input_fields": ["body_html"],
             "output_field": "headline",
-            "max_characters": 60,
+            "parameters": {"max_characters": 60},
             "provider": "#ai_providers._id#"
         }
         """

@@ -111,7 +111,10 @@ listing the whole catalogue, which is what an administrator picks the shortlist 
     {"_id": "68af1c0e2b1a4c0f9a3d1e01", "name": "OpenRouter", "active": true, "_status": "OK", ...}
 
 Add an action for it. ``input_fields`` are read from the item, ``output_field`` is the field the
-client writes an accepted answer to:
+client writes an accepted answer to, and ``parameters`` holds everything that tunes how the answers
+are asked for: ``suggestions_count``, ``max_characters``, ``temperature`` and ``system_prompt``.
+Patching one parameter leaves the others alone, so a new knob does not become a new field on the
+resource:
 
 .. code:: sh
 
@@ -120,8 +123,7 @@ client writes an accepted answer to:
         "action_type": "suggestion",
         "input_fields": ["body_html"],
         "output_field": "headline",
-        "suggestions_count": 3,
-        "max_characters": 60,
+        "parameters": {"suggestions_count": 3, "max_characters": 60},
         "provider": "68af1c0e2b1a4c0f9a3d1e01"
     }'
 
