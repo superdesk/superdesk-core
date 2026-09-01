@@ -115,6 +115,47 @@ Feature: AI actions
         And the AI provider was called with the api key "secret-key"
 
     @auth
+    Scenario: A run sends the text the client holds rather than the stored item
+        Given a mocked AI provider at "https://provider.test/v1"
+        And an archive item "article-1" with data
+        """
+        {"profile": "story", "language": "en", "body_html": "<p>The council met on Tuesday.</p>"}
+        """
+        When we post to "/ai_providers"
+        """
+        {
+            "name": "OpenRouter",
+            "provider_type": "openai_compatible",
+            "base_url": "https://provider.test/v1",
+            "api_key": "secret-key",
+            "default_model": "openai/gpt-4o-mini"
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Headline suggestions",
+            "action_type": "suggestion",
+            "input_fields": ["body_html"],
+            "output_field": "headline",
+            "provider": "#ai_providers._id#"
+        }
+        """
+        Then we get OK response
+        When we run the AI action at "/ai_actions/#ai_actions._id#/run"
+        """
+        {
+            "item_id": "article-1",
+            "source": "authoring",
+            "fields": {"body_html": "<p>The council rejected the budget on Wednesday.</p>"}
+        }
+        """
+        Then we get OK response
+        And the AI provider was sent "The council rejected the budget on Wednesday."
+        And the AI provider was not sent "The council met on Tuesday."
+
+    @auth
     Scenario: Running an action against an unknown item is a 404
         Given a mocked AI provider at "https://provider.test/v1"
         When we post to "/ai_providers"

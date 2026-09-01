@@ -68,6 +68,18 @@ def step_then_provider_called_without_api_key(context):
     assert authorization is None, "provider was called with %s" % authorization
 
 
+@then('the AI provider was sent "{text}"')
+def step_then_provider_was_sent(context, text):
+    message = _last_provider_user_message(context)
+    assert text in message, "provider was sent %s" % message
+
+
+@then('the AI provider was not sent "{text}"')
+def step_then_provider_was_not_sent(context, text):
+    message = _last_provider_user_message(context)
+    assert text not in message, "provider was sent %s" % message
+
+
 @when('we run the AI action at "{url}"')
 @async_run_until_complete
 async def step_when_we_run_the_ai_action(context, url):
@@ -124,3 +136,20 @@ def _last_provider_authorization(context):
     assert requests, "no request was made to a mocked AI provider"
 
     return requests[-1].get("headers", {}).get("Authorization")
+
+
+def _last_provider_user_message(context):
+    """Text of the user message of the last completion the provider was asked for
+
+    Skips the ``/models`` calls, which carry no body, so the step reads the completion even
+    when a scenario listed the catalogue first.
+    """
+
+    for request in reversed(_provider_requests(context)):
+        messages = (request.get("json") or {}).get("messages") or []
+        contents = [message["content"] for message in messages if message.get("role") == "user"]
+
+        if contents:
+            return contents[-1]
+
+    raise AssertionError("no completion was requested from a mocked AI provider")
