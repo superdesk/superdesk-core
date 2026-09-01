@@ -8,5 +8,5 @@ types-croniter~=6.2.3
 types-python-dateutil~=2.9.0
 types-pytz~=2026.3.1
 types-PyYAML~=6.0.12
-types-requests<2.32.4.20260108  # https://github.com/python/typeshed/issues/10825
+types-requests<2.33.0.20260713  # https://github.com/python/typeshed/issues/10825
 typing-extensions==4.15.0
