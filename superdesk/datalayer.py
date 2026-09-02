@@ -216,15 +216,17 @@ class SuperdeskDataLayer(DataLayer):
     def _search_backend(self, resource, use_async: bool = False) -> Elastic | ElasticAsync | None:
         if resource.endswith(get_config(str, "VERSIONS")):
             return None
-        datasource = self.datasource(resource)
+        sources = get_config(dict, "SOURCES", {})
         try:
-            backend = get_config(dict, "SOURCES", {})[datasource[0]]["search_backend"]
+            backend = sources[self.datasource(resource)[0]]["search_backend"]
         except (KeyError, TypeError, AttributeError):
-            backend = None
+            # The datasource source may not itself be an endpoint (SOURCES is keyed by
+            # endpoint), so fall back to the endpoint's own config.
+            backend = (sources.get(resource) or {}).get("search_backend")
 
         if backend and use_async:
             backend += "_async"
-        return getattr(self, backend) if backend is not None else None
+        return getattr(self, backend) if backend else None
 
     @overload
     def _backend(self, resource: str) -> Mongo | None:
