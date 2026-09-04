@@ -7,16 +7,16 @@
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: Superdesk-Core 3.2.0.dev0\n"
+"Project-Id-Version: Superdesk-Core 3.6.0.dev0\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-01-13 11:28+0100\n"
+"POT-Creation-Date: 2026-09-04 13:08+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.17.0\n"
+"Generated-By: Babel 2.18.0\n"
 
 #: superdesk/activity.py:85
 msgid "Send notifications via email"
@@ -30,16 +30,74 @@ msgstr ""
 msgid "Allow Desktop Notifications"
 msgstr ""
 
-#: superdesk/internal_destinations.py:116
+#: superdesk/activity.py:114 superdesk/activity.py:137
+msgid "Can not determine user"
+msgstr ""
+
+#: superdesk/activity.py:142
+msgid "User is not in the notification list"
+msgstr ""
+
+#: superdesk/activity.py:146
+msgid "Can not set notification as read"
+msgstr ""
+
+#: superdesk/activity.py:152
+msgid "Can not set other users notification as read"
+msgstr ""
+
+#: superdesk/activity.py:156
+msgid "Can not update"
+msgstr ""
+
+#: superdesk/download.py:41 superdesk/upload.py:81
+msgid "File not found on media storage."
+msgstr ""
+
+#: superdesk/eve_backend.py:875 superdesk/eve_backend.py:891
+msgid "Can not remove from endpoint with a defined search"
+msgstr ""
+
+#: superdesk/internal_destinations.py:121
 msgid "Internal Destinations"
 msgstr ""
 
-#: superdesk/internal_destinations.py:117
+#: superdesk/internal_destinations.py:122
 msgid "User can manage internal destinations."
 msgstr ""
 
 #: superdesk/resource_locking.py:35
 msgid "Resource is locked."
+msgstr ""
+
+#: superdesk/services.py:207
+msgid "Running `get_all_batch_elastic` without a sort is not supported"
+msgstr ""
+
+#: superdesk/eve_async/service.py:239 superdesk/services.py:337
+#, python-brace-format
+msgid "Uploaded file is invalid, Error occured:{}."
+msgstr ""
+
+#: superdesk/upload.py:92
+msgid "Provide required param: 'resource'."
+msgstr ""
+
+#: superdesk/upload.py:96
+msgid "You don't have permissions to upload JSON file."
+msgstr ""
+
+#: superdesk/upload.py:100
+msgid "Provide JSON file with key 'json_file'."
+msgstr ""
+
+#: superdesk/upload.py:115
+#, python-brace-format
+msgid "Invalid JSON file: {}."
+msgstr ""
+
+#: superdesk/media/renditions.py:92 superdesk/upload.py:234
+msgid "Generating renditions failed"
 msgstr ""
 
 #: superdesk/types/content_types.py:34 superdesk/validator.py:349
@@ -58,14 +116,14 @@ msgid "Package doesn't support Public Service Announcements"
 msgstr ""
 
 #: apps/archive/archive.py:411 apps/archive/archive.py:911
-#: apps/duplication/archive_duplication.py:144
+#: apps/duplication/archive_duplication.py:153
 #: apps/item_autosave/components/item_autosave.py:36
 #: superdesk/archive_async/service.py:473
 #: superdesk/archive_async/service.py:999
 msgid "The item was locked by another user"
 msgstr ""
 
-#: apps/archive/archive.py:465 apps/archived/archived.py:219
+#: apps/archive/archive.py:465 apps/archived/archived.py:220
 #: superdesk/archive_async/service.py:555
 #: superdesk/archived_async/service.py:159
 msgid "User does not have permissions to read the item."
@@ -132,76 +190,88 @@ msgstr ""
 msgid "Duplicate subjects are not allowed"
 msgstr ""
 
-#: apps/archived/archived.py:141 superdesk/archived_async/service.py:90
+#: apps/archived/archived.py:142 superdesk/archived_async/service.py:90
 msgid "Only Text articles are allowed to be Killed in Archived repo"
 msgstr ""
 
-#: apps/archived/archived.py:144 superdesk/archived_async/service.py:93
+#: apps/archived/archived.py:145 superdesk/archived_async/service.py:93
 msgid "Killing of Broadcast Items isn't allowed in Archived repo"
 msgstr ""
 
-#: apps/archived/archived.py:148 superdesk/archived_async/service.py:98
+#: apps/archived/archived.py:149 superdesk/archived_async/service.py:98
 msgid ""
 "Can't kill as this article acts as a Master Story for existing "
 "broadcast(s)"
 msgstr ""
 
-#: apps/archived/archived.py:152 superdesk/archived_async/service.py:103
+#: apps/archived/archived.py:153 superdesk/archived_async/service.py:103
 msgid "Can't Kill as article is still available in production"
 msgstr ""
 
-#: apps/archived/archived.py:155 superdesk/archived_async/service.py:106
+#: apps/archived/archived.py:156 superdesk/archived_async/service.py:106
 msgid "Can't kill as article is part of a Package"
 msgstr ""
 
-#: apps/archived/archived.py:160 superdesk/archived_async/service.py:111
+#: apps/archived/archived.py:161 superdesk/archived_async/service.py:111
 msgid "Can't Kill as the Digital Story is still available in production"
 msgstr ""
 
-#: apps/archived/archived.py:172 superdesk/archived_async/service.py:115
+#: apps/archived/archived.py:173 superdesk/archived_async/service.py:115
 msgid "Digital Story of the article not found in Archived repo"
 msgstr ""
 
-#: apps/archived/archived.py:175 superdesk/archived_async/service.py:118
+#: apps/archived/archived.py:176 superdesk/archived_async/service.py:118
 msgid "Can't kill as Digital Story is part of a Package"
 msgstr ""
 
-#: apps/archived/archived.py:180 superdesk/archived_async/service.py:124
+#: apps/archived/archived.py:181 superdesk/archived_async/service.py:124
 msgid "Can't Kill as Take(s) are still available in production"
 msgstr ""
 
-#: apps/archived/archived.py:190 superdesk/archived_async/service.py:128
+#: apps/archived/archived.py:191 superdesk/archived_async/service.py:128
 msgid "One of Take(s) not found in Archived repo"
 msgstr ""
 
-#: apps/archived/archived.py:193 superdesk/archived_async/service.py:131
+#: apps/archived/archived.py:194 superdesk/archived_async/service.py:131
 msgid "Can't kill as one of Take(s) is part of a Package"
 msgstr ""
 
-#: superdesk/auth_server/module.py:61
+#: superdesk/auth/decorator.py:59
+msgid "Token required"
+msgstr ""
+
+#: superdesk/auth/decorator.py:62
+msgid "Invalid or expired token"
+msgstr ""
+
+#: superdesk/auth/decorator.py:65
+msgid "Token not valid for this URL"
+msgstr ""
+
+#: superdesk/auth_server/module.py:68
 msgid "Auth Server Clients"
 msgstr ""
 
-#: superdesk/auth_server/module.py:62
+#: superdesk/auth_server/module.py:69
 msgid "User can manage auth server clients"
 msgstr ""
 
-#: apps/content_types/content_types.py:162
-#: superdesk/content_types_async/service.py:87
+#: apps/content_types/content_types.py:140
+#: superdesk/content_types_async/service.py:66
 #, python-brace-format
 msgid "Vocabulary {vocabulary} is used in {count} content type(s)"
 msgstr ""
 
-#: apps/content_types/content_types.py:185
-#: superdesk/content_types_async/service.py:105
+#: apps/content_types/content_types.py:163
+#: superdesk/content_types_async/service.py:84
 #, python-brace-format
 msgid ""
 "Cannot disable content profile as following templates are referencing: "
 "{templates}"
 msgstr ""
 
-#: apps/content_types/content_types.py:197
-#: superdesk/content_types_async/service.py:115
+#: apps/content_types/content_types.py:175
+#: superdesk/content_types_async/service.py:94
 #, python-brace-format
 msgid "Cannot disable content profile as following desks are referencing: {desks}"
 msgstr ""
@@ -210,19 +280,50 @@ msgstr ""
 msgid "Insufficient privileges for the requested operation."
 msgstr ""
 
+#: superdesk/core/elastic/base_client.py:237
+msgid "Invalid where argument"
+msgstr ""
+
+#: superdesk/core/resources/resource_rest_endpoints.py:272
+msgid "Parent resource ID not provided in URL"
+msgstr ""
+
 #: superdesk/core/resources/resource_rest_endpoints.py:400
 msgid "Invalid ID format"
 msgstr ""
 
-#: superdesk/core/resources/utils.py:56
+#: superdesk/core/resources/resource_rest_endpoints.py:416
+#: superdesk/core/resources/resource_rest_endpoints.py:539
+msgid "Empty payload"
+msgstr ""
+
+#: apps/archive/archive.py:1310 superdesk/core/resources/service.py:501
+#: superdesk/core/resources/service.py:1009
+msgid "Client and server etags don't match"
+msgstr ""
+
+#: superdesk/core/resources/service.py:941
+msgid "Failed to parse the where filter"
+msgstr ""
+
+#: superdesk/core/resources/service.py:1065
+#: superdesk/core/resources/service.py:1100
+msgid "Resource does not support versioning"
+msgstr ""
+
+#: superdesk/core/resources/service.py:1188
+msgid "Failed to bulk update items in MongoDB"
+msgstr ""
+
+#: superdesk/core/resources/utils.py:89
 msgid "Cannot combine projections of different types"
 msgstr ""
 
-#: superdesk/core/resources/utils.py:76
+#: superdesk/core/resources/utils.py:109
 msgid "invalid projection type"
 msgstr ""
 
-#: superdesk/core/resources/utils.py:119
+#: superdesk/core/resources/utils.py:152
 msgid "Invalid projection: cannot include and exclude the same field"
 msgstr ""
 
@@ -291,6 +392,18 @@ msgstr ""
 msgid "User can maintain Ingest Channels."
 msgstr ""
 
+#: superdesk/io/ingest_provider_model.py:277
+msgid "Deleting an Ingest Source after receiving items is prohibited."
+msgstr ""
+
+#: superdesk/io/feeding_services/__init__.py:172
+msgid "Ingest Provider is closed"
+msgstr ""
+
+#: superdesk/io/webhooks/__init__.py:26
+msgid "You are not authorized to access this resource"
+msgstr ""
+
 #: superdesk/macros/abstract_populator.py:35
 msgid "Populate Abstract"
 msgstr ""
@@ -315,7 +428,7 @@ msgstr ""
 msgid "Internal Destination Auto Publish"
 msgstr ""
 
-#: superdesk/macros/set_default_template_metadata.py:90
+#: superdesk/macros/set_default_template_metadata.py:95
 msgid "Set Default Template Metadata"
 msgstr ""
 
@@ -412,12 +525,84 @@ msgstr ""
 msgid "weight"
 msgstr ""
 
+#: superdesk/media/crop.py:50
+msgid "Only images can be cropped!"
+msgstr ""
+
+#: superdesk/media/crop.py:54
+msgid "Missing renditions!"
+msgstr ""
+
+#: superdesk/media/crop.py:58
+msgid "Missing original rendition!"
+msgstr ""
+
+#: superdesk/media/crop.py:65
+#, python-brace-format
+msgid "Unknown crop name! (name={name})"
+msgstr ""
+
+#: superdesk/media/crop.py:80
+#, python-brace-format
+msgid "Invalid value for {field} in renditions"
+msgstr ""
+
+#: superdesk/media/crop.py:131
+msgid "Crop data are missing. width, height or ratio need to be defined"
+msgstr ""
+
+#: superdesk/media/crop.py:138
+#, python-brace-format
+msgid "Wrong crop size. Minimum crop size is {}x{}."
+msgstr ""
+
+#: superdesk/media/crop.py:143
+msgid "Wrong aspect ratio!"
+msgstr ""
+
+#: superdesk/media/crop.py:151
+#, python-brace-format
+msgid "Ratio {ratio} is not respected. We got {actual}"
+msgstr ""
+
+#: superdesk/media/crop.py:172
+msgid "Crops sizes couldn't be loaded!"
+msgstr ""
+
+#: superdesk/media/crop.py:187
+msgid "Original file couldn't be found"
+msgstr ""
+
+#: superdesk/media/crop.py:192
+msgid "Saving crop failed."
+msgstr ""
+
+#: superdesk/media/crop.py:207 superdesk/media/crop.py:241
+#, python-brace-format
+msgid "Generating crop failed: {}"
+msgstr ""
+
+#: superdesk/media/media_operations.py:113
+#: superdesk/media/media_operations.py:146
+#, python-brace-format
+msgid "Failed to retrieve file from URL: {url}"
+msgstr ""
+
+#: superdesk/media/media_operations.py:177
+msgid "Failed to process file"
+msgstr ""
+
 #: superdesk/profiling/__init__.py:35
 msgid "Profiling Service"
 msgstr ""
 
 #: superdesk/profiling/__init__.py:36
 msgid "User can read profiling data."
+msgstr ""
+
+#: superdesk/profiling/service.py:78
+#, python-brace-format
+msgid "Invalid sort field {field}"
 msgstr ""
 
 #: superdesk/publish_async/__init__.py:49 superdesk/publish_async/module.py:60
@@ -460,37 +645,37 @@ msgstr ""
 msgid "Article not found"
 msgstr ""
 
-#: apps/publish/content/common.py:499 apps/publish/content/common.py:567
-#: superdesk/publish_async/exchanges/content_exchange.py:328
+#: apps/publish/content/common.py:541 apps/publish/content/common.py:625
+#: superdesk/publish_async/exchanges/content_exchange.py:590
 msgid "Corrected package cannot be empty!"
 msgstr ""
 
-#: superdesk/publish_async/filters/base_exchange_filter.py:384
+#: superdesk/publish_async/filters/base_exchange_filter.py:383
 #, python-brace-format
 msgid "Filter statement {index} does not have a filter condition"
 msgstr ""
 
-#: superdesk/publish_async/formatters/base_exchange_formatter.py:384
+#: superdesk/publish_async/formatters/base_exchange_formatter.py:533
 #, python-brace-format
 msgid "Can not find package {package} published item {item}"
 msgstr ""
 
-#: superdesk/publish_async/resources/content_filters/service.py:44
+#: superdesk/publish_async/resources/content_filters/service.py:45
 #, python-brace-format
 msgid "Content filter has been referenced by subscriber(s) {references}"
 msgstr ""
 
-#: superdesk/publish_async/resources/content_filters/service.py:54
+#: superdesk/publish_async/resources/content_filters/service.py:55
 #, python-brace-format
 msgid "Content filter has been referenced by routing scheme(s) {references}"
 msgstr ""
 
-#: superdesk/publish_async/resources/content_filters/service.py:64
+#: superdesk/publish_async/resources/content_filters/service.py:65
 #, python-brace-format
 msgid "Content filter has been referenced in {references})"
 msgstr ""
 
-#: superdesk/publish_async/resources/content_filters/service.py:82
+#: superdesk/publish_async/resources/content_filters/service.py:83
 #, python-brace-format
 msgid "Circular dependency error in content filters:{filter}"
 msgstr ""
@@ -620,6 +805,14 @@ msgstr ""
 msgid "User can manage roles."
 msgstr ""
 
+#: superdesk/roles/roles.py:75
+msgid "Cannot delete the default role"
+msgstr ""
+
+#: superdesk/roles/roles.py:79
+msgid "Cannot delete the role, it still has users in it!"
+msgstr ""
+
 #: superdesk/sams/__init__.py:50
 msgid "Sams"
 msgstr ""
@@ -648,6 +841,11 @@ msgstr ""
 msgid "SAMS Image Asset not found"
 msgstr ""
 
+#: superdesk/sams/assets.py:139 superdesk/sams/assets.py:166
+#: superdesk/sams/sets.py:84 superdesk/sams/sets.py:126
+msgid "If-Match field missing in header"
+msgstr ""
+
 #: superdesk/sams/assets.py:142
 msgid "Asset is attached to a news item, cannot delete"
 msgstr ""
@@ -673,12 +871,53 @@ msgstr ""
 msgid "Unsupported content type"
 msgstr ""
 
+#: superdesk/text_checkers/ai/__init__.py:95
+#: superdesk/text_checkers/ai/__init__.py:168
+#: superdesk/text_checkers/ai/__init__.py:235
+#, python-brace-format
+msgid "{service} service can't be found"
+msgstr ""
+
+#: superdesk/text_checkers/ai/imatrics.py:349
+#, python-brace-format
+msgid "[{name}] no tag UUID specified"
+msgstr ""
+
+#: superdesk/text_checkers/spellcheckers/__init__.py:149
+#, python-brace-format
+msgid "{sc_name} spellchecker can't be found"
+msgstr ""
+
+#: superdesk/text_checkers/spellcheckers/default.py:39
+#: superdesk/text_checkers/spellcheckers/default.py:57
+msgid "missing language for default spellchecker"
+msgstr ""
+
+#: superdesk/text_checkers/spellcheckers/grammalecte.py:222
+#: superdesk/text_checkers/spellcheckers/grammalecte.py:247
+msgid "Unexpected return code from Grammalecte"
+msgstr ""
+
+#: superdesk/text_checkers/spellcheckers/leuven_dutch.py:51
+#: superdesk/text_checkers/spellcheckers/leuven_dutch.py:83
+#, python-brace-format
+msgid "Unexpected return code from {}"
+msgstr ""
+
 #: apps/ldap/__init__.py:26 superdesk/users/__init__.py:29
 msgid "User Management"
 msgstr ""
 
 #: apps/ldap/__init__.py:26 superdesk/users/__init__.py:29
 msgid "User can manage users."
+msgstr ""
+
+#: superdesk/users/async_service.py:441 superdesk/users/services.py:541
+msgid "Failed to send account activation email."
+msgstr ""
+
+#: superdesk/users/async_service.py:469 superdesk/users/services.py:568
+msgid "User not found"
 msgstr ""
 
 #: superdesk/vocabularies/__init__.py:30
@@ -697,6 +936,16 @@ msgstr ""
 #: superdesk/vocabularies/vocabularies.py:40
 #: superdesk/vocabularies_async/service.py:37
 msgid "User can manage vocabularies' contents."
+msgstr ""
+
+#: superdesk/vocabularies/vocabularies.py:284
+#: superdesk/vocabularies_async/service.py:128
+msgid "Default vocabularies cannot be deleted"
+msgstr ""
+
+#: superdesk/vocabularies/vocabularies.py:299
+#, python-brace-format
+msgid "{} cannot be empty"
 msgstr ""
 
 #: apps/desk_routing.py:77
@@ -723,19 +972,19 @@ msgstr ""
 msgid "User can access master desk."
 msgstr ""
 
-#: apps/desks.py:196 apps/desks_async/desks_async_service.py:93
+#: apps/desks.py:196 apps/desks_async/desks_async_service.py:97
 msgid "Cannot update Desk Type as there are article(s) referenced by the Desk."
 msgstr ""
 
-#: apps/desks.py:219 apps/desks_async/desks_async_service.py:110
+#: apps/desks.py:219 apps/desks_async/desks_async_service.py:114
 msgid "Cannot delete desk as it is assigned as default desk to user(s)."
 msgstr ""
 
-#: apps/desks.py:231 apps/desks_async/desks_async_service.py:122
+#: apps/desks.py:231 apps/desks_async/desks_async_service.py:126
 msgid "Cannot delete desk as routing scheme(s) are associated with the desk"
 msgstr ""
 
-#: apps/desks.py:245 apps/desks_async/desks_async_service.py:136
+#: apps/desks.py:245 apps/desks_async/desks_async_service.py:140
 msgid ""
 "Cannot delete desk as it has article(s) or referenced by versions of the "
 "article(s)."
@@ -841,27 +1090,27 @@ msgstr ""
 msgid "Must have one incoming stage in a desk"
 msgstr ""
 
-#: apps/archive/common.py:634 apps/tasks.py:100
+#: apps/archive/common.py:636 apps/tasks.py:108
 #, python-brace-format
 msgid "Invalid desk identifier {desk_id}"
 msgstr ""
 
-#: apps/tasks.py:105
+#: apps/tasks.py:113
 #, python-brace-format
 msgid "User is not member of desk: {desk_id}"
 msgstr ""
 
-#: apps/archive/common.py:640 apps/tasks.py:117
+#: apps/archive/common.py:642 apps/tasks.py:125
 #, python-brace-format
 msgid "Invalid stage identifier {stage_id}"
 msgstr ""
 
-#: apps/tasks.py:158
+#: apps/tasks.py:168
 #, python-brace-format
 msgid "Error:{exception} in {rule_type} rule:{rule} for stage:{stage}"
 msgstr ""
 
-#: apps/tasks.py:338
+#: apps/tasks.py:348
 msgid "Tasks Management"
 msgstr ""
 
@@ -957,56 +1206,60 @@ msgstr ""
 msgid "User can mark or unmark items for other users"
 msgstr ""
 
-#: apps/archive/archive.py:1310
-msgid "Client and server etags don't match"
+#: apps/archive/archive.py:1301
+msgid "Content is missing"
 msgstr ""
 
 #: apps/archive/archive.py:1312
 msgid "Request for Auto-save must have _id"
 msgstr ""
 
-#: apps/archive/archive_correction.py:123
+#: apps/archive/archive_correction.py:141
 #, python-brace-format
 msgid "Failed to generate correction: {exception}"
 msgstr ""
 
-#: apps/archive/archive_correction.py:136 apps/archive/archive_rewrite.py:148
+#: apps/archive/archive_correction.py:154 apps/archive/archive_rewrite.py:149
 msgid "Cannot find the article"
 msgstr ""
 
-#: apps/archive/archive_link.py:59 apps/archive/archive_rewrite.py:360
+#: apps/archive/archive_link.py:59 apps/archive/archive_rewrite.py:401
 msgid "Only updates can be unlinked!"
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:152
+#: apps/archive/archive_media.py:52
+msgid "No media found"
+msgstr ""
+
+#: apps/archive/archive_rewrite.py:153
 msgid "Rewrite of an Item having embargo isn't possible"
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:155
+#: apps/archive/archive_rewrite.py:156
 msgid "Event id does not exist"
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:158
+#: apps/archive/archive_rewrite.py:159
 msgid "Article has been rewritten before !"
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:171
+#: apps/archive/archive_rewrite.py:172
 msgid "Rewrite is not published. Cannot rewrite the story again."
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:177
+#: apps/archive/archive_rewrite.py:178
 msgid "Rewrite story has been used as update before !"
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:190
+#: apps/archive/archive_rewrite.py:191
 msgid "Rewrite story can only be text or pre-formatted !"
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:195
+#: apps/archive/archive_rewrite.py:196
 msgid "Broadcast cannot be a update story !"
 msgstr ""
 
-#: apps/archive/archive_rewrite.py:199
+#: apps/archive/archive_rewrite.py:200
 msgid "Rewrite item content profile does not match with Original item."
 msgstr ""
 
@@ -1028,19 +1281,19 @@ msgstr ""
 msgid "Field %(field)s is not allowed"
 msgstr ""
 
-#: apps/archive/common.py:450 apps/archive/common.py:476
+#: apps/archive/common.py:452 apps/archive/common.py:478
 msgid "Document not found in archive collection"
 msgstr ""
 
-#: apps/archive/common.py:724 apps/archive/common.py:726
+#: apps/archive/common.py:726 apps/archive/common.py:728
 msgid "Schedule date is not recognized"
 msgstr ""
 
-#: apps/archive/common.py:730
+#: apps/archive/common.py:732
 msgid "Schedule cannot be earlier than now"
 msgstr ""
 
-#: apps/archive/common.py:746
+#: apps/archive/common.py:748
 #, python-brace-format
 msgid "{} date is not recognized"
 msgstr ""
@@ -1070,11 +1323,11 @@ msgstr ""
 msgid "Invalid content state."
 msgstr ""
 
-#: apps/archived/archived.py:447
+#: apps/archived/archived.py:448
 msgid "Archive Management"
 msgstr ""
 
-#: apps/archived/archived.py:448
+#: apps/archived/archived.py:449
 msgid "User can remove items from the archived"
 msgstr ""
 
@@ -1090,6 +1343,10 @@ msgstr ""
 msgid ""
 "Oops!This account has been changed to External. External accounts have no"
 " login capability."
+msgstr ""
+
+#: apps/auth/db/reset_password.py:61
+msgid "Invalid token received"
 msgstr ""
 
 #: apps/auth/db/reset_password.py:80
@@ -1150,6 +1407,14 @@ msgstr ""
 msgid "Invalid filter conditions field {field}"
 msgstr ""
 
+#: apps/content_lists/module.py:82
+msgid "Content Lists"
+msgstr ""
+
+#: apps/content_lists/module.py:82
+msgid "Manage content lists"
+msgstr ""
+
 #: apps/content_types/__init__.py:13
 msgid "Content Profile"
 msgstr ""
@@ -1208,7 +1473,7 @@ msgid "Send Content to Personal desk"
 msgstr ""
 
 #: apps/duplication/archive_copy.py:55
-#: apps/duplication/archive_duplication.py:133
+#: apps/duplication/archive_duplication.py:142
 #: apps/duplication/archive_move.py:129
 #: apps/duplication/archive_translate.py:60
 #, python-brace-format
@@ -1219,7 +1484,7 @@ msgstr ""
 msgid "Copy is not allowed on items in a desk."
 msgstr ""
 
-#: apps/duplication/archive_duplication.py:56
+#: apps/duplication/archive_duplication.py:57
 msgid "Duplicate to Personal space is not allowed."
 msgstr ""
 
@@ -1232,7 +1497,7 @@ msgstr ""
 msgid "Item is locked for move by another user."
 msgstr ""
 
-#: apps/duplication/archive_move.py:198
+#: apps/duplication/archive_move.py:199
 msgid "Move is not allowed within the same stage."
 msgstr ""
 
@@ -1240,11 +1505,11 @@ msgstr ""
 msgid "Content export"
 msgstr ""
 
-#: apps/export/service.py:95
+#: apps/export/service.py:103
 msgid "No items to export."
 msgstr ""
 
-#: apps/export/service.py:100
+#: apps/export/service.py:108
 msgid "Formatter not found for requested format type."
 msgstr ""
 
@@ -1281,11 +1546,6 @@ msgstr ""
 msgid "provider not found source={source}"
 msgstr ""
 
-#: apps/io/feeding_services/reuters.py:149
-#, python-brace-format
-msgid "Not found {payload}"
-msgstr ""
-
 #: apps/item_autosave/components/item_autosave.py:32
 msgid "Invalid item identifier"
 msgstr ""
@@ -1312,6 +1572,10 @@ msgstr ""
 
 #: apps/keywords/service.py:25
 msgid "Not set a keywords provider"
+msgstr ""
+
+#: apps/ldap/commands.py:74
+msgid "Username not found"
 msgstr ""
 
 #: apps/ldap/ldap.py:107
@@ -1478,115 +1742,115 @@ msgid ""
 "remove_expired()."
 msgstr ""
 
-#: apps/publish/content/common.py:193
+#: apps/publish/content/common.py:194
 msgid "Cannot find article to publish"
 msgstr ""
 
-#: apps/publish/content/common.py:328
+#: apps/publish/content/common.py:369
 msgid "Item didn't match any Products"
 msgstr ""
 
-#: apps/publish/content/common.py:330
+#: apps/publish/content/common.py:371
 msgid "Item not published to any Subscribers"
 msgstr ""
 
-#: apps/publish/content/common.py:332
+#: apps/publish/content/common.py:373
 msgid "Failed to route item"
 msgstr ""
 
-#: apps/publish/content/common.py:356
+#: apps/publish/content/common.py:398
 #, python-brace-format
 msgid "Key is missing on article to be published: {exception}"
 msgstr ""
 
-#: apps/publish/content/common.py:361
+#: apps/publish/content/common.py:403
 #, python-brace-format
 msgid "Failed to publish the item: {id}"
 msgstr ""
 
-#: apps/publish/content/common.py:413
+#: apps/publish/content/common.py:455
 msgid "Embargo can't be set after publishing"
 msgstr ""
 
-#: apps/publish/content/common.py:417
+#: apps/publish/content/common.py:459
 msgid "Dateline can't be modified on kill or take down"
 msgstr ""
 
-#: apps/publish/content/common.py:422
+#: apps/publish/content/common.py:464
 msgid "Cannot publish the story after Update is published."
 msgstr ""
 
-#: apps/publish/content/common.py:434
+#: apps/publish/content/common.py:476
 msgid "Can't publish update until original story is published."
 msgstr ""
 
-#: apps/publish/content/common.py:477
+#: apps/publish/content/common.py:519
 msgid ""
 "There are unpublished related items that won't be sent out as related "
 "items. Do you want to publish the article anyway?"
 msgstr ""
 
-#: apps/publish/content/common.py:489
+#: apps/publish/content/common.py:531
 #, python-brace-format
 msgid "Package cannot be {state}"
 msgstr ""
 
-#: apps/publish/content/common.py:492
+#: apps/publish/content/common.py:534
 msgid "Package cannot have Embargo"
 msgstr ""
 
-#: apps/publish/content/common.py:503
+#: apps/publish/content/common.py:545
 msgid "Cannot publish an item which is marked as Not for Publication"
 msgstr ""
 
-#: apps/publish/content/common.py:508
+#: apps/publish/content/common.py:550
 #, python-brace-format
 msgid "Can't {operation} as item state is {state}"
 msgstr ""
 
-#: apps/publish/content/common.py:510
+#: apps/publish/content/common.py:552
 #, python-brace-format
 msgid ""
 "Can't {operation} as either package state or one of the items state is "
 "{state}"
 msgstr ""
 
-#: apps/publish/content/common.py:559 apps/publish/content/publish.py:63
+#: apps/publish/content/common.py:617 apps/publish/content/publish.py:66
 msgid "Empty package cannot be published!"
 msgstr ""
 
-#: apps/publish/content/common.py:580 apps/publish/content/common.py:621
+#: apps/publish/content/common.py:638 apps/publish/content/common.py:679
 #, python-brace-format
 msgid "Package item with id: {guid} does not exist."
 msgstr ""
 
-#: apps/publish/content/common.py:789
+#: apps/publish/content/common.py:844
 #, python-brace-format
 msgid "Item cannot contain associated {state} item."
 msgstr ""
 
-#: apps/publish/content/common.py:793
+#: apps/publish/content/common.py:848
 msgid "Associated item is scheduled later than current item."
 msgstr ""
 
-#: apps/publish/content/common.py:796
+#: apps/publish/content/common.py:851
 msgid "Item cannot have associated items with Embargo"
 msgstr ""
 
-#: apps/publish/content/common.py:808
+#: apps/publish/content/common.py:863
 #, python-brace-format
 msgid "Associated item {name} {error}"
 msgstr ""
 
-#: apps/publish/content/common.py:820
+#: apps/publish/content/common.py:875
 msgid "packaged item is locked by another user"
 msgstr ""
 
-#: apps/publish/content/common.py:829
+#: apps/publish/content/common.py:884
 msgid "packaged item is locked by you. Unlock it and try again"
 msgstr ""
 
-#: apps/publish/content/common.py:970
+#: apps/publish/content/common.py:1025
 #, python-brace-format
 msgid "Associated item \"{}\" does not exist in the system"
 msgstr ""
@@ -1615,40 +1879,40 @@ msgstr ""
 msgid "Circular reference in item {item_id}"
 msgstr ""
 
-#: apps/publish/content/resend.py:95
+#: apps/publish/content/resend.py:98
 msgid "Failed to route item to publish queue!"
 msgstr ""
 
-#: apps/publish/content/resend.py:104
+#: apps/publish/content/resend.py:107
 msgid "No subscribers selected!"
 msgstr ""
 
-#: apps/publish/content/resend.py:111
+#: apps/publish/content/resend.py:114
 msgid "No active subscribers found!"
 msgstr ""
 
-#: apps/publish/content/resend.py:118
+#: apps/publish/content/resend.py:121
 msgid "Only wire subscribers can receive broadcast stories!"
 msgstr ""
 
-#: apps/publish/content/resend.py:130
+#: apps/publish/content/resend.py:133
 msgid "Story couldn't be found!"
 msgstr ""
 
-#: apps/publish/content/resend.py:133
+#: apps/publish/content/resend.py:136
 msgid "Only text stories can be resent!"
 msgstr ""
 
-#: apps/publish/content/resend.py:142
+#: apps/publish/content/resend.py:145
 msgid "Only published, corrected or killed stories can be resent!"
 msgstr ""
 
-#: apps/publish/content/resend.py:147
+#: apps/publish/content/resend.py:150
 #, python-brace-format
 msgid "Please use the newest version {version} to resend!"
 msgstr ""
 
-#: apps/publish/content/resend.py:151
+#: apps/publish/content/resend.py:154
 msgid "Updated story cannot be resent!"
 msgstr ""
 
@@ -1907,6 +2171,10 @@ msgstr ""
 msgid "Kill templates can not be deleted."
 msgstr ""
 
+#: apps/templates/content_templates.py:428
+msgid "Kill templates can not be assigned to desks"
+msgstr ""
+
 #: apps/templates/content_templates.py:430
 msgid "Kill templates must be public"
 msgstr ""
@@ -1923,6 +2191,24 @@ msgstr ""
 #: apps/templates/content_templates.py:481
 #, python-brace-format
 msgid "You dont have the privilege to {action} the public template"
+msgstr ""
+
+#: apps/templates/content_templates.py:512
+msgid "Invalid Template Name"
+msgstr ""
+
+#: apps/templates/content_templates.py:515
+msgid "Invalid Item"
+msgstr ""
+
+#: apps/templates/content_templates.py:519
+msgid "Invalid Template"
+msgstr ""
+
+#: apps/templates/content_templates.py:547
+#: apps/templates/content_templates.py:564
+#, python-brace-format
+msgid "{} Template missing."
 msgstr ""
 
 #: apps/user_availability/__init__.py:27
