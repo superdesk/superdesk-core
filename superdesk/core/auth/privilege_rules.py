@@ -6,6 +6,23 @@ from superdesk.users.async_service import get_privileges, is_admin
 from superdesk.core.types import HTTP_METHOD, AuthRule, Request
 
 
+def request_user_has_privilege(request: Request, privilege: str) -> bool:
+    """Whether the authenticated user holds a privilege, an administrator holding every one
+
+    Same resolution as :func:`required_privilege_rule`, but as an answer rather than as a
+    rejection, for checks that depend on which item is being touched and so cannot be made
+    before the route runs.
+    """
+
+    user = request.user
+    if not isinstance(user, dict):
+        return False
+    if is_admin(user):
+        return True
+
+    return bool(get_privileges(user, request.storage.request.get("role")).get(privilege))
+
+
 def required_privilege_rule(privilege: str) -> AuthRule:
     """
     Creates an authentication rule that restricts access based on a specific privilege.
