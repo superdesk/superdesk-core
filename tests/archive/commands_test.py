@@ -45,16 +45,21 @@ class RemoveExpiredContentTestCase(TestCase):
         assert await test_utils.count("archive") == 0
 
     async def test_expired_archived_picture(self):
+        expired_item_id = "test"
         await test_utils.post_items(
             "archived",
             [
                 {
                     "type": "picture",
                     "_id": ObjectId.from_datetime(datetime(2024, 1, 1)),
-                    "item_id": "test",
-                    "guid": "test",
+                    "item_id": expired_item_id,
+                    "guid": expired_item_id,
                 },
             ],
+        )
+        await test_utils.post_items(
+            "archive",
+            [{"_id": expired_item_id, "type": "text", "state": "published"}],
         )
 
         with patch.dict(self.app.config, {"ARCHIVED_EXPIRY_MINUTES": 1}):

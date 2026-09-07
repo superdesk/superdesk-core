@@ -296,7 +296,7 @@ class RemoveExpiredContent:
         else:
             logger.info("%s Removing %d expired items from archived.", self.log_msg, len(expired))
 
-        removed = await archived_service.delete_docs_async(expired)
+        removed = await archived_service.delete_docs_without_callbacks_async(expired)
         for item in expired:
             if item["_id"] not in removed:
                 logger.error("%s Item was not removed from archived item=%s", self.log_msg, item["item_id"])
