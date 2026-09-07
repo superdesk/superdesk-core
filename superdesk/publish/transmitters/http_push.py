@@ -113,15 +113,15 @@ class HTTPPushService(PublishService, AsyncHttpClientSessionMixin):
                 return
         except aiohttp.ClientResponseError as error:
             message = f"HTTPPush Response Error {error.status} {error.message}"
-            logger.exception(message)
-            await self._raise_publish_error(error.status or 400, Exception(message), destination)
+            logger.debug(message, exc_info=True)
+            await self._raise_publish_error(error.status or 400, error, destination)
         except aiohttp.ClientConnectionError as error:
             message = f"HTTPPush Connection Error {error}"
-            logger.exception(message)
-            await self._raise_publish_error(504, Exception(message), destination)
+            logger.debug(message, exc_info=True)
+            await self._raise_publish_error(504, error, destination)
         except (asyncio.TimeoutError, TimeoutError):
             message = "HTTPPush Timeout while pushing the item"
-            logger.exception(message)
+            logger.debug(message, exc_info=True)
             await self._raise_publish_error(504, Exception(message), destination)
         except asyncio.CancelledError:
             logger.exception("HTTPPush Asyncio Task Cancelled")
