@@ -114,7 +114,13 @@ Add an action for it. ``input_fields`` are read from the item, ``output_field`` 
 client writes an accepted answer to, and ``parameters`` holds everything that tunes how the answers
 are asked for: ``suggestions_count``, ``max_characters``, ``temperature`` and ``system_prompt``.
 Patching one parameter leaves the others alone, so a new knob does not become a new field on the
-resource:
+resource.
+
+``max_characters`` can be left out, in which case the length comes from the ``maxlength`` the
+content profile of the item gives ``output_field``. That is the length the field can actually
+store, so answers are asked to fit it by default and an action cannot quietly produce suggestions
+too long to save. Setting it on the action overrides the profile, for asking for something shorter
+than the field allows:
 
 .. code:: sh
 
