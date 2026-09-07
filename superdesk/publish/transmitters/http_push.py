@@ -112,12 +112,8 @@ class HTTPPushService(PublishService, AsyncHttpClientSessionMixin):
                 yield resp
                 return
         except aiohttp.ClientResponseError as error:
-            message = f"HTTPPush Response Error {error.status} {error.message}"
-            logger.debug(message, exc_info=True)
             await self._raise_publish_error(error.status or 400, error, destination)
         except aiohttp.ClientConnectionError as error:
-            message = f"HTTPPush Connection Error {error}"
-            logger.debug(message, exc_info=True)
             await self._raise_publish_error(504, error, destination)
         except (asyncio.TimeoutError, TimeoutError):
             message = "HTTPPush Timeout while pushing the item"
