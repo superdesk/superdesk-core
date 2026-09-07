@@ -3,9 +3,516 @@ openapi: '3.0.2'
 info:
   title: Superdesk Production API
   version: "2.0"
-  description: API for accessing Superdesk production data
+  description: |
+    Production API server provides stable and versioned endpoints for third-party apps to consume news content from Superdesk.
+
+    Production API uses the same DB and Elasticsearch index as the main Superdesk app, unlike Content API which has a separate DB.
+
+    Production API uses versioned endpoints to provide stable, non-breaking changes API for third-party apps.
+
+    Authentication is based on OAuth 2.0 and uses the Superdesk Auth Server: https://superdesk.readthedocs.io/en/latest/auth_server.html
+
+servers:
+  - url: /prodapi/v1
+    description: Production API v1 Server
+
+security:
+  - oauth2Auth: []
 
 paths:
+  /:
+    get:
+      summary: List all endpoints
+      description: Returns list of all available endpoints in the Production API
+      tags:
+        - General
+      responses:
+        '200':
+          description: List of endpoints
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /items:
+    get:
+      summary: List items
+      description: Get list of content items with elastic search query support
+      tags:
+        - Items
+      parameters:
+        - name: source
+          in: query
+          description: Elasticsearch query in JSON format
+          required: false
+          schema:
+            type: string
+          example: '{"query":{"filtered":{"filter":{"terms":{"type":["composite"]}}}}}'
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Item'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /items/{guid}:
+    get:
+      summary: Get item details
+      description: Retrieve a specific item by its GUID
+      tags:
+        - Items
+      parameters:
+        - $ref: '#/components/parameters/guid'
+      responses:
+        '200':
+          description: Item details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /desks:
+    get:
+      summary: List desks
+      description: Get list of desks with MongoDB query support
+      tags:
+        - Desks
+      parameters:
+        - name: where
+          in: query
+          description: MongoDB query in JSON format
+          required: false
+          schema:
+            type: string
+          example: '{"name": "Production"}'
+      responses:
+        '200':
+          description: List of desks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Desk'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /desks/{_id}:
+    get:
+      summary: Get desk details
+      description: Retrieve a specific desk by its ID
+      tags:
+        - Desks
+      parameters:
+        - $ref: '#/components/parameters/_id'
+      responses:
+        '200':
+          description: Desk details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Desk'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /assignments:
+    get:
+      summary: List assignments
+      description: Get list of assignments with elastic search query support
+      tags:
+        - Assignments
+      parameters:
+        - name: source
+          in: query
+          description: Elasticsearch query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of assignments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Assignment'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /assignments/{_id}:
+    get:
+      summary: Get assignment details
+      description: Retrieve a specific assignment by its ID
+      tags:
+        - Assignments
+      parameters:
+        - $ref: '#/components/parameters/_id'
+      responses:
+        '200':
+          description: Assignment details with HATEOAS links
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Assignment'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /planning:
+    get:
+      summary: List planning items
+      description: Get list of planning items with elastic search query support
+      tags:
+        - Planning
+      parameters:
+        - name: source
+          in: query
+          description: Elasticsearch query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of planning items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Planning'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /planning/{guid}:
+    get:
+      summary: Get planning details
+      description: Retrieve a specific planning item by its GUID
+      tags:
+        - Planning
+      parameters:
+        - $ref: '#/components/parameters/guid'
+      responses:
+        '200':
+          description: Planning details with HATEOAS links
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Planning'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /events:
+    get:
+      summary: List events
+      description: Get list of events with elastic search query support
+      tags:
+        - Events
+      parameters:
+        - name: source
+          in: query
+          description: Elasticsearch query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events/{guid}:
+    get:
+      summary: Get event details
+      description: Retrieve a specific event by its GUID
+      tags:
+        - Events
+      parameters:
+        - $ref: '#/components/parameters/guid'
+      responses:
+        '200':
+          description: Event details with HATEOAS links
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /events_files:
+    get:
+      summary: List event files
+      description: Get list of event files with MongoDB query support
+      tags:
+        - Events
+      parameters:
+        - name: where
+          in: query
+          description: MongoDB query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of event files
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventFile'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events_files/{_id}:
+    get:
+      summary: Get event file details
+      description: Retrieve a specific event file by its ID
+      tags:
+        - Events
+      parameters:
+        - $ref: '#/components/parameters/_id'
+      responses:
+        '200':
+          description: Event file details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventFile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /events_history:
+    get:
+      summary: List events history
+      description: Get list of event history records with MongoDB query support
+      tags:
+        - Events
+      parameters:
+        - name: where
+          in: query
+          description: MongoDB query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of event history records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventHistory'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /events_history/{_id}:
+    get:
+      summary: Get event history details
+      description: Retrieve a specific event history record by its ID
+      tags:
+        - Events
+      parameters:
+        - $ref: '#/components/parameters/_id'
+      responses:
+        '200':
+          description: Event history details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventHistory'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users:
+    get:
+      summary: List users
+      description: Get list of users with MongoDB query support
+      tags:
+        - Users
+      parameters:
+        - name: where
+          in: query
+          description: MongoDB query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{_id}:
+    get:
+      summary: Get user details
+      description: Retrieve a specific user by their ID
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/components/parameters/_id'
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /contacts:
+    get:
+      summary: List contacts
+      description: Get list of contacts with elastic search query support
+      tags:
+        - Contacts
+      parameters:
+        - name: source
+          in: query
+          description: Elasticsearch query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of contacts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Contact'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /contacts/{_id}:
+    get:
+      summary: Get contact details
+      description: Retrieve a specific contact by their ID
+      tags:
+        - Contacts
+      parameters:
+        - $ref: '#/components/parameters/_id'
+      responses:
+        '200':
+          description: Contact details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Contact'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /assets/{media_id}:
+    get:
+      summary: Get media asset
+      description: Retrieve a media asset by its ID
+      tags:
+        - Assets
+      parameters:
+        - name: media_id
+          in: path
+          description: Media ID with extension (e.g., MEDIA_ID.jpg)
+          required: true
+          schema:
+            type: string
+          example: "629864349728636e382c74ce.jpg"
+      responses:
+        '200':
+          description: Media file
+          content:
+            image/*:
+              schema:
+                type: string
+                format: binary
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /user_availability:
     get:
       summary: Get user availability information
@@ -26,7 +533,7 @@ paths:
                     items:
                       $ref: '#/components/schemas/UserAvailability'
         '401':
-          $ref: '#/components/responses/401'
+          $ref: '#/components/responses/Unauthorized'
 
   /user_availability/{id}:
     parameters:
@@ -46,12 +553,42 @@ paths:
               schema:
                 $ref: '#/components/schemas/UserAvailability'
         '401':
-          $ref: '#/components/responses/401'
+          $ref: '#/components/responses/Unauthorized'
         '404':
           description: User availability record not found
 
 components:
+  securitySchemes:
+    oauth2Auth:
+      type: oauth2
+      description: |
+        OAuth 2.0 client credentials flow via Superdesk Auth Server.
+
+        See: https://superdesk.readthedocs.io/en/latest/auth_server.html
+      flows:
+        clientCredentials:
+          tokenUrl: https://<superdesk-url>/api/auth_server/token
+          scopes: {}
+
   parameters:
+    guid:
+      name: guid
+      in: path
+      description: Unique identifier (GUID)
+      required: true
+      schema:
+        type: string
+      example: "urn:newsml:localhost:2021-07-06T11:12:48.695851:60e403bc-8361-feb5-6647-19b1"
+
+    _id:
+      name: _id
+      in: path
+      description: MongoDB Object ID
+      required: true
+      schema:
+        type: string
+      example: "60e403bc8361feb5664719b1"
+
     userId:
       in: path
       name: id
@@ -77,6 +614,340 @@ components:
       example: "2023-05-16"
 
   schemas:
+    Meta:
+      type: object
+      description: Metadata about the response
+      properties:
+        total:
+          type: integer
+          description: Total number of items
+          example: 100
+        page:
+          type: integer
+          description: Current page number
+          example: 1
+        max_results:
+          type: integer
+          description: Maximum results per page
+          example: 25
+
+    HATEOASAssignment:
+      type: object
+      description: HATEOAS link to an Assignment resource
+      properties:
+        title:
+          type: string
+          example: "Assignment"
+        href:
+          type: string
+          description: URL to the resource item
+          example: "assignments/60e403bc8361feb5664719b1"
+        state:
+          type: string
+          enum: [draft, assigned, in_progress, completed, submitted, cancelled]
+          description: The state of the Assignment
+          example: "in_progress"
+        scheduled:
+          type: string
+          format: date-time
+          description: The date & time the Assignment is due
+          example: "2021-07-07T02:00:00+0000"
+        content_type:
+          type: string
+          description: Qcode of the type of content expected (g2_content_type)
+          example: "text"
+        content_href:
+          type: string
+          description: The URL to the content (if any)
+          example: "items/60e6a257de25009b39121d81"
+        content_state:
+          type: string
+          description: The state of the associated content
+          example: "published"
+        content_pubstatus:
+          type: string
+          description: The pubstatus of the associated content
+          example: "usable"
+
+    HATEOASPlanning:
+      type: object
+      description: HATEOAS link to a Planning resource
+      properties:
+        title:
+          type: string
+          example: "Planning"
+        href:
+          type: string
+          description: URL to the resource item
+          example: "planning/60e6a115de25009b39121d7f"
+
+    HATEOASEvent:
+      type: object
+      description: HATEOAS link to an Event resource
+      properties:
+        title:
+          type: string
+          example: "Event"
+        href:
+          type: string
+          description: URL to the resource item
+          example: "events/60e6a116de25009b39121d80"
+
+    HATEOASContent:
+      type: object
+      description: HATEOAS link to News Content
+      properties:
+        title:
+          type: string
+          example: "Item"
+        href:
+          type: string
+          description: URL to the resource item
+          example: "items/60e6a257de25009b39121d81"
+        state:
+          type: string
+          description: The state of the associated content
+          example: "published"
+        pubstatus:
+          type: string
+          description: The pubstatus of the associated content
+          example: "usable"
+
+    Item:
+      type: object
+      description: News content item
+      properties:
+        _id:
+          type: string
+          example: "60e6a257de25009b39121d81"
+        guid:
+          type: string
+          example: "urn:newsml:localhost:2021-07-06T11:12:48.695851:60e403bc-8361-feb5-6647-19b1"
+        type:
+          type: string
+          enum: [text, picture, video, audio, composite]
+          example: "text"
+        headline:
+          type: string
+          example: "Breaking news story"
+        body_html:
+          type: string
+          description: HTML content of the item
+        state:
+          type: string
+          description: Workflow state of the item
+          example: "published"
+        pubstatus:
+          type: string
+          example: "usable"
+        assignment_id:
+          type: string
+          example: "60e403bc8361feb5664719b1"
+        task:
+          type: object
+          properties:
+            desk:
+              type: string
+              example: "5c489481405ecc015e5e10bc"
+        _links:
+          type: object
+          description: HATEOAS links to related resources
+          properties:
+            assignment:
+              $ref: '#/components/schemas/HATEOASAssignment'
+            planning:
+              $ref: '#/components/schemas/HATEOASPlanning'
+            event:
+              $ref: '#/components/schemas/HATEOASEvent'
+
+    Desk:
+      type: object
+      description: Editorial desk
+      properties:
+        _id:
+          type: string
+          example: "5c489481405ecc015e5e10bc"
+        name:
+          type: string
+          example: "Production"
+        description:
+          type: string
+          example: "Main production desk"
+
+    Assignment:
+      type: object
+      description: Content assignment
+      properties:
+        _id:
+          type: string
+          example: "60e403bc8361feb5664719b1"
+        state:
+          type: string
+          enum: [draft, assigned, in_progress, completed, submitted, cancelled]
+          example: "in_progress"
+        scheduled:
+          type: string
+          format: date-time
+          example: "2021-07-07T02:00:00+0000"
+        _links:
+          type: object
+          description: HATEOAS links to related resources
+          properties:
+            planning:
+              $ref: '#/components/schemas/HATEOASPlanning'
+            event:
+              $ref: '#/components/schemas/HATEOASEvent'
+            content:
+              type: array
+              items:
+                $ref: '#/components/schemas/HATEOASContent'
+
+    Planning:
+      type: object
+      description: Planning item
+      properties:
+        _id:
+          type: string
+          example: "60e6a115de25009b39121d7f"
+        guid:
+          type: string
+          example: "urn:newsml:localhost:2021-07-08T12:34:56.123456:planning-guid"
+        slugline:
+          type: string
+          example: "City Council Meeting"
+        description_text:
+          type: string
+          example: "Coverage of the monthly city council meeting"
+        _links:
+          type: object
+          description: HATEOAS links to related resources
+          properties:
+            assignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/HATEOASAssignment'
+            event:
+              $ref: '#/components/schemas/HATEOASEvent'
+
+    Event:
+      type: object
+      description: Calendar event
+      properties:
+        _id:
+          type: string
+          example: "60e6a116de25009b39121d80"
+        guid:
+          type: string
+          example: "urn:newsml:localhost:2021-07-08T12:34:56.789012:event-guid"
+        name:
+          type: string
+          example: "City Council Meeting"
+        definition_short:
+          type: string
+          example: "Monthly meeting of the city council"
+        dates:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+              example: "2021-07-15T14:00:00+0000"
+            end:
+              type: string
+              format: date-time
+              example: "2021-07-15T16:00:00+0000"
+        _links:
+          type: object
+          description: HATEOAS links to related resources
+          properties:
+            assignments:
+              type: array
+              items:
+                $ref: '#/components/schemas/HATEOASAssignment'
+            plannings:
+              type: array
+              items:
+                $ref: '#/components/schemas/HATEOASPlanning'
+
+    EventFile:
+      type: object
+      description: File attached to an event
+      properties:
+        _id:
+          type: string
+          example: "60e6a117de25009b39121d81"
+        media:
+          type: string
+          description: Media ID
+        filename:
+          type: string
+          example: "meeting_agenda.pdf"
+
+    EventHistory:
+      type: object
+      description: Event history record
+      properties:
+        _id:
+          type: string
+          example: "60e6a118de25009b39121d82"
+        event_id:
+          type: string
+          example: "60e6a116de25009b39121d80"
+        operation:
+          type: string
+          enum: [create, update, delete]
+          example: "update"
+        update:
+          type: object
+          description: Changes made in this update
+
+    User:
+      type: object
+      description: System user
+      properties:
+        _id:
+          type: string
+          example: "5c489481405ecc015e5e10bd"
+        username:
+          type: string
+          example: "john.doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@example.com"
+        display_name:
+          type: string
+          example: "John Doe"
+
+    Contact:
+      type: object
+      description: Contact information
+      properties:
+        _id:
+          type: string
+          example: "60e6a119de25009b39121d83"
+        first_name:
+          type: string
+          example: "Jane"
+        last_name:
+          type: string
+          example: "Smith"
+        email:
+          type: array
+          items:
+            type: string
+            format: email
+          example: ["jane.smith@example.com"]
+        phone:
+          type: array
+          items:
+            type: object
+            properties:
+              number:
+                type: string
+              usage:
+                type: string
+
     UserAvailability:
       type: object
       properties:
@@ -117,5 +988,36 @@ components:
                       example: "17:00"
 
   responses:
-    '401':
-      description: Unauthorized
+    Unauthorized:
+      description: Unauthorized - Invalid or missing JWT token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              _error:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 401
+                  message:
+                    type: string
+                    example: "Please provide proper credentials"
+
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              _error:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 404
+                  message:
+                    type: string
+                    example: "The requested resource was not found"
