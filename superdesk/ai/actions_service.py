@@ -1,7 +1,9 @@
+import logging
 from typing import Any, List
 
 from quart_babel import gettext
 
+from superdesk.content_types_async import ContentTypesService
 from superdesk.core import get_current_async_app
 from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
@@ -21,6 +23,8 @@ from .prompts import (
 from .providers import get_client
 from .providers.base import CompletionMessage, CompletionRequest, CompletionResult
 from .providers_service import AIProvidersService
+
+logger = logging.getLogger(__name__)
 
 
 class AIActionsService(AsyncResourceService[AIAction]):
@@ -91,6 +95,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
             )
 
         language = payload.language or item.get("language")
+        max_characters = await self._get_max_characters(action, item)
         request = CompletionRequest(
             model=model,
             messages=[
@@ -100,7 +105,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
                         action.action_type,
                         output_field=action.output_field,
                         count=action.parameters.suggestions_count,
-                        max_characters=action.parameters.max_characters,
+                        max_characters=max_characters,
                         language=language,
                         system_prompt=action.parameters.system_prompt,
                     ),
@@ -149,8 +154,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
                 "text": text,
                 # An answer that is too long is reported in full rather than cut, so the client can
                 # show the editor what the provider wrote and let them shorten it
-                "over_limit": action.parameters.max_characters is not None
-                and len(text) > action.parameters.max_characters,
+                "over_limit": max_characters is not None and len(text) > max_characters,
             }
             for text in answers
         ]
@@ -181,6 +185,30 @@ class AIActionsService(AsyncResourceService[AIAction]):
             )
 
         return parse_suggestions(result.content, action.parameters.suggestions_count)
+
+    async def _get_max_characters(self, action: AIAction, item: dict[str, Any]) -> int | None:
+        """How long an answer may be, from the action or from the content profile of the item
+
+        The profile is the length the field can actually store, so it is the default and
+        ``parameters.max_characters`` overrides it. ``None`` when neither names one.
+        """
+
+        if action.parameters.max_characters is not None:
+            return action.parameters.max_characters
+
+        try:
+            schema = await ContentTypesService().get_schema(item)
+        except Exception:
+            # Broad on purpose: the length is an enrichment, so nothing about reading the profile,
+            # from an item that has none to an unreachable database, should fail the run.
+            logger.exception("Failed to read the content profile of an item an AI action was run against")
+            return None
+
+        # A field with no maxlength, or one carrying something other than a number, means no limit
+        try:
+            return int((schema or {})[action.output_field]["maxlength"])
+        except (KeyError, TypeError, ValueError):
+            return None
 
     async def _get_item(self, item_id: str) -> dict[str, Any]:
         """Load the item as stored, without validating it against the archive model.

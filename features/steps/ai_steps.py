@@ -80,6 +80,18 @@ def step_then_provider_was_not_sent(context, text):
     assert text not in message, "provider was sent %s" % message
 
 
+@then('the AI instructions say "{text}"')
+def step_then_instructions_say(context, text):
+    instructions = _last_provider_message(context, "system")
+    assert text in instructions, "the instructions were %s" % instructions
+
+
+@then('the AI instructions do not mention "{text}"')
+def step_then_instructions_do_not_mention(context, text):
+    instructions = _last_provider_message(context, "system")
+    assert text not in instructions, "the instructions were %s" % instructions
+
+
 @when('we run the AI action at "{url}"')
 @async_run_until_complete
 async def step_when_we_run_the_ai_action(context, url):
@@ -139,7 +151,11 @@ def _last_provider_authorization(context):
 
 
 def _last_provider_user_message(context):
-    """Text of the user message of the last completion the provider was asked for
+    return _last_provider_message(context, "user")
+
+
+def _last_provider_message(context, role):
+    """Text of the message with the given role in the last completion the provider was asked for
 
     Skips the ``/models`` calls, which carry no body, so the step reads the completion even
     when a scenario listed the catalogue first.
@@ -147,9 +163,9 @@ def _last_provider_user_message(context):
 
     for request in reversed(_provider_requests(context)):
         messages = (request.get("json") or {}).get("messages") or []
-        contents = [message["content"] for message in messages if message.get("role") == "user"]
+        contents = [message["content"] for message in messages if message.get("role") == role]
 
         if contents:
             return contents[-1]
 
-    raise AssertionError("no completion was requested from a mocked AI provider")
+    raise AssertionError("no completion with a %s message was requested from a mocked AI provider" % role)

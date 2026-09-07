@@ -156,6 +156,86 @@ Feature: AI actions
         And the AI provider was not sent "The council met on Tuesday."
 
     @auth
+    Scenario: The answer length comes from the content profile when the action names none
+        Given a mocked AI provider at "https://provider.test/v1"
+        And "content_types"
+        """
+        [{"_id": "story", "label": "Story", "schema": {"headline": {"type": "string", "maxlength": 64}}}]
+        """
+        And an archive item "article-1" with data
+        """
+        {"profile": "story", "language": "en", "body_html": "<p>The council met on Tuesday.</p>"}
+        """
+        When we post to "/ai_providers"
+        """
+        {
+            "name": "OpenRouter",
+            "provider_type": "openai_compatible",
+            "base_url": "https://provider.test/v1",
+            "default_model": "openai/gpt-4o-mini"
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Headline suggestions",
+            "action_type": "suggestion",
+            "input_fields": ["body_html"],
+            "output_field": "headline",
+            "provider": "#ai_providers._id#"
+        }
+        """
+        Then we get OK response
+        When we run the AI action at "/ai_actions/#ai_actions._id#/run"
+        """
+        {"item_id": "article-1"}
+        """
+        Then we get OK response
+        And the AI instructions say "under 64 characters"
+
+    @auth
+    Scenario: An action that names a length overrides the content profile
+        Given a mocked AI provider at "https://provider.test/v1"
+        And "content_types"
+        """
+        [{"_id": "story", "label": "Story", "schema": {"headline": {"type": "string", "maxlength": 64}}}]
+        """
+        And an archive item "article-1" with data
+        """
+        {"profile": "story", "language": "en", "body_html": "<p>The council met on Tuesday.</p>"}
+        """
+        When we post to "/ai_providers"
+        """
+        {
+            "name": "OpenRouter",
+            "provider_type": "openai_compatible",
+            "base_url": "https://provider.test/v1",
+            "default_model": "openai/gpt-4o-mini"
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Headline suggestions",
+            "action_type": "suggestion",
+            "input_fields": ["body_html"],
+            "output_field": "headline",
+            "parameters": {"max_characters": 30},
+            "provider": "#ai_providers._id#"
+        }
+        """
+        Then we get OK response
+        When we run the AI action at "/ai_actions/#ai_actions._id#/run"
+        """
+        {"item_id": "article-1"}
+        """
+        Then we get OK response
+        And the AI instructions say "under 30 characters"
+        And the AI instructions do not mention "under 64 characters"
+
+    @auth
     Scenario: Running an action against an unknown item is a 404
         Given a mocked AI provider at "https://provider.test/v1"
         When we post to "/ai_providers"

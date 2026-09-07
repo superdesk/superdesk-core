@@ -280,6 +280,14 @@ class AIActionRunTestCase(TestCase):
         self.assertEqual(response.status_code, 200, await response.get_data())
         return await response.get_json()
 
+    async def _insert_profile(self, schema, profile_id="story"):
+        await self.async_app.mongo.get_collection_async("content_types").insert_one(
+            {"_id": profile_id, "label": profile_id, "schema": schema}
+        )
+
+    def _system_prompt(self, requests):
+        return next(message["content"] for message in requests[0]["json"]["messages"] if message["role"] == "system")
+
     async def _capture_completion(self, content=SUGGESTIONS_CONTENT):
         return capture_requests(self.http_mock, COMPLETIONS_URL, "POST", payload=completion_payload(content))
 
@@ -305,6 +313,47 @@ class AIActionRunTestCase(TestCase):
                 {"text": "Council meets on budget", "over_limit": False},
                 {"text": "Council votes on budget", "over_limit": False},
             ],
+        )
+
+    async def test_the_length_limit_comes_from_the_content_profile_when_the_action_names_none(self):
+        await self._insert_profile({"headline": {"type": "string", "maxlength": 64}})
+        requests = await self._capture_completion()
+        action = await self._create_action(parameters={})
+
+        await self._run(action["_id"])
+
+        self.assertIn("under 64 characters", self._system_prompt(requests))
+
+    async def test_the_action_length_limit_overrides_the_content_profile(self):
+        await self._insert_profile({"headline": {"type": "string", "maxlength": 64}})
+        requests = await self._capture_completion()
+        action = await self._create_action(parameters={"max_characters": 30})
+
+        await self._run(action["_id"])
+
+        prompt = self._system_prompt(requests)
+        self.assertIn("under 30 characters", prompt)
+        self.assertNotIn("under 64 characters", prompt)
+
+    async def test_no_length_is_asked_for_when_neither_the_action_nor_the_profile_names_one(self):
+        await self._insert_profile({"headline": {"type": "string"}})
+        requests = await self._capture_completion()
+        action = await self._create_action(parameters={})
+
+        await self._run(action["_id"])
+
+        self.assertNotIn("characters", self._system_prompt(requests))
+
+    async def test_a_suggestion_over_the_profile_limit_is_flagged(self):
+        await self._insert_profile({"headline": {"type": "string", "maxlength": 20}})
+        content = json.dumps({"suggestions": ["Council votes on the budget after a long debate", "Short one"]})
+        action = await self._create_action(parameters={})
+
+        body = await self._run_action(content, action=action)
+
+        self.assertEqual(
+            [suggestion["over_limit"] for suggestion in body["suggestions"]],
+            [True, False],
         )
 
     async def test_run_reports_the_provider_the_model_it_answered_with_and_the_token_usage(self):
