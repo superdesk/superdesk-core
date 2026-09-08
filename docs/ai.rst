@@ -49,9 +49,10 @@ Three resources make it up:
     ``openai_compatible``, which covers OpenAI itself as well as OpenRouter, Azure style gateways
     and local runtimes. ``GET /api/ai_providers/<id>/models`` lists the models a stored provider
     offers and ``POST /api/ai_providers/<id>/test`` reports whether it answers at all.
-    ``available_models`` narrows that catalogue to the models the installation is prepared to use,
-    and ``default_model`` has to be one of them; leaving it empty allows every model the provider
-    offers.
+    ``available_models`` narrows that catalogue to the models an action may be built on, and is
+    enforced when an action is saved; leaving it empty allows every model the provider offers.
+    ``default_model`` is what an action naming no model falls back to, and is not restricted to
+    the shortlist, so a fallback can be one the actions themselves may not pick.
 
 ``ai_actions``
     What to ask for and of which provider: the item fields to send, the field the answers are
@@ -93,9 +94,10 @@ report what the editor did with the answers. ``$TOKEN`` is a Superdesk session t
     JSON="Content-Type: application/json"
 
 Register the provider. The key is stored but never returned, by this call or any other.
-``available_models`` is the shortlist ``default_model`` has to be picked from, so the hundreds of
-models a gateway offers do not all become the default; ``GET /api/ai_providers/<id>/models`` keeps
-listing the whole catalogue, which is what an administrator picks the shortlist from:
+``available_models`` is the shortlist an action's ``model`` has to be picked from, so the hundreds
+of models a gateway offers are not all on offer when building one; ``GET
+/api/ai_providers/<id>/models`` keeps listing the whole catalogue, which is what an administrator
+picks the shortlist from:
 
 .. code:: sh
 

@@ -92,7 +92,7 @@ Feature: AI providers
         And the AI provider was called with no api key
 
     @auth
-    Scenario: Create fails with a default model outside available_models
+    Scenario: A default model outside available_models is accepted
         When we post to "/ai_providers"
         """
         {
@@ -103,18 +103,33 @@ Feature: AI providers
             "default_model": "openai/gpt-4o"
         }
         """
-        Then we get error 400
+        Then we get OK response
+        And we get existing resource
+        """
+        {"available_models": ["openai/gpt-4o-mini"], "default_model": "openai/gpt-4o"}
+        """
 
     @auth
-    Scenario: Patch fails when available_models drops the default model
+    Scenario: Patch fails when available_models drops a model an action uses
         When we post to "/ai_providers"
         """
         {
             "name": "OpenRouter",
             "provider_type": "openai_compatible",
             "base_url": "https://provider.test/v1",
-            "available_models": ["openai/gpt-4o-mini", "openai/gpt-4o"],
-            "default_model": "openai/gpt-4o"
+            "available_models": ["openai/gpt-4o-mini", "openai/gpt-4o"]
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Headline suggestions",
+            "action_type": "suggestion",
+            "input_fields": ["body_html"],
+            "output_field": "headline",
+            "provider": "#ai_providers._id#",
+            "model": "openai/gpt-4o"
         }
         """
         Then we get OK response
@@ -125,13 +140,9 @@ Feature: AI providers
         Then we get error 400
         When we patch "/ai_providers/#ai_providers._id#"
         """
-        {"available_models": ["openai/gpt-4o-mini"], "default_model": "openai/gpt-4o-mini"}
+        {"available_models": []}
         """
         Then we get OK response
-        And we get existing resource
-        """
-        {"available_models": ["openai/gpt-4o-mini"], "default_model": "openai/gpt-4o-mini"}
-        """
 
     @auth
     Scenario: The models endpoint lists the whole catalogue of the provider

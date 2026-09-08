@@ -52,6 +52,40 @@ class AIActionsService(AsyncResourceService[AIAction]):
 
         await super().on_update(updates, original)
 
+    async def validate_create(self, doc: AIAction) -> None:
+        await super().validate_create(doc)
+
+        await self._check_model_available(doc.provider, doc.model)
+
+    async def validate_update(self, updates: dict[str, Any], original: AIAction, etag: str | None) -> dict[str, Any]:
+        updated = await super().validate_update(updates, original, etag)
+
+        await self._check_model_available(updated["provider"], updated.get("model"))
+
+        return updated
+
+    async def _check_model_available(self, provider_id: Any, model: str | None) -> None:
+        """Check the model against the shortlist its provider restricts actions to
+
+        :raises SuperdeskApiError: If the provider has a shortlist that does not hold the model
+        """
+
+        if model is None:
+            return
+
+        provider = await AIProvidersService().find_by_id(provider_id)
+
+        # A provider that does not exist is reported by the relation validator on the field
+        if provider is None or not provider.available_models:
+            return
+
+        if model not in provider.available_models:
+            raise SuperdeskApiError.badRequestError(
+                gettext("'model' '{model}' is not one of the provider's 'available_models': {models}").format(
+                    model=model, models=", ".join(provider.available_models)
+                )
+            )
+
     def _merge_parameters(self, updates: dict[str, Any], original: AIAction) -> None:
         """Apply a partial ``parameters`` payload onto the stored ones
 

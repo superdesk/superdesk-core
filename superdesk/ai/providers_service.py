@@ -11,15 +11,11 @@ from .models import AIProvider
 class AIProvidersService(AsyncResourceService[AIProvider]):
     """Service for the ``ai_providers`` resource.
 
-    ``default_model`` has to be one of ``available_models`` whenever the shortlist is not empty.
-    The two fields can be changed independently, so the check is made against the state the write
-    leaves behind rather than against what the payload carries.
+    ``available_models`` is the shortlist an AI action picks its model from, so a model cannot be
+    dropped from it while an action still names that model. ``default_model`` is outside that
+    shortlist by design: it is what an action naming no model falls back to, and it may point at a
+    model the actions themselves are not allowed to pick.
     """
-
-    async def validate_create(self, doc: AIProvider) -> None:
-        self._check_default_model(doc.default_model, doc.available_models)
-
-        await super().validate_create(doc)
 
     async def on_update(self, updates: dict[str, Any], original: AIProvider) -> None:
         if updates.get("api_key") == "":
@@ -28,35 +24,45 @@ class AIProvidersService(AsyncResourceService[AIProvider]):
             # the field out of the payload. An explicit ``null`` is the only way to clear it.
             updates.pop("api_key")
 
-        self._check_default_model(
-            updates.get("default_model", original.default_model),
-            updates.get("available_models", original.available_models),
-        )
-
         await super().on_update(updates, original)
 
-    def _check_default_model(self, default_model: Any, available_models: Any) -> None:
-        """Check the default model against the shortlist the provider restricts itself to
+    async def validate_update(self, updates: dict[str, Any], original: AIProvider, etag: str | None) -> dict[str, Any]:
+        updated = await super().validate_update(updates, original, etag)
 
-        On an update both values come straight from the client's payload, which is only validated
-        against the model afterwards, so either can still be of any shape. A value of the wrong
-        shape is left to that validation, which answers with the field that is malformed, instead
-        of being compared here against a value it cannot be compared to.
+        await self._check_models_in_use(original, updated.get("available_models") or [])
 
-        :raises SuperdeskApiError: If the shortlist is not empty and does not hold the default model
+        return updated
+
+    async def _check_models_in_use(self, original: AIProvider, available_models: list[str]) -> None:
+        """Refuse to narrow the shortlist past a model an action of this provider still names
+
+        :raises SuperdeskApiError: If an action would be left naming a model outside the shortlist
         """
 
-        if default_model is not None and not isinstance(default_model, str):
+        if not available_models:
+            # An empty shortlist allows every model, so no action can fall outside it
             return
 
-        if not isinstance(available_models, list) or not all(isinstance(model, str) for model in available_models):
+        dropped = sorted(set(original.available_models) - set(available_models))
+        if not dropped:
             return
 
-        if not available_models or default_model is None or default_model in available_models:
+        # Imported here because ``actions_service`` imports this module
+        from .actions_service import AIActionsService
+
+        cursor = await AIActionsService().find(
+            {"provider": original.id, "model": {"$in": dropped}},
+            max_results=100,
+            use_mongo=True,
+        )
+        actions = await cursor.to_list()
+
+        if not actions:
             return
 
         raise SuperdeskApiError.badRequestError(
-            gettext("'default_model' '{model}' is not one of 'available_models': {models}").format(
-                model=default_model, models=", ".join(available_models)
+            gettext("'available_models' cannot drop {models}, still used by AI actions: {actions}").format(
+                models=", ".join(sorted({action.model for action in actions if action.model})),
+                actions=", ".join(sorted(action.name for action in actions)),
             )
         )

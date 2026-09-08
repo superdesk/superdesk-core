@@ -23,6 +23,10 @@ _http_url_adapter: TypeAdapter = TypeAdapter(AnyHttpUrl)
 # every request URL. Kept a plain ``str`` so it stays serializable for MongoDB storage.
 BaseUrlStr = Annotated[str, BeforeValidator(lambda value: str(_http_url_adapter.validate_python(value)).rstrip("/"))]
 
+# An empty string is stored as ``None``. A form clearing the field can only send an empty string,
+# and a single representation of "no model" keeps every reader from having to handle both.
+ModelName = Annotated[str | None, AfterValidator(lambda value: value or None)]
+
 
 def validate_provider_type() -> AfterValidator:
     """Validates that the value is the name of a registered AI provider type"""
@@ -45,7 +49,10 @@ class AIProvider(ResourceModelWithObjectId):
     provider_type: Annotated[str, validate_provider_type()]
     base_url: BaseUrlStr
     api_key: str | None = None
-    default_model: str | None = None
+
+    #: Fallback for an action that names no model. Deliberately not restricted to
+    #: ``available_models``, so a fallback can be one the actions themselves may not pick.
+    default_model: ModelName = None
 
     #: Models of the provider's catalogue that may be used, an empty list allowing all of them. A
     #: gateway answers with hundreds of models, most of which an administrator has no intention of
@@ -107,8 +114,9 @@ class AIAction(ResourceModelWithObjectId):
 
     provider: Annotated[fields.ObjectId, validate_data_relation_async("ai_providers")]
 
-    #: Model to run the action with, falls back to the provider's ``default_model``
-    model: str | None = None
+    #: Model to run the action with, one of the provider's ``available_models`` when it has any.
+    #: Falls back to the provider's ``default_model``.
+    model: ModelName = None
 
     parameters: AIActionParameters = Field(default_factory=AIActionParameters)
 

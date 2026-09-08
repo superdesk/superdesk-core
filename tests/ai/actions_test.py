@@ -135,6 +135,82 @@ class AIActionsRestTestCase(TestCase):
         action = await self.service.find_by_id(created["_id"])
         self.assertEqual(str(action.provider), self.provider_id)
 
+    async def _create_restricted_provider(self, available_models):
+        response = await self.test_client.post(
+            "/api/ai_providers",
+            json={**PROVIDER, "name": "Restricted", "available_models": available_models},
+        )
+        self.assertEqual(response.status_code, 201, await response.get_data())
+        return (await response.get_json())["_id"]
+
+    async def test_a_model_outside_the_providers_available_models_is_rejected(self):
+        provider_id = await self._create_restricted_provider(["openai/gpt-4o-mini"])
+
+        response = await self.test_client.post(
+            "/api/ai_actions", json=self._payload(provider=provider_id, model="openai/gpt-4o")
+        )
+
+        self.assertEqual(response.status_code, 400)
+        message = (await response.get_json())["_message"]
+        self.assertIn("openai/gpt-4o", message)
+        self.assertIn("available_models", message)
+
+    async def test_a_model_the_provider_lists_is_accepted(self):
+        provider_id = await self._create_restricted_provider(["openai/gpt-4o-mini"])
+
+        created = await self._create_action(provider=provider_id, model="openai/gpt-4o-mini")
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertEqual(action.model, "openai/gpt-4o-mini")
+
+    async def test_no_model_is_accepted_whatever_the_provider_lists(self):
+        """The action falls back to ``default_model``, which the shortlist does not restrict"""
+
+        provider_id = await self._create_restricted_provider(["openai/gpt-4o-mini"])
+
+        created = await self._create_action(provider=provider_id, model=None)
+
+        self.assertIsNone((await self.service.find_by_id(created["_id"])).model)
+
+    async def test_an_empty_available_models_accepts_any_model(self):
+        created = await self._create_action(model="a-model-nobody-listed")
+
+        self.assertEqual((await self.service.find_by_id(created["_id"])).model, "a-model-nobody-listed")
+
+    async def test_patch_setting_a_model_outside_available_models_is_rejected(self):
+        provider_id = await self._create_restricted_provider(["openai/gpt-4o-mini"])
+        created = await self._create_action(provider=provider_id, model="openai/gpt-4o-mini")
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{created['_id']}",
+            json={"model": "openai/gpt-4o"},
+            headers={"If-Match": created["_etag"]},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("available_models", (await response.get_json())["_message"])
+        self.assertEqual((await self.service.find_by_id(created["_id"])).model, "openai/gpt-4o-mini")
+
+    async def test_patch_moving_an_action_to_a_provider_that_lists_its_model(self):
+        provider_id = await self._create_restricted_provider(["openai/gpt-4o-mini"])
+        created = await self._create_action(model="openai/gpt-4o-mini")
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{created['_id']}",
+            json={"provider": provider_id},
+            headers={"If-Match": created["_etag"]},
+        )
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertEqual(str((await self.service.find_by_id(created["_id"])).provider), provider_id)
+
+    async def test_an_empty_model_is_stored_as_none(self):
+        """A form clearing the field can only send an empty string, so it means no model"""
+
+        created = await self._create_action(model="")
+
+        self.assertIsNone((await self.service.find_by_id(created["_id"])).model)
+
     async def test_empty_name_is_rejected(self):
         response = await self.test_client.post("/api/ai_actions", json=self._payload(name=""))
 
