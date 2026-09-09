@@ -48,6 +48,7 @@ from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.cache import cache
 from superdesk.errors import SuperdeskApiError
+from superdesk.utils import merge_dicts_deep
 from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
@@ -389,12 +390,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         # Construct a new ResourceModelType instance, to allow Pydantic to validate the changes
         # This is not efficient, but will do for now
-        updated = original.to_dict()
-        updated.update(updates)
-        updated.pop("_type", None)
+        updates.pop("_type", None)
         # Run the Pydantic sync validators, and get a model instance in return
         # Enable ``include_unknown`` so we get unknown field validation
-        model_instance = self.config.data_class.from_dict(updated, include_unknown=True)
+        model_instance = original.clone_with(updates, include_unknown=True)
 
         # Run the async validators
         await model_instance.validate_async()
@@ -1305,5 +1304,5 @@ class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
         return await self.find_by_id(_id)
 
 
-from .resource_config import ResourceConfig  # noqa: E402
+from .resource_config import ResourceConfig, UpdateStrategy  # noqa: E402
 from .model import get_versioned_model, model_has_versions  # noqa: E402

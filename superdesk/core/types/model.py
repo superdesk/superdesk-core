@@ -124,7 +124,7 @@ class BaseModel(PydanticModel):
     def clone(self) -> Self:
         return self.model_copy(deep=True)
 
-    def clone_with(self, updates: dict[str, Any]) -> Self:
+    def clone_with(self, updates: dict[str, Any], deep: bool = True, **kwargs) -> Self:
         """
         Deeply clones the instance and applies updates with proper validation.
 
@@ -136,8 +136,13 @@ class BaseModel(PydanticModel):
         """
 
         cloned_data = deepcopy(self.to_dict())
-        cloned_data = dict(merge_dicts_deep(cloned_data, updates))
-        return self.from_dict(cloned_data)
+
+        if deep:
+            cloned_data = dict(merge_dicts_deep(cloned_data, updates))
+        else:
+            cloned_data.update(updates)
+
+        return self.from_dict(cloned_data, **kwargs)
 
     def update_from_dict(self, updates: dict, deep: bool = False) -> None:
         if not deep:

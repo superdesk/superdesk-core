@@ -5,7 +5,7 @@ import simplejson as json
 from bson import ObjectId
 
 from superdesk.core.types import SearchRequest
-from superdesk.core.resources import AsyncResourceService
+from superdesk.core.resources import AsyncResourceService, UpdateStrategy
 from superdesk.core.elastic.base_client import ElasticCursor
 from superdesk.utc import utcnow
 from superdesk.utils import format_time
@@ -484,3 +484,29 @@ class TestResourceService(AsyncTestCase):
             es_item = await self.service.elastic.find_by_id(users[index].id)
             es_item.pop("_type", None)
             self.assertEqual(users[index], User(**es_item))
+
+    async def test_update_using_merge(self):
+        test_user = john_doe()
+        source_a = {"source_1": 1, "source_2": 2}
+        source_b = {"source_3": 3, "source_4": 4}
+        source_c = {"source_5": 5, "source_6": 6}
+
+        # Test initial config, should contain only `source_a`
+        test_user.my_dict = source_a
+        await self.service.create([test_user])
+        item = await self.service.find_by_id(test_user.id)
+        self.assertEqual(item.my_dict, source_a)
+
+        # Test default update_strategy of REPLACE (replacing `source_a` with `source_b` entirely)
+        self.service.config.update_strategy = UpdateStrategy.SHALLOW_MERGE
+        updated = await self.service.update(test_user.id, {"my_dict": source_b})
+        self.assertEqual(updated.my_dict, source_b)
+        item = await self.service.find_by_id(test_user.id)
+        self.assertEqual(item.my_dict, source_b)
+
+        # Test again, this time using MERGE (merging `source_c` into `source_b`)
+        self.service.config.update_strategy = UpdateStrategy.DEEP_MERGE
+        updated = await self.service.update(test_user.id, {"my_dict": source_c})
+        self.assertEqual(updated.my_dict, {**source_b, **source_c})
+        item = await self.service.find_by_id(test_user.id)
+        self.assertEqual(item.my_dict, {**source_b, **source_c})
