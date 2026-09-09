@@ -115,6 +115,9 @@ class RestEndpointConfig:
 
     additional_lookup: AdditionalLookupConfig | None = None
 
+    #: Page size for the resource GET endpoint when the request has no ``max_results``, defaults to 25
+    default_max_results: int | None = None
+
 
 def get_id_url_type(data_class: type[ResourceModel]) -> str:
     """Get the URL param type for the ID field for route registration"""
@@ -638,6 +641,9 @@ class ResourceRestEndpoints(RestEndpoints):
         if len(self.endpoint_config.parent_links or []):
             lookup = self.construct_parent_item_lookup(request)
             self.update_where_filter(params, lookup)
+
+        if self.endpoint_config.default_max_results and request.get_url_arg("max_results") is None:
+            params.max_results = self.endpoint_config.default_max_results
 
         params.args = cast(SearchArgs, params.model_extra)
         signals = self.resource_config.data_class.get_signals()

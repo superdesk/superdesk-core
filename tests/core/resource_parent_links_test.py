@@ -133,3 +133,25 @@ class ResourceParentLinksTestCase(AsyncFlaskTestCase):
         config = self.async_app.resources.get_config("company_topic_folders")
         endpoint = ResourceRestEndpoints(config, config.rest_endpoints)
         self.assertEqual(endpoint.get_resource_url(), 'companies/<regex("[\\w,.:_-]+"):company>/topic_folders')
+
+    async def test_default_max_results(self):
+        # company_topic_folders is configured with default_max_results=2
+        response = await self.test_client.post("/api/companies", json=dict(name="Sourcefabric"))
+        self.assertEqual(response.status_code, 201)
+        company_id = (await response.get_json())["_id"]
+        folders_url = f"/api/companies/{company_id}/topic_folders"
+
+        for name in ("Sports", "Finance", "Politics"):
+            response = await self.test_client.post(folders_url, json=dict(name=name, section="wire"))
+            self.assertEqual(response.status_code, 201)
+
+        response = await self.test_client.get(folders_url)
+        data = await response.get_json()
+        self.assertEqual(data["_meta"], {"page": 1, "max_results": 2, "total": 3})
+        self.assertEqual(len(data["_items"]), 2)
+
+        # explicit max_results still wins
+        response = await self.test_client.get(f"{folders_url}?max_results=10")
+        data = await response.get_json()
+        self.assertEqual(data["_meta"]["max_results"], 10)
+        self.assertEqual(len(data["_items"]), 3)

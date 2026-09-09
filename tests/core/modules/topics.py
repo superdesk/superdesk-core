@@ -66,6 +66,7 @@ company_folder_config = ResourceConfig(
             )
         ],
         url="topic_folders",
+        default_max_results=2,
     ),
 )
 
