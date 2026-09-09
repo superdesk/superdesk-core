@@ -268,7 +268,7 @@ class ResourceModel(BaseModel):
             # If `deep` wasn't provided, fallback to using resource configured one
             deep = self.get_config().update_strategy == UpdateStrategy.DEEP_MERGE
 
-        return super().clone_with(updates, deep, **kwargs)
+        return super().clone_with(updates, cast(bool, deep), **kwargs)
 
     @classmethod
     def get_service(cls) -> "AsyncResourceService[Self]":
