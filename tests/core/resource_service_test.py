@@ -497,16 +497,16 @@ class TestResourceService(AsyncTestCase):
         item = await self.service.find_by_id(test_user.id)
         self.assertEqual(item.my_dict, source_a)
 
-        # Test default update_strategy of REPLACE (replacing `source_a` with `source_b` entirely)
-        self.service.config.update_strategy = UpdateStrategy.SHALLOW_MERGE
+        # Test default update_strategy of SHALLOW_MERGE (replacing `source_a` with `source_b` entirely)
+        self.assertEqual(self.service.config.update_strategy, UpdateStrategy.SHALLOW_MERGE)
         updated = await self.service.update(test_user.id, {"my_dict": source_b})
         self.assertEqual(updated.my_dict, source_b)
         item = await self.service.find_by_id(test_user.id)
         self.assertEqual(item.my_dict, source_b)
 
-        # Test again, this time using MERGE (merging `source_c` into `source_b`)
-        self.service.config.update_strategy = UpdateStrategy.DEEP_MERGE
-        updated = await self.service.update(test_user.id, {"my_dict": source_c})
-        self.assertEqual(updated.my_dict, {**source_b, **source_c})
-        item = await self.service.find_by_id(test_user.id)
-        self.assertEqual(item.my_dict, {**source_b, **source_c})
+        # Test again, this time using DEEP_MERGE (merging `source_c` into `source_b`)
+        with mock.patch.object(self.service.config, "update_strategy", UpdateStrategy.DEEP_MERGE):
+            updated = await self.service.update(test_user.id, {"my_dict": source_c})
+            self.assertEqual(updated.my_dict, {**source_b, **source_c})
+            item = await self.service.find_by_id(test_user.id)
+            self.assertEqual(item.my_dict, {**source_b, **source_c})

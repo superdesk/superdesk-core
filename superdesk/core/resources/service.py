@@ -48,7 +48,6 @@ from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.cache import cache
 from superdesk.errors import SuperdeskApiError
-from superdesk.utils import merge_dicts_deep
 from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
