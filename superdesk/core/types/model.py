@@ -132,6 +132,7 @@ class BaseModel(PydanticModel):
         nested data classes or validate updates the given updates.
 
         :param updates: Attributes to update in the cloned instance.
+        :param deep: If `True`, will perform a deep merge otherwise a shallow key merge will be used
         :return: A new instance with the applied updates.
         """
 

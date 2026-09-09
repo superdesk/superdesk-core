@@ -1304,5 +1304,5 @@ class AsyncCacheableService(AsyncResourceService[ResourceModelType]):
         return await self.find_by_id(_id)
 
 
-from .resource_config import ResourceConfig, UpdateStrategy  # noqa: E402
+from .resource_config import ResourceConfig  # noqa: E402
 from .model import get_versioned_model, model_has_versions  # noqa: E402
