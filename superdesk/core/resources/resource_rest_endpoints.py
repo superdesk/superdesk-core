@@ -653,7 +653,9 @@ class ResourceRestEndpoints(RestEndpoints):
             _items=items,
             _meta=dict(
                 page=params.page,
-                max_results=params.max_results if params.max_results is not None else 25,
+                max_results=params.max_results
+                if params.max_results is not None
+                else self.service.get_default_max_results(),
                 total=count,
             ),
         )
@@ -719,15 +721,16 @@ class ResourceRestEndpoints(RestEndpoints):
         )
 
         version = (req.args or {}).get("version")
-        q = querydef(req.max_results, req.where, req.sort, version, req.page, other_params)
+        max_results = req.max_results if req.max_results is not None else self.service.get_default_max_results()
+        q = querydef(max_results, req.where, req.sort, version, req.page, other_params)
 
         if doc_count:
             links["self"]["href"] += q
 
         pagination_ink = links["self"]["href"].split("?")[0]
-        if req.page * req.max_results < (doc_count or 0):
+        if req.page * max_results < (doc_count or 0):
             q = querydef(
-                req.max_results,
+                max_results,
                 req.where,
                 req.sort,
                 version,
@@ -737,9 +740,9 @@ class ResourceRestEndpoints(RestEndpoints):
             links["next"] = {"title": "next page", "href": f"{pagination_ink}{q}"}
 
             if doc_count:
-                last_page = int(math.ceil(doc_count / req.max_results))
+                last_page = int(math.ceil(doc_count / max_results))
                 q = querydef(
-                    req.max_results,
+                    max_results,
                     req.where,
                     req.sort,
                     version,
@@ -753,7 +756,7 @@ class ResourceRestEndpoints(RestEndpoints):
 
         if req.page > 1:
             q = querydef(
-                req.max_results,
+                max_results,
                 req.where,
                 req.sort,
                 version,

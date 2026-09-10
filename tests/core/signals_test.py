@@ -316,6 +316,7 @@ class ResourceWebSignalsTestCase(AsyncFlaskTestCase):
                     args={"source": '{"query":{"match":{"first_name":"John"}}}'},
                     source='{"query":{"match":{"first_name":"John"}}}',
                     projection={"token": False},
+                    max_results=25,  # set by the service on the same instance after the signal
                 ),
             ],
             [
