@@ -690,7 +690,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         self,
         req: dict,
         page: int = 1,
-        max_results: int = 25,
+        max_results: int | None = None,
         sort: SortParam | None = None,
         projection: ProjectedFieldArg | None = None,
         use_mongo: bool = False,
@@ -701,7 +701,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
         self,
         req: SearchRequest | dict,
         page: int = 1,
-        max_results: int = 25,
+        max_results: int | None = None,
         sort: SortParam | None = None,
         projection: ProjectedFieldArg | None = None,
         use_mongo: bool = False,
@@ -710,7 +710,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         :param req: SearchRequest instance, or a lookup dictionary, for the search params to be used
         :param page: The page number to retrieve (defaults to 1)
-        :param max_results: The maximum number of results to retrieve per page (defaults to 25)
+        :param max_results: The maximum number of results to retrieve per page (defaults to resource default, or 25)
         :param sort: The sort order to use (defaults to resource default sort, or not sorting applied)
         :param projection: The field projections to be applied
         :param use_mongo: If ``True`` will force use mongo, else will attempt elastic first
@@ -735,6 +735,9 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         if search_request.sort is None:
             search_request.sort = self.config.default_sort
+
+        if search_request.max_results is None:
+            search_request.max_results = self.get_default_max_results()
 
         try:
             if not use_mongo:
@@ -773,10 +776,22 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         return None
 
+    def get_default_max_results(self) -> int:
+        """Get the page size for searches that do not set ``max_results``"""
+
+        if self.config.default_max_results is not None:
+            return self.config.default_max_results
+        elif self.config.elastic is not None:
+            return self.config.elastic.default_max_results
+        return 25
+
     async def _mongo_find(
         self, req: SearchRequest, versioned: bool = False
     ) -> MongoResourceCursorAsync[ResourceModelType]:
         kwargs: Dict[str, Any] = {}
+
+        if req.max_results is None:
+            req.max_results = self.get_default_max_results()
 
         if req.max_results:
             kwargs["limit"] = req.max_results
