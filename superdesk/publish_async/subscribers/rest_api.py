@@ -27,7 +27,11 @@ class SubscriberRestEndpoints(ResourceRestEndpoints):
                     _items=[cast(dict, subscribers)],
                     _meta=RestResponseMeta(
                         page=1,
-                        max_results=params.max_results,
+                        max_results=(
+                            params.max_results
+                            if params.max_results is not None
+                            else self.service.get_default_max_results()
+                        ),
                         total=1,
                     ),
                 )

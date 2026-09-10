@@ -428,13 +428,13 @@ class TestResourceService(AsyncTestCase):
         await assert_es_find_called_with(
             SearchRequest(), expected=SearchRequest(where=None, page=1, max_results=25, sort=None)
         )
-        expected = SearchRequest()
+        expected = SearchRequest(max_results=25)
         await assert_es_find_called_with(SearchRequest(), expected=expected)
         expected.where = {}
         await assert_es_find_called_with({}, expected=expected)
 
         sort_query = [("last_name.keyword", 1), ("first_name.keyword", 1)]
-        expected = SearchRequest(sort=sort_query)
+        expected = SearchRequest(sort=sort_query, max_results=25)
         await assert_es_find_called_with(SearchRequest(sort=sort_query), expected=expected)
         expected.where = {}
         await assert_es_find_called_with({}, sort=sort_query, expected=expected)
@@ -452,14 +452,27 @@ class TestResourceService(AsyncTestCase):
         # Test with default sort in the resource config
         sort_query = [("email.keyword", 1)]
         self.service.config.default_sort = sort_query
-        expected = SearchRequest(sort=sort_query)
+        expected = SearchRequest(sort=sort_query, max_results=25)
         await assert_es_find_called_with(SearchRequest(), expected=expected)
         expected.where = {}
         await assert_es_find_called_with({}, expected=expected)
 
         # Test passing in sort param with default sort configured
         custom_sort_query = [("scores", 1)]
-        expected = SearchRequest(sort=custom_sort_query)
+        expected = SearchRequest(sort=custom_sort_query, max_results=25)
         await assert_es_find_called_with(SearchRequest(sort=custom_sort_query), expected=expected)
         expected.where = {}
         await assert_es_find_called_with({}, sort=custom_sort_query, expected=expected)
+
+        # Test with default max_results in the resource config
+        with mock.patch.object(self.service.config, "default_max_results", 5):
+            expected = SearchRequest(sort=sort_query, max_results=5)
+            await assert_es_find_called_with(SearchRequest(), expected=expected)
+            expected.where = {}
+            await assert_es_find_called_with({}, expected=expected)
+
+            # explicit max_results wins
+            expected = SearchRequest(sort=sort_query, max_results=10)
+            await assert_es_find_called_with(SearchRequest(max_results=10), expected=expected)
+            expected.where = {}
+            await assert_es_find_called_with({}, max_results=10, expected=expected)

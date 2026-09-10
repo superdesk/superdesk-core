@@ -145,9 +145,8 @@ class SearchRequest(BaseModel):
     #: Sorting to be used
     sort: SortParam | None = None
 
-    #: Maximum number of documents to be returned
-    # TODO-ASYNC: Support None for `max_results`, and let the underlying resource service handle that instead
-    max_results: int = 25
+    #: Maximum number of documents to be returned, uses the resource default when not set
+    max_results: int | None = None
 
     #: The page number to be returned
     page: int = 1
