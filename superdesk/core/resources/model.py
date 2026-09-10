@@ -37,7 +37,7 @@ from pydantic import (
 from pydantic.dataclasses import dataclass as pydataclass
 from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 
-from superdesk.core.types import BaseModel
+from superdesk.core.types import BaseModel, DefaultNoValue
 from superdesk.core.utils import generate_guid, GUID_NEWSML
 from superdesk.utils import merge_dicts_deep
 
@@ -263,6 +263,13 @@ class ResourceModel(BaseModel):
 
         return super().from_dict(values, context, include_unknown)
 
+    def clone_with(self, updates: dict[str, Any], deep: bool | object = DefaultNoValue, **kwargs) -> Self:
+        if deep is DefaultNoValue:
+            # If `deep` wasn't provided, fallback to using resource configured one
+            deep = self.get_config().update_strategy == UpdateStrategy.DEEP_MERGE
+
+        return super().clone_with(updates, cast(bool, deep), **kwargs)
+
     @classmethod
     def get_service(cls) -> "AsyncResourceService[Self]":
         """Helper function to get the service for this resource, without needing to import the service directly.
@@ -287,6 +294,13 @@ class ResourceModel(BaseModel):
 
         app = get_current_async_app()
         return app.resources.get_resource_service(cls.model_resource_name)
+
+    @classmethod
+    def get_config(cls) -> "ResourceConfig":
+        from superdesk.core import get_current_async_app
+
+        app = get_current_async_app()
+        return app.resources.get_config(cls.model_resource_name)
 
     @classmethod
     def get_related_links(cls, item: dict[str, Any]) -> dict[str, Any]:
@@ -402,3 +416,4 @@ def get_versioned_model(model: ResourceModel) -> ModelWithVersions | None:
 
 from .service import AsyncResourceService  # noqa: E402
 from .resource_signals import ResourceSignals  # noqa: E402
+from .resource_config import ResourceConfig, UpdateStrategy  # noqa: E402

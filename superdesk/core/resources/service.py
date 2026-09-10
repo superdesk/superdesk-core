@@ -389,12 +389,10 @@ class AsyncResourceService(Generic[ResourceModelType]):
 
         # Construct a new ResourceModelType instance, to allow Pydantic to validate the changes
         # This is not efficient, but will do for now
-        updated = original.to_dict()
-        updated.update(updates)
-        updated.pop("_type", None)
+        updates.pop("_type", None)
         # Run the Pydantic sync validators, and get a model instance in return
         # Enable ``include_unknown`` so we get unknown field validation
-        model_instance = self.config.data_class.from_dict(updated, include_unknown=True)
+        model_instance = original.clone_with(updates, include_unknown=True)
 
         # Run the async validators
         await model_instance.validate_async()
