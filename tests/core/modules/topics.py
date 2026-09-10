@@ -57,6 +57,7 @@ company_folder_config = ResourceConfig(
     datasource_name="topic_folders",
     data_class=CompanyFolder,
     service=CompanyFolderService,
+    default_max_results=2,
     rest_endpoints=RestEndpointConfig(
         auth=False,
         parent_links=[
@@ -66,7 +67,6 @@ company_folder_config = ResourceConfig(
             )
         ],
         url="topic_folders",
-        default_max_results=2,
     ),
 )
 

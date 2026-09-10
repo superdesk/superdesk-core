@@ -47,6 +47,9 @@ class ResourceConfig:
     #: Optional sorting for this resource
     default_sort: SortListParam | None = None
 
+    #: Optional page size used when a search does not set ``max_results`` (defaults to 25)
+    default_max_results: int | None = None
+
     #: Optional list of sensitive fields that should not be allowed in filters
     sensitive_fields: list[str] | None = None
 
