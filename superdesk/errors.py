@@ -56,11 +56,10 @@ def log_exception(message, extra=None, data=None):
     """
     if not extra:
         extra = {}
+    else:
+        extra = dict(extra)
     if data:
         extra["file"] = save_error_data(data)
-    for k, v in extra.items():
-        message = "{} {}={}".format(message, k, v)
-    if data:
         extra["data"] = data
     try:
         logger.exception(message, extra=extra)
@@ -126,8 +125,6 @@ class SuperdeskApiError(SuperdeskError):
 
         if exception:
             logger.exception(message or exception, extra=extra)
-        elif message:
-            logger.error("HTTP Exception {} has been raised: {}".format(status_code, message), extra=extra)
 
     def to_dict(self) -> dict:
         """Create dict for json response."""
@@ -275,6 +272,14 @@ class SuperdeskIngestError(SuperdeskErrorWithNotifications):
                 message = "{}: {} on channel {}".format(self, exception, self.provider_name)
             else:
                 message = "{}: {}".format(self, exception)
+
+            if item is not None:
+                if extra is None:
+                    extra = {}
+                item_guid = item.get("guid") or item.get("_id") or item.get("id") or ""
+                item_name = item.get("headline") or item.get("slugline") or item.get("name") or ""
+                extra.setdefault("item_id", item_guid)
+                extra.setdefault("item_name", item_name)
 
             log_exception(message, extra=extra, data=data)
 
