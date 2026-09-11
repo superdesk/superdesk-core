@@ -12,7 +12,14 @@ import unittest
 import logging
 
 from superdesk import errors
-from superdesk.errors import IngestApiError, IngestFileError, ParserError, ProviderError, IngestFtpError
+from superdesk.errors import (
+    IngestApiError,
+    IngestFileError,
+    ParserError,
+    ProviderError,
+    IngestFtpError,
+    PublishHTTPPushClientError,
+)
 from superdesk.tests import TestCase, setup_notification
 
 
@@ -94,6 +101,18 @@ class ErrorsTestCase(TestCase):
         errors.logger = mock_logger
         errors.notifiers = []
         self.provider = {"name": "TestProvider"}
+
+    def test_publish_error_does_not_log_wrapped_exception(self):
+        system_exception = Exception("client 4xx")
+        exception = PublishHTTPPushClientError.httpPushError(
+            system_exception,
+            {"name": "TestDestination"},
+        )
+
+        self.assertEqual(exception.code, 14001)
+        self.assertEqual(exception.destination_name, "TestDestination")
+        self.assertIs(exception.system_exception, system_exception)
+        self.assertEqual(self.mock_logger_handler.messages["error"], [])
 
     def test_raise_apiGeneralError(self):
         with self.assertRaises(IngestApiError) as error_context:
