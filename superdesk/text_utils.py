@@ -151,20 +151,24 @@ def get_reading_time(html, word_count=None, language=None):
     return reading_time_minutes
 
 
-def sanitize_html(html, remove_tags=None, kill_tags=None):
+def sanitize_html(html, remove_tags=None, kill_tags=None, remove_attrs=None) -> str:
     """Sanitize HTML
 
     :param str html: unsafe HTML markup
+    :param list remove_attrs: HTML attributes to remove
     :return str: sanitized HTML
     """
     if not html:
         return ""
 
-    if not kill_tags:
+    if kill_tags is None:
         kill_tags = ["script", "style", "head"]
 
     root_elem = lxml_html.fromstring(html)
-    cleaner = clean.Cleaner(add_nofollow=False, kill_tags=kill_tags, remove_tags=remove_tags)
+    cleaner_options = {"add_nofollow": False, "kill_tags": kill_tags, "remove_tags": remove_tags}
+    if remove_attrs is not None:
+        cleaner_options["safe_attrs"] = (set(lxml_html.defs.safe_attrs) | {"style"}) - set(remove_attrs)
+    cleaner = clean.Cleaner(**cleaner_options)
     cleaned_xhtml = cleaner.clean_html(root_elem)
 
     safe_html = etree.tostring(cleaned_xhtml, encoding="unicode")
