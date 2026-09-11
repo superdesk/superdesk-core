@@ -582,8 +582,6 @@ async def ingest_items(items, provider, feeding_service, rule_set=None, routing_
     updated_items = ingest_service.find({"_id": {"$in": created_ids}}, max_results=len(created_ids))
     app = get_current_app()
     app.data._search_backend(ingest_collection).bulk_insert(ingest_collection, list(updated_items))
-    if failed_items:
-        logger.error("Failed to ingest items", extra={"failed_items": list(failed_items)})
     return failed_items
 
 

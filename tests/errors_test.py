@@ -25,9 +25,17 @@ class MockLoggingHandler(logging.Handler):
 
     def emit(self, record):
         self.messages[record.levelname.lower()].append(record.getMessage())
+        self.records[record.levelname.lower()].append(record)
 
     def reset(self):
         self.messages = {
+            "debug": [],
+            "info": [],
+            "warning": [],
+            "error": [],
+            "critical": [],
+        }
+        self.records = {
             "debug": [],
             "info": [],
             "warning": [],
@@ -319,9 +327,9 @@ class ErrorsTestCase(TestCase):
             except Exception as ex:
                 raise ParserError.parseMessageError(ex, self.provider, data=data)
         self.assertEqual(len(self.mock_logger_handler.messages["error"]), 1)
-        message = self.mock_logger_handler.messages["error"][0]
-        self.assertIn("file=", message)
-        filename = message.split("file=")[1]
+        record = self.mock_logger_handler.records["error"][0]
+        self.assertTrue(hasattr(record, "file"))
+        filename = record.file
         with open(filename, "r") as file:
             self.assertEqual(data, file.read())
 
@@ -337,11 +345,11 @@ class ErrorsTestCase(TestCase):
         self.assertIsNotNone(exception.system_exception)
         self.assertEqual(exception.system_exception.args[0], "Testing parseFileError")
         self.assertEqual(len(self.mock_logger_handler.messages["error"]), 1)
-        message = self.mock_logger_handler.messages["error"][0]
-        self.assertIn("ParserError Error 1002 - Ingest file could not be parsed", message)
-        self.assertIn("Testing parseFileError on channel TestProvider", message)
-        self.assertIn("source=afp", message)
-        self.assertIn("file=test.txt", message)
+        record = self.mock_logger_handler.records["error"][0]
+        self.assertIn("ParserError Error 1002 - Ingest file could not be parsed", record.getMessage())
+        self.assertIn("Testing parseFileError on channel TestProvider", record.getMessage())
+        self.assertEqual(getattr(record, "source", None), "afp")
+        self.assertEqual(getattr(record, "file", None), "test.txt")
 
     def test_raise_newsmlOneParserError(self):
         with self.assertRaises(ParserError) as error_context:
@@ -541,8 +549,10 @@ class ErrorsTestCase(TestCase):
         self.assertIsNotNone(exception.system_exception)
         self.assertEqual(exception.system_exception.args[0], "Testing ftpUnknownParserError")
         self.assertEqual(len(self.mock_logger_handler.messages["error"]), 1)
+        record = self.mock_logger_handler.records["error"][0]
         self.assertEqual(
-            self.mock_logger_handler.messages["error"][0],
+            record.getMessage(),
             "IngestFtpError Error 5001 - FTP parser could not be found: "
-            "Testing ftpUnknownParserError on channel TestProvider file=test.xml",
+            "Testing ftpUnknownParserError on channel TestProvider",
         )
+        self.assertEqual(getattr(record, "file", None), "test.xml")
