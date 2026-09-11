@@ -120,12 +120,9 @@ class NINJSFeedParser(FeedParser):
 
         for key, associated_item in ninjs.get("associations", {}).items():
             if associated_item:
-                self.items.append(self._transform_from_ninjs(associated_item))
-                if associated_item.get("type") == "picture" and associated_item.get("body_text"):
-                    associated_item["alt_text"] = associated_item.get("body_text")
-                if associated_item.get("versioncreated"):
-                    associated_item["versioncreated"] = self.datetime(associated_item["versioncreated"])
-                item["associations"][key] = deepcopy(associated_item)
+                transformed_associated_item = self._transform_from_ninjs(associated_item)
+                self.items.append(transformed_associated_item)
+                item["associations"][key] = deepcopy(transformed_associated_item)
 
         if ninjs.get("renditions"):
             item["renditions"] = self.parse_renditions(ninjs["renditions"])

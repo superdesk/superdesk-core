@@ -125,6 +125,35 @@ class SimpleTestCase(NINJSTestCase):
 
         self.assertEqual("custom: <p>text</p>", item["body_html"])
 
+    def test_nested_association_body_html_is_sanitized(self):
+        parser = NINJSFeedParser()
+        item = parser._transform_from_ninjs(
+            {
+                "guid": "parent",
+                "type": "text",
+                "associations": {
+                    "child": {
+                        "guid": "child",
+                        "type": "text",
+                        "body_html": '<p class="child">child<script>bad</script></p>',
+                        "associations": {
+                            "grandchild": {
+                                "guid": "grandchild",
+                                "type": "text",
+                                "body_html": '<p style="display:none">grandchild</p>',
+                            }
+                        },
+                    }
+                },
+            }
+        )
+
+        child = item["associations"]["child"]
+        self.assertEqual("<p>child</p>", child["body_html"])
+        self.assertEqual("<p>grandchild</p>", child["associations"]["grandchild"]["body_html"])
+        self.assertEqual("<p>grandchild</p>", parser.items[0]["body_html"])
+        self.assertEqual("<p>child</p>", parser.items[1]["body_html"])
+
 
 class AssociatedTestCase(NINJSTestCase):
     filename = "ninjs2.json"
