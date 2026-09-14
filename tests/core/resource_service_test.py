@@ -500,9 +500,9 @@ class TestResourceService(AsyncTestCase):
 
     async def test_update_using_merge(self):
         test_user = john_doe()
-        source_a = {"source_1": 1, "source_2": 2}
-        source_b = {"source_3": 3, "source_4": 4}
-        source_c = {"source_5": 5, "source_6": 6}
+        source_a = {"source_1": 1, "source_2": 2, "data": [1, 2, 3]}
+        source_b = {"source_3": 3, "source_4": 4, "data": [4, 5]}
+        source_c = {"source_5": 5, "source_6": 6, "data": [7]}
 
         # Test initial config, should contain only `source_a`
         test_user.my_dict = source_a
