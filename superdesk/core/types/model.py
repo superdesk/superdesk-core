@@ -139,7 +139,7 @@ class BaseModel(PydanticModel):
         cloned_data = deepcopy(self.to_dict())
 
         if deep:
-            cloned_data = dict(merge_dicts_deep(cloned_data, updates))
+            cloned_data = dict(merge_dicts_deep(cloned_data, updates, merge_sequences=False))
         else:
             cloned_data.update(updates)
 

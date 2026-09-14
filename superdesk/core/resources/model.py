@@ -122,7 +122,7 @@ class DataclassBase:
 
     def clone_with(self, updates: dict) -> Self:
         cloned_data = deepcopy(self.to_dict())
-        cloned_data = dict(merge_dicts_deep(cloned_data, updates))
+        cloned_data = dict(merge_dicts_deep(cloned_data, updates, merge_sequences=False))
         return self.from_dict(cloned_data)
 
 

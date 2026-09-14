@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict
+from typing import Optional, List
 from typing_extensions import Annotated
 from enum import Enum
 
@@ -68,7 +68,7 @@ class User(ResourceModel):
 
     location: Optional[fields.Geopoint] = None
 
-    my_dict: Optional[Dict[str, int]] = None
+    my_dict: dict[str, int | list] | None = None
 
     created_by: Annotated[
         Optional[str],
