@@ -117,6 +117,11 @@ class EveToPydanticDataLayer(EveBackend):
             if new_item:
                 doc.update(new_item.to_dict())
 
+            for key in list(doc.keys()):
+                # On create, remove any fields that are `None` (Pydantic requires every field to have a value)
+                if doc.get(key) is None:
+                    doc.pop(key)
+
         # And add any generated items to the `docs` variable (such as recurring events)
         provided_doc_ids = [str(doc["_id"]) for doc in docs]
         for item in new_items:

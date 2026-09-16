@@ -98,24 +98,24 @@ def get_meta(file_stream):
 
     exif_meta = {}
     for k, v in exif.items():
-        print(f"Attempting exif key {k}, val {v}")
+        logger.debug("Attempting exif key %s, val %s", k, v)
         try:
             key = ExifTags.TAGS[k].strip()
         except KeyError:
-            print("\tKey not found")
+            logger.debug("\tKey not found")
             continue
 
-        print(f"\tUpdated key = {key}")
+        logger.debug("\tUpdated key = %s", key)
 
         if key == "GPSInfo":
-            print("\tKey is for GPS Info")
+            logger.debug("\tKey is for GPS Info")
             # lookup GPSInfo description key names
             value = {
                 ExifTags.GPSTAGS[vk].strip(): convert_exif_value(vv, vk)
                 for vk, vv in rv.get_ifd(k).items()
                 if is_serializable(vv)
             }
-            print(value)
+            logger.debug("GPSInfo value: %s", value)
             exif_meta[key] = value
         elif is_serializable(v):
             value = v.decode("UTF-8") if isinstance(v, bytes) else v
@@ -185,7 +185,7 @@ def read_metadata(input: bytes) -> MediaMetadata:
         with pyexiv2.ImageData(input) as img:
             xmp = img.read_xmp()
     except (RuntimeError, ValueError) as e:
-        logger.warning(f"Failed to read image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
+        logger.warning("Failed to read image metadata with pyexiv2: %s, trying exiftool fallback", e, exc_info=True)
         # Try to use exiftool as fallback when pyexiv2 fails
         # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import read_metadata as read_metadata_video
@@ -305,7 +305,7 @@ def write_metadata(input: bytes, metadata: MediaMetadata) -> bytes:
             img.modify_iptc(iptc)
             return img.get_bytes()
     except (RuntimeError, ValueError) as e:
-        logger.warning(f"Failed to write image metadata with pyexiv2: {e}, trying exiftool fallback", exc_info=True)
+        logger.warning("Failed to write image metadata with pyexiv2: %s, trying exiftool fallback", e, exc_info=True)
         # Try to use exiftool as fallback when pyexiv2 fails
         # Import here to avoid loading exiftool dependencies unless needed (lazy loading)
         from superdesk.media.video import write_metadata as write_metadata_video

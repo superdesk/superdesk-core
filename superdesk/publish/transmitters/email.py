@@ -11,7 +11,7 @@
 import json
 
 from superdesk.core import get_app_config, get_current_app
-from superdesk.core.emails import send_email, EmailAttachment
+from superdesk.core.emails import send_email_async, EmailAttachment
 from superdesk.publish import register_transmitter
 from superdesk.publish.publish_service import PublishService
 from superdesk.errors import PublishEmailError
@@ -86,7 +86,7 @@ class EmailPublishService(PublishService):
                     )
 
             # sending email in this task (don't send this as a Celery Task)
-            await send_email(
+            await send_email_async(
                 subject=subject,
                 sender=admins[0],
                 recipients=recipients,

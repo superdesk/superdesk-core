@@ -1,7 +1,14 @@
 from typing import Union
 from dataclasses import dataclass
+from enum import Enum, unique
 
 from superdesk.core.types import SortListParam, ProjectedFieldArg, MongoResourceConfig, ElasticResourceConfig
+
+
+@unique
+class UpdateStrategy(Enum):
+    SHALLOW_MERGE = "SHALLOW_MERGE"
+    DEEP_MERGE = "DEEP_MERGE"
 
 
 @dataclass
@@ -47,6 +54,9 @@ class ResourceConfig:
     #: Optional sorting for this resource
     default_sort: SortListParam | None = None
 
+    #: Optional page size used when a search does not set ``max_results`` (defaults to 25)
+    default_max_results: int | None = None
+
     #: Optional list of sensitive fields that should not be allowed in filters
     sensitive_fields: list[str] | None = None
 
@@ -58,6 +68,9 @@ class ResourceConfig:
 
     #: Boolean to indicate if websocket notifications should be sent for this resource (defaults to ``True``)
     send_ws_notifications: bool = True
+
+    #: Update strategy (shallow or deep merge) used to apply updates to an item
+    update_strategy: UpdateStrategy = UpdateStrategy.SHALLOW_MERGE
 
 
 from .resource_rest_endpoints import RestEndpointConfig  # noqa: E402

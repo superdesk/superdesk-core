@@ -25,6 +25,7 @@ __all__ = [
     "EmailRequest",
     "EmailAddress",
     "EmailFactory",
+    "send_email_async",
     "send_email",
 ]
 
@@ -184,14 +185,7 @@ SMTP_RETRY_ERRORS = (
 )
 
 
-@shared_task(
-    autoretry_for=SMTP_RETRY_ERRORS,
-    max_retries=3,
-    retry_backoff=True,  # Safely spaces retries (e.g., 2s, 4s, 8s)
-    retry_jitter=True,
-    soft_time_limit=120,
-)
-async def send_email(
+async def send_email_async(
     subject: str,
     sender: EmailAddress,
     recipients: list[EmailAddress],
@@ -218,5 +212,38 @@ async def send_email(
             attachments=attachments,
             use_lock=use_lock,
         ),
+        raise_exceptions=raise_exceptions,
+    )
+
+
+@shared_task(
+    autoretry_for=SMTP_RETRY_ERRORS,
+    max_retries=3,
+    retry_backoff=True,  # Safely spaces retries (e.g., 2s, 4s, 8s)
+    retry_jitter=True,
+    soft_time_limit=120,
+)
+async def send_email(
+    subject: str,
+    sender: EmailAddress,
+    recipients: list[EmailAddress],
+    text_body: str,
+    html_body: str,
+    cc: list[EmailAddress] | None = None,
+    bcc: list[EmailAddress] | None = None,
+    attachments: list[EmailAttachment] | None = None,
+    use_lock: bool = True,
+    raise_exceptions: bool = False,
+) -> None:
+    await send_email_async(
+        subject=subject,
+        sender=sender,
+        recipients=recipients,
+        text_body=text_body,
+        html_body=html_body,
+        cc=cc,
+        bcc=bcc,
+        attachments=attachments,
+        use_lock=use_lock,
         raise_exceptions=raise_exceptions,
     )

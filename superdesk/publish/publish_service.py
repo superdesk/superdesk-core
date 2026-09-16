@@ -68,7 +68,8 @@ class PublishServiceBase:
                 if isawaitable(transmit_response):
                     await transmit_response
             except SuperdeskPublishError as error:
-                await self.update_item_status(queue_item["_id"], "error", error)
+                # the caller (consumer) is responsible for persisting the resulting queue item state,
+                # so it can do so in a single update using the etag it already holds
                 await self.close_transmitter(subscriber, error)
                 raise error
 

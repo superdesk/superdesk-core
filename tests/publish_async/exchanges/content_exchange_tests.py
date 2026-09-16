@@ -1,11 +1,15 @@
 import asyncio
+from datetime import timedelta
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from bson import ObjectId
 
 from superdesk.tests import TestCase
-from superdesk.resource_fields import VERSION
+from superdesk.resource_fields import VERSION, ITEM_STATE
 from superdesk.types import PublishState
+from superdesk.lifecycle_timing import to_epoch_ms
+from superdesk.utc import utcnow
+from superdesk.metadata.item import CONTENT_STATE
 from superdesk.publish_async.exchanges.content_exchange import ContentPublishExchange
 from superdesk.publish_async.utils import QUEUE_STATE, PUBLISHED
 
@@ -253,3 +257,205 @@ class ContentExchangeCancelledErrorTestCase(TestCase):
         last_patch_id, last_patch_updates = captured_patches[-1]
         self.assertEqual(last_patch_id, published_item_id)
         self.assertEqual(last_patch_updates[QUEUE_STATE], PublishState.PENDING)
+
+
+class ContentExchangeLifecycleTimingTestCase(TestCase):
+    """
+    Tests that the lifecycle timing carried by the request item is not lost when
+    ``send()`` replaces ``request.item`` with the document from the ``published``
+    collection - eg. a resend restarts the timing on the in-memory article only.
+    """
+
+    def _make_exchange(self):
+        exchange = ContentPublishExchange.__new__(ContentPublishExchange)
+        exchange._filter = MagicMock()
+        exchange._formatter = MagicMock()
+        exchange._router = MagicMock()
+        exchange.polling = False
+        return exchange
+
+    async def test_request_lifecycle_timing_overrides_stored_published_timing(self):
+        exchange = self._make_exchange()
+
+        published_item_id = ObjectId()
+        first_published_at = utcnow()
+        resent_at = first_published_at + timedelta(hours=3)
+        published_item = {
+            "_id": published_item_id,
+            "item_id": "test-item-1",
+            "lifecycle_timing": {
+                "first_published_at": first_published_at,
+                "lifecycle_started_at": first_published_at,
+                "lifecycle_started_ms": to_epoch_ms(first_published_at),
+            },
+        }
+
+        request = MagicMock()
+        request.item = {
+            "item_id": "test-item-1",
+            "lifecycle_timing": {
+                "lifecycle_started_at": resent_at,
+                "lifecycle_started_ms": to_epoch_ms(resent_at),
+            },
+        }
+        request.item_id = "test-item-1"
+
+        published_service = MagicMock()
+        published_service.patch_async = AsyncMock()
+
+        with patch(
+            "superdesk.publish_async.exchanges.content_exchange.get_resource_service",
+            return_value=published_service,
+        ):
+            await exchange._merge_request_lifecycle_timing(request, published_item, published_item_id)
+
+        merged_timing = published_item["lifecycle_timing"]
+        self.assertEqual(resent_at, merged_timing["lifecycle_started_at"])
+        self.assertEqual(to_epoch_ms(resent_at), merged_timing["lifecycle_started_ms"])
+        # fields not part of this action are kept
+        self.assertEqual(first_published_at, merged_timing["first_published_at"])
+        published_service.patch_async.assert_awaited_once_with(published_item_id, {"lifecycle_timing": merged_timing})
+
+    async def test_unchanged_lifecycle_timing_is_not_patched(self):
+        exchange = self._make_exchange()
+
+        published_item_id = ObjectId()
+        lifecycle_timing = {"lifecycle_started_at": utcnow()}
+        published_item = {"_id": published_item_id, "lifecycle_timing": dict(lifecycle_timing)}
+
+        request = MagicMock()
+        request.item = {"lifecycle_timing": dict(lifecycle_timing)}
+
+        published_service = MagicMock()
+        published_service.patch_async = AsyncMock()
+
+        with patch(
+            "superdesk.publish_async.exchanges.content_exchange.get_resource_service",
+            return_value=published_service,
+        ):
+            await exchange._merge_request_lifecycle_timing(request, published_item, published_item_id)
+
+        published_service.patch_async.assert_not_awaited()
+
+    async def test_send_keeps_request_lifecycle_timing_on_published_item(self):
+        exchange = self._make_exchange()
+
+        published_item_id = ObjectId()
+        resent_at = utcnow()
+        published_item = {
+            "_id": published_item_id,
+            "item_id": "test-item-1",
+            "lifecycle_timing": {"lifecycle_started_at": resent_at - timedelta(hours=3)},
+        }
+
+        request = MagicMock()
+        request.item = {
+            "item_id": "test-item-1",
+            "lifecycle_timing": {"lifecycle_started_at": resent_at, "lifecycle_started_ms": to_epoch_ms(resent_at)},
+        }
+        request.item_id = "test-item-1"
+        request.publish_to_content_api = False
+
+        published_service = MagicMock()
+        published_service.patch_async = AsyncMock()
+
+        publish_response = MagicMock()
+        publish_response.content_api_subscribers = []
+
+        with patch(
+            "superdesk.publish_async.exchanges.content_exchange.PublishCache.init",
+            new_callable=AsyncMock,
+        ):
+            with patch(
+                "superdesk.publish_async.exchanges.content_exchange.get_resource_service",
+                return_value=published_service,
+            ):
+                with patch.object(
+                    exchange,
+                    "get_published_item_from_request",
+                    new_callable=AsyncMock,
+                    return_value=published_item,
+                ):
+                    with patch.object(exchange, "update_published_item", new_callable=AsyncMock):
+                        with patch.object(
+                            exchange,
+                            "_publish_item",
+                            new_callable=AsyncMock,
+                            return_value=publish_response,
+                        ) as publish_item_mock:
+                            await exchange.send(request)
+
+        published_request = publish_item_mock.await_args.args[0]
+        self.assertEqual(resent_at, published_request.item["lifecycle_timing"]["lifecycle_started_at"])
+
+
+class ContentExchangeUpdatedScheduledItemTestCase(TestCase):
+    """
+    Tests that ``updated_scheduled_item`` marks the ``published`` collection item as
+    "published" even when one of the best-effort side effects (notifications, legal
+    archive import, signals, etc.) raises. Regression test for items staying stuck
+    reporting "scheduled" state forever after they were actually published.
+    """
+
+    def _make_exchange(self):
+        exchange = ContentPublishExchange.__new__(ContentPublishExchange)
+        exchange._filter = MagicMock()
+        exchange._formatter = MagicMock()
+        exchange._router = MagicMock()
+        exchange.polling = False
+        return exchange
+
+    async def test_published_state_is_set_even_when_side_effects_raise(self):
+        exchange = self._make_exchange()
+
+        published_item_id = ObjectId()
+        published_item = {
+            "_id": published_item_id,
+            "item_id": "test-item-1",
+            "state": "scheduled",
+            "queue_state": "pending",
+            VERSION: 1,
+        }
+
+        archive_service = MagicMock()
+        archive_service.find_one_async = AsyncMock(return_value={"_id": "test-item-1"})
+        archive_service.system_update_async = AsyncMock()
+
+        published_service = MagicMock()
+        published_patches = []
+
+        async def fake_patch(item_id, updates):
+            published_patches.append((item_id, updates.copy()))
+
+        published_service.patch_async = AsyncMock(side_effect=fake_patch)
+
+        def resource_service_lookup(name):
+            return archive_service if name == "archive" else published_service
+
+        with (
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.get_resource_service",
+                side_effect=resource_service_lookup,
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.insert_into_versions_async",
+                new_callable=AsyncMock,
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.get_current_app",
+                side_effect=Exception("boom: on_archive_item_updated blew up"),
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.import_into_legal_archive",
+            ),
+            patch(
+                "superdesk.publish_async.exchanges.content_exchange.push_content_notification",
+            ),
+        ):
+            # side effects raising must not prevent/undo the published-state patch
+            await exchange.updated_scheduled_item(published_item)
+
+        self.assertTrue(len(published_patches) >= 1, "published collection should have been patched")
+        patched_id, patched_updates = published_patches[0]
+        self.assertEqual(patched_id, published_item_id)
+        self.assertEqual(patched_updates[ITEM_STATE], CONTENT_STATE.PUBLISHED)

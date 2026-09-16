@@ -27,6 +27,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.metadata.item import CONTENT_TYPE, ITEM_TYPE, ITEM_STATE, CONTENT_STATE
 from apps.archive.common import is_genre, BROADCAST_GENRE, ITEM_RESEND
 from superdesk.publish_async.commands import publish_item
+from superdesk.lifecycle_timing import reset_lifecycle_started_at
 from apps.archive.common import ITEM_OPERATION
 from quart_babel import gettext as _
 
@@ -76,6 +77,8 @@ class ResendService(AsyncBaseService):
         article = await self._validate_article(article_id, article_version)
         subscribers = await self._validate_subscribers(doc.get("subscribers"), article)
         remove_is_queued(article)
+        # timing must be measured from this resend, not from the original publish
+        reset_lifecycle_started_at(article)
         signals.item_resend.send(self, item=article)
 
         publish_response = await publish_item(

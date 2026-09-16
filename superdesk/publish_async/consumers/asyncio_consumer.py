@@ -6,7 +6,7 @@ from datetime import timedelta
 
 from superdesk.types import PublishQueueResource, PublishQueueState, SubscribersResource, PublishConsumer
 from superdesk.core import get_config
-from superdesk.errors import PublishHTTPPushClientError
+from superdesk.errors import PublishHTTPPushClientError, SuperdeskPublishError
 from superdesk.utc import utcnow
 from superdesk.resource_fields import LAST_UPDATED
 from superdesk.publish import registered_transmitters
@@ -88,16 +88,26 @@ class AsyncioPublishConsumer(PublishConsumer):
             logger.error("Destination not defined in queue item", extra=log_extra)
             return False
 
+        # Every update regenerates the item's etag, so the stored version is tracked separately
+        # from `task`: each state update below is checked against the etag it is given and fails
+        # with a 412 once that etag is no longer the one held in the database.
+        current_task = task
+        publish_queue_service = PublishQueueResource.get_service()
+
         try:
             # Update the status of the task to in-progress
             task_update = {"state": PublishQueueState.IN_PROGRESS, "transmit_started_at": utcnow()}
-            await PublishQueueResource.get_service().update(task.id, task_update, task.etag, task)
+            current_task = await publish_queue_service.update(task.id, task_update, current_task.etag, current_task)
             logger.info(f"Transmitting queue item {log_msg}")
 
             try:
                 transmitter = registered_transmitters[task.destination.delivery_type]
             except KeyError:
-                print(task.destination.delivery_type not in registered_transmitters)
+                logger.error(
+                    "No transmitter registered for delivery type %s",
+                    task.destination.delivery_type,
+                    extra=log_extra,
+                )
                 raise
 
             response = transmitter.transmit(task.to_dict(context={"use_objectid": True}))
@@ -122,7 +132,7 @@ class AsyncioPublishConsumer(PublishConsumer):
             elif task.lifecycle_started_at:
                 success_update["lifecycle_to_transmit_ms"] = duration_ms(task.lifecycle_started_at, completed_now)
 
-            await PublishQueueResource.get_service().update(task.id, success_update, task.etag, task)
+            await publish_queue_service.update(task.id, success_update, current_task.etag, current_task)
             logger.info(f"Transmit completed for queue item {log_msg}")
 
             return True
@@ -141,18 +151,20 @@ class AsyncioPublishConsumer(PublishConsumer):
                 get_config(int, "MAX_TRANSMIT_RETRY_DELAY_MINUTES", 120),
             )
             try:
-                retry_attempt = task.retry_attempt or 0
+                retry_attempt = current_task.retry_attempt or 0
                 timeout_minutes = compute_retry_timeout_minutes(
                     retry_attempt,
                     initial_retry_delay_minutes,
                     max_retry_delay_minutes,
                 )
                 updates: dict[str, object] = {LAST_UPDATED: utcnow()}
+                if isinstance(e, SuperdeskPublishError):
+                    updates["error_message"] = f"{e}:{e.system_exception}"
 
-                if task.retry_attempt < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
+                if retry_attempt < max_retry_attempt and not isinstance(e, PublishHTTPPushClientError):
                     updates.update(
                         {
-                            "retry_attempt": task.retry_attempt + 1,
+                            "retry_attempt": retry_attempt + 1,
                             "state": PublishQueueState.RETRYING,
                             "next_retry_attempt_at": utcnow() + timedelta(minutes=timeout_minutes),
                         }
@@ -160,7 +172,7 @@ class AsyncioPublishConsumer(PublishConsumer):
                 else:
                     updates["state"] = PublishQueueState.FAILED
 
-                await PublishQueueResource.get_service().update(task.id, updates, task.etag, task)
+                await publish_queue_service.update(current_task.id, updates, current_task.etag, current_task)
                 return False
             except Exception:
                 logger.error("Failed to set the state for failed publish queue item.", extra=log_extra)

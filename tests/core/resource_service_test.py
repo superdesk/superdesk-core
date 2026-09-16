@@ -5,7 +5,7 @@ import simplejson as json
 from bson import ObjectId
 
 from superdesk.core.types import SearchRequest
-from superdesk.core.resources import AsyncResourceService
+from superdesk.core.resources import AsyncResourceService, UpdateStrategy
 from superdesk.core.elastic.base_client import ElasticCursor
 from superdesk.utc import utcnow
 from superdesk.utils import format_time
@@ -429,13 +429,13 @@ class TestResourceService(AsyncTestCase):
         await assert_es_find_called_with(
             SearchRequest(), expected=SearchRequest(where=None, page=1, max_results=25, sort=None)
         )
-        expected = SearchRequest()
+        expected = SearchRequest(max_results=25)
         await assert_es_find_called_with(SearchRequest(), expected=expected)
         expected.where = {}
         await assert_es_find_called_with({}, expected=expected)
 
         sort_query = [("last_name.keyword", 1), ("first_name.keyword", 1)]
-        expected = SearchRequest(sort=sort_query)
+        expected = SearchRequest(sort=sort_query, max_results=25)
         await assert_es_find_called_with(SearchRequest(sort=sort_query), expected=expected)
         expected.where = {}
         await assert_es_find_called_with({}, sort=sort_query, expected=expected)
@@ -454,17 +454,30 @@ class TestResourceService(AsyncTestCase):
         sort_query = [("email.keyword", 1)]
 
         with mock.patch.object(self.service.config, "default_sort", sort_query):
-            expected = SearchRequest(sort=sort_query)
+            expected = SearchRequest(sort=sort_query, max_results=25)
             await assert_es_find_called_with(SearchRequest(), expected=expected)
             expected.where = {}
             await assert_es_find_called_with({}, expected=expected)
 
             # Test passing in sort param with default sort configured
             custom_sort_query = [("scores", 1)]
-            expected = SearchRequest(sort=custom_sort_query)
+            expected = SearchRequest(sort=custom_sort_query, max_results=25)
             await assert_es_find_called_with(SearchRequest(sort=custom_sort_query), expected=expected)
             expected.where = {}
             await assert_es_find_called_with({}, sort=custom_sort_query, expected=expected)
+
+        # Test with default max_results in the resource config
+        with mock.patch.object(self.service.config, "default_max_results", 5):
+            expected = SearchRequest(max_results=5)
+            await assert_es_find_called_with(SearchRequest(), expected=expected)
+            expected.where = {}
+            await assert_es_find_called_with({}, expected=expected)
+
+            # explicit max_results wins
+            expected = SearchRequest(max_results=10)
+            await assert_es_find_called_with(SearchRequest(max_results=10), expected=expected)
+            expected.where = {}
+            await assert_es_find_called_with({}, max_results=10, expected=expected)
 
     async def test_bulk_update(self):
         users = all_users()
@@ -484,3 +497,29 @@ class TestResourceService(AsyncTestCase):
             es_item = await self.service.elastic.find_by_id(users[index].id)
             es_item.pop("_type", None)
             self.assertEqual(users[index], User(**es_item))
+
+    async def test_update_using_merge(self):
+        test_user = john_doe()
+        source_a = {"source_1": 1, "source_2": 2, "data": [1, 2, 3]}
+        source_b = {"source_3": 3, "source_4": 4, "data": [4, 5]}
+        source_c = {"source_5": 5, "source_6": 6, "data": [7]}
+
+        # Test initial config, should contain only `source_a`
+        test_user.my_dict = source_a
+        await self.service.create([test_user])
+        item = await self.service.find_by_id(test_user.id)
+        self.assertEqual(item.my_dict, source_a)
+
+        # Test default update_strategy of SHALLOW_MERGE (replacing `source_a` with `source_b` entirely)
+        self.assertEqual(self.service.config.update_strategy, UpdateStrategy.SHALLOW_MERGE)
+        updated = await self.service.update(test_user.id, {"my_dict": source_b})
+        self.assertEqual(updated.my_dict, source_b)
+        item = await self.service.find_by_id(test_user.id)
+        self.assertEqual(item.my_dict, source_b)
+
+        # Test again, this time using DEEP_MERGE (merging `source_c` into `source_b`)
+        with mock.patch.object(self.service.config, "update_strategy", UpdateStrategy.DEEP_MERGE):
+            updated = await self.service.update(test_user.id, {"my_dict": source_c})
+            self.assertEqual(updated.my_dict, {**source_b, **source_c})
+            item = await self.service.find_by_id(test_user.id)
+            self.assertEqual(item.my_dict, {**source_b, **source_c})
