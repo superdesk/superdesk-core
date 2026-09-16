@@ -93,6 +93,9 @@ class AsyncBaseService(BaseService):
             await self.on_deleted_async(doc)
         return res
 
+    async def delete_docs_without_callbacks_async(self, docs: list[dict]) -> list[ItemId]:
+        return await self.backend.delete_docs_async(self.datasource, docs)
+
     async def find_one_async(self, req: ParsedRequest | None, **lookup) -> dict | None:
         return await self.backend.find_one_async(self.datasource, req=req, **lookup)
 
