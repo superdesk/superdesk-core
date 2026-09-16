@@ -17,7 +17,7 @@ install_requires = [
     "elasticsearch[async]<7.18",  # we are using oss version on test server
     "aiosmtplib>=5.1.1,<5.2",
     "arrow>=0.4,<=1.4.0",
-    "pillow>=9.2,<12.1",
+    "pillow>=9.2,<12.4",
     "bcrypt>=3.1.1,<5.1",
     "blinker>=1.3,<1.10",
     "celery[redis]>=5.6.2,<5.7",
