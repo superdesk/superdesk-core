@@ -9,17 +9,20 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
-from superdesk.core import get_app_config
-from superdesk.flask import Blueprint
-from superdesk.upload import get_upload_as_data_uri
+from superdesk.core import get_app_config, get_current_app
+from superdesk.flask import Blueprint, request
+from superdesk.upload import _get_upload_as_data_uri
 
 
 bp = Blueprint("assets", __name__)
 
 
 @bp.route("/assets/<path:media_id>", methods=["GET"])
-def prod_get_upload_as_data_uri(media_id):
-    return get_upload_as_data_uri(media_id)
+async def prod_get_upload_as_data_uri(media_id):
+    app = get_current_app()
+    if app.auth and not app.auth.authorized([], "archive", request.method):
+        return app.auth.authenticate()
+    return await _get_upload_as_data_uri(media_id)
 
 
 def upload_url(media_id, view=prod_get_upload_as_data_uri):

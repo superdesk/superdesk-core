@@ -61,6 +61,10 @@ async def get_upload_as_data_uri_bc(media_id):
 @bp.route("/upload-raw/<path:media_id>", methods=["GET", "OPTIONS", "HEAD"])
 @blueprint_auth()
 async def get_upload_as_data_uri(media_id):
+    return await _get_upload_as_data_uri(media_id)
+
+
+async def _get_upload_as_data_uri(media_id):
     app = get_current_app()
 
     if request.method == "OPTIONS":
