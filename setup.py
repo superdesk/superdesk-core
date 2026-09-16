@@ -34,7 +34,7 @@ install_requires = [
     "boto3>=1.26,<2.0",
     "websockets>=14.2,<17",
     "PyYAML>=6.0.1",
-    "lxml>=5.2.2,<5.4",
+    "lxml>=5.2.2,<6.2",
     "lxml_html_clean>=0.1.1,<0.5",
     "chardet<6.0",
     "pymongo>=4.9.1,<4.16",
