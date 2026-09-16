@@ -588,11 +588,6 @@ class SuperdeskPublishError(SuperdeskErrorWithNotifications):
                     ),
                 )
 
-            extra = {}
-            if destination:
-                extra["destination"] = destination.get("name", "unknown")
-            log_exception(exception, extra=extra)
-
 
 class FormatterError(SuperdeskPublishError):
     _codes = {
