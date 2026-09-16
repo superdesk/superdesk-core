@@ -20,7 +20,8 @@ bp = Blueprint("assets", __name__)
 @bp.route("/assets/<path:media_id>", methods=["GET"])
 async def prod_get_upload_as_data_uri(media_id):
     app = get_current_app()
-    if app.auth and not app.auth.authorized([], "archive", request.method):
+    method = "GET" if request.method == "HEAD" else request.method
+    if app.auth and not app.auth.authorized([], "archive", method):
         return app.auth.authenticate()
     return await serve_media_file(media_id)
 
