@@ -12,6 +12,7 @@
 import logging
 
 import superdesk
+from quart import Response
 from quart_babel import gettext
 
 from superdesk.core import get_app_config, get_current_app
@@ -61,18 +62,17 @@ async def get_upload_as_data_uri_bc(media_id):
 @bp.route("/upload-raw/<path:media_id>", methods=["GET", "OPTIONS", "HEAD"])
 @blueprint_auth()
 async def get_upload_as_data_uri(media_id):
-    return await _get_upload_as_data_uri(media_id)
-
-
-async def _get_upload_as_data_uri(media_id):
-    app = get_current_app()
-
     if request.method == "OPTIONS":
         response = await make_response()
         response.headers.add("Access-Control-Allow-Origin", "*")
         response.headers.add("Access-Control-Allow-Headers", "*")
         response.headers.add("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS")
         return response
+    return await serve_media_file(media_id)
+
+
+async def serve_media_file(media_id: str) -> Response:
+    app = get_current_app()
 
     begin, end = get_file_request_range(request.range)
     if not request.args.get("resource"):

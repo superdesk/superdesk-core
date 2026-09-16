@@ -15,7 +15,7 @@ async def test_assets_require_auth(prodapi_app, prodapi_client):
 @pytest.mark.parametrize("issued_tokens", [(("ARCHIVE_READ",),)], indirect=True)
 async def test_assets_use_archive_read_scope(issued_tokens, prodapi_app, prodapi_client):
     access_token = issued_tokens[0]["access_token"]
-    with patch("prod_api.assets._get_upload_as_data_uri", new_callable=AsyncMock) as get_asset:
+    with patch("prod_api.assets.serve_media_file", new_callable=AsyncMock) as get_asset:
         get_asset.return_value = "asset response"
 
         async with prodapi_app.test_request_context("/"):

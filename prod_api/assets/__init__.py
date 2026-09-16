@@ -11,7 +11,7 @@
 import superdesk
 from superdesk.core import get_app_config, get_current_app
 from superdesk.flask import Blueprint, request
-from superdesk.upload import _get_upload_as_data_uri
+from superdesk.upload import serve_media_file
 
 
 bp = Blueprint("assets", __name__)
@@ -22,7 +22,7 @@ async def prod_get_upload_as_data_uri(media_id):
     app = get_current_app()
     if app.auth and not app.auth.authorized([], "archive", request.method):
         return app.auth.authenticate()
-    return await _get_upload_as_data_uri(media_id)
+    return await serve_media_file(media_id)
 
 
 def upload_url(media_id, view=prod_get_upload_as_data_uri):
