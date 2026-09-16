@@ -40,6 +40,9 @@ paths:
       description: Get list of content items with elastic search query support
       tags:
         - Items
+      security:
+        - oauth2Auth:
+            - ARCHIVE_READ
       parameters:
         - name: source
           in: query
@@ -64,6 +67,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /items/{guid}:
     get:
@@ -71,6 +76,9 @@ paths:
       description: Retrieve a specific item by its GUID
       tags:
         - Items
+      security:
+        - oauth2Auth:
+            - ARCHIVE_READ
       parameters:
         - $ref: '#/components/parameters/guid'
       responses:
@@ -82,6 +90,8 @@ paths:
                 $ref: '#/components/schemas/Item'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -91,6 +101,9 @@ paths:
       description: Get list of desks with MongoDB query support
       tags:
         - Desks
+      security:
+        - oauth2Auth:
+            - DESKS_READ
       parameters:
         - name: where
           in: query
@@ -115,6 +128,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /desks/{_id}:
     get:
@@ -122,6 +137,9 @@ paths:
       description: Retrieve a specific desk by its ID
       tags:
         - Desks
+      security:
+        - oauth2Auth:
+            - DESKS_READ
       parameters:
         - $ref: '#/components/parameters/_id'
       responses:
@@ -133,6 +151,8 @@ paths:
                 $ref: '#/components/schemas/Desk'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -142,6 +162,9 @@ paths:
       description: Get list of assignments with elastic search query support
       tags:
         - Assignments
+      security:
+        - oauth2Auth:
+            - ASSIGNMENTS_READ
       parameters:
         - name: source
           in: query
@@ -165,6 +188,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /assignments/{_id}:
     get:
@@ -172,6 +197,9 @@ paths:
       description: Retrieve a specific assignment by its ID
       tags:
         - Assignments
+      security:
+        - oauth2Auth:
+            - ASSIGNMENTS_READ
       parameters:
         - $ref: '#/components/parameters/_id'
       responses:
@@ -183,6 +211,8 @@ paths:
                 $ref: '#/components/schemas/Assignment'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -192,6 +222,9 @@ paths:
       description: Get list of planning items with elastic search query support
       tags:
         - Planning
+      security:
+        - oauth2Auth:
+            - PLANNING_READ
       parameters:
         - name: source
           in: query
@@ -215,6 +248,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /planning/{guid}:
     get:
@@ -222,6 +257,9 @@ paths:
       description: Retrieve a specific planning item by its GUID
       tags:
         - Planning
+      security:
+        - oauth2Auth:
+            - PLANNING_READ
       parameters:
         - $ref: '#/components/parameters/guid'
       responses:
@@ -233,6 +271,8 @@ paths:
                 $ref: '#/components/schemas/Planning'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -242,6 +282,9 @@ paths:
       description: Get list of events with elastic search query support
       tags:
         - Events
+      security:
+        - oauth2Auth:
+            - EVENTS_READ
       parameters:
         - name: source
           in: query
@@ -265,6 +308,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /events/{guid}:
     get:
@@ -272,6 +317,9 @@ paths:
       description: Retrieve a specific event by its GUID
       tags:
         - Events
+      security:
+        - oauth2Auth:
+            - EVENTS_READ
       parameters:
         - $ref: '#/components/parameters/guid'
       responses:
@@ -283,6 +331,8 @@ paths:
                 $ref: '#/components/schemas/Event'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -292,6 +342,9 @@ paths:
       description: Get list of event files with MongoDB query support
       tags:
         - Events
+      security:
+        - oauth2Auth:
+            - EVENTS_READ
       parameters:
         - name: where
           in: query
@@ -315,6 +368,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /events_files/{_id}:
     get:
@@ -322,6 +377,9 @@ paths:
       description: Retrieve a specific event file by its ID
       tags:
         - Events
+      security:
+        - oauth2Auth:
+            - EVENTS_READ
       parameters:
         - $ref: '#/components/parameters/_id'
       responses:
@@ -333,6 +391,8 @@ paths:
                 $ref: '#/components/schemas/EventFile'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -342,6 +402,9 @@ paths:
       description: Get list of event history records with MongoDB query support
       tags:
         - Events
+      security:
+        - oauth2Auth:
+            - EVENTS_READ
       parameters:
         - name: where
           in: query
@@ -365,6 +428,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /events_history/{_id}:
     get:
@@ -372,6 +437,9 @@ paths:
       description: Retrieve a specific event history record by its ID
       tags:
         - Events
+      security:
+        - oauth2Auth:
+            - EVENTS_READ
       parameters:
         - $ref: '#/components/parameters/_id'
       responses:
@@ -383,6 +451,8 @@ paths:
                 $ref: '#/components/schemas/EventHistory'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -392,6 +462,9 @@ paths:
       description: Get list of users with MongoDB query support
       tags:
         - Users
+      security:
+        - oauth2Auth:
+            - USERS_READ
       parameters:
         - name: where
           in: query
@@ -415,6 +488,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /users/{_id}:
     get:
@@ -422,6 +497,9 @@ paths:
       description: Retrieve a specific user by their ID
       tags:
         - Users
+      security:
+        - oauth2Auth:
+            - USERS_READ
       parameters:
         - $ref: '#/components/parameters/_id'
       responses:
@@ -433,6 +511,8 @@ paths:
                 $ref: '#/components/schemas/User'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -442,6 +522,9 @@ paths:
       description: Get list of contacts with elastic search query support
       tags:
         - Contacts
+      security:
+        - oauth2Auth:
+            - CONTACTS_READ
       parameters:
         - name: source
           in: query
@@ -465,6 +548,8 @@ paths:
                     $ref: '#/components/schemas/Meta'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /contacts/{_id}:
     get:
@@ -472,6 +557,9 @@ paths:
       description: Retrieve a specific contact by their ID
       tags:
         - Contacts
+      security:
+        - oauth2Auth:
+            - CONTACTS_READ
       parameters:
         - $ref: '#/components/parameters/_id'
       responses:
@@ -483,6 +571,8 @@ paths:
                 $ref: '#/components/schemas/Contact'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
@@ -504,7 +594,7 @@ paths:
         '200':
           description: Media file
           content:
-            image/*:
+            '*/*':
               schema:
                 type: string
                 format: binary
@@ -518,6 +608,9 @@ paths:
       summary: Get user availability information
       tags:
         - User Availability
+      security:
+        - oauth2Auth:
+            - USERS_READ
       parameters:
         - $ref: '#/components/parameters/month'
         - $ref: '#/components/parameters/day'
@@ -534,6 +627,8 @@ paths:
                       $ref: '#/components/schemas/UserAvailability'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
 
   /user_availability/{id}:
     parameters:
@@ -545,6 +640,9 @@ paths:
       summary: Get specific user availability
       tags:
         - User Availability
+      security:
+        - oauth2Auth:
+            - USERS_READ
       responses:
         '200':
           description: User availability record
@@ -554,6 +652,8 @@ paths:
                 $ref: '#/components/schemas/UserAvailability'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           description: User availability record not found
 
@@ -567,8 +667,15 @@ components:
         See: https://superdesk.readthedocs.io/en/latest/auth_server.html
       flows:
         clientCredentials:
-          tokenUrl: https://<superdesk-url>/api/auth_server/token
-          scopes: {}
+          tokenUrl: /api/auth_server/token
+          scopes:
+            ARCHIVE_READ: Read archive items
+            DESKS_READ: Read desks
+            PLANNING_READ: Read planning items
+            CONTACTS_READ: Read contacts
+            USERS_READ: Read users and user availability
+            ASSIGNMENTS_READ: Read assignments
+            EVENTS_READ: Read events, event files and event history
 
   parameters:
     guid:
@@ -879,9 +986,12 @@ components:
         media:
           type: string
           description: Media ID
-        filename:
-          type: string
-          example: "meeting_agenda.pdf"
+        filemeta:
+          type: object
+          properties:
+            media_id:
+              type: string
+              example: "5e05dd3f05add39732aa8436"
 
     EventHistory:
       type: object
@@ -932,13 +1042,13 @@ components:
         last_name:
           type: string
           example: "Smith"
-        email:
+        contact_email:
           type: array
           items:
             type: string
             format: email
           example: ["jane.smith@example.com"]
-        phone:
+        contact_phone:
           type: array
           items:
             type: object
@@ -1004,6 +1114,23 @@ components:
                   message:
                     type: string
                     example: "Please provide proper credentials"
+
+    Forbidden:
+      description: Forbidden - JWT token does not have the required scope
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              _error:
+                type: object
+                properties:
+                  code:
+                    type: integer
+                    example: 403
+                  message:
+                    type: string
+                    example: "Invalid scope"
 
     NotFound:
       description: Not Found
