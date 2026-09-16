@@ -8,7 +8,7 @@ info:
 
     Production API uses the same DB and Elasticsearch index as the main Superdesk app, unlike Content API which has a separate DB.
 
-    Production API uses versioned endpoints to provide stable, non-breaking changes API for third-party apps.
+    Production API uses versioned endpoints to provide a stable API with non-breaking changes for third-party apps.
 
     Authentication is based on OAuth 2.0 and uses the Superdesk Auth Server: https://superdesk.readthedocs.io/en/latest/auth_server.html
 
@@ -582,6 +582,9 @@ paths:
       description: Retrieve a media asset by its ID
       tags:
         - Assets
+      security:
+        - oauth2Auth:
+            - ARCHIVE_READ
       parameters:
         - name: media_id
           in: path
@@ -600,6 +603,8 @@ paths:
                 format: binary
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '404':
           $ref: '#/components/responses/NotFound'
 
