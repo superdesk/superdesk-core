@@ -17,6 +17,7 @@ from superdesk.io.registry import register_feed_parser
 from superdesk.io.feed_parsers import FeedParser
 from superdesk.utc import utc
 from superdesk.metadata.utils import generate_tag_from_url
+from superdesk.text_utils import sanitize_html
 from typing import Optional, Dict, List, Any
 from superdesk import get_resource_service
 
@@ -31,6 +32,10 @@ class NINJSFeedParser(FeedParser):
     NAME = "ninjs"
 
     label = "NINJS Feed Parser"
+
+    HTML_ATTRIBUTES_TO_REMOVE = ("class", "style")
+    HTML_TAGS_TO_REMOVE = None
+    HTML_TAGS_TO_KILL = None
 
     direct_copy_properties = (
         "usageterms",
@@ -115,12 +120,9 @@ class NINJSFeedParser(FeedParser):
 
         for key, associated_item in ninjs.get("associations", {}).items():
             if associated_item:
-                self.items.append(self._transform_from_ninjs(associated_item))
-                if associated_item.get("type") == "picture" and associated_item.get("body_text"):
-                    associated_item["alt_text"] = associated_item.get("body_text")
-                if associated_item.get("versioncreated"):
-                    associated_item["versioncreated"] = self.datetime(associated_item["versioncreated"])
-                item["associations"][key] = deepcopy(associated_item)
+                transformed_associated_item = self._transform_from_ninjs(associated_item)
+                self.items.append(transformed_associated_item)
+                item["associations"][key] = deepcopy(transformed_associated_item)
 
         if ninjs.get("renditions"):
             item["renditions"] = self.parse_renditions(ninjs["renditions"])
@@ -143,10 +145,21 @@ class NINJSFeedParser(FeedParser):
         if not item.get("body_html") and ninjs.get("body_xhtml"):
             item["body_html"] = ninjs["body_xhtml"]
 
+        if item.get("body_html"):
+            item["body_html"] = self._sanitize_html(item["body_html"])
+
         if ninjs.get("embargoed"):
             item["embargoed"] = self.datetime(ninjs.get("embargoed"))
 
         return item
+
+    def _sanitize_html(self, value: str) -> str:
+        return sanitize_html(
+            value,
+            remove_tags=self.HTML_TAGS_TO_REMOVE,
+            kill_tags=self.HTML_TAGS_TO_KILL,
+            remove_attrs=self.HTML_ATTRIBUTES_TO_REMOVE,
+        )
 
     def parse_renditions(self, renditions):
         rend = {}

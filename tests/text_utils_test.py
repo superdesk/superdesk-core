@@ -1,4 +1,7 @@
 import unittest
+from unittest.mock import patch
+
+from lxml.html import clean
 from superdesk import text_utils
 
 
@@ -136,6 +139,24 @@ class WordCountTestCase(unittest.TestCase):
         )
 
         self.assertEqual(0, text_utils.get_par_count(None))
+
+    def test_sanitize_html_removes_configured_attributes(self):
+        markup = '<p class="foo" style="width:0" title="keep">text</p>'
+
+        self.assertEqual(
+            '<p title="keep">text</p>',
+            text_utils.sanitize_html(markup, remove_attrs=("class", "style")),
+        )
+        self.assertEqual(
+            '<p style="width:0" title="keep">text</p>',
+            text_utils.sanitize_html(markup, remove_attrs=("class",)),
+        )
+
+    def test_sanitize_html_allows_empty_kill_tags(self):
+        with patch("superdesk.text_utils.clean.Cleaner", wraps=clean.Cleaner) as cleaner:
+            text_utils.sanitize_html("<p>text</p>", kill_tags=())
+
+        self.assertEqual((), cleaner.call_args.kwargs["kill_tags"])
 
     def test_convert_plain_text_to_html(self):
         test_strings = [
