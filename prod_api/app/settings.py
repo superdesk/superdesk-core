@@ -50,6 +50,7 @@ PRODAPI_INSTALLED_APPS = (
     "prod_api.content_types",
     "prod_api.user_availability",
     "prod_api.user_metrics",
+    "prod_api.content_lists",
 )
 
 # NOTE: no trailing slash for the PRODAPI_URL setting!

@@ -129,6 +129,68 @@ Production API **v1** provides next endpoints:
     | path: **/prodapi/v1/desks/<_id>**
     | allowed methods: GET
 
+- content lists
+    | path: **/prodapi/v1/content_lists**
+    | search backend: mongo
+    | allowed methods: GET
+    | Only enabled lists are returned by default. Use the ``enabled`` parameter to change that:
+      ``enabled=true`` (default), ``enabled=false`` (disabled lists only) or ``enabled=all``.
+      The ``filters`` and ``cache_life_time`` fields are not exposed.
+    | query examples:
+
+    - list disabled lists
+
+    .. code::
+
+            http://hostname/prodapi/v1/content_lists?enabled=false
+
+    - filter by ``type``
+
+    .. code::
+
+            http://hostname/prodapi/v1/content_lists?where={"type": "manual"}
+
+- content lists HATEOAS:
+    | **items**: the items of the list (see content list items below)
+    | Example:
+
+    .. code::
+
+        "_links": {
+            "items": {
+                "title": "Items",
+                "href": "content_lists/66f0000000000000000000a1/items"
+            }
+        }
+
+- content list items
+    | path: **/prodapi/v1/content_lists/<list_id>/items**
+    | search backend: mongo
+    | allowed methods: GET
+    | Items of one content list sorted by ``position``. Items of a disabled list are served as well,
+      an unknown ``list_id`` returns 404. Only enabled items are returned by default, the ``enabled``
+      parameter works the same way as for content lists.
+    | Every item carries an ``article_content`` summary of the referenced article
+      (``title``, ``state``, ``thumbnail``, ``anpa_category``, ``subject``, ``firstpublished``,
+      ``_created``, ``_updated``), or ``null`` when the article no longer exists.
+    | Example:
+
+    .. code::
+
+        {
+            "_id": "66f0000000000000000000b2",
+            "list_id": "66f0000000000000000000a1",
+            "content": "urn:newsml:localhost:5000:2019-08-14T15:02:48.032188:d1be79f4-1d08-464a-90ac-90542dde4e90",
+            "position": 0,
+            "sticky": true,
+            "enabled": true,
+            "article_content": {
+                "title": "GDPR Headline",
+                "state": "published",
+                "firstpublished": "2019-08-14T15:03:00+0000"
+            }
+        }
+
 - assignments list
     | path: **/prodapi/v1/assignments**
     | search backend: elastic
