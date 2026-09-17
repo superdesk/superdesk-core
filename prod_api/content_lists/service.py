@@ -61,6 +61,10 @@ class ContentListsService(ProdApiService):
 
 
 class ContentListItemsService(ProdApiService):
+    # there is no item endpoint, and eve would render the raw sub-resource
+    # url regex into the self link
+    excluded_fields = {"_links"} | ProdApiService.excluded_fields
+
     async def get_async(self, req, lookup):
         lookup = dict(lookup or {})
         list_id = ObjectId(lookup.pop("list_id"))

@@ -97,7 +97,7 @@ async def test_items(prodapi_app_with_data, prodapi_app_with_data_client):
         assert [item["position"] for item in items] == [0, 1, 2]
         assert all(item["list_id"] == FRONT_PAGE_ID for item in items)
         for item in items:
-            assert not (set(item.keys()) & EXCLUDED_FIELDS)
+            assert not (set(item.keys()) & (EXCLUDED_FIELDS | {"_links"}))
 
         assert items[0]["sticky"] is True
         assert items[0]["article_content"]["title"] == "GDPR Headline"
