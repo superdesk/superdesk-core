@@ -120,7 +120,7 @@ async def test_items(prodapi_app_with_data, prodapi_app_with_data_client):
 
 
 async def test_items_thumbnail_href(prodapi_app_with_data, prodapi_app_with_data_client):
-    """Thumbnail renditions point at the production api assets url."""
+    """The thumbnail rendition keeps the public media url stored on the article."""
     async with prodapi_app_with_data.app_context():
         prodapi_app_with_data.data.insert(
             "archive",
@@ -163,9 +163,8 @@ async def test_items_thumbnail_href(prodapi_app_with_data, prodapi_app_with_data
         )
         assert resp.status_code == 200
         thumbnail = data["_items"][0]["article_content"]["thumbnail"]
-        assert "media" not in thumbnail
-        assert thumbnail["href"].startswith("http://localhost:5500/prodapi/v1/assets/")
-        assert thumbnail["href"].endswith("5d553c343031e2855a2e5666.jpg")
+        assert thumbnail["href"] == "http://localhost:5000/api/upload-raw/5d553c343031e2855a2e5666.jpg"
+        assert thumbnail["mimetype"] == "image/jpeg"
 
 
 async def test_items_of_disabled_list(prodapi_app_with_data, prodapi_app_with_data_client):

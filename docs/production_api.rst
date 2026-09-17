@@ -172,7 +172,9 @@ Production API **v1** provides next endpoints:
       parameter works the same way as for content lists.
     | Every item carries an ``article_content`` summary of the referenced article
       (``title``, ``state``, ``thumbnail``, ``anpa_category``, ``subject``, ``firstpublished``,
-      ``_created``, ``_updated``), or ``null`` when the article no longer exists.
+      ``_created``, ``_updated``), or ``null`` when the article no longer exists. The ``thumbnail``
+      rendition is returned as stored on the article, so its ``href`` is the public media url
+      (``upload-raw`` or the configured S3 url).
     | Example:
 
     .. code::

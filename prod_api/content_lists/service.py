@@ -78,9 +78,7 @@ class ContentListItemsService(ProdApiService):
 
     async def on_fetched_async(self, result):
         await super().on_fetched_async(result)
+        # ``article_content.thumbnail`` is passed through as stored on the
+        # article, so its ``href`` is the public media url (upload-raw or S3),
+        # the same one the internal api returns
         await attach_article_content(result["_items"])
-        for item in result["_items"]:
-            thumbnail = (item.get("article_content") or {}).get("thumbnail")
-            if isinstance(thumbnail, dict):
-                # rewrite the rendition href to point at the production api assets url
-                self._process_item_renditions({"renditions": {"thumbnail": thumbnail}})
