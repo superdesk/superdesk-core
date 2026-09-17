@@ -63,7 +63,36 @@ def dataclass(*args, **kwargs):
     # By default, we allow extra values in dataclasses, but they won't be included in to_dict output.
     config.update(kwargs.pop("config", {}))
 
-    return pydataclass(*args, **kwargs, config=config)
+    return _pydataclass_with_extra_preserving_setattr(*args, **kwargs, config=config)
+
+
+def _pydataclass_with_extra_preserving_setattr(*args, **kwargs):
+    cls = pydataclass(*args, **kwargs)
+    original_setattr = cls.__setattr__
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        instance_dict = getattr(self, "__dict__", None)
+        extra_values = {}
+
+        if isinstance(instance_dict, dict):
+            fields = get_model_annotations(self.__class__).keys()
+            aliased_fields = get_model_aliased_fields(self.__class__)
+
+            extra_values = {
+                key: val
+                for key, val in instance_dict.items()
+                if key not in fields and key not in aliased_fields and not key.startswith("__pydantic_")
+            }
+
+        original_setattr(self, name, value)
+
+        instance_dict = getattr(self, "__dict__", None)
+        if isinstance(instance_dict, dict):
+            for key, val in extra_values.items():
+                instance_dict.setdefault(key, val)
+
+    cls.__setattr__ = __setattr__
+    return cls
 
 
 class DataclassBase:
@@ -142,7 +171,9 @@ class DataclassMeta(type):
 
         # create the class and apply the Pydantic dataclass decorator
         new_cls = super().__new__(cls, name, bases, attrs)  # type: ignore[misc]
-        return pydataclass(new_cls, config=deepcopy(model_config or default_model_config))
+        return _pydataclass_with_extra_preserving_setattr(
+            new_cls, config=deepcopy(model_config or default_model_config)
+        )
 
 
 class Dataclass(DataclassBase, metaclass=DataclassMeta):
