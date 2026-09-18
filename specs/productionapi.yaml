@@ -516,6 +516,41 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /user_metrics:
+    get:
+      summary: List user metrics
+      description: Get list of user metrics with MongoDB query support
+      tags:
+        - User Metrics
+      security:
+        - oauth2Auth:
+            - USERS_READ
+      parameters:
+        - name: where
+          in: query
+          description: MongoDB query in JSON format
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of user metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserMetric'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
   /contacts:
     get:
       summary: List contacts
@@ -1102,54 +1137,57 @@ components:
                       type: string
                       example: "17:00"
 
+    UserMetric:
+      type: object
+      description: Metric recorded for a user
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2023-05-01"
+        user:
+          type: string
+          description: User ID
+          example: "5c489481405ecc015e5e10bd"
+        name:
+          type: string
+          example: "published_articles"
+        value:
+          type: number
+          example: 5
+
+    ErrorResponse:
+      type: object
+      properties:
+        _status:
+          type: string
+          example: "ERR"
+        _error:
+          type: object
+          properties:
+            code:
+              type: integer
+            message:
+              type: string
+
   responses:
     Unauthorized:
       description: Unauthorized - Invalid or missing JWT token
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              _error:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 401
-                  message:
-                    type: string
-                    example: "Please provide proper credentials"
+            $ref: '#/components/schemas/ErrorResponse'
 
     Forbidden:
       description: Forbidden - JWT token does not have the required scope
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              _error:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 403
-                  message:
-                    type: string
-                    example: "Invalid scope"
+            $ref: '#/components/schemas/ErrorResponse'
 
     NotFound:
       description: Not Found
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              _error:
-                type: object
-                properties:
-                  code:
-                    type: integer
-                    example: 404
-                  message:
-                    type: string
-                    example: "The requested resource was not found"
+            $ref: '#/components/schemas/ErrorResponse'
