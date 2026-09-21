@@ -177,8 +177,9 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
 class DictCursorAsync(Generic[ResourceModelType]):
     """Wraps a ResourceCursorAsync and yields raw dicts instead of ResourceModel instances"""
 
-    def __init__(self, cursor: ResourceCursorAsync[ResourceModelType]):
+    def __init__(self, cursor: ResourceCursorAsync[ResourceModelType], **to_dict_kwargs):
         self._cursor = cursor
+        self._to_dict_kwargs = to_dict_kwargs or {}
 
     def __aiter__(self):
         return self
@@ -186,12 +187,12 @@ class DictCursorAsync(Generic[ResourceModelType]):
     async def __anext__(self) -> dict:
         item = await self._cursor.next()
         if item is not None:
-            return item.to_dict()
+            return item.to_dict(**self._to_dict_kwargs)
         raise StopAsyncIteration
 
     async def next(self) -> dict[str, Any] | None:
         item = await self._cursor.next()
-        return item.to_dict() if item else None
+        return item.to_dict(**self._to_dict_kwargs) if item else None
 
     async def next_raw(self) -> dict[str, Any] | None:
         return await self._cursor.next_raw()
@@ -200,7 +201,7 @@ class DictCursorAsync(Generic[ResourceModelType]):
         self._cursor.rewind()
 
     async def to_list(self) -> list[dict[str, Any]]:
-        return [item.to_dict() async for item in self._cursor]
+        return [item.to_dict(**self._to_dict_kwargs) async for item in self._cursor]
 
     async def count(self) -> int:
         return await self._cursor.count()
