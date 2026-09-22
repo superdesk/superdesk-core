@@ -49,7 +49,7 @@ from superdesk.flask import (
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
-from superdesk.logging import configure_logging
+from superdesk.logging import configure_logging, configure_graylog
 from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncoder
@@ -642,6 +642,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app.jinja_env.filters[name] = jinja_filter
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
+    configure_graylog(app.config)
 
     # configure the CLI only after modules and apps have been loaded
     # to make sure all commands are registered

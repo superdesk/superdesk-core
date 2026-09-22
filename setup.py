@@ -30,6 +30,7 @@ install_requires = [
     "pytz>=2021.3",
     "tzlocal>=5.2",
     "sentry-sdk[quart]>=2.11,<3.0",
+    "graypy>=2.1,<2.2",
     "requests>=2.7.0,<3.0",
     "boto3>=1.26,<2.0",
     "websockets>=14.2,<17",
