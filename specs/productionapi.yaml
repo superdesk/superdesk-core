@@ -156,6 +156,94 @@ paths:
         '404':
           $ref: '#/components/responses/NotFound'
 
+  /content_lists:
+    get:
+      summary: List content lists
+      description: Get list of content lists with MongoDB query support. By default only enabled lists are returned.
+      tags:
+        - Content Lists
+      security:
+        - oauth2Auth:
+            - CONTENT_LISTS_READ
+      parameters:
+        - name: where
+          in: query
+          description: MongoDB query in JSON format
+          required: false
+          schema:
+            type: string
+          example: '{"type": "manual"}'
+        - name: enabled
+          in: query
+          description: Filter by enabled state. Use true to include only enabled lists, false for disabled lists only, or all to disable the default filter.
+          required: false
+          schema:
+            type: string
+            enum: [true, false, all]
+          example: "true"
+      responses:
+        '200':
+          description: List of content lists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentList'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /content_lists/{list_id}/items:
+    get:
+      summary: List items in a content list
+      description: Get the items contained in a specific content list. By default only enabled items are returned.
+      tags:
+        - Content Lists
+      security:
+        - oauth2Auth:
+            - CONTENT_LISTS_READ
+      parameters:
+        - $ref: '#/components/parameters/list_id'
+        - name: enabled
+          in: query
+          description: Filter by enabled state. Use true to include only enabled items, false for disabled items only, or all to disable the default filter.
+          required: false
+          schema:
+            type: string
+            enum: [true, false, all]
+          example: "true"
+      responses:
+        '200':
+          description: List of content list items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  _items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ContentListItem'
+                  _meta:
+                    $ref: '#/components/schemas/Meta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
   /assignments:
     get:
       summary: List assignments
@@ -716,6 +804,7 @@ components:
             USERS_READ: Read users and user availability
             ASSIGNMENTS_READ: Read assignments
             EVENTS_READ: Read events, event files and event history
+            CONTENT_LISTS_READ: Read content lists and their items
 
   parameters:
     guid:
@@ -735,6 +824,15 @@ components:
       schema:
         type: string
       example: "60e403bc8361feb5664719b1"
+
+    list_id:
+      name: list_id
+      in: path
+      description: MongoDB Object ID of the content list
+      required: true
+      schema:
+        type: string
+      example: "66f0000000000000000000a1"
 
     userId:
       in: path
@@ -920,6 +1018,75 @@ components:
         description:
           type: string
           example: "Main production desk"
+
+    ContentList:
+      type: object
+      description: Content list metadata and links
+      properties:
+        _id:
+          type: string
+          example: "66f0000000000000000000a1"
+        name:
+          type: string
+          example: "Front page"
+        type:
+          type: string
+          example: "manual"
+        description:
+          type: string
+          nullable: true
+          example: "Top stories for the front page"
+        enabled:
+          type: boolean
+          example: true
+        limit:
+          type: integer
+          example: 10
+        content_list_items_updated_at:
+          type: string
+          format: date-time
+          example: "2024-09-29T12:00:00+0000"
+        _links:
+          type: object
+          description: HATEOAS links to related resources
+          properties:
+            items:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: "Items"
+                href:
+                  type: string
+                  example: "content_lists/66f0000000000000000000a1/items"
+
+    ContentListItem:
+      type: object
+      description: Item contained in a content list
+      properties:
+        _id:
+          type: string
+          example: "66f0000000000000000000a2"
+        list_id:
+          type: string
+          example: "66f0000000000000000000a1"
+        content:
+          type: string
+          description: Item GUID or content identifier
+          example: "urn:newsml:localhost:2021-07-06T11:12:48.695851:60e403bc-8361-feb5-6647-19b1"
+        position:
+          type: integer
+          example: 0
+        enabled:
+          type: boolean
+          example: true
+        sticky:
+          type: boolean
+          example: true
+        article_content:
+          type: object
+          description: Enriched article content when available
+          additionalProperties: true
 
     Assignment:
       type: object
