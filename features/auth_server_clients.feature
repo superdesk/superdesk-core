@@ -149,7 +149,7 @@ Feature: Authorization Server Client Management
         """
         Then we get error 400
         """
-        {"_status": "ERR", "_issues": {"scope": {"0": "Input should be 'ARCHIVE_READ', 'DESKS_READ', 'PLANNING_READ', 'CONTACTS_READ', 'USERS_READ', 'ASSIGNMENTS_READ' or 'EVENTS_READ'"}}}
+        {"_status": "ERR", "_issues": {"scope": {"0": "Input should be 'ARCHIVE_READ', 'DESKS_READ', 'PLANNING_READ', 'CONTACTS_READ', 'USERS_READ', 'ASSIGNMENTS_READ', 'EVENTS_READ' or 'CONTENT_LISTS_READ'"}}}
         """
 
      @auth
