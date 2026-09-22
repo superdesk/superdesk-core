@@ -105,6 +105,7 @@ CONTACTS_READ       The client can get contacts metadata
 USERS_READ          The client can retrieve users
 ASSIGNMENTS_READ    The client can retrieve assignments
 EVENTS_READ         The client can retrieve events
+CONTENT_LISTS_READ  The client can retrieve content lists and their items
 ================    ======================================================
 
 Access token
