@@ -446,7 +446,7 @@ async def process_iptc_codes(item, provider):
                     try:
                         item["subject"].append({"qcode": top_qcode, "name": subject_codes[top_qcode]})
                     except KeyError:
-                        logger.warning("missing qcode in subject_codes: {qcode}".format(qcode=top_qcode))
+                        logger.debug("missing qcode in subject_codes: {qcode}".format(qcode=top_qcode))
                         continue
 
                 mid_qcode = subject["qcode"][:5] + "000"
@@ -454,7 +454,7 @@ async def process_iptc_codes(item, provider):
                     try:
                         item["subject"].append({"qcode": mid_qcode, "name": subject_codes[mid_qcode]})
                     except KeyError:
-                        logger.warning("missing qcode in subject_codes: {qcode}".format(qcode=mid_qcode))
+                        logger.debug("missing qcode in subject_codes: {qcode}".format(qcode=mid_qcode))
                         continue
     except Exception as ex:
         raise await ProviderError.iptcError(ex, provider).send_notifications()
