@@ -134,6 +134,30 @@ LOG_CONFIG_FILE = env("LOG_CONFIG_FILE", "logging_config.yml")
 LOG_SERVER_ADDRESS = env("LOG_SERVER_ADDRESS", "localhost")
 LOG_SERVER_PORT = int(env("LOG_SERVER_PORT", 5555))
 
+#: Graylog GELF UDP input host - logs are sent to Graylog when set, ``GRAYLOG_HOST`` env
+#:
+#: .. versionadded:: 3.6
+#:
+GRAYLOG_HOST = env("GRAYLOG_HOST")
+
+#: Graylog GELF UDP input port, ``GRAYLOG_PORT`` env
+#:
+#: .. versionadded:: 3.6
+#:
+GRAYLOG_PORT = int(env("GRAYLOG_PORT", 12201))
+
+#: Graylog facility field value, ``GRAYLOG_FACILITY`` env
+#:
+#: .. versionadded:: 3.6
+#:
+GRAYLOG_FACILITY = env("GRAYLOG_FACILITY", "superdesk")
+
+#: Minimal level of log records sent to Graylog, ``GRAYLOG_LEVEL`` env
+#:
+#: .. versionadded:: 3.6
+#:
+GRAYLOG_LEVEL = env("GRAYLOG_LEVEL", "INFO")
+
 SAMS_HOST = env("SAMS_HOST", "localhost")
 SAMS_PORT = env("SAMS_PORT", 5700)
 
