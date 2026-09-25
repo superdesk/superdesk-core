@@ -5,7 +5,7 @@ from quart import has_app_context, Quart
 from contextvars import ContextVar
 
 from kombu.utils.uuid import uuid
-from celery import Task
+from celery import Task, states
 from typing import Any
 
 from superdesk.logging import logger
@@ -29,6 +29,11 @@ class HybridAppContextTask(Task):
     abstract = True
     serializer = CELERY_SERIALIZER_NAME
     app_errors = (SuperdeskError, werkzeug.exceptions.InternalServerError)
+
+    #: Store the outcome in the result backend so the caller can await it with ``AsyncTaskResult``.
+    #: Celery's own result storing can't be used for this: ``CELERY_TASK_IGNORE_RESULT`` is on, and
+    #: the async worker returns from ``__call__`` before the task has finished.
+    store_async_result = False
 
     def get_current_app(self):
         """
@@ -71,6 +76,8 @@ class HybridAppContextTask(Task):
             response = func(*func_args, **func_kwargs)
             return await response if isawaitable(response) else response
 
+        store_result = self.store_async_result and not is_always_eager
+
         # We need a wrapper to handle exceptions inside the async function because asyncio
         # does not propagate them in the same way as synchronous exceptions. This ensures that
         # all exceptions are managed and logged regardless of where they occur within the event loop
@@ -78,13 +85,24 @@ class HybridAppContextTask(Task):
             try:
                 if not has_app_context():
                     async with self.get_current_app().app_context():
-                        return await _handle_run_task(self.run, *args, **kwargs)
+                        result = await _handle_run_task(self.run, *args, **kwargs)
                 else:
-                    return await _handle_run_task(self.run, *args, **kwargs)
-
+                    result = await _handle_run_task(self.run, *args, **kwargs)
             except self.app_errors as e:
                 self.handle_exception(e)
+                if store_result:
+                    self.backend.mark_as_failure(self.request.id, e, request=self.request)
                 return None
+            except Exception as e:
+                if store_result:
+                    self.backend.mark_as_failure(self.request.id, e, request=self.request)
+                raise
+
+            if store_result:
+                # Not ``mark_as_done``: it skips storing when the request has ``ignore_result`` set,
+                # which every message carries while ``CELERY_TASK_IGNORE_RESULT`` is on.
+                self.backend.store_result(self.request.id, result, states.SUCCESS, request=self.request)
+            return result
 
         if is_always_eager:
             # No need to run it with app_context, as we should already be within an app context
