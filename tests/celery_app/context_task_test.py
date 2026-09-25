@@ -1,9 +1,13 @@
 import asyncio
 from unittest.mock import patch
 
+from celery.app.trace import build_tracer
+from kombu.utils.uuid import uuid
+
 from superdesk.errors import SuperdeskError
 from superdesk.celery_app import HybridAppContextTask
 from superdesk.tests import AsyncFlaskTestCase
+from superdesk.tests import worker_test
 
 # NOTE: all tasks below are in eager mode because of global
 # tests settings. See `update_config` function in tests.__init__.py
@@ -71,3 +75,52 @@ class TestEagerDispatchDecision(AsyncFlaskTestCase):
 
         self.assertFalse(some_task._is_configured_always_eager())
         self.assertTrue(some_task._is_always_eager())
+
+
+class TestStoreAsyncResultInWorker(AsyncFlaskTestCase):
+    """Runs tasks the way the default (non-async) worker does, through Celery's non-eager tracer.
+
+    The test harness forces eager mode unless ``CELERY_USE_ASYNC_WORKER`` is on, so this is the only
+    coverage of how a result reaches ``AsyncTaskResult`` from a default ``celery worker`` process.
+    """
+
+    app_config = {"CELERY_TASK_ALWAYS_EAGER": False}
+
+    async def _run_in_worker(self, task, *args) -> str:
+        task_id = uuid()
+        tracer = build_tracer(task.name, task, eager=False, app=self.app.celery)
+
+        def run():
+            # A worker process has no running event loop, so ``run_async`` drives its own
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+            try:
+                # ``ignore_result`` is what every task message carries while ``CELERY_TASK_IGNORE_RESULT`` is on
+                tracer(task_id, args, {}, {"id": task_id, "ignore_result": True})
+            finally:
+                asyncio.set_event_loop(None)
+                loop.close()
+
+        await asyncio.to_thread(run)
+
+        return task_id
+
+    async def test_result_is_stored(self):
+        # Resolve the ``shared_task`` proxy here: in another thread it would bind to Celery's default app
+        task = worker_test.value_task_test._get_current_object()
+        task_id = await self._run_in_worker(task, 21)
+        result = await task.AsyncResult(task_id).get_result_async(max_timeout=5)
+        self.assertEqual(result, 42)
+
+    async def test_app_error_is_stored(self):
+        @self.app.celery.task(store_async_result=True)
+        async def failing_task():
+            raise SuperdeskError("Rendering failed")
+
+        with patch("superdesk.celery_app.context_task.logger"):
+            task_id = await self._run_in_worker(failing_task)
+
+        with self.assertRaises(Exception) as context:
+            await failing_task.AsyncResult(task_id).get_result_async(max_timeout=5)
+        self.assertNotIsInstance(context.exception, asyncio.TimeoutError)
+        self.assertIn("Rendering failed", str(context.exception))
