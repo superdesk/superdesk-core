@@ -84,6 +84,10 @@ async def test_lists_enabled_param(prodapi_app_with_data, prodapi_app_with_data_
 
         resp, data = await _get_json(prodapi_app_with_data_client, url_for("content_lists|resource", enabled="bogus"))
         assert resp.status_code == 400
+        assert data == {
+            "_status": "ERR",
+            "_error": {"code": 400, "message": "Invalid value for 'enabled', must be one of: true, false, all"},
+        }
 
 
 async def test_items(prodapi_app_with_data, prodapi_app_with_data_client):

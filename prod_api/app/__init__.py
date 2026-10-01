@@ -20,15 +20,33 @@ import os
 import importlib
 
 from eve.io.mongo.mongo import MongoJSONEncoder
+from eve.render import send_response
 
 from superdesk.flask import Config
 from superdesk.datalayer import SuperdeskDataLayer
+from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
 from superdesk.cache import cache_backend
 
 from prod_api.auth import JWTAuth
+
+
+def set_prodapi_error_handlers(app):
+    """Render errors as ``{"_status": "ERR", "_error": {"code", "message"}}`` like eve and auth errors."""
+
+    @app.errorhandler(SuperdeskError)
+    async def prodapi_error_handler(error):
+        status_code = error.status_code or 422
+        body = {"_status": "ERR", "_error": {"code": status_code, "message": str(error.message or "")}}
+        if getattr(error, "payload", None):
+            body["_issues"] = error.payload
+        return await send_response(None, (body, None, None, status_code))
+
+    @app.errorhandler(500)
+    async def prodapi_server_error_handler(error):
+        return await prodapi_error_handler(SuperdeskApiError.internalError(error))
 
 
 def get_app(config=None):
@@ -79,6 +97,7 @@ def get_app(config=None):
     )
 
     set_error_handlers(app)
+    set_prodapi_error_handlers(app)
     setup_apm(app, "Production API")
     cache_backend.init_app(app)
 
