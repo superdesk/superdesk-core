@@ -179,7 +179,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [true, false, all]
+            enum: ["true", "false", "all"]
           example: "true"
       responses:
         '200':
@@ -219,7 +219,7 @@ paths:
           required: false
           schema:
             type: string
-            enum: [true, false, all]
+            enum: ["true", "false", "all"]
           example: "true"
       responses:
         '200':
@@ -748,6 +748,7 @@ paths:
           content:
             application/json:
               schema:
+                type: object
                 properties:
                   _items:
                     type: array
@@ -783,7 +784,7 @@ paths:
         '403':
           $ref: '#/components/responses/Forbidden'
         '404':
-          description: User availability record not found
+          $ref: '#/components/responses/NotFound'
 
 components:
   securitySchemes:
@@ -1085,6 +1086,7 @@ components:
           example: true
         article_content:
           type: object
+          nullable: true
           description: Enriched article content when available
           additionalProperties: true
 
@@ -1281,6 +1283,7 @@ components:
                 format: date
                 example: "2023-05-01"
               status:
+                type: string
                 enum:
                   - available
                   - unavailable
@@ -1325,28 +1328,43 @@ components:
 
     ErrorResponse:
       type: object
+      required: [_status, _error]
       properties:
         _status:
           type: string
           example: "ERR"
         _error:
           type: object
+          required: [code, message]
           properties:
             code:
               type: integer
+              example: 400
             message:
               type: string
+              example: "Invalid value for 'enabled', must be one of: true, false, all"
+        _issues:
+          type: object
+          description: Optional details about the error
+          additionalProperties: true
 
   responses:
+    BadRequest:
+      description: Bad Request - Invalid query parameter value
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
     Unauthorized:
-      description: Unauthorized - Invalid or missing JWT token
+      description: Unauthorized - Invalid or missing access token
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
 
     Forbidden:
-      description: Forbidden - JWT token does not have the required scope
+      description: Forbidden - Access token does not have the required scope
       content:
         application/json:
           schema:
