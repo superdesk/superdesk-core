@@ -503,6 +503,7 @@ class NINJSFormatter(Formatter):
                         or locators[0].get("country")
                         or locators[0].get("world_region")
                         or locators[0].get("group")
+                        or locators[0].get("name")
                     )
             return item.get("name")
 

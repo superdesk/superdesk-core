@@ -751,6 +751,36 @@ class NinjsFormatterTest(TestCase):
 
         self.assertEqual(data["place"], [{"code": "UK", "name": "Europe"}])
 
+    async def test_place_locator_names(self):
+        self.app.data.insert(
+            "vocabularies",
+            [
+                {
+                    "_id": "locators",
+                    "items": [
+                        {"name": "Suomi", "qcode": "sttcountry:1", "parent": None, "is_active": True},
+                        {"name": "Latvia", "qcode": "sttcountry:2", "parent": None, "is_active": True},
+                    ],
+                }
+            ],
+        )
+        article = {
+            "guid": "urn:bar",
+            "type": "text",
+            "place": [
+                {"name": "Suomi", "qcode": "sttcountry:1"},
+                {"name": "Latvia", "qcode": "sttcountry:2"},
+            ],
+        }
+        for extended in (False, True):
+            with self.subTest(extended=extended):
+                with mock.patch.dict(self.app.config, {"NINJS_PLACE_EXTENDED": extended}):
+                    seq, doc = (await self.formatter.format(article, self.subscriber))[0]
+                self.assertEqual(
+                    json.loads(doc)["place"],
+                    [{"code": "sttcountry:1", "name": "Suomi"}, {"code": "sttcountry:2", "name": "Latvia"}],
+                )
+
     async def test_translations(self):
         """Check that fields are correctly translated"""
         article = {
