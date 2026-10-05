@@ -768,8 +768,8 @@ class NinjsFormatterTest(TestCase):
             "guid": "urn:bar",
             "type": "text",
             "place": [
-                {"name": "Suomi", "qcode": "sttcountry:1"},
-                {"name": "Latvia", "qcode": "sttcountry:2"},
+                {"name": "", "qcode": "sttcountry:1"},
+                {"name": "", "qcode": "sttcountry:2"},
             ],
         }
         for extended in (False, True):
