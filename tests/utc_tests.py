@@ -11,8 +11,10 @@
 
 import pytz
 import unittest
+from unittest.mock import patch
 from datetime import datetime, timedelta
 from superdesk.utc import (
+    EXPIRY_OVERFLOW_DAYS,
     get_date,
     utcnow,
     get_expiry_date,
@@ -73,8 +75,17 @@ class UTCTestCase(unittest.TestCase):
             get_expiry_date(minutes=5, offset=offset)
 
     def test_get_expiry_date_overflow(self):
-        self.assertIsNone(get_expiry_date(9999999999999))
-        self.assertIsNone(get_expiry_date(9999999999999, utcnow()))
+        now = utcnow()
+        for offset in (None, now):
+            for minutes in (9999999999999, 10**30):
+                with patch("superdesk.utc.utcnow", return_value=now):
+                    with self.assertLogs("superdesk.utc", level="WARNING"):
+                        self.assertEqual(now + timedelta(days=EXPIRY_OVERFLOW_DAYS), get_expiry_date(minutes, offset))
+
+    def test_get_expiry_date_above_overflow_fallback_duration(self):
+        now = utcnow()
+        days = EXPIRY_OVERFLOW_DAYS + 1
+        self.assertEqual(now + timedelta(days=days), get_expiry_date(days * 24 * 60, now))
 
     def test_utc_to_local(self):
         # with day light saving on
