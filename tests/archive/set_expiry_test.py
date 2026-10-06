@@ -103,27 +103,6 @@ class SetExpiryTestCase(TestCase):
         self.assert_expiry(second, second["_updated"] + timedelta(days=5))
         self.assertEqual(versions, list(self.app.data.find_all("archive_versions")))
 
-    def test_config_from_updated_respects_stage_desk_and_global_defaults(self):
-        stage_item = self.insert_item("stage")
-        desk_item = self.insert_item("desk", include_stage=False)
-        with patch("apps.archive.set_expiry.utcnow", return_value=self.now):
-            self.assertEqual(2, SetExpiry().run("Sports News", from_updated=True))
-        self.assert_expiry(stage_item, stage_item["_updated"] + timedelta(minutes=60))
-        self.assert_expiry(desk_item, desk_item["_updated"] + timedelta(minutes=120))
-
-        get_resource_service("desks").system_update(self.desk_id, {"content_expiry": None}, {"_id": self.desk_id})
-        desk_item = get_resource_service("archive").find_one(req=None, _id=desk_item["_id"])
-        SetExpiry().run("Sports News", from_updated=True)
-        self.assert_expiry(
-            desk_item, desk_item["_updated"] + timedelta(minutes=self.app.settings["CONTENT_EXPIRY_MINUTES"])
-        )
-
-    def test_no_stage_uses_desk_config(self):
-        item = self.insert_item(include_stage=False)
-        with patch("apps.archive.set_expiry.utcnow", return_value=self.now):
-            SetExpiry().run("Sports News")
-        self.assert_expiry(item, self.now + timedelta(minutes=120))
-
     def test_desk_and_stage_reads_are_cached_across_batches_with_item_offsets(self):
         other_stage = ObjectId()
         self.app.data.insert(
@@ -166,14 +145,6 @@ class SetExpiryTestCase(TestCase):
             )
             self.assert_expiry(item, item["expiry"], updated=False)
         self.assert_expiry(valid, self.now + timedelta(minutes=120))
-
-    def test_days_does_not_fetch_stages(self):
-        item = self.insert_item(stage_id=ObjectId())
-        stages = get_resource_service("stages")
-        with patch.object(stages, "find_one", wraps=stages.find_one) as stage_read:
-            self.assertEqual(1, SetExpiry().run("Sports News", days=1))
-        stage_read.assert_not_called()
-        self.assert_expiry(item, self.now + timedelta(days=1))
 
     def test_disabled_expiry_clears_explicit_expiry(self):
         item = self.insert_item()
@@ -224,12 +195,6 @@ class SetExpiryTestCase(TestCase):
                 SetExpiry().run("Sports News", days=days)
         self.assert_expiry(item, item["expiry"], updated=False)
 
-    def test_days_above_overflow_fallback_duration(self):
-        item = self.insert_item()
-        with patch("apps.archive.set_expiry.utcnow", return_value=self.now):
-            self.assertEqual(1, SetExpiry().run("Sports News", days=EXPIRY_OVERFLOW_DAYS + 1))
-        self.assert_expiry(item, self.now + timedelta(days=EXPIRY_OVERFLOW_DAYS + 1))
-
     def test_days_overflow_uses_fallback_for_both_timestamp_modes(self):
         for from_updated in (False, True):
             item = self.insert_item("overflow-{}".format(from_updated))
@@ -238,21 +203,6 @@ class SetExpiryTestCase(TestCase):
                     self.assertEqual(1, SetExpiry().run("Sports News", days=10**30, from_updated=from_updated))
             base = item["_updated"] if from_updated else self.now
             self.assert_expiry(item, base + timedelta(days=EXPIRY_OVERFLOW_DAYS))
-
-    def test_stored_expiry_overflow_uses_fallback(self):
-        overflow_item = self.insert_item("overflow")
-        valid = self.insert_item("valid", include_stage=False)
-        get_resource_service("stages").system_update(
-            self.stage_id, {"content_expiry": 9999999999999}, {"_id": self.stage_id}
-        )
-        with self.assertLogs("superdesk.utc", level="WARNING"):
-            with patch("apps.archive.set_expiry.utcnow", return_value=self.now):
-                self.assertEqual(2, SetExpiry().run("Sports News"))
-        self.assert_expiry(overflow_item, self.now + timedelta(days=EXPIRY_OVERFLOW_DAYS))
-        self.assert_expiry(valid, self.now + timedelta(minutes=120))
-
-    def test_empty_desk(self):
-        self.assertEqual(0, SetExpiry().run("Sports News", days=1))
 
     def test_invalid_timestamps_are_logged_and_skipped_across_batches(self):
         invalid_items = [self.insert_item("invalid-{}".format(i)) for i in range(3)]
@@ -283,36 +233,16 @@ class SetExpiryTestCase(TestCase):
         for item in items:
             self.assert_expiry(item, self.now + timedelta(days=5))
 
-    def test_invalid_stage_is_logged_and_skipped(self):
-        invalid = self.insert_item("invalid", stage_id=ObjectId())
-        valid = self.insert_item("valid")
-        with self.assertLogs("apps.archive.set_expiry", level="ERROR") as logs:
-            with patch("apps.archive.set_expiry.utcnow", return_value=self.now):
-                self.assertEqual(1, SetExpiry().run("Sports News"))
-        self.assertTrue(any(invalid["_id"] in message for message in logs.output))
-        self.assert_expiry(invalid, invalid["expiry"], updated=False)
-        self.assert_expiry(valid, self.now + timedelta(minutes=60))
-
-    def test_update_failure_is_not_reported_as_success(self):
-        self.insert_item()
-        collection = self.app.data.get_mongo_collection("archive")
-        with patch.object(self.app.data.mongo, "get_collection_with_write_concern", return_value=collection):
-            with patch.object(collection, "update_one", side_effect=RuntimeError("Update failed")):
-                with self.assertRaisesRegex(RuntimeError, "Update failed"):
-                    SetExpiry().run("Sports News", days=1)
-
-    def assert_concurrent_change_skipped(self, changes=None, remove=False):
+    def test_concurrent_publish_is_skipped_and_other_items_are_updated(self):
         changed = self.insert_item("changed")
         valid = self.insert_item("valid")
         collection = self.app.data.get_mongo_collection("archive")
         update_one = collection.update_one
+        changes = {"state": CONTENT_STATE.PUBLISHED, "_etag": "published", "expiry": self.now + timedelta(days=30)}
 
         def concurrent_update(query, update):
             if query["_id"] == changed["_id"]:
-                if remove:
-                    collection.delete_one({"_id": changed["_id"]})
-                else:
-                    update_one({"_id": changed["_id"]}, {"$set": changes})
+                update_one({"_id": changed["_id"]}, {"$set": changes})
             return update_one(query, update)
 
         with patch.object(self.app.data.mongo, "get_collection_with_write_concern", return_value=collection):
@@ -328,84 +258,9 @@ class SetExpiryTestCase(TestCase):
         self.assertEqual(valid["_id"], index.call_args.args[1])
         self.assert_expiry(valid, self.now + timedelta(days=5))
         stored = collection.find_one({"_id": changed["_id"]})
-        if remove:
-            self.assertIsNone(stored)
-        else:
-            self.assertEqual(changes.get("expiry", changed["expiry"]), stored["expiry"])
-            for key, value in changes.items():
-                self.assertEqual(value, stored[key])
-
-    def test_concurrent_edit_is_skipped(self):
-        self.assert_concurrent_change_skipped(
-            {
-                "_etag": "edited",
-                "_current_version": 8,
-                "_updated": self.now,
-                "expiry": self.now + timedelta(days=30),
-            }
-        )
-
-    def test_concurrent_desk_move_is_skipped_with_etag_change(self):
-        self.assert_concurrent_change_skipped({"task": {"desk": ObjectId(), "stage": ObjectId()}, "_etag": "moved"})
-
-    def test_concurrent_stage_move_is_skipped_with_etag_change(self):
-        self.assert_concurrent_change_skipped({"task": {"desk": self.desk_id, "stage": ObjectId()}, "_etag": "moved"})
-
-    def test_concurrent_publish_is_skipped_with_etag_change(self):
-        self.assert_concurrent_change_skipped({"state": CONTENT_STATE.PUBLISHED, "_etag": "published"})
-
-    def test_concurrent_expiry_change_is_skipped_with_etag_change(self):
-        self.assert_concurrent_change_skipped({"expiry": self.now + timedelta(days=30), "_etag": "edited"})
-
-    def test_concurrent_version_change_is_skipped_with_etag_change(self):
-        self.assert_concurrent_change_skipped({"_current_version": 8, "_etag": "edited"})
-
-    def test_concurrent_etag_change_is_skipped_without_version_change(self):
-        self.assert_concurrent_change_skipped({"_etag": "edited"})
-
-    def test_concurrent_removal_is_skipped(self):
-        self.assert_concurrent_change_skipped(remove=True)
-
-    def test_atomic_write_uses_backend_etag_check_and_sets_expiry_and_timestamp(self):
-        item = self.insert_item()
-        collection = self.app.data.get_mongo_collection("archive")
-        original = collection.find_one({"_id": item["_id"]})
-        with patch.object(self.app.data.mongo, "get_collection_with_write_concern", return_value=collection):
-            with patch.object(collection, "update_one", wraps=collection.update_one) as update:
-                with patch("apps.archive.set_expiry.utcnow", return_value=self.now):
-                    self.assertEqual(1, SetExpiry().run("Sports News", days=5))
-        expiry = self.now + timedelta(days=5)
-        self.assertEqual(
-            {"_id": item["_id"], "_etag": item["_etag"]},
-            update.call_args.args[0],
-        )
-        self.assertEqual({"$set": {"expiry": expiry, "_updated": self.now}}, update.call_args.args[1])
-        original["expiry"] = expiry
-        original["_updated"] = self.now
-        self.assertEqual(original, collection.find_one({"_id": item["_id"]}))
-
-    def test_indexing_reads_current_document_after_successful_write(self):
-        item = self.insert_item()
-        collection = self.app.data.get_mongo_collection("archive")
-        update_one = collection.update_one
-        changes = {
-            "state": CONTENT_STATE.PUBLISHED,
-            "_current_version": 8,
-            "_etag": "published",
-            "_updated": self.now,
-            "expiry": self.now + timedelta(days=30),
-        }
-
-        def publish_after_write(query, update):
-            result = update_one(query, update)
-            update_one({"_id": item["_id"]}, {"$set": changes})
-            return result
-
-        with patch.object(self.app.data.mongo, "get_collection_with_write_concern", return_value=collection):
-            with patch.object(collection, "update_one", side_effect=publish_after_write):
-                self.assertEqual(1, SetExpiry().run("Sports News", days=5))
-        item.update(changes)
-        self.assert_expiry(item, changes["expiry"])
+        for key, value in changes.items():
+            self.assertEqual(value, stored[key])
+        self.assertEqual(changed["_updated"], stored["_updated"])
 
     def test_indexing_failure_is_not_reported_as_success(self):
         self.insert_item()

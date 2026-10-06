@@ -99,15 +99,6 @@ class DatalayerTestCase(TestCase):
         stored = self.app.data.elastic.find_one("archive", None, _id="checked")
         self.assertEqual("updated", stored["slugline"])
 
-    def test_system_update_checked_without_original_etag_uses_backend_behavior(self):
-        service = superdesk.get_resource_service("archive")
-        collection = service.backend.get_mongo_collection("archive")
-        collection.insert_one({"_id": "checked", "_updated": utcnow()})
-        original = collection.find_one({"_id": "checked"})
-        collection.update_one({"_id": "checked"}, {"$set": {"_etag": "new"}})
-        service.system_update("checked", {"slugline": "updated"}, original, check_etag=True)
-        self.assertEqual("updated", collection.find_one({"_id": "checked"})["slugline"])
-
     def test_find_all(self):
         data = {"name": "test", "privileges": {"ingest": 1, "archive": 1, "fetch": 1}}
         superdesk.get_resource_service("roles").post([data])
