@@ -101,7 +101,7 @@ Superdesk commands
 ``archive:set_expiry``
 ^^^^^^^^^^^^^^^^^^^^^^
 
-.. autoclass:: apps.archive.commands.SetExpiry()
+.. autoclass:: apps.archive.set_expiry.SetExpiry()
 
 ``audit:purge``
 ^^^^^^^^^^^^^^^

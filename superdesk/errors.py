@@ -71,6 +71,15 @@ def notifications_enabled():
     return app.config.get("ERROR_NOTIFICATIONS", True)
 
 
+class UpdateConflictError(Exception):
+    """The backend rejected an update because the original no longer matches or the write is a no-op."""
+
+    def __init__(self, resource: str, item_id: object) -> None:
+        self.resource = resource
+        self.item_id = item_id
+        super().__init__("Update conflict for resource {!r}, item {!r}".format(resource, item_id))
+
+
 class SuperdeskError(DocumentError):
     _codes = {}
     system_exception = None

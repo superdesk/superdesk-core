@@ -35,15 +35,31 @@ start time. Add ``--from-updated`` to calculate it from each item's last-updated
 timestamp instead, with either ``--days`` or configured expiry. This can make
 older items immediately eligible for expiry removal. A disabled configured
 expiry clears the item's explicit expiry.
+The desk configuration is reused and each stage is fetched at most once per
+command run, across all batches.
 
 The command handles draft, ingested, routed, fetched, submitted and in-progress
 items only. It leaves spiked, scheduled and published content (including
 corrections) untouched. Updates are applied to both MongoDB and Elasticsearch
-without changing the current version, version history, etag or last-updated
-timestamp. Subsequent editorial updates will recalculate expiry normally.
+without changing the current version, version history or etag. Successful writes
+refresh the last-updated timestamp. With ``--from-updated``, expiry is calculated
+from the timestamp fetched before this refresh. Subsequent editorial updates
+will recalculate expiry normally.
 Items with invalid timestamps or expiry configuration are logged and skipped;
 the command reports the skipped count and continues with other items. Storage
 failures still stop the command.
+Writes use the MongoDB backend's atomic item ID and fetched etag check.
+This uses ``system_update(..., check_etag=True)``, which raises
+``UpdateConflictError`` on a mismatch or removal before indexing or notifying.
+This plain exception carries ``resource`` and ``item_id`` attributes and chains
+the original backend exception as its cause.
+The option defaults to false, preserving existing unchecked system updates.
+Items whose etag changed, or which were removed since the batch
+read, are logged and skipped without indexing or counting them as updated.
+Desk/state eligibility is checked at batch selection; concurrent changes must
+update the etag to be detected. Timestamp-only changes are not detected.
+The backend also treats no-op writes as conflicts. Only expiry and last-updated are
+written; other stored metadata is left untouched.
 
 Published content
 -----------------

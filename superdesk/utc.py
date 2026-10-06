@@ -14,7 +14,9 @@ import arrow
 import datetime
 import logging
 import pytz
-from pytz import utc, timezone  # flake8: noqa
+from pytz import utc, timezone
+
+from superdesk.text_checkers.ai import base  # flake8: noqa
 
 tzinfo = getattr(datetime, "tzinfo", object)
 EXPIRY_OVERFLOW_DAYS = 99999
@@ -40,7 +42,7 @@ def get_date(date_or_string) -> Optional[datetime.datetime]:
     return None
 
 
-def get_expiry_date(minutes, offset=None):
+def get_expiry_date(minutes, offset=None) -> Optional[datetime.datetime]:
     if minutes is None or minutes <= 0:
         return None
     if offset and type(offset) is not datetime.datetime:
@@ -50,7 +52,10 @@ def get_expiry_date(minutes, offset=None):
         return base + datetime.timedelta(minutes=minutes)
     except OverflowError:
         logger.warning("Expiry duration overflow; using %s days from %s", EXPIRY_OVERFLOW_DAYS, base)
-        return base + datetime.timedelta(days=EXPIRY_OVERFLOW_DAYS)
+        try:
+            return base + datetime.timedelta(days=EXPIRY_OVERFLOW_DAYS)
+        except OverflowError:
+            return datetime.datetime.max.replace(tzinfo=base.tzinfo)
 
 
 def local_to_utc(local_tz_name, local_datetime):
