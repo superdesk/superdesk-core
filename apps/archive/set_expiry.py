@@ -10,6 +10,7 @@
 
 import logging
 from datetime import datetime
+from typing import Optional
 
 import superdesk
 from eve.utils import config
@@ -56,7 +57,7 @@ class SetExpiry(superdesk.Command):
     ]
     batch_size = 500
 
-    def run(self, desk: str, days: int | None = None, from_updated: bool = False) -> int:
+    def run(self, desk: str, days: Optional[int] = None, from_updated: bool = False) -> int:
         if days is not None and days <= 0:
             raise ValueError("--days must be a positive integer")
 
