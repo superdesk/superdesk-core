@@ -9,14 +9,13 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from typing import Optional
 import arrow
 import datetime
 import logging
 import pytz
-from pytz import utc, timezone
 
-from superdesk.text_checkers.ai import base  # flake8: noqa
+from typing import Optional
+from pytz import utc, timezone
 
 tzinfo = getattr(datetime, "tzinfo", object)
 EXPIRY_OVERFLOW_DAYS = 99999
