@@ -381,6 +381,11 @@ Available core formatters:
 
 Superdesk NINJS Schema in :download:`JSON <superdesk-ninjs-schema.json>`.
 
+Place names from the locators vocabulary use the first non-empty ``state``,
+``country``, ``world_region``, or ``group`` value, falling back to the localized
+vocabulary ``name``. This also applies when the article's place ``name`` is
+empty, including when ``NINJS_PLACE_EXTENDED`` is enabled.
+
 .. autoclass:: NINJS2Formatter
 
 .. autoclass:: FTPNinjsFormatter

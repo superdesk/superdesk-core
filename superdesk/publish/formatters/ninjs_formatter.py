@@ -503,6 +503,7 @@ class NINJSFormatter(Formatter):
                         or locators[0].get("country")
                         or locators[0].get("world_region")
                         or locators[0].get("group")
+                        or locators[0].get("name")
                     )
             return item.get("name")
 
@@ -517,13 +518,11 @@ class NINJSFormatter(Formatter):
                         if item.get(key):
                             if key == "qcode":
                                 place["code"] = item.get(key)
-                            elif key == "name":
-                                if get_label(item) is not None:
-                                    place["name"] = get_label(item)
-                                else:
-                                    place["name"] = item.get(key)
                             else:
                                 place[key] = item.get(key)
+                    label = get_label(item)
+                    if label is not None:
+                        place["name"] = label
                 else:
                     place = {"name": get_label(item), "code": item.get("qcode")}
                 places.append(place)
