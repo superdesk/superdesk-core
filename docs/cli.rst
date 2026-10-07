@@ -98,6 +98,11 @@ Superdesk commands
 
 .. autoclass:: apps.archive.commands.RemoveExpiredContent()
 
+``archive:set_expiry``
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: apps.archive.set_expiry.SetExpiry()
+
 ``audit:purge``
 ^^^^^^^^^^^^^^^
 
