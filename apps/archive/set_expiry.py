@@ -10,7 +10,7 @@
 
 import logging
 from datetime import datetime
-from typing import Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import superdesk
 from eve.utils import config
@@ -66,7 +66,7 @@ class SetExpiry(superdesk.Command):
         count = 0
         skipped = 0
         conflicts = 0
-        stages = {}
+        stages: Dict[Any, Optional[Dict[str, Any]]] = {}
         while True:
             items = list(archive_service.find(lookup, max_results=self.batch_size, sort="_id"))
             if not items:
