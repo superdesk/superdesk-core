@@ -45,7 +45,7 @@ def get_expiry_date(minutes, offset=None) -> Optional[datetime.datetime]:
     if minutes is None or minutes <= 0:
         return None
     if offset and type(offset) is not datetime.datetime:
-        raise TypeError("offset must be a datetime.date, not a %s" % type(offset))
+        raise TypeError("offset must be a datetime.datetime, not a %s" % type(offset))
     base = offset or utcnow()
     try:
         return base + datetime.timedelta(minutes=minutes)

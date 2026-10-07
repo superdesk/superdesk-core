@@ -70,7 +70,7 @@ class UTCTestCase(unittest.TestCase):
         self.assertEqual(date1.second, date2.second)
 
     def test_get_expiry_date_bad_offset_raises_error(self):
-        with self.assertRaises(TypeError) as error_context:
+        with self.assertRaises(TypeError):
             offset = "01.02.2013 13:30"
             get_expiry_date(minutes=5, offset=offset)
 
