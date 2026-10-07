@@ -78,3 +78,26 @@ class JoinUrlPartsTestCase(unittest.TestCase):
         """Test joining parts that contain internal slashes that should be preserved"""
         self.assertEqual(utils.join_url_parts("api", "v1/latest", "items"), "api/v1/latest/items")
         self.assertEqual(utils.join_url_parts("/api/", "v1/latest/", "/items/"), "api/v1/latest/items")
+
+
+class CompileIgnorecaseRegexTestCase(unittest.TestCase):
+    def test_plain_value(self):
+        regex = utils.compile_ignorecase_regex("^", "abc")
+        self.assertEqual(regex.pattern, "^abc")
+        self.assertIsNotNone(regex.search("ABCD"))
+        self.assertIsNone(regex.search("xabc"))
+
+    def test_leading_inline_flags_are_moved_to_start(self):
+        regex = utils.compile_ignorecase_regex("^", "(?ix)CRI-")
+        self.assertEqual(regex.pattern, "(?ix)^CRI-")
+        self.assertIsNotNone(regex.search("cri-123"))
+        self.assertIsNone(regex.search("a cri-123"))
+
+    def test_prefix_and_suffix(self):
+        regex = utils.compile_ignorecase_regex(".*", "(?i)cri", ".*")
+        self.assertEqual(regex.pattern, "(?i).*cri.*")
+        self.assertIsNotNone(regex.search("xxCRIxx"))
+
+    def test_multiple_flag_groups(self):
+        regex = utils.compile_ignorecase_regex("^", "(?i)(?s)a")
+        self.assertEqual(regex.pattern, "(?i)(?s)^a")
