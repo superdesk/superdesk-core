@@ -10,7 +10,7 @@
 
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Tuple
 
 import superdesk
 from eve.utils import config
@@ -58,16 +58,45 @@ class SetExpiry(superdesk.Command):
     batch_size = 500
 
     def run(self, desk: str, days: Optional[int] = None, from_updated: bool = False) -> int:
+        self._validate_days(days)
+        desk_doc = self._get_desk(desk)
+        now = utcnow()
+        archive_service = get_resource_service(ARCHIVE)
+        lookup = self._get_lookup(desk_doc)
+        count = 0
+        skipped = 0
+        conflicts = 0
+        stages = {}
+        while True:
+            items = list(archive_service.find(lookup, max_results=self.batch_size, sort="_id"))
+            if not items:
+                break
+            updated, batch_skipped, batch_conflicts = self._update_batch(
+                items, archive_service, desk_doc, desk, days, from_updated, now, stages
+            )
+            count += updated
+            skipped += batch_skipped
+            conflicts += batch_conflicts
+            lookup[config.ID_FIELD] = {"$gt": items[-1][config.ID_FIELD]}
+
+        self._print_summary(desk, count, skipped, conflicts)
+        return count
+
+    @staticmethod
+    def _validate_days(days: Optional[int]) -> None:
         if days is not None and days <= 0:
             raise ValueError("--days must be a positive integer")
 
+    @staticmethod
+    def _get_desk(desk: str):
         desk_doc = get_resource_service("desks").find_one(req=None, name=desk)
         if desk_doc is None:
             raise ValueError("Desk not found: {}".format(desk))
+        return desk_doc
 
-        now = utcnow()
-        archive_service = get_resource_service(ARCHIVE)
-        lookup = {
+    @staticmethod
+    def _get_lookup(desk_doc) -> dict:
+        return {
             "task.desk": desk_doc[config.ID_FIELD],
             ITEM_STATE: {
                 "$in": [
@@ -80,57 +109,62 @@ class SetExpiry(superdesk.Command):
                 ]
             },
         }
-        count = 0
+
+    def _update_batch(
+        self, items, archive_service, desk_doc, desk, days, from_updated, now, stages
+    ) -> Tuple[int, int, int]:
+        updated = 0
         skipped = 0
         conflicts = 0
-        stages = {}
-        while True:
-            items = list(archive_service.find(lookup, max_results=self.batch_size, sort="_id"))
-            if not items:
-                break
-            for item in items:
-                try:
-                    updated = item.get(config.LAST_UPDATED)
-                    if from_updated and not isinstance(updated, datetime):
-                        raise ValueError("Invalid last-updated timestamp")
-                    offset = updated if from_updated else now
-                    if days is not None:
-                        item_expiry = get_expiry_date(days * 24 * 60, offset=offset)
-                    else:
-                        stage_id = item.get("task", {}).get("stage")
-                        stage = None
-                        if stage_id:
-                            if stage_id not in stages:
-                                stages[stage_id] = get_resource_service("stages").find_one(req=None, _id=stage_id)
-                            stage = stages[stage_id]
-                            if not stage:
-                                logger.error(
-                                    "Skipping expiry update for item %s on desk %r: Invalid stage identifier %s",
-                                    item[config.ID_FIELD],
-                                    desk,
-                                    stage_id,
-                                )
-                                skipped += 1
-                                continue
-                        item_expiry = get_item_expiry(desk_doc, stage, offset=offset)
-                except (KeyError, TypeError, ValueError, OverflowError, SuperdeskApiError):
-                    logger.exception("Skipping expiry update for item %s on desk %r", item[config.ID_FIELD], desk)
-                    skipped += 1
-                    continue
-                try:
-                    archive_service.system_update(item[config.ID_FIELD], {"expiry": item_expiry}, item, check_etag=True)
-                except UpdateConflictError:
-                    logger.warning(
-                        "Skipping expiry update for changed or removed item %s on desk %r", item[config.ID_FIELD], desk
-                    )
-                    conflicts += 1
-                    continue
-                count += 1
-            lookup[config.ID_FIELD] = {"$gt": items[-1][config.ID_FIELD]}
+        for item in items:
+            is_valid, item_expiry = self._get_item_expiry(item, desk_doc, desk, days, from_updated, now, stages)
+            if not is_valid:
+                skipped += 1
+                continue
+            try:
+                archive_service.system_update(item[config.ID_FIELD], {"expiry": item_expiry}, item, check_etag=True)
+            except UpdateConflictError:
+                logger.warning(
+                    "Skipping expiry update for changed or removed item %s on desk %r", item[config.ID_FIELD], desk
+                )
+                conflicts += 1
+                continue
+            updated += 1
+        return updated, skipped, conflicts
 
+    @staticmethod
+    def _get_item_expiry(item, desk_doc, desk, days, from_updated, now, stages) -> Tuple[bool, Optional[datetime]]:
+        try:
+            updated = item.get(config.LAST_UPDATED)
+            if from_updated and not isinstance(updated, datetime):
+                raise ValueError("Invalid last-updated timestamp")
+            offset = updated if from_updated else now
+            if days is not None:
+                return True, get_expiry_date(days * 24 * 60, offset=offset)
+
+            stage_id = item.get("task", {}).get("stage")
+            stage = None
+            if stage_id:
+                if stage_id not in stages:
+                    stages[stage_id] = get_resource_service("stages").find_one(req=None, _id=stage_id)
+                stage = stages[stage_id]
+                if not stage:
+                    logger.error(
+                        "Skipping expiry update for item %s on desk %r: Invalid stage identifier %s",
+                        item[config.ID_FIELD],
+                        desk,
+                        stage_id,
+                    )
+                    return False, None
+            return True, get_item_expiry(desk_doc, stage, offset=offset)
+        except (KeyError, TypeError, ValueError, OverflowError, SuperdeskApiError):
+            logger.exception("Skipping expiry update for item %s on desk %r", item[config.ID_FIELD], desk)
+            return False, None
+
+    @staticmethod
+    def _print_summary(desk: str, count: int, skipped: int, conflicts: int) -> None:
         print("Updated expiry on {} items on desk {!r}.".format(count, desk))
         if skipped:
             print("Skipped {} items with expiry errors; see logs for details.".format(skipped))
         if conflicts:
             print("Skipped {} items changed or removed concurrently; see logs for details.".format(conflicts))
-        return count
