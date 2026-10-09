@@ -18,11 +18,16 @@ class AsyncTaskResult[T](AsyncResult):
         """
         for attempt in range(max_retries + 1):
             try:
-                return func()
+                return await asyncio.to_thread(func)
             except RESULT_BACKEND_ERRORS:
-                if attempt == max_retries or time.monotonic() >= deadline:
+                if attempt == max_retries:
                     raise
-                await asyncio.sleep(min(0.1 * 2**attempt, 2.0))
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise
+                await asyncio.sleep(min(0.1 * 2**attempt, 2.0, remaining))
+                if time.monotonic() >= deadline:
+                    raise
         raise AssertionError("unreachable")
 
     async def get_result_async(self, max_timeout: int = 1000, max_retries: int = 5) -> T:
