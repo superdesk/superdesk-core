@@ -327,6 +327,12 @@ CELERY_RESULT_BACKEND = env("CELERY_RESULT_URL", REDIS_URL)
 CELERY_RESULT_EXPIRES = 3600  # Delete results after 1 hour
 CELERY_RESULT_SERIALIZER = CELERY_TASK_SERIALIZER
 
+# Redis result backend socket options (used when reading task results)
+CELERY_REDIS_SOCKET_TIMEOUT = float(env("CELERY_RESULT_REDIS_TIMEOUT", 30))
+CELERY_REDIS_SOCKET_CONNECT_TIMEOUT = float(env("CELERY_RESULT_REDIS_CONNECT_TIMEOUT", 5))
+CELERY_REDIS_RETRY_ON_TIMEOUT = True
+CELERY_REDIS_SOCKET_KEEPALIVE = True
+
 CELERY_TASK_SEND_EVENTS = False
 
 # Redis broker publish/connect calls are synchronous inside Celery's apply_async path.
