@@ -102,6 +102,13 @@ Superdesk commands
 
 .. autofunction:: apps.archive.commands.cli_archive_remove_expired()
 
+``archive:set_expiry``
+^^^^^^^^^^^^^^^^^^^^^^
+
+.. autoclass:: apps.archive.set_expiry.SetExpiry()
+
+.. autofunction:: apps.archive.set_expiry.cli_archive_set_expiry()
+
 ``audit:purge``
 ^^^^^^^^^^^^^^^
 

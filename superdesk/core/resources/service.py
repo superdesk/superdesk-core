@@ -39,6 +39,8 @@ from motor.motor_asyncio import AsyncIOMotorCursor
 
 # TODO-ASYNC: Replace Eve's parser with our own
 from eve.io.mongo.parser import parse, ParseError
+from eve.io.base import DataLayer
+from elasticsearch.exceptions import NotFoundError
 
 from quart_babel import gettext as _
 
@@ -47,7 +49,7 @@ from superdesk.core.errors import ElasticNotConfiguredForResource
 from superdesk.flask import g
 from superdesk.utc import utcnow
 from superdesk.cache import cache
-from superdesk.errors import SuperdeskApiError
+from superdesk.errors import SuperdeskApiError, UpdateConflictError
 from superdesk.json_utils import SuperdeskJSONEncoder, cast_item
 from superdesk.resource_fields import ID_FIELD, VERSION_ID_FIELD, CURRENT_VERSION, LATEST_VERSION
 from superdesk.lookup_validation import validate_lookup_for_sensitive_fields
@@ -1121,29 +1123,65 @@ class AsyncResourceService(Generic[ResourceModelType]):
         if self.config.ignore_fields_in_versions:
             versioned_item.update({key: item[key] for key in self.config.ignore_fields_in_versions if item.get(key)})
 
-    async def system_update(self, item_id: ObjectId | str, updates: dict[str, Any], update_etag: bool = False) -> None:
+    async def system_update(
+        self,
+        item_id: ObjectId | str,
+        updates: dict[str, Any],
+        update_etag: bool = False,
+        *,
+        original: dict[str, Any] | None = None,
+        check_etag: bool = False,
+        change_request: bool = False,
+    ) -> None:
         """Update an item with the supplied updates, and do not update the etag or call any signals
 
         :param item_id: The ID of the item to update
         :param updates: A dictionary of values to update
         :param update_etag: If ``True`` will update the item's ``_etag``
+        :param original: The fetched document for a checked update
+        :param check_etag: Atomically check the fetched etag and raise ``UpdateConflictError``
+            on a mismatch, removal or no-op, without indexing
+        :param change_request: Use MongoDB update operators instead of wrapping updates in ``$set``
         """
 
         item_id = ObjectId(item_id) if self.id_uses_objectid() else item_id
+        query: dict[str, Any] = {"_id": item_id}
+        if check_etag:
+            if original is None or "_etag" not in original:
+                raise ValueError("Checked system updates require an original document with an etag")
+            query["_etag"] = original["_etag"]
+            if not change_request:
+                updates.setdefault("_updated", utcnow())
         if update_etag:
-            original = await self.find_by_id(item_id)
-            if not original:
+            original_model = await self.find_by_id(item_id)
+            if not original_model:
                 raise SuperdeskApiError.notFoundError()
 
             updated = {
-                **original.to_dict(),
+                **original_model.to_dict(),
                 **updates,
             }
             updates["_etag"] = self.generate_etag(updated, self.config.etag_ignore_fields)
 
-        await self.mongo_async.update_one({"_id": item_id}, {"$set": updates})
+        result = await self.mongo_async.update_one(query, updates if change_request else {"$set": updates})
+        if check_etag and result.acknowledged and result.modified_count == 0:
+            raise UpdateConflictError(self.resource_name, item_id) from DataLayer.OriginalChangedError()
         try:
-            await self.elastic.update(str(item_id), updates)
+            if change_request:
+                document = await self.mongo_async.find_one({"_id": item_id})
+                if document is None:
+                    raise SuperdeskApiError.notFoundError()
+                await self.elastic.replace(str(item_id), document)
+            else:
+                try:
+                    await self.elastic.update(str(item_id), updates)
+                except NotFoundError:
+                    if not check_etag:
+                        raise
+                    document = await self.mongo_async.find_one({"_id": item_id})
+                    if document is None:
+                        raise SuperdeskApiError.notFoundError()
+                    await self.elastic.insert([document])
         except ElasticNotConfiguredForResource:
             pass
 
