@@ -7,7 +7,7 @@
 # For the full copyright and license information, please see the
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
-import re
+from superdesk.utils import compile_ignorecase_regex
 from apps.content_filters.filter_condition.filter_condition_operator import (
     FilterConditionOperator,
     FilterConditionOperatorsEnum,
@@ -66,7 +66,8 @@ class FilterConditionValue:
             return self._get_value(field), field.get_entity_name()
 
     def _get_regex_value(self):
-        return re.compile(self.mongo_regex.format(self.value), re.IGNORECASE)
+        prefix, _, suffix = self.mongo_regex.partition("{}")
+        return compile_ignorecase_regex(prefix, self.value, suffix)
 
     def _get_value(self, field):
         t = field.get_type()

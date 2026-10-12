@@ -448,3 +448,21 @@ def join_url_parts(*parts) -> str:
     :return: A string of the joined URL
     """
     return "/".join(str(part).strip("/") for part in parts if part)
+
+
+_INLINE_FLAGS_RE = re.compile(r"\(\?[aiLmsux]+\)")
+
+
+def compile_ignorecase_regex(prefix: str, value: str, suffix: str = "") -> "re.Pattern":
+    """Compile ``prefix + value + suffix`` case insensitively.
+
+    Python 3.11+ requires global inline flags like ``(?ix)`` at the start of the
+    expression, so flags found at the start of ``value`` are moved to the front.
+    """
+    flags = ""
+    match = _INLINE_FLAGS_RE.match(value)
+    while match:
+        flags += match.group(0)
+        value = value[match.end() :]
+        match = _INLINE_FLAGS_RE.match(value)
+    return re.compile(flags + prefix + value + suffix, re.IGNORECASE)

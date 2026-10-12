@@ -1,7 +1,7 @@
 from typing import cast
 import logging
 from copy import copy
-import re
+from superdesk.utils import compile_ignorecase_regex
 
 from quart_babel import gettext
 
@@ -43,7 +43,7 @@ async def check_similar_filter_conditions(filter_condition: dict) -> list[Filter
                 {
                     "field": filter_condition["field"],
                     "operator": filter_condition["operator"],
-                    "value": {"$regex": re.compile(".*{}.*".format(filter_condition["value"]), re.IGNORECASE)},
+                    "value": {"$regex": compile_ignorecase_regex(".*", filter_condition["value"], ".*")},
                 }
             )
         ).to_list()
@@ -54,7 +54,7 @@ async def check_similar_filter_conditions(filter_condition: dict) -> list[Filter
                     {
                         "field": filter_condition["field"],
                         "operator": parameter[0].operators[0],
-                        "value": {"$not": re.compile(".*{}.*".format(filter_condition["value"]), re.IGNORECASE)},
+                        "value": {"$not": compile_ignorecase_regex(".*", filter_condition["value"], ".*")},
                     }
                 )
             ).to_list()
@@ -66,7 +66,7 @@ async def check_similar_filter_conditions(filter_condition: dict) -> list[Filter
                 {
                     "field": filter_condition["field"],
                     "operator": filter_condition["operator"],
-                    "value": {"$regex": re.compile("{}".format(filter_condition["value"]), re.IGNORECASE)},
+                    "value": {"$regex": compile_ignorecase_regex("", filter_condition["value"])},
                 }
             )
         ).to_list()
