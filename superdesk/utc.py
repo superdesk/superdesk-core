@@ -9,13 +9,17 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 
-from typing import Optional
 import arrow
 import datetime
+import logging
 import pytz
-from pytz import utc, timezone  # flake8: noqa
+
+from typing import Optional
+from pytz import utc, timezone
 
 tzinfo = getattr(datetime, "tzinfo", object)
+EXPIRY_OVERFLOW_DAYS = 99999
+logger = logging.getLogger(__name__)
 
 
 def utcnow():
@@ -37,22 +41,20 @@ def get_date(date_or_string) -> Optional[datetime.datetime]:
     return None
 
 
-def get_expiry_date(minutes, offset=None):
+def get_expiry_date(minutes, offset=None) -> Optional[datetime.datetime]:
     if minutes is None or minutes <= 0:
         return None
-    if offset:
-        if type(offset) is datetime.datetime:
-            try:
-                return offset + datetime.timedelta(minutes=minutes)
-            except OverflowError:
-                return
-        else:
-            raise TypeError("offset must be a datetime.date, not a %s" % type(offset))
-    else:
+    if offset and type(offset) is not datetime.datetime:
+        raise TypeError("offset must be a datetime.datetime, not a %s" % type(offset))
+    base = offset or utcnow()
+    try:
+        return base + datetime.timedelta(minutes=minutes)
+    except OverflowError:
+        logger.warning("Expiry duration overflow; using %s days from %s", EXPIRY_OVERFLOW_DAYS, base)
         try:
-            return utcnow() + datetime.timedelta(minutes=minutes)
-        except OverflowError:  # very big number, never expire
-            return
+            return base + datetime.timedelta(days=EXPIRY_OVERFLOW_DAYS)
+        except OverflowError:
+            return datetime.datetime.max.replace(tzinfo=base.tzinfo)
 
 
 def local_to_utc(local_tz_name, local_datetime):

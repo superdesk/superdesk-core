@@ -28,6 +28,7 @@ from .archive import (
     archive_internal_service,
 )
 from .commands import RemoveExpiredContent, LOCK_EXPIRY
+from .set_expiry import SetExpiry
 from .ingest import IngestResource, AppIngestService
 from .user_content import UserContentResource, UserContentService
 from .archive_lock import ArchiveLockResource, ArchiveUnlockResource, ArchiveLockService, ArchiveUnlockService
@@ -44,6 +45,7 @@ from .news import NewsResource, NewsService
 from flask_babel import _, lazy_gettext
 
 logger = logging.getLogger(__name__)
+superdesk.command("archive:set_expiry", SetExpiry())
 
 
 def init_app(app) -> None:
