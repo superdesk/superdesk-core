@@ -37,6 +37,19 @@ class AsyncListCursor:
         self._limit = -1
         self.docs = docs or []
 
+    def __iter__(self):
+        return iter(self.docs)
+
+    def __getitem__(self, key):
+        return self.docs[key]
+
+    def __len__(self) -> int:
+        return len(self.docs)
+
+    def first(self) -> dict | None:
+        """Get first doc."""
+        return self.docs[0] if self.docs else None
+
     def __aiter__(self):
         return self
 

@@ -6,6 +6,7 @@ from superdesk.core import json
 from superdesk.flask import abort, request
 from superdesk.utc import utcnow
 from superdesk.utils import ListCursor
+from superdesk.eve_async import AsyncListCursor
 from apps.search_providers.registry import registered_search_providers
 from apps.io.search_ingest import SearchIngestService
 from superdesk.metadata.item import get_schema
@@ -79,7 +80,9 @@ class SearchProviderProxyService(SearchIngestService):
         except TypeError:  # BC
             items = await service.find_async(query)
         if isinstance(items, list):
-            items = ListCursor(items)
+            items = AsyncListCursor(items)
+        elif isinstance(items, ListCursor):
+            items = AsyncListCursor(items.docs)
         for item in items:
             self._set_item_defaults(item, provider)
         return items
