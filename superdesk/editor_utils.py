@@ -851,7 +851,7 @@ def generate_fields(item, fields=None, force=False, reload=False, original=None)
         if CHECK_GENERATE_CONSISTENCY and not force and client_value is not None:
             server_value = get_field_value(item, field) or ""
             if client_value.strip() != server_value.strip():
-                logger.warning(
+                logger.debug(
                     "Generated HTML inconsistency between client and backend, we'll use client one",
                     extra=dict(
                         field=field,

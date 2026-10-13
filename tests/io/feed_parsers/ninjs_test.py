@@ -65,6 +65,95 @@ class SimpleTestCase(NINJSTestCase):
             [{"name": "Advisory", "qcode": "m", "translations": {"name": {"en": "Advisory", "fr": "Avis"}}}],
         )
 
+    def test_body_html_removes_class_and_style_attributes(self):
+        parser = NINJSFeedParser()
+        item = parser._transform_from_ninjs(
+            {
+                "guid": "body-cleanup-test",
+                "type": "text",
+                "body_html": (
+                    '<table cellspacing="0" class="bwtablemarginb bwblockalignl">'
+                    '<tr><td class="bwalignr" rowspan="1" colspan="1">'
+                    '<p class="bwcellpmargin" style="width:0;height:0">(1)</p>'
+                    "</td></tr></table>"
+                ),
+            }
+        )
+
+        self.assertEqual(
+            '<table cellspacing="0"><tr><td rowspan="1" colspan="1"><p>(1)</p></td></tr></table>',
+            item["body_html"],
+        )
+
+    def test_body_html_attributes_to_remove_can_be_overridden(self):
+        class KeepStyleNINJSFeedParser(NINJSFeedParser):
+            HTML_ATTRIBUTES_TO_REMOVE = ("class",)
+
+        item = KeepStyleNINJSFeedParser()._transform_from_ninjs(
+            {
+                "guid": "body-cleanup-override-test",
+                "type": "text",
+                "body_html": '<p class="foo" style="width:0">x</p>',
+            }
+        )
+
+        self.assertEqual('<p style="width:0">x</p>', item["body_html"])
+
+    def test_body_html_tags_to_remove_and_kill_can_be_overridden(self):
+        class CustomNINJSFeedParser(NINJSFeedParser):
+            HTML_TAGS_TO_REMOVE = ("span",)
+            HTML_TAGS_TO_KILL = ("script", "style", "head", "aside")
+
+        item = CustomNINJSFeedParser()._transform_from_ninjs(
+            {
+                "guid": "body-cleanup-tags-test",
+                "type": "text",
+                "body_html": "<div><span>keep text</span><aside>remove text</aside></div>",
+            }
+        )
+
+        self.assertEqual("<div>keep text</div>", item["body_html"])
+
+    def test_body_html_sanitizer_can_be_overridden(self):
+        class CustomNINJSFeedParser(NINJSFeedParser):
+            def _sanitize_html(self, value):
+                return "custom: " + value
+
+        item = CustomNINJSFeedParser()._transform_from_ninjs(
+            {"guid": "body-cleanup-method-test", "type": "text", "body_html": "<p>text</p>"}
+        )
+
+        self.assertEqual("custom: <p>text</p>", item["body_html"])
+
+    def test_nested_association_body_html_is_sanitized(self):
+        parser = NINJSFeedParser()
+        item = parser._transform_from_ninjs(
+            {
+                "guid": "parent",
+                "type": "text",
+                "associations": {
+                    "child": {
+                        "guid": "child",
+                        "type": "text",
+                        "body_html": '<p class="child">child<script>bad</script></p>',
+                        "associations": {
+                            "grandchild": {
+                                "guid": "grandchild",
+                                "type": "text",
+                                "body_html": '<p style="display:none">grandchild</p>',
+                            }
+                        },
+                    }
+                },
+            }
+        )
+
+        child = item["associations"]["child"]
+        self.assertEqual("<p>child</p>", child["body_html"])
+        self.assertEqual("<p>grandchild</p>", child["associations"]["grandchild"]["body_html"])
+        self.assertEqual("<p>grandchild</p>", parser.items[0]["body_html"])
+        self.assertEqual("<p>child</p>", parser.items[1]["body_html"])
+
 
 class AssociatedTestCase(NINJSTestCase):
     filename = "ninjs2.json"
