@@ -135,11 +135,11 @@ class SearchProviderTestCase(TestCase):
         self.assertEqual(item["_type"], "externalsource")
 
     async def test_async_list_cursor_methods(self):
-        docs = [{"_id": 1, "name": "one"}, {"_id": 2, "name": "two"}]
+        docs = [{"_id": 1, "name": "one"}, {"_id": 2, "name": "two"}, {"_id": 3, "name": "three"}]
         cursor = AsyncListCursor(docs)
 
         # len, indexing, first
-        self.assertEqual(len(cursor), 2)
+        self.assertEqual(len(cursor), 3)
         self.assertEqual(cursor[0], {"_id": 1, "name": "one"})
         self.assertEqual(cursor.first(), {"_id": 1, "name": "one"})
 
@@ -150,3 +150,13 @@ class SearchProviderTestCase(TestCase):
         # async iteration
         async_items = [d async for d in cursor]
         self.assertEqual(async_items, docs)
+
+        # test sync iteration with skip and limit
+        cursor_window = AsyncListCursor(docs).skip(1).limit(2)
+        # sync iteration respects skip and limit without consuming _index
+        self.assertEqual(cursor_window._index, 1)
+        self.assertEqual([d for d in cursor_window], docs[1:2])
+        self.assertEqual(cursor_window._index, 1)
+
+        # async iteration also respects the same window
+        self.assertEqual([d async for d in cursor_window], docs[1:2])

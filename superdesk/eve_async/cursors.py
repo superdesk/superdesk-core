@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+from itertools import islice
+from typing import TYPE_CHECKING, Iterator
 from typing_extensions import Self
 
 from pymongo.cursor_shared import _Hint as MongoCursorHint
@@ -37,8 +38,9 @@ class AsyncListCursor:
         self._limit = -1
         self.docs = docs or []
 
-    def __iter__(self):
-        return iter(self.docs)
+    def __iter__(self) -> Iterator[dict]:
+        stop = None if self._limit < 0 else self._limit
+        return islice(self.docs, self._index, stop)
 
     def __getitem__(self, key):
         return self.docs[key]

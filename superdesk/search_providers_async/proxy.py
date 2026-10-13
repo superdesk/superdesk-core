@@ -89,7 +89,7 @@ async def _set_item_defaults(item: dict[str, Any], provider: dict[str, Any]) -> 
     item.setdefault("ingest_provider", str(provider["_id"]))
 
 
-async def search_items(lookup: dict[str, Any], provider_id: str | None = None) -> AsyncListCursor | ListCursor:
+async def search_items(lookup: dict[str, Any], provider_id: str | None = None) -> AsyncListCursor:
     """Search using provider."""
     # TODO-ASYNC [search_providers]: to be checked when search providers are async.
     provider = await get_provider(provider_id)
