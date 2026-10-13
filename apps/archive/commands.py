@@ -257,12 +257,16 @@ class RemoveExpiredContent:
             # move to archived collection
             logger.info("{} Archiving items.".format(self.log_msg))
             for _item_id, item in items_to_be_archived.items():
-                await self._move_to_archived(item, filter_conditions)
+                await self._move_to_archived(item, filter_conditions, expiry_datetime)
 
             for item_id, item in killed_items.items():
                 # delete from the published collection and queue
                 msg = log_msg_format.format(**item)
                 try:
+                    current_item = await archive_service.find_one_async(req=None, _id=item_id)
+                    if current_item is None or not is_item_expired(current_item, expiry_datetime):
+                        logger.info("%s Skipping no longer expired item %s", self.log_msg, item_id)
+                        continue
                     await published_service.delete_by_article_id(item_id)
                     logger.info("{} Deleting killed item from published. {}".format(self.log_msg, msg))
                     items_to_remove.add(item_id)
@@ -429,18 +433,23 @@ class RemoveExpiredContent:
         )
         return [doc.get(ID_FIELD) async for doc in archive_docs]
 
-    async def _move_to_archived(self, item, filter_conditions):
+    async def _move_to_archived(self, item, filter_conditions, expiry_datetime):
         """Moves all the published version of an article to archived.
 
         Deletes all published version of an article in the published collection
 
         :param str item_id: item_id of the document
         :param list filter_conditions: list of filter conditions
+        :param datetime expiry_datetime: cleanup expiry cutoff
         """
         published_service = get_resource_service("published")
         archived_service = get_resource_service("archived")
         archive_service = get_resource_service("archive")
         item_id = item.get(ID_FIELD)
+        item = await archive_service.find_one_async(req=None, _id=item_id)
+        if item is None or not is_item_expired(item, expiry_datetime):
+            logger.info("%s Skipping no longer expired item %s", self.log_msg, item_id)
+            return
         moved_to_archived = self._conforms_to_archived_filter(item, filter_conditions)
         published_items = await (
             await published_service.get_from_mongo_async(req=None, lookup={"item_id": item_id})
@@ -505,10 +514,14 @@ class RemoveExpiredContent:
                 and not await self._get_associated_items(item)
                 and is_item_expired(item, expiry_datetime)
             ]
-            if spiked_ids:
-                logger.warning("{} deleting spiked items: {}.".format(self.log_msg, spiked_ids))
-                await get_resource_service("archive").delete_by_article_ids(spiked_ids)
-            logger.info("{} deleted spiked items. Count: {}.".format(self.log_msg, len(spiked_ids)))
+            archive_service = get_resource_service("archive")
+            for item_id in spiked_ids:
+                item = await archive_service.find_one_async(req=None, _id=item_id)
+                if item is None or not is_item_expired(item, expiry_datetime):
+                    logger.info("%s Skipping no longer expired item %s", self.log_msg, item_id)
+                    continue
+                logger.warning("%s deleting spiked item: %s", self.log_msg, item_id)
+                await archive_service.delete_by_article_ids([item_id])
         except Exception:
             logger.exception("{} Failed to delete spiked items.".format(self.log_msg))
 
