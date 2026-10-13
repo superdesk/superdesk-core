@@ -39,8 +39,8 @@ class AsyncListCursor:
         self.docs = docs or []
 
     def __iter__(self) -> Iterator[dict]:
-        stop = None if self._limit < 0 else self._limit
-        return islice(self.docs, self._index, stop)
+        end = self._limit if self._limit >= 0 else None
+        return iter(self.docs[self._index : end])
 
     def __getitem__(self, key):
         return self.docs[key]
