@@ -31,7 +31,7 @@ from quart_babel import gettext as _
 
 from superdesk.core import json, get_app_config, get_current_app
 from superdesk.resource_fields import ID_FIELD, ETAG, LAST_UPDATED, DATE_CREATED
-from superdesk.errors import SuperdeskApiError
+from superdesk.errors import SuperdeskApiError, UpdateConflictError
 from superdesk.notification import push_notification as _push_notification
 from superdesk.cache import cache
 from superdesk.utils import get_list_chunks
@@ -455,28 +455,8 @@ class EveBackend:
                 updates[ETAG] = updated[ETAG]
         return await self._change_request_async(endpoint_name, id, updates, original)
 
-    def system_update(self, endpoint_name, id, updates, original, change_request=False, push_notification=True):
-        """Only update what is provided, without affecting etag.
-
-        This is useful when you want to make some changes without affecting users.
-
-        :param endpoint_name: api resource name
-        :param id: document id
-        :param updates: changes made to document
-        :param original: original document
-        :param change_request: if True it will allow you to use other mongo operations than `$set`
-        :param push_notification: if False it won't send resource: notifications for update
-        """
-        if not change_request:
-            updates.setdefault(LAST_UPDATED, utcnow())
-        updated = original.copy()
-        updated.pop(ETAG, None)  # make sure we update
-        return self._change_request(
-            endpoint_name, id, updates, updated, change_request=change_request, push_notification=push_notification
-        )
-
-    async def system_update_async(
-        self, endpoint_name, id, updates, original, change_request=False, push_notification=True
+    def system_update(
+        self, endpoint_name, id, updates, original, change_request=False, push_notification=True, check_etag=False
     ):
         """Only update what is provided, without affecting etag.
 
@@ -488,16 +468,58 @@ class EveBackend:
         :param original: original document
         :param change_request: if True it will allow you to use other mongo operations than `$set`
         :param push_notification: if False it won't send resource: notifications for update
+        :param check_etag: retain the original etag for the backend's optimistic-lock check
+            and raise UpdateConflictError without indexing or notifying
         """
         if not change_request:
             updates.setdefault(LAST_UPDATED, utcnow())
         updated = original.copy()
-        updated.pop(ETAG, None)  # make sure we update
-        return await self._change_request_async(
-            endpoint_name, id, updates, updated, change_request=change_request, push_notification=push_notification
+        if not check_etag:
+            updated.pop(ETAG, None)  # make sure we update
+        return self._change_request(
+            endpoint_name,
+            id,
+            updates,
+            updated,
+            change_request=change_request,
+            push_notification=push_notification,
+            check_etag=check_etag,
         )
 
-    def _change_request(self, endpoint_name, id, updates, original, change_request=False, push_notification=True):
+    async def system_update_async(
+        self, endpoint_name, id, updates, original, change_request=False, push_notification=True, check_etag=False
+    ):
+        """Only update what is provided, without affecting etag.
+
+        This is useful when you want to make some changes without affecting users.
+
+        :param endpoint_name: api resource name
+        :param id: document id
+        :param updates: changes made to document
+        :param original: original document
+        :param change_request: if True it will allow you to use other mongo operations than `$set`
+        :param push_notification: if False it won't send resource: notifications for update
+        :param check_etag: retain the original etag for the backend's optimistic-lock check
+            and raise UpdateConflictError without indexing or notifying
+        """
+        if not change_request:
+            updates.setdefault(LAST_UPDATED, utcnow())
+        updated = original.copy()
+        if not check_etag:
+            updated.pop(ETAG, None)  # make sure we update
+        return await self._change_request_async(
+            endpoint_name,
+            id,
+            updates,
+            updated,
+            change_request=change_request,
+            push_notification=push_notification,
+            check_etag=check_etag,
+        )
+
+    def _change_request(
+        self, endpoint_name, id, updates, original, change_request=False, push_notification=True, check_etag=False
+    ):
         backend = self._backend(endpoint_name)
         search_backend = self._lookup_backend(endpoint_name)
 
@@ -510,7 +532,9 @@ class EveBackend:
                 updated_fields = get_diff_keys(updates, original)
                 if updated_fields:
                     self._push_resource_notification("updated", endpoint_name, _id=str(id), fields=updated_fields)
-        except eve.io.base.DataLayer.OriginalChangedError:
+        except eve.io.base.DataLayer.OriginalChangedError as exc:
+            if check_etag:
+                raise UpdateConflictError(endpoint_name, id) from exc
             if search_backend and not backend.find_one(endpoint_name, req=None, _id=id):
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))
@@ -549,7 +573,7 @@ class EveBackend:
         return updates
 
     async def _change_request_async(
-        self, endpoint_name, id, updates, original, change_request=False, push_notification=True
+        self, endpoint_name, id, updates, original, change_request=False, push_notification=True, check_etag=False
     ):
         backend = self._backend(endpoint_name, use_async=True)
         search_backend = self._lookup_backend(endpoint_name, use_async=True)
@@ -563,7 +587,9 @@ class EveBackend:
                 updated_fields = get_diff_keys(updates, original)
                 if updated_fields:
                     self._push_resource_notification("updated", endpoint_name, _id=str(id), fields=updated_fields)
-        except eve.io.base.DataLayer.OriginalChangedError:
+        except eve.io.base.DataLayer.OriginalChangedError as exc:
+            if check_etag:
+                raise UpdateConflictError(endpoint_name, id) from exc
             if not await backend.find_one(endpoint_name, req=None, _id=id) and search_backend:
                 # item is in elastic, not in mongo - not good
                 logger.warn("Item is missing in mongo resource={} id={}".format(endpoint_name, id))

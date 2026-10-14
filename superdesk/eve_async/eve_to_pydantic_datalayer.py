@@ -167,8 +167,11 @@ class EveToPydanticDataLayer(EveBackend):
         original: dict,
         change_request: bool = False,
         push_notification: bool = True,
+        check_etag: bool = False,
     ):
-        return await self.get_service(endpoint_name).system_update(item_id, updates)
+        return await self.get_service(endpoint_name).system_update(
+            item_id, updates, original=original, check_etag=check_etag, change_request=change_request
+        )
 
     async def replace_async(self, endpoint_name: str, item_id: ItemId, document: dict, original: dict):
         service = self.get_service(endpoint_name)
@@ -264,6 +267,7 @@ class EveToPydanticDataLayer(EveBackend):
         original: dict,
         change_request: bool = False,
         push_notification: bool = True,
+        check_etag: bool = False,
     ) -> NoReturn:
         raise NonAsyncNotSupported()
 

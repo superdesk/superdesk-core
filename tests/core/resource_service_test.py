@@ -11,6 +11,10 @@ from superdesk.utc import utcnow
 from superdesk.utils import format_time
 
 from superdesk.tests import AsyncTestCase
+from superdesk.errors import UpdateConflictError
+from superdesk.eve_async.eve_to_pydantic_datalayer import EveToPydanticDataLayer
+from eve.io.base import DataLayer
+from datetime import timedelta
 
 
 from .modules.users import UserResourceService, User
@@ -173,6 +177,122 @@ class TestResourceService(AsyncTestCase):
 
         with self.assertRaises(ValidationError):
             await self.service.update(test_user.id, {"unknown_field": 1234})
+
+    async def test_system_update_checked_preserves_metadata_and_indexes(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        now = original["_updated"] + timedelta(days=1)
+        with mock.patch("superdesk.core.resources.service.utcnow", return_value=now):
+            await self.service.system_update(
+                str(user.id), {"first_name": "Updated"}, original=original, check_etag=True
+            )
+        stored = await self.service.mongo_async.find_one({"_id": user.id})
+        self.assertEqual("Updated", stored["first_name"])
+        self.assertEqual(original["_etag"], stored["_etag"])
+        self.assertEqual(now, stored["_updated"])
+        for key in original.keys() - {"first_name", "_updated"}:
+            self.assertEqual(original[key], stored[key])
+        indexed = await self.service.elastic.find_by_id(user.id)
+        self.assertEqual("Updated", indexed["first_name"])
+        self.assertEqual(original["_etag"], indexed["_etag"])
+        self.assertEqual(format_time(now) + "+00:00", indexed["_updated"])
+
+    async def test_system_update_checked_conflict_and_removal_do_not_index(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        await self.service.system_update(user.id, {"_etag": "changed"})
+        for removed in (False, True):
+            if removed:
+                await self.service.mongo_async.delete_one({"_id": user.id})
+            with mock.patch.object(self.service.elastic, "update") as index:
+                with self.assertRaises(UpdateConflictError) as caught:
+                    await self.service.system_update(
+                        user.id, {"first_name": "Stale"}, original=original, check_etag=True
+                    )
+            index.assert_not_called()
+            self.assertEqual(self.service.resource_name, caught.exception.resource)
+            self.assertEqual(user.id, caught.exception.item_id)
+            self.assertIsInstance(caught.exception.__cause__, DataLayer.OriginalChangedError)
+        self.assertEqual("changed", (await self.service.elastic.find_by_id(user.id))["_etag"])
+
+    async def test_system_update_checked_noop_does_not_index(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        with mock.patch.object(self.service.elastic, "update") as index:
+            with self.assertRaises(UpdateConflictError):
+                await self.service.system_update(
+                    user.id,
+                    {"first_name": original["first_name"], "_updated": original["_updated"]},
+                    original=original,
+                    check_etag=True,
+                )
+        index.assert_not_called()
+
+    async def test_system_update_default_keeps_timestamp_and_allows_stale_original(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        await self.service.system_update(user.id, {"_etag": "changed"})
+        await self.service.system_update(user.id, {"first_name": "Updated"}, original=original)
+        stored = await self.service.mongo_async.find_one({"_id": user.id})
+        self.assertEqual("Updated", stored["first_name"])
+        self.assertEqual("changed", stored["_etag"])
+        self.assertEqual(original["_updated"], stored["_updated"])
+
+    async def test_system_update_checked_recreates_missing_search_document(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        await self.service.elastic.remove(str(user.id))
+        await self.service.system_update(user.id, {"first_name": "Updated"}, original=original, check_etag=True)
+        indexed = await self.service.elastic.find_by_id(user.id)
+        self.assertEqual("Updated", indexed["first_name"])
+        self.assertEqual(original["_etag"], indexed["_etag"])
+
+    async def test_eve_adapter_checked_system_update_and_change_request(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        adapter = EveToPydanticDataLayer(self.service.resource_name)
+        await adapter.system_update_async(
+            self.service.resource_name,
+            user.id,
+            {"$set": {"first_name": "Updated"}},
+            original,
+            check_etag=True,
+            change_request=True,
+        )
+        self.assertEqual("Updated", (await self.service.elastic.find_by_id(user.id))["first_name"])
+        await self.service.system_update(user.id, {"_etag": "changed"})
+        with self.assertRaises(UpdateConflictError):
+            await adapter.system_update_async(
+                self.service.resource_name, user.id, {"first_name": "Stale"}, original, check_etag=True
+            )
+
+    async def test_system_update_checked_requires_original_etag(self):
+        with self.assertRaisesRegex(ValueError, "original document with an etag"):
+            await self.service.system_update(ObjectId(), {"first_name": "Updated"}, check_etag=True)
+
+    async def test_system_update_can_still_update_etag(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        await self.service.system_update(user.id, {"first_name": "Updated"}, update_etag=True)
+        stored = await self.service.mongo_async.find_one({"_id": user.id})
+        self.assertNotEqual(original["_etag"], stored["_etag"])
+        self.assertEqual(original["_updated"], stored["_updated"])
+        self.assertEqual(stored["_etag"], (await self.service.elastic.find_by_id(user.id))["_etag"])
+
+    async def test_system_update_checked_storage_failure_propagates(self):
+        user = john_doe()
+        await self.service.create([user])
+        original = await self.service.mongo_async.find_one({"_id": user.id})
+        with mock.patch.object(self.service.elastic, "update", side_effect=RuntimeError("Index failed")):
+            with self.assertRaisesRegex(RuntimeError, "Index failed"):
+                await self.service.system_update(user.id, {"first_name": "Updated"}, original=original, check_etag=True)
 
     async def test_delete(self):
         # First create the user, and make sure it exists
