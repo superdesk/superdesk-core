@@ -15,7 +15,7 @@ from superdesk.media.video import (
 )
 
 
-def read_metadata(bin: bytes, content_type: CONTENT_TYPE_LITERAL) -> MediaMetadata:
+def read_metadata(bin: bytes | str, content_type: CONTENT_TYPE_LITERAL) -> MediaMetadata:
     return video_read_metadata(bin) if content_type == "video" else image_read_metadata(bin)
 
 
