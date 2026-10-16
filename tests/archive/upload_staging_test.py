@@ -50,6 +50,25 @@ class UploadStagingTestCase(TestCase):
         self.assertEqual(staged["status"], "pending")
         self.assertNotIn("renditions", staged)
 
+    async def test_confirmation_rejects_media_replacement(self):
+        staged = await self.stage()
+        for replacement in (
+            FileStorage(BytesIO(b"replacement"), filename="replacement.jpg", content_type="image/jpeg"),
+            staged["media"],
+            None,
+        ):
+            with self.subTest(media=replacement):
+                with self.assertRaises(SuperdeskApiError) as error:
+                    await self.service.on_update_async({"confirmed": True, "media": replacement}, staged)
+                self.assertEqual(error.exception.status_code, 400)
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["media"], staged["media"])
+        self.assertIsNotNone(await self.app.media.get_async(staged["media"]))
+
+    async def test_confirmation_without_media_remains_allowed(self):
+        staged = await self.stage()
+        await self.service.on_update_async({"confirmed": True}, staged)
+
     async def test_worker_updates_invalidate_conditional_gets(self):
         self.headers = []
         await setup_auth_user(self)

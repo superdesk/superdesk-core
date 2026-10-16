@@ -224,7 +224,7 @@ class UploadStagingService(AsyncBaseService):
 
     async def on_update_async(self, updates, original):
         self._check_owner(original)
-        if updates.get("confirmed") is not True or original["expires"] <= utcnow():
+        if "media" in updates or updates.get("confirmed") is not True or original["expires"] <= utcnow():
             raise SuperdeskApiError.badRequestError(_("Only upload confirmation is allowed"))
 
     async def on_updated_async(self, updates, original):
@@ -384,6 +384,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
                 specs,
                 file_type,
                 delete_all_on_error=True,
+                temporary=False,
                 content_type=staged["mimetype"],
                 original_content=original_content,
             )

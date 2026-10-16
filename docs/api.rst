@@ -37,6 +37,7 @@ file so the worker downloads the original only once. Metadata is persisted and i
 notification sent before rendition generation begins. Video processing is deferred:
 ``status`` becomes ``awaiting_confirmation`` until the user confirms via
 ``PATCH /upload_staging/<id>`` with ``{"confirmed": true}`` (and ``If-Match``).
+Confirmation cannot replace the binary: PATCH requests containing ``media`` are rejected.
 The worker then performs video server upload/timeline generation if configured.
 Other processing states are ``pending``, ``processing``, ``ready``, and ``failed``.
 A rendition failure includes an ``error`` message; discard the file and upload it again.
