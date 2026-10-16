@@ -424,4 +424,4 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         return self.fs(resource).delete(format_id(_id))
 
     async def delete_async(self, _id, resource=None):
-        return self.fs_async(resource).delete(format_id(_id))
+        return await self.fs_async(resource).delete(format_id(_id))

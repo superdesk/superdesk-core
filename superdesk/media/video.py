@@ -47,10 +47,14 @@ def get_meta(filestream):
     return metadata
 
 
-def read_with_exiftool(bin: bytes) -> dict[str, Any]:
+def read_with_exiftool(bin: bytes | str) -> dict[str, Any]:
     from tempfile import NamedTemporaryFile
     from exiftool import ExifToolHelper  # type: ignore
     from exiftool.exceptions import ExifToolExecuteError  # type: ignore
+
+    if isinstance(bin, str):
+        with ExifToolHelper() as et:
+            return et.get_metadata(bin, ["-xmp:all"])[0]
 
     with NamedTemporaryFile(delete=True) as tmp:
         tmp.write(bin)
@@ -64,7 +68,7 @@ def read_with_exiftool(bin: bytes) -> dict[str, Any]:
             return {}
 
 
-def read_metadata(bin: bytes) -> MediaMetadata:
+def read_metadata(bin: bytes | str) -> MediaMetadata:
     from typing import cast
 
     raw_metadata = read_with_exiftool(bin)

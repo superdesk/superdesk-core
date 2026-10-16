@@ -8,7 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
-from typing import Dict, Optional, Tuple, Any
+from typing import IO, Dict, Optional, Tuple, Any
 from PIL import Image
 from io import BytesIO
 import logging
@@ -68,18 +68,51 @@ async def create_renditions_in_celery_task(
     temporary: bool = True,
     content_type: str | None = None,
 ) -> dict:
+    return await create_renditions_for_file(
+        image_id, rendition_config, file_type, resource, delete_all_on_error, insert_metadata, temporary, content_type
+    )
+
+
+async def create_renditions_for_file(
+    image_id: str,
+    rendition_config: dict,
+    file_type: str,
+    resource: str = "upload",
+    delete_all_on_error: bool = False,
+    insert_metadata: bool = True,
+    temporary: bool = True,
+    content_type: str | None = None,
+    *,
+    original_content: IO[bytes] | None = None,
+) -> dict:
+    """Generate renditions in the current process, without dispatching another task."""
     app = get_current_app()
-    media_file: SuperdeskAsyncFile = await app.media.get_async(image_id, resource=resource)
-    original_content = await media_file.to_buffer_sync()
+    if original_content is None:
+        media_file: SuperdeskAsyncFile = await app.media.get_async(image_id, resource=resource)
+        content_type = content_type or media_file.content_type
+        if file_type == "image":
+            original_content = await media_file.to_buffer_sync()
+    elif not content_type:
+        raise ValueError("content_type is required when supplying original_content")
+    if file_type != "image":
+        return {
+            "original": {
+                "href": app.media.url_for_media(image_id, content_type),
+                "media": image_id,
+                "mimetype": content_type,
+            }
+        }
 
     inserted: list[str] = []
     try:
+        assert original_content is not None
+        original_content.seek(0)
         return generate_renditions(
             original_content,
             image_id,
             inserted,
             file_type,
-            content_type or media_file.content_type,
+            content_type,
             rendition_config,
             app.media.url_for_media,
             insert_metadata=insert_metadata,
