@@ -293,7 +293,12 @@ async def extract_staged_metadata(staged: dict, content: IO[bytes], path: str) -
     def parse():
         try:
             raw = {} if file_type == "audio" else dict(read_metadata(path, STAGEABLE_FILE_TYPES[file_type]))
-            return {"raw_metadata": raw, "meta": map_metadata_to_article(raw, staged.get("meta"))}
+            mapping_input = raw.copy()
+            if file_type == "video":
+                for canonical, alias in (("CopyrightNotice", "Rights"), ("CreditLine", "Credit")):
+                    if alias in raw:
+                        mapping_input.setdefault(canonical, raw[alias])
+            return {"raw_metadata": raw, "meta": map_metadata_to_article(mapping_input, staged.get("meta"))}
         except Exception:
             logger.exception("Failed to extract embedded metadata for %s", staged["_id"])
             return {
@@ -394,7 +399,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
             await delete_staged_media(staged, original=False)
         else:
             notify_staged_upload(staged)
-    except Exception:
+    except (Exception, asyncio.CancelledError):
         logger.exception("Failed to process staged upload %s", staged_id)
         await delete_staged_media(staged, original=False)
         await service.update_processing(

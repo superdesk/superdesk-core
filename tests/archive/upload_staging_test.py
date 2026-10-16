@@ -1,6 +1,8 @@
 from io import BytesIO
+from tempfile import NamedTemporaryFile
 from unittest.mock import AsyncMock, patch
 import os
+import asyncio
 
 from bson import ObjectId
 from werkzeug.datastructures import FileStorage
@@ -273,6 +275,33 @@ class UploadStagingTestCase(TestCase):
         self.assertIsNone(await self.service.find_one_async(None, _id=staged["_id"]))
         self.assertIsNotNone(await self.app.media.get_async(staged["media"]))
 
+    async def test_commit_merges_missing_extra_defaults_without_overwriting_explicit_values(self):
+        self.app.config["PICTURE_METADATA_MAPPING"] = {
+            "extra.filename": "Description",
+            "extra.credit": "Creator",
+        }
+        staged = await self.stage()
+        await process_staged_upload.run(staged["_id"])
+        ready = await self.service.find_one_async(None, _id=staged["_id"])
+        defaults = ready["meta"]["extra"]
+        self.assertTrue(defaults["filename"])
+        self.assertTrue(defaults["credit"])
+
+        for supplied in ({}, {"unrelated": "Custom"}, {"filename": "Edited"}, {"filename": ""}, {"filename": None}):
+            with self.subTest(extra=supplied):
+                doc = {"staged_id": staged["_id"], "extra": supplied.copy(), "headline": ""}
+                with patch("apps.archive.archive_media.get_user", return_value=self.user):
+                    await ArchiveMediaService()._pop_staged_upload(doc)
+                self.assertEqual(doc["extra"], {**defaults, **supplied})
+                self.assertEqual(doc["headline"], "")
+                current = await self.service.find_one_async(None, _id=staged["_id"])
+                self.assertEqual(current["meta"]["extra"], defaults)
+
+        doc = {"staged_id": staged["_id"]}
+        with patch("apps.archive.archive_media.get_user", return_value=self.user):
+            await ArchiveMediaService()._pop_staged_upload(doc)
+        self.assertEqual(doc["extra"], defaults)
+
     async def test_failed_archive_insert_can_retry_without_losing_staging(self):
         staged = await self.stage()
         await process_staged_upload.run(staged["_id"])
@@ -379,6 +408,42 @@ class UploadStagingTestCase(TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertIn("Media processing failed", result["error"])
 
+    async def test_cancellation_during_download_records_failure_and_notifies(self):
+        staged = await self.stage()
+        downloading = asyncio.Event()
+        paths = []
+
+        def temporary_file(*args, **kwargs):
+            file = NamedTemporaryFile(*args, **kwargs)
+            paths.append(file.name)
+            return file
+
+        async def download_chunk():
+            downloading.set()
+            await asyncio.Future()
+
+        with (
+            patch.object(SuperdeskAsyncFile, "__anext__", side_effect=download_chunk),
+            patch("apps.archive.upload_staging.NamedTemporaryFile", side_effect=temporary_file),
+            patch("apps.archive.upload_staging.delete_staged_media", new_callable=AsyncMock) as cleanup,
+            patch("apps.archive.upload_staging.push_notification") as notify,
+        ):
+            worker = asyncio.create_task(process_staged_upload.run(staged["_id"]))
+            await asyncio.wait_for(downloading.wait(), timeout=5)
+            worker.cancel()
+            with self.assertRaises(asyncio.CancelledError):
+                await worker
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["status"], "failed")
+        self.assertIn("Media processing failed", current["error"])
+        cleanup.assert_awaited_once()
+        self.assertFalse(cleanup.call_args.kwargs["original"])
+        notify.assert_called_once_with(
+            "upload_staging:updated", staged_id=str(staged["_id"]), user=str(self.user["_id"])
+        )
+        self.assertEqual(len(paths), 1)
+        self.assertFalse(os.path.exists(paths[0]))
+
     async def test_discard_removes_original_and_renditions(self):
         staged = await self.stage()
         await process_staged_upload.run(staged["_id"])
@@ -450,3 +515,40 @@ class UploadStagingTestCase(TestCase):
         self.assertEqual(doc["media"], "video-id")
         self.assertEqual(doc["renditions"], renditions)
         self.assertIsNone(await self.app.media.get_async(staged["media"]))
+
+    async def test_video_metadata_aliases_are_defaults_on_commit_without_changing_raw_metadata(self):
+        staged = await self.stage()
+        await self.service.update_async(staged["_id"], {"mimetype": "video/mp4"}, staged)
+        raw = {"Rights": "Embedded copyright", "Credit": "Embedded credit"}
+        with patch("apps.archive.upload_staging.read_metadata", return_value=raw):
+            await process_staged_upload.run(staged["_id"])
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["raw_metadata"], raw)
+        self.assertEqual(current["meta"]["copyrightnotice"], "Embedded copyright")
+        self.assertEqual(current["meta"]["creditline"], "Embedded credit")
+        await self.service.update_async(staged["_id"], {"confirmed": True}, current)
+        await process_staged_upload.run(staged["_id"], renditions_only=True)
+        doc = {"staged_id": staged["_id"], "creditline": "Edited credit"}
+        with patch("apps.archive.archive_media.get_user", return_value=self.user):
+            await ArchiveMediaService()._pop_staged_upload(doc)
+        self.assertEqual(doc["copyrightnotice"], "Embedded copyright")
+        self.assertEqual(doc["creditline"], "Edited credit")
+        self.assertEqual(raw, {"Rights": "Embedded copyright", "Credit": "Embedded credit"})
+
+    async def test_video_metadata_aliases_preserve_canonical_and_configured_mapping_values(self):
+        self.app.config["PICTURE_METADATA_MAPPING"] = {"extra.original_credit": "Credit"}
+        staged = await self.stage()
+        await self.service.update_async(staged["_id"], {"mimetype": "video/mp4"}, staged)
+        raw = {
+            "Rights": "Video copyright",
+            "Credit": "Video credit",
+            "CopyrightNotice": "Canonical copyright",
+            "CreditLine": "Canonical credit",
+        }
+        with patch("apps.archive.upload_staging.read_metadata", return_value=raw):
+            await process_staged_upload.run(staged["_id"])
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["raw_metadata"], raw)
+        self.assertEqual(current["meta"]["copyrightnotice"], "Canonical copyright")
+        self.assertEqual(current["meta"]["creditline"], "Canonical credit")
+        self.assertEqual(current["meta"]["extra"]["original_credit"], "Video credit")

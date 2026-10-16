@@ -161,7 +161,11 @@ class ArchiveMediaService:
         doc[ID_FIELD] = doc["guid"] = staged["archive_id"]
 
         for key, value in (staged.get("meta") or {}).items():
-            doc.setdefault(key, value)
+            if key == "extra" and isinstance(value, dict) and isinstance(doc.get("extra"), dict):
+                for field, default in value.items():
+                    doc["extra"].setdefault(field, default)
+            else:
+                doc.setdefault(key, value)
 
         doc["media"] = staged.get("video_server_id") or staged["media"]
         return staged

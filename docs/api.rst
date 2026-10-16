@@ -22,6 +22,9 @@ is applied before starting the next refresh.
 
 ``metadata_status`` is ``pending``, ``ready``, or ``failed``. Once extraction completes,
 ``meta`` contains mapped article fields and ``raw_metadata`` contains embedded IPTC/XMP.
+For video mapping, ``Rights`` and ``Credit`` also supply ``CopyrightNotice`` and
+``CreditLine`` defaults when those canonical keys are absent. ``raw_metadata`` remains
+unchanged, and configured mappings can still reference the original video keys.
 Metadata failure includes ``metadata_error`` and permits manual entry, without blocking
 rendition generation. The editor applies extracted defaults only once, preserving edits.
 Each file keeps its own embedded metadata even when extraction completes at different
@@ -37,6 +40,8 @@ notification sent before rendition generation begins. Video processing is deferr
 The worker then performs video server upload/timeline generation if configured.
 Other processing states are ``pending``, ``processing``, ``ready``, and ``failed``.
 A rendition failure includes an ``error`` message; discard the file and upload it again.
+Worker cancellation during processing also records failure and notifies the client
+before propagating cancellation, rather than leaving the upload stuck in ``processing``.
 Processing updates are persisted in MongoDB: this flow does not store or retrieve Celery task results.
 Each worker state change refreshes ``_updated`` and ``_etag`` atomically with the data,
 so conditional GETs after a notification return the new metadata or renditions.
@@ -44,6 +49,9 @@ so conditional GETs after a notification return the new metadata or renditions.
 Once ready, ``POST /archive`` with ``staged_id`` and the edited article fields. The server
 reuses the stored binary and renditions without waiting for a worker. A premature commit
 returns HTTP 409. Staged files are owner-restricted and can be committed only once.
+Mapped metadata supplies defaults for missing article fields. For an ``extra`` dictionary,
+missing custom subfields are filled individually; explicitly supplied values, including
+empty strings and null values, are preserved.
 Before archive creation, staging enters ``committing`` and reserves an archive ID.
 If validation or insertion fails, retry the same ``staged_id``: it reuses that ID,
 preventing concurrent retries from creating duplicate items. Staging is finalized only
