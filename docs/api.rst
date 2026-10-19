@@ -43,6 +43,10 @@ Other processing states are ``pending``, ``processing``, ``ready``, and ``failed
 A rendition failure includes an ``error`` message; discard the file and upload it again.
 Worker cancellation during processing also records failure and notifies the client
 before propagating cancellation, rather than leaving the upload stuck in ``processing``.
+Claim acquisition is covered by the same recovery: a unique worker token is written
+atomically with ``processing``. If the claim response is lost or cancelled, recovery
+uses that token to reconcile the result and record failure without changing or
+cleaning up another worker's claim.
 Processing updates are persisted in MongoDB: this flow does not store or retrieve Celery task results.
 Each worker state change refreshes ``_updated`` and ``_etag`` atomically with the data,
 so conditional GETs after a notification return the new metadata or renditions.

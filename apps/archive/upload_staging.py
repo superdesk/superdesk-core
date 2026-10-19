@@ -110,6 +110,7 @@ class UploadStagingResource(Resource):
             "readonly": True,
         },
         "error": {"type": "string", "readonly": True},
+        "processing_token": {"type": "string", "readonly": True},
         "metadata_status": {"type": "string", "readonly": True},
         "metadata_error": {"type": "string", "readonly": True},
         "confirmed": {"type": "boolean", "default": False},
@@ -130,6 +131,7 @@ class UploadStagingResource(Resource):
             "filemeta_json": 1,
             "status": 1,
             "error": 1,
+            "processing_token": 1,
             "metadata_status": 1,
             "metadata_error": 1,
             "confirmed": 1,
@@ -304,21 +306,23 @@ async def extract_staged_metadata(staged: dict, content: IO[bytes], path: str) -
 @shared_task(ignore_result=True, store_async_result=False, soft_time_limit=10 * 60, time_limit=15 * 60)
 async def process_staged_upload(staged_id, renditions_only: bool = False) -> None:
     service = superdesk.get_resource_service("upload_staging")
-    staged = await service.update_processing(
-        {
-            "_id": staged_id,
-            "status": "awaiting_confirmation" if renditions_only else "pending",
-            "expires": {"$gt": utcnow()},
-            **({"confirmed": True} if renditions_only else {}),
-        },
-        {"status": "processing"},
-    )
-    if not staged:
-        return
-
+    token = uuid4().hex
+    owned_processing = {"_id": staged_id, "status": "processing", "processing_token": token}
+    staged = None
     files = ExitStack()
     original_content = None
     try:
+        staged = await service.update_processing(
+            {
+                "_id": staged_id,
+                "status": "awaiting_confirmation" if renditions_only else "pending",
+                "expires": {"$gt": utcnow()},
+                **({"confirmed": True} if renditions_only else {}),
+            },
+            {"status": "processing", "processing_token": token},
+        )
+        if not staged:
+            return
         file_type = staged["mimetype"].split("/")[0]
         if not renditions_only:
             media = await get_current_app().media.get_async(staged["media"])
@@ -332,7 +336,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
             original_content = tmp.file
             metadata_updates = await extract_staged_metadata(staged, original_content, tmp.name)
             current = await service.update_processing(
-                {"_id": staged_id, "status": "processing", "expires": {"$gt": utcnow()}},
+                {**owned_processing, "expires": {"$gt": utcnow()}},
                 metadata_updates,
             )
             if not current:
@@ -341,7 +345,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
             notify_staged_upload(staged)
             if file_type == "video":
                 waiting = await service.update_processing(
-                    {"_id": staged_id, "status": "processing"},
+                    owned_processing,
                     {"status": "awaiting_confirmation"},
                 )
                 if waiting:
@@ -379,7 +383,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
         updates = {key: staged[key] for key in ("renditions", "video_server_id", "filemeta_json") if key in staged}
         updates["status"] = "ready"
         published = await service.update_processing(
-            {"_id": staged_id, "status": "processing", "expires": {"$gt": utcnow()}},
+            {**owned_processing, "expires": {"$gt": utcnow()}},
             updates,
         )
         if not published:
@@ -391,33 +395,26 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
         logger.exception("Failed to process staged upload %s", staged_id)
         failure = {"status": "failed", "error": str(_("Media processing failed. Remove the file and try again."))}
 
-        async def get_current():
+        current = None
+        for attempt in range(2):
             try:
-                return await service.find_one_async(req=None, _id=staged_id)
-            except (Exception, asyncio.CancelledError):
-                logger.exception("Failed to reconcile staged upload %s after processing failure", staged_id)
-                return None
-
-        try:
-            current = await service.update_processing({"_id": staged_id, "status": "processing"}, failure)
-        except (Exception, asyncio.CancelledError):
-            logger.exception("Failed to claim cleanup for staged upload %s", staged_id)
-            current = None
-
-        if current is None:
-            current = await get_current()
-        if current and current.get("status") == "processing":
-            try:
-                current = await service.update_processing({"_id": staged_id, "status": "processing"}, failure)
+                current = await service.update_processing(owned_processing, failure)
             except (Exception, asyncio.CancelledError):
                 logger.exception("Failed to claim cleanup for staged upload %s", staged_id)
                 current = None
             if current is None:
-                current = await get_current()
+                try:
+                    current = await service.find_one_async(req=None, _id=staged_id)
+                except (Exception, asyncio.CancelledError):
+                    logger.exception("Failed to reconcile staged upload %s after processing failure", staged_id)
+                    continue
+            if not current or current.get("processing_token") != token or current.get("status") != "processing":
+                break
 
-        if current and current.get("status") == "failed":
-            await delete_staged_media(staged, original=False)
-        notify_staged_upload(current or staged)
+        if current and current.get("processing_token") == token:
+            if current.get("status") == "failed":
+                await delete_staged_media(staged or current, original=False)
+            notify_staged_upload(current)
         raise
     finally:
         files.close()

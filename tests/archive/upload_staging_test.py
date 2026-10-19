@@ -431,6 +431,88 @@ class UploadStagingTestCase(TestCase):
         self.assertEqual(result["status"], "failed")
         self.assertIn("Media processing failed", result["error"])
 
+    async def test_ambiguous_processing_claim_records_failure_and_notifies(self):
+        for renditions_only in (False, True):
+            for error_type in (ConnectionError, asyncio.CancelledError):
+                with self.subTest(renditions_only=renditions_only, error=error_type):
+                    staged = await self.stage()
+                    if renditions_only:
+                        await self.service.update_async(
+                            staged["_id"], {"status": "awaiting_confirmation", "confirmed": True}, staged
+                        )
+                    update_processing = self.service.update_processing
+
+                    async def claim_then_lose_response(query, updates):
+                        result = await update_processing(query, updates)
+                        if updates.get("status") == "processing":
+                            self.assertIsNotNone(result)
+                            self.assertTrue(result["processing_token"])
+                            raise error_type("claim response lost")
+                        return result
+
+                    with (
+                        patch.object(self.service, "update_processing", side_effect=claim_then_lose_response),
+                        patch("apps.archive.upload_staging.delete_staged_media", new_callable=AsyncMock) as cleanup,
+                        patch("apps.archive.upload_staging.push_notification") as notify,
+                    ):
+                        with self.assertRaises(error_type):
+                            await process_staged_upload.run(staged["_id"], renditions_only=renditions_only)
+                    current = await self.service.find_one_async(None, _id=staged["_id"])
+                    self.assertEqual(current["status"], "failed")
+                    self.assertIn("Media processing failed", current["error"])
+                    cleanup.assert_awaited_once_with(current, original=False)
+                    notify.assert_called_once_with(
+                        "upload_staging:updated", staged_id=str(staged["_id"]), user=str(self.user["_id"])
+                    )
+                    self.assertIsNotNone(await self.app.media.get_async(staged["media"]))
+
+    async def test_failed_claim_does_not_recover_another_workers_claim(self):
+        for other_status in ("processing", "failed", "ready"):
+            with self.subTest(other_status=other_status):
+                staged = await self.stage()
+                update_processing = self.service.update_processing
+
+                async def another_worker_claims(query, updates):
+                    if updates.get("status") == "processing":
+                        await update_processing(query, {"status": other_status, "processing_token": "other-worker"})
+                        raise ConnectionError("claim response lost")
+                    return await update_processing(query, updates)
+
+                with (
+                    patch.object(self.service, "update_processing", side_effect=another_worker_claims),
+                    patch("apps.archive.upload_staging.delete_staged_media", new_callable=AsyncMock) as cleanup,
+                    patch("apps.archive.upload_staging.push_notification") as notify,
+                ):
+                    with self.assertRaisesRegex(ConnectionError, "claim response lost"):
+                        await process_staged_upload.run(staged["_id"])
+                current = await self.service.find_one_async(None, _id=staged["_id"])
+                self.assertEqual(current["status"], other_status)
+                self.assertEqual(current["processing_token"], "other-worker")
+                cleanup.assert_not_awaited()
+                notify.assert_not_called()
+
+    async def test_claim_failure_before_write_leaves_pending_upload_untouched(self):
+        staged = await self.stage()
+        update_processing = self.service.update_processing
+
+        async def fail_claim(query, updates):
+            if updates.get("status") == "processing":
+                raise ConnectionError("claim not written")
+            return await update_processing(query, updates)
+
+        with (
+            patch.object(self.service, "update_processing", side_effect=fail_claim),
+            patch("apps.archive.upload_staging.delete_staged_media", new_callable=AsyncMock) as cleanup,
+            patch("apps.archive.upload_staging.push_notification") as notify,
+        ):
+            with self.assertRaisesRegex(ConnectionError, "claim not written"):
+                await process_staged_upload.run(staged["_id"])
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["status"], "pending")
+        self.assertNotIn("processing_token", current)
+        cleanup.assert_not_awaited()
+        notify.assert_not_called()
+
     async def test_lost_ready_update_response_preserves_published_media(self):
         staged = await self.stage()
         update_processing = self.service.update_processing
