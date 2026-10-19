@@ -21,9 +21,7 @@ class CleanImagesTestCase(TestCase):
             "archive_versions": Mock(get_from_mongo=Mock(return_value=[])),
             "ingest": Mock(get_from_mongo_async=AsyncMock(return_value=[])),
             "upload": Mock(get_from_mongo_async=AsyncMock(return_value=[])),
-            "upload_staging": Mock(
-                get_from_mongo_async=AsyncMock(return_value=staging_cursor())
-            ),
+            "upload_staging": Mock(get_from_mongo_async=AsyncMock(return_value=staging_cursor())),
         }
         media = Mock()
         app = Mock(media=media)
