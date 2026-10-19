@@ -7,22 +7,22 @@ from superdesk.tests import TestCase
 
 class CleanImagesTestCase(TestCase):
     async def test_staged_media_is_referenced(self):
+        async def staging_cursor():
+            yield {
+                "media": "staged-original",
+                "renditions": {
+                    "thumbnail": {"media": "staged-thumbnail"},
+                },
+            }
+            yield {"media": "another-staged-original"}
+
         services = {
             "archive": Mock(get_from_mongo=Mock(return_value=[])),
             "archive_versions": Mock(get_from_mongo=Mock(return_value=[])),
             "ingest": Mock(get_from_mongo_async=AsyncMock(return_value=[])),
             "upload": Mock(get_from_mongo_async=AsyncMock(return_value=[])),
             "upload_staging": Mock(
-                get_from_mongo_async=AsyncMock(
-                    return_value=[
-                        {
-                            "media": "staged-original",
-                            "renditions": {
-                                "thumbnail": {"media": "staged-thumbnail"},
-                            },
-                        }
-                    ]
-                )
+                get_from_mongo_async=AsyncMock(return_value=staging_cursor())
             ),
         }
         media = Mock()
@@ -36,4 +36,6 @@ class CleanImagesTestCase(TestCase):
             await CleanImages().run()
 
         services["upload_staging"].get_from_mongo_async.assert_awaited_once_with(req=None, lookup={})
-        media.remove_unreferenced_files.assert_called_once_with({"staged-original", "staged-thumbnail"})
+        media.remove_unreferenced_files.assert_called_once_with(
+            {"staged-original", "staged-thumbnail", "another-staged-original"}
+        )

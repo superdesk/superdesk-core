@@ -58,7 +58,8 @@ class CleanImages:
         upload_staging_items = await superdesk.get_resource_service("upload_staging").get_from_mongo_async(
             req=None, lookup={}
         )
-        self.__add_existing_files(used_images, upload_staging_items)
+        async for item in upload_staging_items:
+            self.__add_existing_files(used_images, [item])
 
         if get_app_config("LEGAL_ARCHIVE"):
             legal_archive_items = superdesk.get_resource_service("legal_archive").get_from_mongo(None, query)
