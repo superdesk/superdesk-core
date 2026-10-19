@@ -34,7 +34,6 @@ from apps.ldap import ADAuth
 from superdesk.factory import get_app
 from superdesk.factory.app import get_media_storage_class, SuperdeskApp
 from superdesk.core.app import SuperdeskAsyncApp
-from superdesk.core import app as core_app
 from superdesk.core.resources import ResourceModel
 from superdesk.storage.amazon_media_storage import AmazonMediaStorage
 from superdesk.storage.proxy import ProxyMediaStorage
@@ -684,18 +683,10 @@ class AsyncQuartTestCase(IsolatedAsyncioTestCase):
         if self.app_config:
             self.app.config.update(deepcopy(self.app_config))
 
-        original_app = None
-        if core_app._global_app is not None:
-            original_app = getattr(core_app._global_app, "wsgi", None)
-            core_app._global_app.wsgi = self.app
-
         self.ctx = self.app.app_context()
         await self.ctx.push()
 
         async def clean_ctx():
-            if original_app:
-                core_app._global_app.wsgi = original_app
-
             if self.ctx:
                 try:
                     await self.ctx.pop()
