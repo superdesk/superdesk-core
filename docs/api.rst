@@ -56,22 +56,25 @@ empty strings and null values, are preserved.
 Before archive creation, staging enters ``committing`` and reserves an archive ID.
 If validation or insertion fails, retry the same ``staged_id``: it reuses that ID,
 preventing concurrent retries from creating duplicate items. Staging is finalized only
-after archive persistence, never during the pre-create hook. Committing uploads cannot
-be discarded while creation may still be in flight. Expiry cleanup reconciles unfinished
-commits with the archive, preserving media belonging to persisted items.
+after archive persistence, never during the pre-create hook.
+Expiry cleanup reconciles unfinished commits with the archive,
+preserving media belonging to items already persisted when cleanup checks.
 The client allows Upload confirmation while renditions are still running, waits for the
 ready notification, and commits automatically without requiring another click.
 
-Discard with ``DELETE /upload_staging/<id>`` using the response's ``_etag`` in ``If-Match``.
-This removes the binary and generated renditions. Workers also clean up their output if
-discard occurs during processing.
-Worker updates may invalidate ``If-Match`` between a GET and confirmation or discard.
-The client handles HTTP 412 by fetching a fresh, uncached snapshot and retrying, with at
-most three mutation attempts. A failed Remove keeps the file visible for another attempt.
+Removing an upload from the client queue is local only: stop polling and do not send
+a DELETE request. Staging does not support DELETE. Processing continues, and abandoned
+uploads and their persisted media remain until expiry. Workers still clean up temporary
+files and unpublished output.
+Worker updates may invalidate ``If-Match`` between a GET and confirmation; clients should
+fetch a fresh, uncached snapshot before retrying a confirmation that returns HTTP 412.
 
 ``UPLOAD_STAGING_TTL`` defaults to six hours. Celery beat schedules
 ``apps.archive.upload_staging.expire_staged_uploads`` every five minutes to remove expired
-uploads and their media. A worker and beat must be running; no Celery results backend is
+uploads and their media. Media-processing tasks have a ten-minute soft runtime limit and
+a fifteen-minute hard runtime limit; these do not limit archive creation in HTTP requests
+or serialize it with expiry cleanup.
+A worker and beat must be running; no Celery results backend is
 needed for staging. Legacy, non-staged archive uploads retain their existing processing flow.
 
 When updating a development database that used the earlier staging TTL index, drop

@@ -11,8 +11,8 @@
 """Upload staging.
 
 Lets a client send a media binary ahead of creating an archive item. The binary is stored,
-workers extract embedded metadata (IPTC/XMP), and the client then either commits the upload
-by posting to ``archive`` with ``staged_id`` or discards it.
+workers extract embedded metadata (IPTC/XMP), and the client can commit the upload
+by posting to ``archive`` with ``staged_id``. Abandoned uploads remain until expiry.
 Workers persist metadata and rendition status here, without using a Celery results backend.
 Expired uploads are removed by a scheduled task so their media can be cleaned up too.
 """
@@ -145,8 +145,8 @@ class UploadStagingResource(Resource):
         }
     }
     resource_methods = ["POST"]
-    item_methods = ["GET", "PATCH", "DELETE"]
-    privileges = {"POST": "archive", "PATCH": "archive", "DELETE": "archive"}
+    item_methods = ["GET", "PATCH"]
+    privileges = {"POST": "archive", "PATCH": "archive"}
     mongo_indexes = {
         "expires_1": ([("expires", 1)], {"background": True}),
         "archive_id_1": ([("archive_id", 1)], {"background": True, "sparse": True}),
@@ -238,21 +238,6 @@ class UploadStagingService(AsyncBaseService):
         if doc["expires"] <= utcnow() or doc["status"] in ("discarded", "consumed"):
             raise SuperdeskApiError.notFoundError(_("Staged upload not found or expired"))
 
-    async def on_delete_async(self, doc):
-        self._check_owner(doc)
-        if not await self.discard(doc["_id"]):
-            raise SuperdeskApiError.conflictError(_("Staged upload is no longer available"))
-
-    async def discard(self, staged_id) -> bool:
-        staged = await self.update_processing(
-            {"_id": staged_id, "status": {"$nin": ["committing", "consumed"]}},
-            {"status": "discarded"},
-        )
-        if not staged:
-            return False
-        await delete_staged_media(staged)
-        return True
-
     async def finish_commit(self, staged: dict) -> None:
         """Release staging only after the archive item has been persisted."""
         if staged["status"] != "consumed":
@@ -316,7 +301,7 @@ async def extract_staged_metadata(staged: dict, content: IO[bytes], path: str) -
     return updates
 
 
-@shared_task(ignore_result=True, store_async_result=False)
+@shared_task(ignore_result=True, store_async_result=False, soft_time_limit=10 * 60, time_limit=15 * 60)
 async def process_staged_upload(staged_id, renditions_only: bool = False) -> None:
     service = superdesk.get_resource_service("upload_staging")
     staged = await service.update_processing(
@@ -398,7 +383,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
             updates,
         )
         if not published:
-            # Discard/expiry may race with processing; never leave the worker's output orphaned.
+            # Expiry may race with processing; never leave the worker's output orphaned.
             await delete_staged_media(staged, original=False)
         else:
             notify_staged_upload(staged)
@@ -447,15 +432,12 @@ async def expire_staged_uploads() -> None:
             if archive or staged["status"] == "consumed":
                 await service.finish_commit(staged)
                 continue
-            expired = await service.update_processing(
-                {"_id": staged["_id"], "status": "committing", "expires": {"$lte": utcnow()}},
-                {"status": "discarded"},
-            )
-            if expired:
-                await delete_staged_media(expired)
-                await service.delete_async({"_id": staged["_id"], "status": "discarded"})
-            continue
-        if await service.discard(staged["_id"]):
+        expired = await service.update_processing(
+            {"_id": staged["_id"], "status": staged["status"], "expires": {"$lte": utcnow()}},
+            {"status": "discarded"},
+        )
+        if expired:
+            await delete_staged_media(expired)
             await service.delete_async({"_id": staged["_id"], "status": "discarded"})
 
 

@@ -265,6 +265,11 @@ class UploadStagingTestCase(TestCase):
                 await ArchiveMediaService()._pop_staged_upload({"staged_id": staged["_id"]})
         self.assertEqual(error.exception.status_code, 409)
 
+    async def test_processing_task_has_runtime_limits_below_staging_ttl(self):
+        self.assertEqual(process_staged_upload.soft_time_limit, 10 * 60)
+        self.assertEqual(process_staged_upload.time_limit, 15 * 60)
+        self.assertLess(process_staged_upload.time_limit, self.app.config["UPLOAD_STAGING_TTL"])
+
     async def test_duplicate_worker_delivery_does_not_regenerate_renditions(self):
         staged = await self.stage()
         await process_staged_upload.run(staged["_id"])
@@ -337,7 +342,6 @@ class UploadStagingTestCase(TestCase):
             retry = {"staged_id": staged["_id"], "headline": "Retried"}
             await ArchiveMediaService().on_create_async([retry])
             self.assertEqual(retry["_id"], first["_id"])
-            self.assertFalse(await self.service.discard(staged["_id"]))
             await archive.create_async([retry])
             await ArchiveMediaService().on_created_async([retry])
         self.assertIsNone(await self.service.find_one_async(None, _id=staged["_id"]))
@@ -512,29 +516,47 @@ class UploadStagingTestCase(TestCase):
         self.assertEqual(len(paths), 1)
         self.assertFalse(os.path.exists(paths[0]))
 
-    async def test_discard_removes_original_and_renditions(self):
+    async def test_delete_is_not_allowed_and_preserves_staged_media(self):
         staged = await self.stage()
         await process_staged_upload.run(staged["_id"])
         result = await self.service.find_one_async(None, _id=staged["_id"])
-        await self.service.discard(staged["_id"])
+        self.headers = []
+        await setup_auth_user(self)
+        response = await self.client.delete(
+            f"/api/upload_staging/{staged['_id']}",
+            headers=[*self.headers, ("If-Match", result["_etag"])],
+        )
+        self.assertEqual(response.status_code, 405)
+        self.assertIsNotNone(await self.service.find_one_async(None, _id=staged["_id"]))
         for rendition in result["renditions"].values():
-            self.assertIsNone(await self.app.media.get_async(rendition["media"]))
+            self.assertIsNotNone(await self.app.media.get_async(rendition["media"]))
 
-    async def test_discard_during_processing_cleans_worker_output(self):
+    async def test_expiry_during_processing_cleans_unpublished_worker_output(self):
         staged = await self.stage()
         generated = {}
 
-        async def generate_then_discard(*args, **kwargs):
+        async def generate_then_expire(*args, **kwargs):
             generated.update(await create_renditions_for_file(*args, **kwargs))
-            await self.service.discard(staged["_id"])
-            await self.service.delete_async({"_id": staged["_id"]})
+            current = await self.service.find_one_async(None, _id=staged["_id"])
+            await self.service.update_async(staged["_id"], {"expires": utcnow() - timedelta(seconds=1)}, current)
+            await expire_staged_uploads.run()
             return generated
 
-        with patch("apps.archive.upload_staging.create_renditions_for_file", side_effect=generate_then_discard):
+        with patch("apps.archive.upload_staging.create_renditions_for_file", side_effect=generate_then_expire):
             await process_staged_upload.run(staged["_id"])
         self.assertIsNone(await self.service.find_one_async(None, _id=staged["_id"]))
         for rendition in generated.values():
             self.assertIsNone(await self.app.media.get_async(rendition["media"]))
+
+    async def test_expiry_preserves_unexpired_uploads(self):
+        for status in ("pending", "processing", "awaiting_confirmation", "ready", "failed", "committing"):
+            with self.subTest(status=status):
+                staged = await self.stage()
+                await self.service.update_async(staged["_id"], {"status": status}, staged)
+                await expire_staged_uploads.run()
+                current = await self.service.find_one_async(None, _id=staged["_id"])
+                self.assertEqual(current["status"], status)
+                self.assertIsNotNone(await self.app.media.get_async(staged["media"]))
 
     async def test_expiry_removes_media_and_document(self):
         staged = await self.stage()
@@ -545,6 +567,31 @@ class UploadStagingTestCase(TestCase):
         self.assertIsNone(await self.service.find_one_async(None, _id=staged["_id"]))
         for rendition in ready["renditions"].values():
             self.assertIsNone(await self.app.media.get_async(rendition["media"]))
+
+    async def test_expiry_preserves_commit_renewed_after_scan(self):
+        staged = await self.stage()
+        await self.service.update_async(
+            staged["_id"],
+            {
+                "status": "committing",
+                "archive_id": "renewed-archive",
+                "expires": utcnow() - timedelta(seconds=1),
+            },
+            staged,
+        )
+        update_processing = self.service.update_processing
+
+        async def renew_before_cleanup(query, updates):
+            if updates.get("status") == "discarded":
+                current = await self.service.find_one_async(None, _id=staged["_id"])
+                await self.service.update_async(staged["_id"], {"expires": utcnow() + timedelta(hours=6)}, current)
+            return await update_processing(query, updates)
+
+        with patch.object(self.service, "update_processing", side_effect=renew_before_cleanup):
+            await expire_staged_uploads.run()
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["status"], "committing")
+        self.assertIsNotNone(await self.app.media.get_async(staged["media"]))
 
     async def test_video_server_processing_is_done_by_worker_and_reused_on_commit(self):
         self.app.config["VIDEO_SERVER_ENABLED"] = True
