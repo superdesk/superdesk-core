@@ -205,7 +205,7 @@ class ArchiveMediaService:
         doc.setdefault(ITEM_STATE, CONTENT_STATE.DRAFT)
 
         if not doc.get("ingest_provider"):
-            doc["source"] = get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
+            doc.setdefault("source", get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES"))
 
         copy_metadata_from_user_preferences(doc)
 

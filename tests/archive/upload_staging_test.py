@@ -39,6 +39,26 @@ class UploadStagingTestCase(TestCase):
         await self.service.create_async([doc])
         return doc
 
+    async def test_metadata_preserves_supplied_source(self):
+        with patch.dict(self.app.config, DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES="Default Source"):
+            for source in ("Explicit Source", "", None):
+                with self.subTest(source=source):
+                    doc = {"source": source}
+                    await ArchiveMediaService()._set_metadata(doc)
+                    self.assertEqual(doc["source"], source)
+
+    async def test_metadata_defaults_missing_source(self):
+        with patch.dict(self.app.config, DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES="Default Source"):
+            doc = {}
+            await ArchiveMediaService()._set_metadata(doc)
+        self.assertEqual(doc["source"], "Default Source")
+
+    async def test_metadata_does_not_default_ingested_source(self):
+        with patch.dict(self.app.config, DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES="Default Source"):
+            doc = {"ingest_provider": "provider"}
+            await ArchiveMediaService()._set_metadata(doc)
+        self.assertNotIn("source", doc)
+
     async def test_dispatch_does_not_read_a_task_result(self):
         staged = await self.stage()
         with (
