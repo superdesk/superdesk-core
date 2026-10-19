@@ -677,6 +677,43 @@ class UploadStagingTestCase(TestCase):
         self.assertEqual(current["status"], "committing")
         self.assertIsNotNone(await self.app.media.get_async(staged["media"]))
 
+    async def test_expiry_retries_after_media_deleted_but_document_deletion_failed(self):
+        staged = await self.stage()
+        await process_staged_upload.run(staged["_id"])
+        ready = await self.service.find_one_async(None, _id=staged["_id"])
+        await self.service.update_async(staged["_id"], {"expires": utcnow() - timedelta(seconds=1)}, ready)
+        with patch.object(self.service, "delete_async", side_effect=RuntimeError("document deletion failed")):
+            with self.assertRaisesRegex(RuntimeError, "document deletion failed"):
+                await expire_staged_uploads.run()
+        discarded = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(discarded["status"], "discarded")
+        for rendition in ready["renditions"].values():
+            self.assertIsNone(await self.app.media.get_async(rendition["media"]))
+
+        later = await self.stage()
+        await self.service.update_async(later["_id"], {"expires": utcnow() - timedelta(seconds=1)}, later)
+        await expire_staged_uploads.run()
+        self.assertIsNone(await self.service.find_one_async(None, _id=staged["_id"]))
+        self.assertIsNone(await self.service.find_one_async(None, _id=later["_id"]))
+        self.assertIsNone(await self.app.media.get_async(later["media"]))
+
+    async def test_video_commit_finalization_retries_after_original_deleted(self):
+        staged = await self.stage()
+        await self.service.update_async(
+            staged["_id"],
+            {"status": "committing", "archive_id": "video-archive", "video_server_id": "video-id"},
+            staged,
+        )
+        committing = await self.service.find_one_async(None, _id=staged["_id"])
+        with patch.object(self.service, "delete_async", side_effect=RuntimeError("document deletion failed")):
+            with self.assertRaisesRegex(RuntimeError, "document deletion failed"):
+                await self.service.finish_commit(committing)
+        consumed = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(consumed["status"], "consumed")
+        self.assertIsNone(await self.app.media.get_async(staged["media"]))
+        await self.service.finish_commit(consumed)
+        self.assertIsNone(await self.service.find_one_async(None, _id=staged["_id"]))
+
     async def test_video_server_processing_is_done_by_worker_and_reused_on_commit(self):
         self.app.config["VIDEO_SERVER_ENABLED"] = True
         staged = await self.stage()

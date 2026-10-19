@@ -9,6 +9,7 @@ from superdesk.utc import utcnow
 from superdesk.utils import sha
 from superdesk.tests import AsyncFlaskTestCase
 from datetime import timedelta
+from gridfs.errors import NoFile
 
 
 class GridFSMediaStorageTestCase(AsyncFlaskTestCase):
@@ -125,6 +126,24 @@ class GridFSMediaStorageTestCase(AsyncFlaskTestCase):
             completion.set_exception(RuntimeError("GridFS deletion failed"))
             with self.assertRaisesRegex(RuntimeError, "GridFS deletion failed"):
                 await deleting
+
+    async def test_delete_async_accepts_missing_gridfs_file(self):
+        media_id = bson.ObjectId()
+        completion = asyncio.get_running_loop().create_future()
+        bucket = Mock()
+        bucket.delete.return_value = completion
+        with patch.object(self.app.media, "fs_async", return_value=bucket):
+            deleting = asyncio.create_task(self.app.media.delete_async(str(media_id), resource="upload"))
+            await asyncio.sleep(0)
+            bucket.delete.assert_called_once_with(media_id)
+            completion.set_exception(NoFile("file already deleted"))
+            self.assertIsNone(await deleting)
+
+    async def test_delete_async_can_be_repeated(self):
+        media_id = await self.app.media.put_async(io.BytesIO(b"test data"), filename="delete-twice")
+        await self.app.media.delete_async(media_id)
+        await self.app.media.delete_async(media_id)
+        self.assertFalse(await self.app.media.exists_async(media_id))
 
     def _mock_gridfs(self):
         gridfs = Mock()
