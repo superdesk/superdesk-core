@@ -162,8 +162,8 @@ class UploadStagingTestCase(TestCase):
 
         doc = {"media": FileStorage(BoundedUpload(self.binary), filename="cp.jpg", content_type="image/jpeg")}
         with (
-            patch("apps.archive.upload_staging.read_metadata") as embedded,
-            patch("apps.archive.upload_staging.process_file") as technical,
+            patch("apps.archive.upload_staging_processing.read_metadata") as embedded,
+            patch("apps.archive.upload_staging_processing.process_file") as technical,
         ):
             await self.service.on_create_async([doc])
         embedded.assert_not_called()
@@ -186,7 +186,7 @@ class UploadStagingTestCase(TestCase):
             snapshots.append(kwargs)
 
         with (
-            patch("apps.archive.upload_staging.read_metadata", side_effect=parse_file),
+            patch("apps.archive.upload_staging_processing.read_metadata", side_effect=parse_file),
             patch("apps.archive.upload_staging.push_notification", side_effect=notify),
             patch.object(SuperdeskAsyncFile, "to_bytes", side_effect=AssertionError("full binary read")),
         ):
@@ -202,7 +202,9 @@ class UploadStagingTestCase(TestCase):
 
     async def test_metadata_failure_does_not_prevent_renditions(self):
         staged = await self.stage()
-        with patch("apps.archive.upload_staging.read_metadata", side_effect=ValueError("invalid embedded metadata")):
+        with patch(
+            "apps.archive.upload_staging_processing.read_metadata", side_effect=ValueError("invalid embedded metadata")
+        ):
             await process_staged_upload.run(staged["_id"])
         ready = await self.service.find_one_async(None, _id=staged["_id"])
         self.assertEqual(ready["status"], "ready")
@@ -717,7 +719,7 @@ class UploadStagingTestCase(TestCase):
         staged = await self.stage()
         await self.service.update_async(staged["_id"], {"mimetype": "video/mp4"}, staged)
         raw = {"Rights": "Embedded copyright", "Credit": "Embedded credit"}
-        with patch("apps.archive.upload_staging.read_metadata", return_value=raw):
+        with patch("apps.archive.upload_staging_processing.read_metadata", return_value=raw):
             await process_staged_upload.run(staged["_id"])
         current = await self.service.find_one_async(None, _id=staged["_id"])
         self.assertEqual(current["raw_metadata"], raw)
@@ -742,7 +744,7 @@ class UploadStagingTestCase(TestCase):
             "CopyrightNotice": "Canonical copyright",
             "CreditLine": "Canonical credit",
         }
-        with patch("apps.archive.upload_staging.read_metadata", return_value=raw):
+        with patch("apps.archive.upload_staging_processing.read_metadata", return_value=raw):
             await process_staged_upload.run(staged["_id"])
         current = await self.service.find_one_async(None, _id=staged["_id"])
         self.assertEqual(current["raw_metadata"], raw)
