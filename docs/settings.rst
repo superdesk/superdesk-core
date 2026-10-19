@@ -32,6 +32,20 @@ Default: ``'Superdesk'``
 
 Default: ``'http://localhost:9000'``
 
+``PREFERRED_URL_SCHEME``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``'https'`` for non-local servers. For ``localhost``, ``127.0.0.1``,
+and ``::1``, uses the scheme from ``SUPERDESK_URL`` (HTTP by default).
+
+Controls the scheme used for generated download links, including export ZIP
+downloads, even when the API receives HTTP requests behind a TLS-terminating
+proxy. Set the ``PREFERRED_URL_SCHEME`` environment variable or application
+setting explicitly to override this default. Tests and non-local HTTP-only
+development environments should set ``PREFERRED_URL_SCHEME=http``.
+If the setting is missing or explicitly set to ``None`` in application settings,
+download links use the request scheme.
+
 ``DEFAULT_TIMEZONE``
 ^^^^^^^^^^^^^^^^^^^^
 

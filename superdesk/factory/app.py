@@ -405,8 +405,8 @@ class SuperdeskEve(eve.Eve):
         return getattr(g, "user", None)
 
     def download_url(self, media_id: str) -> str:
-        prefered_url_scheme = self.config.get("PREFERRED_URL_SCHEME", "http")
-        return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
+        preferred_url_scheme = self.config.get("PREFERRED_URL_SCHEME")
+        return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=preferred_url_scheme)
 
     def as_any(self) -> Any:
         return self
