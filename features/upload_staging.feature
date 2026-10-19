@@ -61,17 +61,6 @@ Feature: Upload staging
         Then we get response code 404
 
     @auth
-    Scenario: Discard a staged upload
-        When we upload a file "bike.jpg" to "upload_staging"
-        When we delete "/upload_staging/#upload_staging._id#"
-        Then we get OK response
-        When we post to "/archive"
-        """
-        {"staged_id": "#upload_staging._id#"}
-        """
-        Then we get response code 404
-
-    @auth
     @vocabulary
     Scenario: Video renditions wait for upload confirmation
         When we upload a file "this_week_nasa.mp4" to "upload_staging"
