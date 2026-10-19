@@ -10,7 +10,7 @@ from werkzeug.exceptions import Conflict
 
 import superdesk
 from apps.archive.archive_media import ArchiveMediaService
-from apps.archive.upload_staging import process_staged_upload, expire_staged_uploads
+from apps.archive.upload_staging import process_staged_upload, expire_staged_uploads, delete_staged_media
 from superdesk.celery_app.task_result import AsyncTaskResult
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.renditions import create_renditions_for_file
@@ -133,14 +133,14 @@ class UploadStagingTestCase(TestCase):
         atomic_update = self.service.find_and_modify_async
         attempts = 0
 
-        async def confirm_then_update(query, update):
+        async def confirm_then_update(query, update, **kwargs):
             nonlocal attempts
             attempts += 1
             if attempts == 1:
                 await self.service.update_async(
                     staged["_id"], {"confirmed": True, "_etag": "concurrent-confirmation"}, staged
                 )
-            return await atomic_update(query, update)
+            return await atomic_update(query, update, **kwargs)
 
         with patch.object(self.service, "find_and_modify_async", side_effect=confirm_then_update):
             matched = await self.service.update_processing(
@@ -426,6 +426,55 @@ class UploadStagingTestCase(TestCase):
         result = await self.service.find_one_async(None, _id=staged["_id"])
         self.assertEqual(result["status"], "failed")
         self.assertIn("Media processing failed", result["error"])
+
+    async def test_lost_ready_update_response_preserves_published_media(self):
+        staged = await self.stage()
+        update_processing = self.service.update_processing
+
+        async def publish_then_lose_response(query, updates):
+            result = await update_processing(query, updates)
+            if updates.get("status") == "ready" and result:
+                raise ConnectionError("connection lost after ready update")
+            return result
+
+        with patch.object(self.service, "update_processing", side_effect=publish_then_lose_response):
+            with self.assertRaisesRegex(ConnectionError, "connection lost after ready update"):
+                await process_staged_upload.run(staged["_id"])
+
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["status"], "ready")
+        for rendition in current["renditions"].values():
+            self.assertIsNotNone(await self.app.media.get_async(rendition["media"]))
+
+    async def test_lost_failure_update_response_reconciles_cleanup(self):
+        staged = await self.stage()
+        update_processing = self.service.update_processing
+        cleanup = delete_staged_media
+
+        async def fail_ready_and_lose_failure_response(query, updates):
+            if updates.get("status") == "ready":
+                raise ConnectionError("ready update failed")
+            result = await update_processing(query, updates)
+            if updates.get("status") == "failed" and result:
+                raise ConnectionError("connection lost after failed update")
+            return result
+
+        async def cleanup_after_failure_claim(staged_doc, **kwargs):
+            current = await self.service.find_one_async(None, _id=staged["_id"])
+            self.assertEqual(current["status"], "failed")
+            await cleanup(staged_doc, **kwargs)
+
+        with (
+            patch.object(self.service, "update_processing", side_effect=fail_ready_and_lose_failure_response),
+            patch("apps.archive.upload_staging.delete_staged_media", side_effect=cleanup_after_failure_claim) as remove,
+        ):
+            with self.assertRaisesRegex(ConnectionError, "ready update failed"):
+                await process_staged_upload.run(staged["_id"])
+
+        current = await self.service.find_one_async(None, _id=staged["_id"])
+        self.assertEqual(current["status"], "failed")
+        remove.assert_awaited_once()
+        self.assertFalse(remove.await_args.kwargs["original"])
 
     async def test_cancellation_during_download_records_failure_and_notifies(self):
         staged = await self.stage()

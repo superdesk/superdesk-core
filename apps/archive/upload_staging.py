@@ -27,6 +27,7 @@ from uuid import uuid4
 
 from celery import shared_task
 from eve.methods.common import resolve_document_etag
+from pymongo import ReturnDocument
 from quart_babel import gettext as _
 
 import superdesk
@@ -167,6 +168,7 @@ class UploadStagingService(AsyncBaseService):
             matched = await self.find_and_modify_async(
                 {"$and": [{**query, "_id": original["_id"]}, {"_etag": original.get("_etag")}]},
                 {"$set": changes},
+                return_document=ReturnDocument.AFTER,
             )
             if matched is not None:
                 return matched
@@ -402,12 +404,35 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
             notify_staged_upload(staged)
     except (Exception, asyncio.CancelledError):
         logger.exception("Failed to process staged upload %s", staged_id)
-        await delete_staged_media(staged, original=False)
-        await service.update_processing(
-            {"_id": staged_id, "status": "processing"},
-            {"status": "failed", "error": str(_("Media processing failed. Remove the file and try again."))},
-        )
-        notify_staged_upload(staged)
+        failure = {"status": "failed", "error": str(_("Media processing failed. Remove the file and try again."))}
+
+        async def get_current():
+            try:
+                return await service.find_one_async(req=None, _id=staged_id)
+            except (Exception, asyncio.CancelledError):
+                logger.exception("Failed to reconcile staged upload %s after processing failure", staged_id)
+                return None
+
+        try:
+            current = await service.update_processing({"_id": staged_id, "status": "processing"}, failure)
+        except (Exception, asyncio.CancelledError):
+            logger.exception("Failed to claim cleanup for staged upload %s", staged_id)
+            current = None
+
+        if current is None:
+            current = await get_current()
+        if current and current.get("status") == "processing":
+            try:
+                current = await service.update_processing({"_id": staged_id, "status": "processing"}, failure)
+            except (Exception, asyncio.CancelledError):
+                logger.exception("Failed to claim cleanup for staged upload %s", staged_id)
+                current = None
+            if current is None:
+                current = await get_current()
+
+        if current and current.get("status") == "failed":
+            await delete_staged_media(staged, original=False)
+        notify_staged_upload(current or staged)
         raise
     finally:
         files.close()
