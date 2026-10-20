@@ -17,6 +17,7 @@ import importlib
 import superdesk
 import logging
 import sentry_sdk
+from urllib.parse import urlparse
 
 from pydantic import ValidationError
 from celery import Celery
@@ -541,6 +542,9 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app_config.update(config or {})
     except TypeError:
         app_config.from_object(config)
+
+    if "PREFERRED_URL_SCHEME" not in app_config:
+        app_config["PREFERRED_URL_SCHEME"] = urlparse(app_config["SERVER_URL"]).scheme
 
     if not media_storage:
         media_storage = get_media_storage_class(app_config)

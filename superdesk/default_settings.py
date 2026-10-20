@@ -1189,10 +1189,9 @@ GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 GOOGLE_LOGIN = True
 GOOGLE_GMAIL = True
 
-PREFERRED_URL_SCHEME = env(
-    "PREFERRED_URL_SCHEME",
-    server_url.scheme if server_url.hostname in ("localhost", "127.0.0.1", "::1") else "https",
-)
+preferred_url_scheme = env("PREFERRED_URL_SCHEME")
+if preferred_url_scheme is not None:
+    PREFERRED_URL_SCHEME = preferred_url_scheme
 
 # SAML Auth settings
 SAML_PATH = env("SAML_PATH")
