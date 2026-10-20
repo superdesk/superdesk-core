@@ -60,6 +60,7 @@ async def test_default_download_url_scheme(factory_app, server_url, preferred_sc
 def factory_app():
     apps = []
     with patch("superdesk.app"), patch("superdesk.core.app._global_app", None):
+
         def create(config=None, config_object=None):
             app = get_app(
                 config={"CORE_APPS": [], "INSTALLED_APPS": [], "MODULES": [], **(config or {})},
