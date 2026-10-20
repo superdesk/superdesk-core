@@ -1134,6 +1134,20 @@ components:
         description_text:
           type: string
           example: "Coverage of the monthly city council meeting"
+        planning_date:
+          type: string
+          format: date-time
+          description: Start date and time of the planning item (mapped from dates.start)
+          example: "2021-07-15T14:00:00+0000"
+        all_day:
+          type: boolean
+          description: Whether the planning item is scheduled for the whole day (mapped from dates.all_day)
+        coverages:
+          type: array
+          nullable: true
+          description: Possible content coverages associated with the planning item
+          items:
+            $ref: '#/components/schemas/Coverage'
         _links:
           type: object
           description: HATEOAS links to related resources
@@ -1172,6 +1186,12 @@ components:
               type: string
               format: date-time
               example: "2021-07-15T16:00:00+0000"
+        coverages:
+          type: array
+          nullable: true
+          description: Possible content coverages associated with the event
+          items:
+            $ref: '#/components/schemas/Coverage'
         _links:
           type: object
           description: HATEOAS links to related resources
@@ -1184,6 +1204,136 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/HATEOASPlanning'
+
+    Coverage:
+      type: object
+      description: A possible content coverage associated with an event or planning item
+      properties:
+        coverage_id:
+          type: string
+          description: Unique identifier of the coverage
+          example: "urn:newsml:localhost:2021-07-08T12:34:56.123456:coverage-guid"
+        profile:
+          type: string
+          description: ID of the coverage profile
+        news_coverage_status:
+          type: object
+          description: News coverage status
+          properties:
+            qcode:
+              type: string
+              enum: [ncostat:int, ncostat:notint, ncostat:notdec, ncostat:onreq]
+              example: "ncostat:int"
+            name:
+              type: string
+            label:
+              type: string
+        workflow_status:
+          type: string
+          description: Workflow status of the coverage
+          enum: [draft, active, ingested, scheduled, killed, cancelled, rescheduled, postponed, spiked]
+          example: "active"
+        assigned_to:
+          $ref: '#/components/schemas/CoverageAssignedTo'
+        planning:
+          type: object
+          description: Planning details for the expected coverage
+          properties:
+            scheduled:
+              type: string
+              format: date-time
+              description: Due date and time for the coverage
+            g2_content_type:
+              type: string
+              description: G2 content type of the coverage
+              example: "text"
+            slugline:
+              type: string
+            name:
+              type: string
+            headline:
+              type: string
+            definition_short:
+              type: string
+            definition_long:
+              type: string
+            description_text:
+              type: string
+              description: Legacy description alias included by the Planning endpoint
+            internal_note:
+              type: string
+            ednote:
+              type: string
+            keyword:
+              type: array
+              description: Legacy keyword alias included by the Planning endpoint
+              items:
+                type: string
+            workflow_status_reason:
+              type: string
+            multiple_content:
+              type: boolean
+        scheduled_updates:
+          type: array
+          description: Scheduled updates associated with the coverage
+          items:
+            $ref: '#/components/schemas/CoverageScheduledUpdate'
+
+    CoverageScheduledUpdate:
+      type: object
+      description: A scheduled update for a coverage
+      properties:
+        coverage_id:
+          type: string
+        scheduled_update_id:
+          type: string
+        news_coverage_status:
+          type: object
+          properties:
+            qcode:
+              type: string
+              enum: [ncostat:int, ncostat:notint, ncostat:notdec, ncostat:onreq]
+            name:
+              type: string
+            label:
+              type: string
+        workflow_status:
+          type: string
+          enum: [draft, active, ingested, scheduled, killed, cancelled, rescheduled, postponed, spiked]
+        previous_status:
+          type: string
+          enum: [draft, active, ingested, scheduled, killed, cancelled, rescheduled, postponed, spiked]
+        assigned_to:
+          $ref: '#/components/schemas/CoverageAssignedTo'
+        planning:
+          type: object
+          properties:
+            scheduled:
+              type: string
+              format: date-time
+            internal_note:
+              type: string
+            workflow_status_reason:
+              type: string
+            multiple_content:
+              type: boolean
+
+    CoverageAssignedTo:
+      type: object
+      nullable: true
+      description: Assignment and contact information for the coverage
+      properties:
+        assignment_id:
+          type: string
+        state:
+          type: string
+          enum: [draft, assigned, in_progress, completed, submitted, cancelled]
+        contact:
+          type: string
+        user:
+          type: string
+        desk:
+          type: string
 
     EventFile:
       type: object
