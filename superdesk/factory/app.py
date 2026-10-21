@@ -183,6 +183,8 @@ class HttpFlaskRequest(Request):
 
 
 def log_server_error(app, error: Exception) -> None:
+    if isinstance(error, SuperdeskApiError) and error._logged:
+        return
     if isinstance(error, InternalServerError) and error.original_exception is not None:
         # Quart already logged the original unhandled exception.
         return

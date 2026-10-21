@@ -23,6 +23,7 @@ def test_api_logging_defaults(api):
     [
         (RuntimeError("unhandled"), 500),
         (SuperdeskApiError.internalError("handled"), 500),
+        (None, 500),
         (SuperdeskApiError.badRequestError("client error"), 400),
     ],
 )
@@ -42,15 +43,36 @@ async def test_api_error_logging(api, error, status, monkeypatch, caplog):
 
     @app.route("/error")
     async def error_endpoint():
+        if error is None:
+            try:
+                raise OSError("asset save failed")
+            except OSError as original:
+                raise SuperdeskApiError.internalError("Saving file failed", exception=original)
         raise error
 
     with caplog.at_level(logging.ERROR):
         response = await app.test_client().get("/error")
 
     assert response.status_code == status
-    records = [record for record in caplog.records if record.name == app.name]
+    records = [record for record in caplog.records if record.levelno >= logging.ERROR]
     assert len(records) == (1 if status == 500 else 0)
     if records:
         assert records[0].levelno == logging.ERROR
         assert records[0].exc_info is not None
         assert records[0].exc_info[2] is not None
+        if error is None:
+            assert isinstance(records[0].exc_info[1], OSError)
+            assert str(records[0].exc_info[1]) == "asset save failed"
+
+
+def test_api_error_logs_original_exception_without_request(caplog):
+    try:
+        raise OSError("asset save failed")
+    except OSError as original:
+        error = original
+
+    with caplog.at_level(logging.ERROR):
+        SuperdeskApiError.internalError("Saving file failed", exception=error)
+
+    assert len(caplog.records) == 1
+    assert caplog.records[0].exc_info == (type(error), error, error.__traceback__)

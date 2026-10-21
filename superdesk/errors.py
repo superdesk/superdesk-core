@@ -122,6 +122,7 @@ class SuperdeskApiError(SuperdeskError):
 
     def __init__(self, message=None, status_code=None, payload=None, exception=None, extra=None):
         Exception.__init__(self)
+        self._logged = False
 
         #: a human readable error description
         self.message = message
@@ -133,7 +134,8 @@ class SuperdeskApiError(SuperdeskError):
             self.payload = payload
 
         if exception:
-            logger.exception(message or exception, extra=extra)
+            logger.exception(message or exception, exc_info=exception, extra=extra)
+            self._logged = True
 
     def to_dict(self) -> dict:
         """Create dict for json response."""
