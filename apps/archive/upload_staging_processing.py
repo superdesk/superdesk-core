@@ -22,6 +22,7 @@ from superdesk.media.media_operations import process_file, encode_metadata, deco
 from superdesk.media.metadata_mapping import MediaMetadataKeys
 from superdesk.media.video_editor import VideoEditorWrapper
 from superdesk.metadata.item import CONTENT_TYPE_LITERAL
+from .upload_staging_types import MetadataStatus, StagedMetadata, StagedUpload
 
 logger = logging.getLogger(__name__)
 
@@ -160,23 +161,24 @@ def map_metadata_to_article(raw_metadata: dict[str, Any], user: dict[str, Any] |
     return meta
 
 
-async def delete_staged_media(staged: dict, *, original: bool = True) -> None:
+async def delete_staged_media(staged: StagedUpload, *, original: bool = True) -> None:
     media_ids = {rend["media"] for rend in staged.get("renditions", {}).values() if rend.get("media")}
     if original:
         media_ids.add(staged["media"])
     else:
         media_ids.discard(staged["media"])
-    for media_id in media_ids:
-        await get_current_app().media.delete_async(media_id)
+    media = get_current_app().media
+    deletions = [media.delete_async(media_id) for media_id in media_ids]
+    await asyncio.gather(*deletions)
     if staged.get("video_server_id"):
         VideoEditorWrapper()._delete(staged["video_server_id"])
 
 
-async def extract_staged_metadata(staged: dict, content: IO[bytes], path: str) -> dict:
+async def extract_staged_metadata(staged: StagedUpload, content: IO[bytes], path: str) -> StagedMetadata:
     file_type = staged["mimetype"].split("/")[0]
-    updates = {"metadata_status": "ready"}
+    updates: StagedMetadata = {"metadata_status": MetadataStatus.READY}
 
-    def parse():
+    def parse() -> StagedMetadata:
         try:
             raw, iptc = ({}, {}) if file_type == "audio" else read_staged_metadata(path, file_type)
             mapping_input = raw.copy()
@@ -192,7 +194,7 @@ async def extract_staged_metadata(staged: dict, content: IO[bytes], path: str) -
         except Exception:
             logger.exception("Failed to extract embedded metadata for %s", staged["_id"])
             return {
-                "metadata_status": "failed",
+                "metadata_status": MetadataStatus.FAILED,
                 "metadata_error": str(_("Metadata extraction failed. Enter metadata manually.")),
             }
 

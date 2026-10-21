@@ -41,7 +41,10 @@ or overwrite user edits.
 Metadata failure includes ``metadata_error`` and permits manual entry, without blocking
 rendition generation. The editor applies extracted defaults only once, preserving edits.
 Each file keeps its own embedded metadata even when extraction completes at different
-times. Only explicit bulk edits are carried forward to files arriving in the editor later.
+times. Bulk edits apply only to images selected at the time of the edit. The first ready
+batch is selected automatically; later arrivals remain unselected and retain their embedded
+metadata. Arrivals preserve the existing selection, and users can explicitly select all
+ready images to apply a shared value.
 Before metadata is available, the client shows a separate file preview with upload progress
 followed by a reading-metadata indicator. Pending files can be removed without opening the editor.
 

@@ -20,9 +20,11 @@ Expired uploads are removed by a scheduled task so their media can be cleaned up
 import logging
 import asyncio
 from contextlib import ExitStack
+from collections.abc import Mapping
 from datetime import timedelta
 from tempfile import NamedTemporaryFile
 from uuid import uuid4
+from typing import Any, cast
 
 from celery import shared_task
 from eve.methods.common import resolve_document_etag
@@ -30,7 +32,8 @@ from pymongo import ReturnDocument
 from quart_babel import gettext as _
 
 import superdesk
-from superdesk.core import get_app_config, get_current_app
+from superdesk.core import get_config, get_current_app
+from superdesk.types import Id
 from superdesk.eve_async import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
 from superdesk.filemeta import set_filemeta
@@ -39,6 +42,7 @@ from superdesk.resource import Resource
 from superdesk.utc import utcnow
 from superdesk.notification import push_notification
 from apps.auth import get_user
+from .upload_staging_types import MetadataStatus, StagedBinaryDocument, StagedUpload, UploadStatus
 from .upload_staging_processing import (
     STAGEABLE_FILE_TYPES,
     map_metadata_to_article,
@@ -62,16 +66,7 @@ class UploadStagingResource(Resource):
         "filemeta_json": {"type": "string", "readonly": True},
         "status": {
             "type": "string",
-            "allowed": [
-                "pending",
-                "processing",
-                "awaiting_confirmation",
-                "ready",
-                "failed",
-                "committing",
-                "discarded",
-                "consumed",
-            ],
+            "allowed": [status.value for status in UploadStatus],
             "readonly": True,
         },
         "error": {"type": "string", "readonly": True},
@@ -122,7 +117,7 @@ class UploadStagingResource(Resource):
 
 
 class UploadStagingService(AsyncBaseService):
-    async def update_processing(self, query: dict, updates: dict) -> dict | None:
+    async def update_processing(self, query: dict[str, Any], updates: Mapping[str, Any]) -> StagedUpload | None:
         """Atomically publish worker changes with fresh HTTP cache validators."""
         for _attempt in range(5):
             original = await self.find_one_async(req=None, **query)
@@ -139,10 +134,10 @@ class UploadStagingService(AsyncBaseService):
                 return_document=ReturnDocument.AFTER,
             )
             if matched is not None:
-                return matched
+                return cast(StagedUpload, matched)
         raise SuperdeskApiError.conflictError(_("Staged upload changed while processing"))
 
-    async def on_create_async(self, docs):
+    async def on_create_async(self, docs: list[dict[str, Any]]) -> None:
         app = get_current_app()
         user = get_user(required=True)
 
@@ -170,20 +165,20 @@ class UploadStagingService(AsyncBaseService):
             doc["mimetype"] = content_type
             doc["size"] = size
             doc["meta"] = map_metadata_to_article({}, user)
-            doc["metadata_status"] = "pending"
+            doc["metadata_status"] = MetadataStatus.PENDING
             doc["user"] = user["_id"]
-            doc["expires"] = utcnow() + timedelta(seconds=get_app_config("UPLOAD_STAGING_TTL"))
-            doc["status"] = "pending"
+            doc["expires"] = utcnow() + timedelta(seconds=get_config(int, "UPLOAD_STAGING_TTL"))
+            doc["status"] = UploadStatus.PENDING
 
-    async def on_created_async(self, docs):
+    async def on_created_async(self, docs: list[dict[str, Any]]) -> None:
         for doc in docs:
             try:
                 await process_staged_upload.delay(doc["_id"])
             except Exception:
                 logger.exception("Failed to queue staged upload %s", doc["_id"])
                 await self.update_processing(
-                    {"_id": doc["_id"], "status": "pending"},
-                    {"status": "failed", "error": str(_("Failed to queue media processing"))},
+                    {"_id": doc["_id"], "status": UploadStatus.PENDING},
+                    {"status": UploadStatus.FAILED, "error": str(_("Failed to queue media processing"))},
                 )
                 raise
             # Eager execution (tests/development) may already have finished processing.
@@ -192,48 +187,51 @@ class UploadStagingService(AsyncBaseService):
                 raise SuperdeskApiError.notFoundError(_("Staged upload not found or expired"))
             doc.update(current)
 
-    async def on_update_async(self, updates, original):
+    async def on_update_async(self, updates: dict[str, Any], original: dict[str, Any]) -> None:
         self._check_owner(original)
         if "media" in updates or updates.get("confirmed") is not True or original["expires"] <= utcnow():
             raise SuperdeskApiError.badRequestError(_("Only upload confirmation is allowed"))
 
-    async def on_updated_async(self, updates, original):
+    async def on_updated_async(self, updates: dict[str, Any], original: dict[str, Any]) -> None:
         if updates.get("confirmed"):
             await process_staged_upload.delay(original["_id"], renditions_only=True)
 
-    async def on_fetched_item_async(self, doc):
+    async def on_fetched_item_async(self, doc: dict[str, Any]) -> None:
         self._check_owner(doc)
-        if doc["expires"] <= utcnow() or doc["status"] in ("discarded", "consumed"):
+        if doc["expires"] <= utcnow() or doc["status"] in (UploadStatus.DISCARDED, UploadStatus.CONSUMED):
             raise SuperdeskApiError.notFoundError(_("Staged upload not found or expired"))
 
-    async def finish_commit(self, staged: dict) -> None:
+    async def finish_commit(self, staged: StagedUpload) -> None:
         """Release staging only after the archive item has been persisted."""
-        if staged["status"] != "consumed":
+        if staged["status"] != UploadStatus.CONSUMED:
             claimed = await self.update_processing(
-                {"_id": staged["_id"], "status": "committing", "archive_id": staged["archive_id"]},
-                {"status": "consumed"},
+                {"_id": staged["_id"], "status": UploadStatus.COMMITTING, "archive_id": staged["archive_id"]},
+                {"status": UploadStatus.CONSUMED},
             )
             if not claimed:
                 return
         if staged.get("video_server_id"):
             await get_current_app().media.delete_async(staged["media"])
-        await self.delete_async({"_id": staged["_id"], "status": "consumed"})
+        await self.delete_async({"_id": staged["_id"], "status": UploadStatus.CONSUMED})
 
     @staticmethod
-    def _check_owner(doc):
+    def _check_owner(doc: Mapping[str, Any]) -> None:
         if str(doc.get("user")) != str(get_user(required=True)["_id"]):
             raise SuperdeskApiError.forbiddenError(_("Staged upload belongs to another user"))
 
 
-def notify_staged_upload(staged: dict) -> None:
+def notify_staged_upload(staged: StagedUpload) -> None:
     push_notification("upload_staging:updated", staged_id=str(staged["_id"]), user=str(staged["user"]))
 
 
 async def _recover_processing_failure(
-    service: UploadStagingService, staged_id, token: str, staged: dict | None
+    service: UploadStagingService, staged_id: Id, token: str, staged: StagedUpload | None
 ) -> None:
-    owned_processing = {"_id": staged_id, "status": "processing", "processing_token": token}
-    failure = {"status": "failed", "error": str(_("Media processing failed. Remove the file and try again."))}
+    owned_processing = {"_id": staged_id, "status": UploadStatus.PROCESSING, "processing_token": token}
+    failure = {
+        "status": UploadStatus.FAILED,
+        "error": str(_("Media processing failed. Remove the file and try again.")),
+    }
     current = None
     for attempt in range(2):
         try:
@@ -243,36 +241,36 @@ async def _recover_processing_failure(
             current = None
         if current is None:
             try:
-                current = await service.find_one_async(req=None, _id=staged_id)
+                current = cast(StagedUpload | None, await service.find_one_async(req=None, _id=staged_id))
             except (Exception, asyncio.CancelledError):
                 logger.exception("Failed to reconcile staged upload %s after processing failure", staged_id)
                 continue
-        if not current or current.get("processing_token") != token or current.get("status") != "processing":
+        if not current or current.get("processing_token") != token or current.get("status") != UploadStatus.PROCESSING:
             break
 
     if current and current.get("processing_token") == token:
-        if current.get("status") == "failed":
+        if current.get("status") == UploadStatus.FAILED:
             await delete_staged_media(staged or current, original=False)
         notify_staged_upload(current)
 
 
 @shared_task(ignore_result=True, store_async_result=False, soft_time_limit=10 * 60, time_limit=15 * 60)
-async def process_staged_upload(staged_id, renditions_only: bool = False) -> None:
+async def process_staged_upload(staged_id: Id, renditions_only: bool = False) -> None:
     service = superdesk.get_resource_service("upload_staging")
     token = uuid4().hex
-    owned_processing = {"_id": staged_id, "status": "processing", "processing_token": token}
-    staged = None
+    owned_processing = {"_id": staged_id, "status": UploadStatus.PROCESSING, "processing_token": token}
+    staged: StagedUpload | None = None
     files = ExitStack()
     original_content = None
     try:
         staged = await service.update_processing(
             {
                 "_id": staged_id,
-                "status": "awaiting_confirmation" if renditions_only else "pending",
+                "status": UploadStatus.AWAITING_CONFIRMATION if renditions_only else UploadStatus.PENDING,
                 "expires": {"$gt": utcnow()},
                 **({"confirmed": True} if renditions_only else {}),
             },
-            {"status": "processing", "processing_token": token},
+            {"status": UploadStatus.PROCESSING, "processing_token": token},
         )
         if not staged:
             return
@@ -299,7 +297,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
             if file_type == "video":
                 waiting = await service.update_processing(
                     owned_processing,
-                    {"status": "awaiting_confirmation"},
+                    {"status": UploadStatus.AWAITING_CONFIRMATION},
                 )
                 if waiting:
                     notify_staged_upload(staged)
@@ -307,12 +305,12 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
                     if current and current.get("confirmed"):
                         await process_staged_upload.delay(staged_id, renditions_only=True)
                 return
-        if file_type == "video" and get_app_config("VIDEO_SERVER_ENABLED"):
+        if file_type == "video" and get_config(bool, "VIDEO_SERVER_ENABLED"):
             from .archive_media import ArchiveMediaService
 
             media_service = ArchiveMediaService()
-            doc = {"media_fetched": await get_current_app().media.get_async(staged["media"])}
-            await media_service._load_staged_binary(doc, staged)
+            doc: StagedBinaryDocument = {"media_fetched": await get_current_app().media.get_async(staged["media"])}
+            await media_service.load_staged_binary(doc, staged)
             binary = doc["media"]
             try:
                 res, renditions, metadata = media_service.upload_file_to_video_server(doc)
@@ -322,7 +320,7 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
                 binary.close()
             set_filemeta(staged, metadata)
         else:
-            specs = await get_renditions_spec_async(no_custom_crops=get_app_config("NO_CUSTOM_CROPS"))
+            specs = await get_renditions_spec_async(no_custom_crops=get_config(bool, "NO_CUSTOM_CROPS"))
             renditions = await create_renditions_for_file(
                 staged["media"],
                 specs,
@@ -333,8 +331,10 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
                 original_content=original_content,
             )
         staged["renditions"] = renditions
-        updates = {key: staged[key] for key in ("renditions", "video_server_id", "filemeta_json") if key in staged}
-        updates["status"] = "ready"
+        updates = {
+            key: value for key, value in staged.items() if key in ("renditions", "video_server_id", "filemeta_json")
+        }
+        updates["status"] = UploadStatus.READY
         published = await service.update_processing(
             {**owned_processing, "expires": {"$gt": utcnow()}},
             updates,
@@ -356,18 +356,18 @@ async def process_staged_upload(staged_id, renditions_only: bool = False) -> Non
 async def expire_staged_uploads() -> None:
     service = superdesk.get_resource_service("upload_staging")
     async for staged in await service.find_async({"expires": {"$lte": utcnow()}}):
-        if staged["status"] in ("committing", "consumed"):
+        if staged["status"] in (UploadStatus.COMMITTING, UploadStatus.CONSUMED):
             archive = await superdesk.get_resource_service("archive").find_one_async(None, _id=staged["archive_id"])
-            if archive or staged["status"] == "consumed":
+            if archive or staged["status"] == UploadStatus.CONSUMED:
                 await service.finish_commit(staged)
                 continue
         expired = await service.update_processing(
             {"_id": staged["_id"], "status": staged["status"], "expires": {"$lte": utcnow()}},
-            {"status": "discarded"},
+            {"status": UploadStatus.DISCARDED},
         )
         if expired:
             await delete_staged_media(expired)
-            await service.delete_async({"_id": staged["_id"], "status": "discarded"})
+            await service.delete_async({"_id": staged["_id"], "status": UploadStatus.DISCARDED})
 
 
 def init_app(app) -> None:

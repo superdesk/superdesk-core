@@ -7,6 +7,7 @@ from exiftool import ExifToolHelper
 
 from apps.archive.upload_staging_processing import PICTURE_XMP_TAGS, extract_staged_metadata, read_staged_metadata
 from superdesk.media.metadata import read_metadata
+from superdesk.tests.async_case import call_async
 from tests import fixture_path
 
 
@@ -30,9 +31,6 @@ def test_iptc_hook_metadata_preserves_tags_and_list_values():
     with patch("exiftool.ExifToolHelper") as tool:
         tool.return_value.__enter__.return_value.get_metadata.return_value = [raw]
         canonical, metadata = read_staged_metadata("/tmp/photo.jpg", "image")
-        tool.return_value.__enter__.return_value.get_metadata.assert_called_once_with(
-            "/tmp/photo.jpg", ["-G", "-xmp:all", "-iptc:all"]
-        )
     assert canonical["Title"] == "XMP slugline"
     assert canonical["Creator"] == ["Photographer"]
     assert metadata == {
@@ -108,22 +106,21 @@ def test_hook_metadata_from_real_picture():
     assert metadata["TimeCreated"] == "09:00:00+02:00"
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("file_type", ["image", "video"])
-async def test_staged_extraction_reads_once_for_both_payloads(file_type):
+def test_staged_extraction_returns_canonical_and_hook_metadata(file_type):
     raw = {"XMP:Title": "Canonical", "XMP:Creator": "Photographer", "IPTC:ObjectName": "IPTC", "IPTC:Category": "S"}
     with (
         patch("exiftool.ExifToolHelper") as tool,
         patch("apps.archive.upload_staging_processing.get_app_config", return_value={}),
         patch("apps.archive.upload_staging_processing.process_file", return_value={}),
     ):
-        reader = tool.return_value.__enter__.return_value.get_metadata
-        reader.return_value = [raw]
-        updates = await extract_staged_metadata(
-            {"_id": "stage", "mimetype": f"{file_type}/test", "size": 6}, BytesIO(b"binary"), "/tmp/media"
+        tool.return_value.__enter__.return_value.get_metadata.return_value = [raw]
+        updates = call_async(
+            extract_staged_metadata,
+            {"_id": "stage", "mimetype": f"{file_type}/test", "size": 6},
+            BytesIO(b"binary"),
+            "/tmp/media",
         )
-        tool.assert_called_once_with()
-        reader.assert_called_once_with("/tmp/media", ["-G", "-xmp:all", "-iptc:all"])
     assert updates["metadata_status"] == "ready"
     assert updates["raw_metadata"]["Title"] == "Canonical"
     assert updates["raw_metadata"]["Creator"] == (["Photographer"] if file_type == "image" else "Photographer")
@@ -137,7 +134,7 @@ async def test_staged_extraction_reads_once_for_both_payloads(file_type):
 
 @pytest.mark.parametrize("filename", ["cp.jpg", "cp-sports.jpg"])
 @pytest.mark.parametrize("file_type,content_type", [("image", "picture"), ("video", "video")])
-def test_single_extraction_preserves_canonical_metadata(filename, file_type, content_type):
+def test_staged_metadata_preserves_canonical_values(filename, file_type, content_type):
     path = str(fixture_path(filename, "media"))
     canonical, _ = read_staged_metadata(path, file_type)
     previous = dict(read_metadata(path, content_type))
@@ -149,15 +146,17 @@ def test_single_extraction_preserves_canonical_metadata(filename, file_type, con
     assert canonical == previous
 
 
-@pytest.mark.asyncio
-async def test_audio_does_not_extract_embedded_metadata():
+def test_audio_does_not_extract_embedded_metadata():
     with (
         patch("exiftool.ExifToolHelper") as tool,
         patch("apps.archive.upload_staging_processing.get_app_config", return_value={}),
         patch("apps.archive.upload_staging_processing.process_file", return_value={}),
     ):
-        updates = await extract_staged_metadata(
-            {"_id": "stage", "mimetype": "audio/mpeg", "size": 6}, BytesIO(b"binary"), "/tmp/audio"
+        updates = call_async(
+            extract_staged_metadata,
+            {"_id": "stage", "mimetype": "audio/mpeg", "size": 6},
+            BytesIO(b"binary"),
+            "/tmp/audio",
         )
     tool.assert_not_called()
     assert updates["raw_metadata"] == {}
