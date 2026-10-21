@@ -25,6 +25,19 @@ is applied before starting the next refresh.
 For video mapping, ``Rights`` and ``Credit`` also supply ``CopyrightNotice`` and
 ``CreditLine`` defaults when those canonical keys are absent. ``raw_metadata`` remains
 unchanged, and configured mappings can still reference the original video keys.
+``iptc_metadata`` is a separate payload for client ``iptcMapping`` extensions, using
+ExifTool IPTC names (for example ``ObjectName``, ``By-line`` and ``SubjectReference``).
+It includes vocabulary, location, language and date tags omitted by the canonical reader,
+preserves list values, and uses XMP equivalents when IPTC tags are absent. Pictures prefer
+IPTC values; videos use XMP. XMP creation timestamps also supply ``TimeCreated``.
+Both payloads are derived from a single ExifTool extraction of the temporary file;
+canonical picture fields retain their XMP names, defaults and creator-list representation.
+Pictures that previously required the pyexiv2 fallback now use that same consistent
+picture-field shape rather than the fallback's sparse fields and scalar creator.
+The client runs extension hooks sequentially, once per file, passing the mapped article
+and upload parent. Hooks finish before metadata becomes editable or saveable; failures
+are reported and block committing that file. Subsequent status refreshes do not rerun hooks
+or overwrite user edits.
 Metadata failure includes ``metadata_error`` and permits manual entry, without blocking
 rendition generation. The editor applies extracted defaults only once, preserving edits.
 Each file keeps its own embedded metadata even when extraction completes at different

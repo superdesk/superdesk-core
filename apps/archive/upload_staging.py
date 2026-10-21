@@ -57,6 +57,7 @@ class UploadStagingResource(Resource):
         "size": {"type": "integer", "readonly": True},
         "meta": {"type": "dict", "allow_unknown": True, "readonly": True},
         "raw_metadata": {"type": "dict", "allow_unknown": True, "readonly": True},
+        "iptc_metadata": {"type": "dict", "allow_unknown": True, "readonly": True},
         "filemeta": {"type": "dict", "allow_unknown": True, "readonly": True},
         "filemeta_json": {"type": "string", "readonly": True},
         "status": {
@@ -91,6 +92,7 @@ class UploadStagingResource(Resource):
             "size": 1,
             "meta": 1,
             "raw_metadata": 1,
+            "iptc_metadata": 1,
             "filemeta": 1,
             "filemeta_json": 1,
             "status": 1,

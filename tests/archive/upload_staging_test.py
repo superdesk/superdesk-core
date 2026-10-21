@@ -14,7 +14,7 @@ from apps.archive.upload_staging import process_staged_upload, expire_staged_upl
 from superdesk.celery_app.task_result import AsyncTaskResult
 from superdesk.errors import SuperdeskApiError
 from superdesk.media.renditions import create_renditions_for_file
-from superdesk.media.metadata import read_metadata
+from apps.archive.upload_staging_processing import read_staged_metadata
 from superdesk.core.types import SuperdeskAsyncFile
 from superdesk.tests import TestCase, setup_auth_user
 from superdesk.utc import utcnow
@@ -182,7 +182,7 @@ class UploadStagingTestCase(TestCase):
 
         doc = {"media": FileStorage(BoundedUpload(self.binary), filename="cp.jpg", content_type="image/jpeg")}
         with (
-            patch("apps.archive.upload_staging_processing.read_metadata") as embedded,
+            patch("apps.archive.upload_staging_processing.read_staged_metadata") as embedded,
             patch("apps.archive.upload_staging_processing.process_file") as technical,
         ):
             await self.service.on_create_async([doc])
@@ -200,13 +200,13 @@ class UploadStagingTestCase(TestCase):
             self.assertIsInstance(path, str)
             self.assertTrue(os.path.isfile(path))
             paths.append(path)
-            return read_metadata(path, content_type)
+            return read_staged_metadata(path, content_type)
 
         def notify(name, **kwargs):
             snapshots.append(kwargs)
 
         with (
-            patch("apps.archive.upload_staging_processing.read_metadata", side_effect=parse_file),
+            patch("apps.archive.upload_staging_processing.read_staged_metadata", side_effect=parse_file),
             patch("apps.archive.upload_staging.push_notification", side_effect=notify),
             patch.object(SuperdeskAsyncFile, "to_bytes", side_effect=AssertionError("full binary read")),
         ):
@@ -216,6 +216,8 @@ class UploadStagingTestCase(TestCase):
         ready = await self.service.find_one_async(None, _id=staged["_id"])
         self.assertEqual(ready["metadata_status"], "ready")
         self.assertIn("Montreal Police", ready["meta"]["description_text"])
+        self.assertEqual(ready["iptc_metadata"]["By-line"], "Paul Chiasson")
+        self.assertEqual(ready["iptc_metadata"]["City"], "Montreal")
         self.assertEqual(len(snapshots), 2)
         for event in snapshots:
             self.assertEqual(event, {"staged_id": str(staged["_id"]), "user": str(self.user["_id"])})
@@ -223,7 +225,8 @@ class UploadStagingTestCase(TestCase):
     async def test_metadata_failure_does_not_prevent_renditions(self):
         staged = await self.stage()
         with patch(
-            "apps.archive.upload_staging_processing.read_metadata", side_effect=ValueError("invalid embedded metadata")
+            "apps.archive.upload_staging_processing.read_staged_metadata",
+            side_effect=ValueError("invalid embedded metadata"),
         ):
             await process_staged_upload.run(staged["_id"])
         ready = await self.service.find_one_async(None, _id=staged["_id"])
@@ -776,7 +779,7 @@ class UploadStagingTestCase(TestCase):
         staged = await self.stage()
         await self.service.update_async(staged["_id"], {"mimetype": "video/mp4"}, staged)
         raw = {"Rights": "Embedded copyright", "Credit": "Embedded credit"}
-        with patch("apps.archive.upload_staging_processing.read_metadata", return_value=raw):
+        with patch("apps.archive.upload_staging_processing.read_staged_metadata", return_value=(raw, {})):
             await process_staged_upload.run(staged["_id"])
         current = await self.service.find_one_async(None, _id=staged["_id"])
         self.assertEqual(current["raw_metadata"], raw)
@@ -801,7 +804,7 @@ class UploadStagingTestCase(TestCase):
             "CopyrightNotice": "Canonical copyright",
             "CreditLine": "Canonical credit",
         }
-        with patch("apps.archive.upload_staging_processing.read_metadata", return_value=raw):
+        with patch("apps.archive.upload_staging_processing.read_staged_metadata", return_value=(raw, {})):
             await process_staged_upload.run(staged["_id"])
         current = await self.service.find_one_async(None, _id=staged["_id"])
         self.assertEqual(current["raw_metadata"], raw)
