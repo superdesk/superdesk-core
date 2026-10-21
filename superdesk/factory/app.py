@@ -17,6 +17,7 @@ import importlib
 import superdesk
 import logging
 import sentry_sdk
+from urllib.parse import urlparse
 
 from pydantic import ValidationError
 from celery import Celery
@@ -405,8 +406,8 @@ class SuperdeskEve(eve.Eve):
         return getattr(g, "user", None)
 
     def download_url(self, media_id: str) -> str:
-        prefered_url_scheme = self.config.get("PREFERRED_URL_SCHEME", "http")
-        return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
+        preferred_url_scheme = self.config.get("PREFERRED_URL_SCHEME")
+        return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=preferred_url_scheme)
 
     def as_any(self) -> Any:
         return self
@@ -541,6 +542,9 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app_config.update(config or {})
     except TypeError:
         app_config.from_object(config)
+
+    if "PREFERRED_URL_SCHEME" not in app_config:
+        app_config["PREFERRED_URL_SCHEME"] = urlparse(app_config["SERVER_URL"]).scheme
 
     if not media_storage:
         media_storage = get_media_storage_class(app_config)

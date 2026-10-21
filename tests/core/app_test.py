@@ -1,8 +1,52 @@
-from unittest import TestCase, mock
+from unittest import IsolatedAsyncioTestCase, TestCase, mock
 
-from superdesk.core.app import SuperdeskAsyncApp
+from superdesk.core.app import SuperdeskAsyncApp, get_app_config
 from superdesk.core.privileges import Privilege
-from superdesk.tests import MockWSGI
+from superdesk.flask import Flask
+from superdesk.tests import AsyncQuartTestCase, MockWSGI
+
+
+class AsyncQuartAppIsolationTestCase(AsyncQuartTestCase):
+    app_config = {"CONFIG_VALUE": "context"}
+
+    async def asyncSetUp(self):
+        self.global_wsgi = MockWSGI(config={"CONFIG_VALUE": "global"})
+        self.global_app = SuperdeskAsyncApp(self.global_wsgi)
+        global_patch = mock.patch("superdesk.core.app._global_app", self.global_app)
+        global_patch.start()
+        self.addCleanup(global_patch.stop)
+        await super().asyncSetUp()
+
+    async def test_local_context_does_not_replace_global_wsgi(self):
+        self.assertIs(self.global_app.wsgi, self.global_wsgi)
+        self.assertEqual(get_app_config("CONFIG_VALUE"), "context")
+
+
+class AppConfigTestCase(IsolatedAsyncioTestCase):
+    async def test_active_context_takes_precedence_over_global_app(self):
+        app = Flask(__name__)
+        app.config["CONFIG_VALUE"] = "context"
+        global_app = SuperdeskAsyncApp(MockWSGI(config={"CONFIG_VALUE": "global", "GLOBAL_ONLY": "global"}))
+        with mock.patch("superdesk.core.app._global_app", global_app):
+            async with app.app_context():
+                self.assertEqual(get_app_config("CONFIG_VALUE"), "context")
+                self.assertEqual(get_app_config("GLOBAL_ONLY", "default"), "default")
+                self.assertIsNone(get_app_config("GLOBAL_ONLY"))
+            self.assertEqual(get_app_config("CONFIG_VALUE"), "global")
+            self.assertEqual(get_app_config("MISSING", "default"), "default")
+
+    async def test_active_context_without_global_app(self):
+        app = Flask(__name__)
+        app.config["CONFIG_VALUE"] = "context"
+        with mock.patch("superdesk.core.app._global_app", None):
+            async with app.app_context():
+                self.assertEqual(get_app_config("CONFIG_VALUE"), "context")
+                self.assertEqual(get_app_config("MISSING", "default"), "default")
+
+    async def test_no_app_raises(self):
+        with mock.patch("superdesk.core.app._global_app", None):
+            with self.assertRaisesRegex(RuntimeError, "Superdesk app is not running"):
+                get_app_config("CONFIG_VALUE")
 
 
 class SuperdeskAsyncAppTestCase(TestCase):
