@@ -117,12 +117,13 @@ class SuperdeskError(DocumentError):
 class SuperdeskApiError(SuperdeskError):
     """Base class for superdesk API."""
 
+    _logged = False
+
     #: error status code
     status_code = 400
 
     def __init__(self, message=None, status_code=None, payload=None, exception=None, extra=None):
         Exception.__init__(self)
-        self._logged = False
 
         #: a human readable error description
         self.message = message
