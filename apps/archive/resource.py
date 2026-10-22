@@ -7,7 +7,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 from apps.archive.common import item_schema
-from superdesk.metadata.item import PROCESSED_FROM
+from superdesk.metadata.item import PROCESSED_FROM, not_analyzed
 from superdesk.resource import Resource
 from superdesk.metadata.utils import (
     extra_response_fields,
@@ -20,7 +20,8 @@ from .utils import private_content_filter
 
 
 class ArchiveResource(Resource):
-    schema = item_schema()
+    #: ``staged_id`` references an ``upload_staging`` document to create the item from, it is not stored
+    schema = item_schema({"staged_id": {"type": "string", "mapping": not_analyzed}})
     extra_response_fields = extra_response_fields
     item_url = item_url
     datasource = {

@@ -450,6 +450,10 @@ CELERY_TASK_ROUTES = {
         "routing_key": "publish.transmit",
     },
     "superdesk.media.*": {"queue": celery_queue("media"), "routing_key": "media.operations"},
+    "apps.archive.upload_staging.process_staged_upload": {
+        "queue": celery_queue("media"),
+        "routing_key": "media.operations",
+    },
 }
 
 #: celery beat config
@@ -469,6 +473,10 @@ CELERY_BEAT_SCHEDULE = {
     "audit:gc": {"task": "superdesk.audit.gc_audit", "schedule": crontab(minute="8", hour=local_to_utc_hour(1))},
     "session:gc": {"task": "apps.auth.session_purge", "schedule": timedelta(minutes=5)},
     "content:gc": {"task": "apps.archive.content_expiry", "schedule": timedelta(minutes=30)},
+    "upload_staging:gc": {
+        "task": "apps.archive.upload_staging.expire_staged_uploads",
+        "schedule": timedelta(minutes=5),
+    },
     "temp_files:gc": {
         "task": "superdesk.commands.temp_file_expiry",
         "schedule": crontab(minute="0", hour=local_to_utc_hour(3)),
@@ -1532,6 +1540,13 @@ AP_MEDIA_API_VERIFY_SSL = strtobool(env("AP_MEDIA_API_VERIFY_SSL", "true"))
 #: .. versionadded:: 2.8
 #:
 PICTURE_METADATA_MAPPING = {}
+
+#: Seconds an uploaded media file waits in ``upload_staging`` for the client to commit it
+#: before it is removed by the scheduled upload staging cleanup task.
+#:
+#: .. versionadded:: 3.6
+#:
+UPLOAD_STAGING_TTL = 6 * 3600
 
 #: Enable broadcast feature
 #:

@@ -135,6 +135,9 @@ Default: ``9999``
 
 Default: ``'Superdesk'``
 
+For uploaded media without an ingest provider, this default is used only when
+the source field is absent. A supplied source value is preserved.
+
 .. versionchanged:: 1.8
     Change default value to ``'Superdesk'``.
 

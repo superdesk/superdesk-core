@@ -220,6 +220,7 @@ class ArchiveService(AsyncBaseService, HighlightsSearchMixin):
             superdesk.item_create.send(self, item=doc)
 
     async def on_created_async(self, docs):
+        await self.mediaService.on_created_async(docs)
         packages = [doc for doc in docs if doc[ITEM_TYPE] == CONTENT_TYPE.COMPOSITE]
         if packages:
             await self.packageService.on_created_async(packages)

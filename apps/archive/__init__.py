@@ -100,6 +100,10 @@ def init_app(app) -> None:
     service = NewsService(endpoint_name, backend=superdesk.get_backend())
     NewsResource(endpoint_name, app=app, service=service)
 
+    from .upload_staging import init_app as init_upload_staging
+
+    init_upload_staging(app)
+
     endpoint_name = "archive_internal"
     ArchiveInternalResource(endpoint_name, app=app, service=archive_internal_service)
 
