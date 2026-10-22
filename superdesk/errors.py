@@ -117,6 +117,8 @@ class SuperdeskError(DocumentError):
 class SuperdeskApiError(SuperdeskError):
     """Base class for superdesk API."""
 
+    _logged = False
+
     #: error status code
     status_code = 400
 
@@ -133,7 +135,8 @@ class SuperdeskApiError(SuperdeskError):
             self.payload = payload
 
         if exception:
-            logger.exception(message or exception, extra=extra)
+            logger.exception(message or exception, exc_info=exception, extra=extra)
+            self._logged = True
 
     def to_dict(self) -> dict:
         """Create dict for json response."""
