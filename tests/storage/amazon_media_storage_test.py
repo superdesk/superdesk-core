@@ -1,8 +1,9 @@
 import os
 import time
+from io import BytesIO
 
 from datetime import timedelta
-from unittest.mock import patch, Mock
+from unittest.mock import patch, Mock, AsyncMock
 
 from superdesk.utc import utcnow
 from superdesk.tests import TestCase
@@ -11,6 +12,42 @@ from superdesk.media.media_operations import guess_media_extension
 
 
 class AmazonMediaStorageTestCase(TestCase):
+    async def test_async_upload_logs_storage_milestones(self):
+        content = BytesIO(b"upload")
+        with (
+            patch.object(self.amazon, "_check_exists_async", new_callable=AsyncMock, return_value=False),
+            patch.object(self.amazon, "call_async", new_callable=AsyncMock) as call,
+            self.assertLogs("superdesk.storage.amazon_media_storage", level="INFO") as logs,
+        ):
+            media_id = await self.amazon.put_async(
+                content, filename="upload-reference", content_type="audio/mpeg", _id="media-id"
+            )
+        self.assertEqual(media_id, "media-id")
+        call.assert_awaited_once_with(
+            "upload_fileobj",
+            Fileobj=content,
+            Key="media-id",
+            ExtraArgs={"ContentType": "audio/mpeg", "Metadata": {"filename": "upload-reference"}},
+        )
+        messages = [record.getMessage() for record in logs.records]
+        self.assertIn("S3 upload checking existence media=media-id upload=upload-reference", messages)
+        self.assertTrue(any("S3 upload existence checked media=media-id exists=False" in msg for msg in messages))
+        self.assertIn("S3 upload preparing body media=media-id", messages)
+        self.assertIn("S3 upload sending body media=media-id method=upload_fileobj", messages)
+        self.assertTrue(messages[-1].startswith("S3 upload completed media=media-id elapsed="))
+
+    async def test_failed_async_upload_does_not_log_completion(self):
+        with (
+            patch.object(self.amazon, "_check_exists_async", new_callable=AsyncMock, return_value=False),
+            patch.object(self.amazon, "call_async", new_callable=AsyncMock, side_effect=RuntimeError("S3 unavailable")),
+            self.assertLogs("superdesk.storage.amazon_media_storage", level="INFO") as logs,
+        ):
+            with self.assertRaisesRegex(RuntimeError, "S3 unavailable"):
+                await self.amazon.put_async(b"upload", content_type="audio/mpeg", _id="media-id")
+        messages = [record.getMessage() for record in logs.records]
+        self.assertIn("S3 upload sending body media=media-id method=put_object", messages)
+        self.assertFalse(any("S3 upload completed" in msg for msg in messages))
+
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.amazon = AmazonMediaStorage(self.app)

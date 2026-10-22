@@ -97,6 +97,15 @@ or serialize it with expiry cleanup.
 A worker and beat must be running; no Celery results backend is
 needed for staging. Legacy, non-staged archive uploads retain their existing processing flow.
 
+For upload diagnostics, enable INFO logging for ``apps.archive.upload_staging`` and
+``superdesk.storage.amazon_media_storage`` in both the API and worker processes.
+Milestones cover MIME detection, binary storage, database insertion completion,
+worker dispatch, metadata extraction, confirmation and renditions. Correlate the
+generated ``upload`` reference with ``media`` and then ``staged_id``. S3 logs distinguish
+client initialization, existence checks and binary transfer, with elapsed times.
+The first staging milestone occurs after multipart parsing; no milestone means the
+request has not reached the staging create hook. File contents and credentials are not logged.
+
 When updating a development database that used the earlier staging TTL index, drop
 ``upload_staging.expires_1`` and reinitialize indexes. The new index on ``expires`` is
 non-TTL: direct MongoDB expiry would bypass media cleanup.

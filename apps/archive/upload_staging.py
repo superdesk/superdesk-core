@@ -23,6 +23,7 @@ from contextlib import ExitStack
 from collections.abc import Mapping
 from datetime import timedelta
 from tempfile import NamedTemporaryFile
+from time import monotonic
 from uuid import uuid4
 from typing import Any, cast
 
@@ -142,11 +143,15 @@ class UploadStagingService(AsyncBaseService):
         user = get_user(required=True)
 
         for doc in docs:
+            started = monotonic()
+            file_name = uuid4().hex
+            logger.info("Staged upload received upload=%s; detecting media type", file_name)
             content = doc.get("media")
             if content is None:
                 raise SuperdeskApiError.badRequestError(_("No media found"))
 
             content_type = app.media._get_mimetype(content)
+            logger.info("Staged upload detected upload=%s mimetype=%s", file_name, content_type)
             content.seek(0)
             file_type = content_type.split("/")[0]
             if file_type not in STAGEABLE_FILE_TYPES:
@@ -155,10 +160,16 @@ class UploadStagingService(AsyncBaseService):
             content.seek(0, 2)
             size = content.tell()
             content.seek(0)
-            file_name = uuid4().hex
             upload_name = getattr(content, "filename", None) or file_name
+            logger.info("Staged upload storing binary upload=%s size=%s", file_name, size)
             doc["media"] = await app.media.put_async(
                 content, filename=file_name, content_type=content_type, metadata={"length": str(size)}
+            )
+            logger.info(
+                "Staged upload stored binary upload=%s media=%s elapsed=%.3fs",
+                file_name,
+                doc["media"],
+                monotonic() - started,
             )
 
             doc["filename"] = upload_name
@@ -169,9 +180,12 @@ class UploadStagingService(AsyncBaseService):
             doc["user"] = user["_id"]
             doc["expires"] = utcnow() + timedelta(seconds=get_config(int, "UPLOAD_STAGING_TTL"))
             doc["status"] = UploadStatus.PENDING
+            logger.info("Staged upload prepared for database insertion upload=%s media=%s", file_name, doc["media"])
 
     async def on_created_async(self, docs: list[dict[str, Any]]) -> None:
         for doc in docs:
+            started = monotonic()
+            logger.info("Staged upload persisted staged_id=%s media=%s; dispatching worker", doc["_id"], doc["media"])
             try:
                 await process_staged_upload.delay(doc["_id"])
             except Exception:
@@ -181,11 +195,22 @@ class UploadStagingService(AsyncBaseService):
                     {"status": UploadStatus.FAILED, "error": str(_("Failed to queue media processing"))},
                 )
                 raise
+            logger.info(
+                "Staged upload dispatched staged_id=%s elapsed=%.3fs; refreshing status",
+                doc["_id"],
+                monotonic() - started,
+            )
             # Eager execution (tests/development) may already have finished processing.
             current = await self.find_one_async(req=None, _id=doc["_id"])
             if not current:
                 raise SuperdeskApiError.notFoundError(_("Staged upload not found or expired"))
             doc.update(current)
+            logger.info(
+                "Staged upload response ready staged_id=%s status=%s elapsed=%.3fs",
+                doc["_id"],
+                doc["status"],
+                monotonic() - started,
+            )
 
     async def on_update_async(self, updates: dict[str, Any], original: dict[str, Any]) -> None:
         self._check_owner(original)
@@ -256,6 +281,8 @@ async def _recover_processing_failure(
 
 @shared_task(ignore_result=True, store_async_result=False, soft_time_limit=10 * 60, time_limit=15 * 60)
 async def process_staged_upload(staged_id: Id, renditions_only: bool = False) -> None:
+    started = monotonic()
+    logger.info("Staged upload worker started staged_id=%s renditions_only=%s", staged_id, renditions_only)
     service = superdesk.get_resource_service("upload_staging")
     token = uuid4().hex
     owned_processing = {"_id": staged_id, "status": UploadStatus.PROCESSING, "processing_token": token}
@@ -273,9 +300,11 @@ async def process_staged_upload(staged_id: Id, renditions_only: bool = False) ->
             {"status": UploadStatus.PROCESSING, "processing_token": token},
         )
         if not staged:
+            logger.info("Staged upload worker skipped staged_id=%s; no eligible claim", staged_id)
             return
         file_type = staged["mimetype"].split("/")[0]
         if not renditions_only:
+            logger.info("Staged upload worker downloading staged_id=%s media=%s", staged_id, staged["media"])
             media = await get_current_app().media.get_async(staged["media"])
             if not media:
                 raise SuperdeskApiError.notFoundError(_("Staged media not found"))
@@ -285,7 +314,13 @@ async def process_staged_upload(staged_id: Id, renditions_only: bool = False) ->
                     tmp.write(chunk)
             tmp.flush()
             original_content = tmp.file
+            logger.info("Staged upload worker extracting metadata staged_id=%s", staged_id)
             metadata_updates = await extract_staged_metadata(staged, original_content, tmp.name)
+            logger.info(
+                "Staged upload worker extracted metadata staged_id=%s elapsed=%.3fs",
+                staged_id,
+                monotonic() - started,
+            )
             current = await service.update_processing(
                 {**owned_processing, "expires": {"$gt": utcnow()}},
                 metadata_updates,
@@ -300,11 +335,13 @@ async def process_staged_upload(staged_id: Id, renditions_only: bool = False) ->
                     {"status": UploadStatus.AWAITING_CONFIRMATION},
                 )
                 if waiting:
+                    logger.info("Staged upload awaiting confirmation staged_id=%s", staged_id)
                     notify_staged_upload(staged)
                     current = await service.find_one_async(None, _id=staged_id)
                     if current and current.get("confirmed"):
                         await process_staged_upload.delay(staged_id, renditions_only=True)
                 return
+        logger.info("Staged upload worker generating renditions staged_id=%s", staged_id)
         if file_type == "video" and get_config(bool, "VIDEO_SERVER_ENABLED"):
             from .archive_media import ArchiveMediaService
 
@@ -344,6 +381,7 @@ async def process_staged_upload(staged_id: Id, renditions_only: bool = False) ->
             await delete_staged_media(staged, original=False)
         else:
             notify_staged_upload(staged)
+            logger.info("Staged upload ready staged_id=%s elapsed=%.3fs", staged_id, monotonic() - started)
     except (Exception, asyncio.CancelledError):
         logger.exception("Failed to process staged upload %s", staged_id)
         await _recover_processing_failure(service, staged_id, token, staged)
