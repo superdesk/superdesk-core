@@ -33,6 +33,9 @@ Production API. This returns ``+0000`` instead of ``+00:00`` or ``Z`` for UTC
 timestamps, including nested and Pydantic-serialized values. Fractional seconds
 and non-UTC offsets are preserved. The setting defaults to ``true`` and affects
 only Production API JSON responses, not stored data or other APIs.
+The Production API data layer restores datetime types using resource schemas.
+The JSON encoder formats only datetime objects; editorial text and unknown string
+fields are left unchanged, even if their contents look like timestamps.
 
 
 Endpoints

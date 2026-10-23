@@ -23,3 +23,26 @@ def init_app(app: Eve):
         init_planning_app(app)
     except ImportError:
         pass
+    else:
+        from planning.events.events_schema import events_schema
+        from planning.planning.planning_schema import planning_schema
+        from planning.assignments.assignments import assignments_schema
+
+        # These read-only endpoints omit the full schemas from Eve's DOMAIN.
+        schemas = app.config.setdefault("_PRODAPI_RESPONSE_SCHEMAS", {})
+        schemas.update(
+            events=events_schema,
+            planning=planning_schema,
+            assignments=assignments_schema,
+            events_history={"update": {"type": "dict", "schema": events_schema}},
+        )
+        assignment_link = {"type": "dict", "schema": {"scheduled": {"type": "datetime"}}}
+        links = {
+            "type": "dict",
+            "schema": {
+                "assignment": assignment_link,
+                "assignments": {"type": "list", "schema": assignment_link},
+            },
+        }
+        for resource in ("archive", "events", "planning", "assignments"):
+            schemas[resource] = {**schemas.get(resource, {}), "_links": links}

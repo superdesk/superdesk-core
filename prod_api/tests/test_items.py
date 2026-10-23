@@ -55,6 +55,15 @@ async def test_datetime_format(prodapi_app_with_data, prodapi_app_with_data_clie
                     "guid": guid,
                     "type": "text",
                     "firstcreated": datetime(2026, 10, 20, 7, 56, 49, tzinfo=timezone.utc),
+                    "headline": "2026-10-20T07:56:49+0000",
+                    "slugline": "2026-10-20T07:56:49Z",
+                    "extra": {"text": "2026-10-20T07:56:49+0000"},
+                    "associations": {
+                        "editor_0": {
+                            "firstcreated": "2026-10-20T07:56:49+0000",
+                            "headline": "2026-10-20T07:56:49Z",
+                        }
+                    },
                 }
             ],
         )
@@ -72,6 +81,11 @@ async def test_datetime_format(prodapi_app_with_data, prodapi_app_with_data_clie
 
         for item in (items[0], await response.get_json()):
             assert item["firstcreated"] == expected
+            assert item["headline"] == "2026-10-20T07:56:49+0000"
+            assert item["slugline"] == "2026-10-20T07:56:49Z"
+            assert item["extra"]["text"] == "2026-10-20T07:56:49+0000"
+            assert item["associations"]["editor_0"]["firstcreated"] == expected
+            assert item["associations"]["editor_0"]["headline"] == "2026-10-20T07:56:49Z"
 
 
 async def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):
