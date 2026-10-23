@@ -41,7 +41,7 @@ async def create_renditions_in_celery(
     resource: str = "upload",
     delete_all_on_error: bool = False,
     insert_metadata: bool = True,
-    temporary: bool = True,
+    temporary: bool = False,
     content_type: str | None = None,
 ) -> dict:
     task_result: AsyncTaskResult[dict] | dict = await create_renditions_in_celery_task.delay(
@@ -65,7 +65,7 @@ async def create_renditions_in_celery_task(
     resource: str = "upload",
     delete_all_on_error: bool = False,
     insert_metadata: bool = True,
-    temporary: bool = True,
+    temporary: bool = False,
     content_type: str | None = None,
 ) -> dict:
     return await create_renditions_for_file(
@@ -80,7 +80,7 @@ async def create_renditions_for_file(
     resource: str = "upload",
     delete_all_on_error: bool = False,
     insert_metadata: bool = True,
-    temporary: bool = True,
+    temporary: bool = False,
     content_type: str | None = None,
     *,
     original_content: IO[bytes] | None = None,
@@ -147,8 +147,8 @@ def generate_renditions(
     :param dict rendition_config: rendition config
     :param url_for_media: function to generate url
     :param bool insert_metadata: boolean to inserted metadata or not. For AWS storage it is false.
-    :param bool temporary: put files created in database in "temp" if True
-                           files in "temp" folder will be removed after 24 hours
+    :param bool temporary: put files created in database in "temp" if True (False by default);
+                           files in "temp" folder will be removed after the configured expiry
     :return: dict of renditions
     """
     app = get_current_app()
