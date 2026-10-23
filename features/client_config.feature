@@ -13,6 +13,7 @@ Feature: Client Config
                 "schema": {},
                 "editor": {},
                 "publish_content_expiry_minutes": 0,
+                "max_content_expiry_minutes": 143999999,
                 "workflow_allow_multiple_updates": false,
                 "default_timezone": "Europe/Prague"
             }

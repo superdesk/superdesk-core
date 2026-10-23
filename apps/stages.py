@@ -15,6 +15,7 @@ from superdesk.notification import push_notification
 from superdesk.resource import Resource
 from superdesk.eve_async import AsyncBaseService
 from superdesk.errors import SuperdeskApiError
+from superdesk.utc import MAX_CONTENT_EXPIRY_MINUTES
 from superdesk import get_resource_service
 from eve.utils import ParsedRequest
 from apps.tasks import task_statuses
@@ -37,7 +38,7 @@ class StagesResource(Resource):
         "task_status": {"type": "string", "allowed": task_statuses},
         "desk_order": {"type": "integer", "readonly": True},
         "desk": Resource.rel("desks", embeddable=True, required=True),
-        "content_expiry": {"type": "integer"},
+        "content_expiry": {"type": "integer", "max": MAX_CONTENT_EXPIRY_MINUTES},
         # if true then desk members can see the item on that stage
         # if false then non-members cannot see the item on that stage
         "is_visible": {"type": "boolean", "default": True},

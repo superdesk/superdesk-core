@@ -19,6 +19,8 @@ from pytz import utc, timezone
 
 tzinfo = getattr(datetime, "tzinfo", object)
 EXPIRY_OVERFLOW_DAYS = 99999
+# 99999 days, 23 hours and 59 minutes.
+MAX_CONTENT_EXPIRY_MINUTES = (EXPIRY_OVERFLOW_DAYS + 1) * 24 * 60 - 1
 logger = logging.getLogger(__name__)
 
 

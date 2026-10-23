@@ -100,6 +100,33 @@ Feature: Stages
         Then we get global content expiry
 
     @auth @notification
+    Scenario: Stage content expiry cannot exceed 99999 days
+        When we post to "/stages"
+        """
+        {"name": "too long expiry", "desk": "#desks._id#", "content_expiry": 144000000}
+        """
+        Then we get error 400
+        """
+        {"_issues": {"content_expiry": "max value is 143999999"}}
+        """
+        When we post to "/stages"
+        """
+        {"name": "max expiry", "desk": "#desks._id#", "content_expiry": 143999999}
+        """
+        Then we get new resource
+        """
+        {"name": "max expiry", "content_expiry": 143999999}
+        """
+        When we patch "/stages/#stages._id#"
+        """
+        {"content_expiry": 14399999998560}
+        """
+        Then we get error 400
+        """
+        {"_issues": {"content_expiry": "max value is 143999999"}}
+        """
+
+    @auth @notification
     Scenario: Can delete an empty stage
         When we post to "/stages"
         """
