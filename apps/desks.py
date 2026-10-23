@@ -22,6 +22,7 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.resource import Resource
 from superdesk.utils import SuperdeskBaseEnum
 from superdesk.timer import timer
+from superdesk.utc import MAX_CONTENT_EXPIRY_MINUTES
 from bson.objectid import ObjectId
 from superdesk.eve_async.service import AsyncBaseService
 from superdesk.notification import push_notification
@@ -47,7 +48,7 @@ desks_schema = {
     "members": {"type": "list", "schema": {"type": "dict", "schema": {"user": Resource.rel("users", True)}}},
     "incoming_stage": Resource.rel("stages", True),
     "working_stage": Resource.rel("stages", True),
-    "content_expiry": {"type": "integer"},
+    "content_expiry": {"type": "integer", "max": MAX_CONTENT_EXPIRY_MINUTES},
     "source": {"type": "string"},
     "send_to_desk_not_allowed": {"type": "boolean"},
     "monitoring_settings": {
