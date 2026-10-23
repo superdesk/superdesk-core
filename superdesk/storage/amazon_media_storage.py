@@ -206,7 +206,9 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
             kw["Key"] = self.get_key(kw["Key"])
 
         if not self.client_async:
+            logger.info("S3 async client initializing")
             self.client_async = await self.session_async.client("s3", **self.connection_kwargs).__aenter__()
+            logger.info("S3 async client initialized")
 
         return await getattr(self.client_async, method)(**kw)
 
@@ -429,13 +431,23 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
         logger.debug("Going to save file file=%s media=%s " % (filename, _id))
 
         media_id = self._get_put_id(_id, version, folder)
+        started = time.monotonic()
+        logger.info("S3 upload checking existence media=%s upload=%s", media_id, filename)
         found = await self._check_exists_async(media_id)
+        logger.info(
+            "S3 upload existence checked media=%s exists=%s elapsed=%.3fs",
+            media_id,
+            found,
+            time.monotonic() - started,
+        )
         if found:
             return media_id
 
         try:
+            logger.info("S3 upload preparing body media=%s", media_id)
             call_kwargs = self._get_put_kwargs(content, filename, content_type, media_id, **kwargs)
             if isinstance(content, (bytes, str)):
+                logger.info("S3 upload sending body media=%s method=put_object", media_id)
                 await self.call_async("put_object", **call_kwargs)
             else:
                 call_kwargs = dict(
@@ -443,7 +455,9 @@ class AmazonMediaStorage(SuperdeskMediaStorage):
                     Key=call_kwargs.pop("Key"),
                     ExtraArgs=call_kwargs,
                 )
+                logger.info("S3 upload sending body media=%s method=upload_fileobj", media_id)
                 await self.call_async("upload_fileobj", **call_kwargs)
+            logger.info("S3 upload completed media=%s elapsed=%.3fs", media_id, time.monotonic() - started)
             return media_id
         except Exception as ex:
             logger.exception(ex)

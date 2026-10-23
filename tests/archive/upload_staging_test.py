@@ -39,6 +39,33 @@ class UploadStagingTestCase(TestCase):
         await self.service.create_async([doc])
         return doc
 
+    async def test_upload_logs_request_and_worker_milestones(self):
+        with self.assertLogs("apps.archive.upload_staging", level="INFO") as logs:
+            staged = await self.stage()
+            with patch("apps.archive.upload_staging.process_staged_upload.delay", new_callable=AsyncMock):
+                await self.service.on_created_async([staged])
+            await process_staged_upload.run(staged["_id"])
+        messages = [record.getMessage() for record in logs.records]
+        for milestone in (
+            "received upload=",
+            "detected upload=",
+            "storing binary upload=",
+            "stored binary upload=",
+            "prepared for database insertion upload=",
+            "persisted staged_id=",
+            "dispatched staged_id=",
+            "response ready staged_id=",
+            "worker started staged_id=",
+            "worker downloading staged_id=",
+            "worker extracting metadata staged_id=",
+            "worker extracted metadata staged_id=",
+            "worker generating renditions staged_id=",
+            "ready staged_id=",
+        ):
+            self.assertTrue(any(f"Staged upload {milestone}" in msg for msg in messages), milestone)
+        self.assertTrue(any(f"media={staged['media']}" in msg for msg in messages))
+        self.assertTrue(any(f"staged_id={staged['_id']}" in msg for msg in messages))
+
     async def test_metadata_preserves_supplied_source(self):
         with patch.dict(self.app.config, DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES="Default Source"):
             for source in ("Explicit Source", "", None):
