@@ -12,6 +12,17 @@ info:
 
     Authentication is based on OAuth 2.0 and uses the Superdesk Auth Server: https://superdesk.readthedocs.io/en/latest/auth_server.html
 
+    Datetime strings use RFC 3339 by default, for example `2026-10-20T07:56:49+00:00`.
+    UTC may also be represented by `Z`, and fractional seconds may be included.
+    Date-only fields use `YYYY-MM-DD`.
+
+    For legacy clients, set `PRODAPI_RFC3339_DATETIME=false` in the environment or
+    `PRODAPI_RFC3339_DATETIME = False` in server settings and restart the Production API.
+    This uses compact timezone offsets such as `+0000` instead of `+00:00` or `Z`.
+    That compatibility mode is not RFC 3339 and does not conform to the `date-time`
+    formats declared in this specification. It affects only Production API JSON
+    responses, not stored data or other APIs.
+
 servers:
   - url: /prodapi/v1
     description: Production API v1 Server
@@ -897,7 +908,7 @@ components:
           type: string
           format: date-time
           description: The date & time the Assignment is due
-          example: "2021-07-07T02:00:00+0000"
+          example: "2021-07-07T02:00:00+00:00"
         content_type:
           type: string
           description: Qcode of the type of content expected (g2_content_type)
@@ -1046,7 +1057,7 @@ components:
         content_list_items_updated_at:
           type: string
           format: date-time
-          example: "2024-09-29T12:00:00+0000"
+          example: "2024-09-29T12:00:00+00:00"
         _links:
           type: object
           description: HATEOAS links to related resources
@@ -1104,7 +1115,7 @@ components:
         scheduled:
           type: string
           format: date-time
-          example: "2021-07-07T02:00:00+0000"
+          example: "2021-07-07T02:00:00+00:00"
         _links:
           type: object
           description: HATEOAS links to related resources
@@ -1138,7 +1149,7 @@ components:
           type: string
           format: date-time
           description: Start date and time of the planning item (mapped from dates.start)
-          example: "2021-07-15T14:00:00+0000"
+          example: "2021-07-15T14:00:00+00:00"
         all_day:
           type: boolean
           description: Whether the planning item is scheduled for the whole day (mapped from dates.all_day)
@@ -1181,11 +1192,11 @@ components:
             start:
               type: string
               format: date-time
-              example: "2021-07-15T14:00:00+0000"
+              example: "2021-07-15T14:00:00+00:00"
             end:
               type: string
               format: date-time
-              example: "2021-07-15T16:00:00+0000"
+              example: "2021-07-15T16:00:00+00:00"
         coverages:
           type: array
           nullable: true
