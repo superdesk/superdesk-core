@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from bson import ObjectId
+from planning.events.events_schema import events_schema
 
 from prod_api.json_utils import ProdApiJSONEncoder, ProdApiLegacyJSONEncoder
 from prod_api.datalayer import parse_datetimes
@@ -21,6 +22,26 @@ class ExampleModel(BaseModel):
 class ExampleDataclass(Dataclass):
     when: UTCDatetime
     headline: str
+
+
+@pytest.mark.parametrize("encoder_class", [ProdApiJSONEncoder, ProdApiLegacyJSONEncoder])
+def test_mapped_date_only_values(encoder_class):
+    response = {
+        "dates": {
+            "recurring_date": ["2026-10-20", "2026-10-21"],
+            "ex_date": ["2026-10-22"],
+        },
+        "accreditation_deadline": "2026-10-19",
+    }
+
+    parsed = parse_datetimes(response, {"type": "dict", "schema": events_schema})
+
+    assert parsed == response
+    assert json.loads(encoder_class().encode(parsed)) == response
+    assert parse_datetimes("2026-10-20", {"type": "datetime"}) == datetime(2026, 10, 20)
+    assert parse_datetimes("2026-10-20T07:56:49Z", {"mapping": {"type": "date"}}) == datetime(
+        2026, 10, 20, 7, 56, 49, tzinfo=timezone.utc
+    )
 
 
 @pytest.mark.parametrize(

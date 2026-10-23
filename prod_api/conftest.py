@@ -173,7 +173,7 @@ async def prodapi_app_with_data(request):
         # Event response hooks query nested links absent from these older fixtures.
         app.data.elastic._put_mappings(
             app.data.elastic.es,
-            app.data.elastic._resource_index("events"),
+            app.data.elastic._resource_index("planning"),
             {"properties": {"related_events": planning_schema["related_events"]["mapping"]}},
         )
 

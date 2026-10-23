@@ -25,6 +25,8 @@ format, for example ``2026-10-20T07:56:49+00:00``. The ``+00:00`` offset indicat
 Earlier versions returned UTC offsets as ``+0000``, without the colon. Consumers migrating
 from those versions should accept RFC 3339 offsets rather than requiring the old spelling.
 Date-only fields, such as user availability dates, use ``YYYY-MM-DD``.
+Date-only strings remain unchanged in both modes, including Planning recurrence
+dates, exception dates, and accreditation deadlines mapped as Elasticsearch dates.
 
 For clients that still require compact timezone offsets, set
 ``PRODAPI_RFC3339_DATETIME=false`` in the environment, or

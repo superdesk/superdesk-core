@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from typing import Any
 
 from eve_elastic import Elastic
@@ -14,6 +15,9 @@ def parse_datetimes(value: Any, schema: dict) -> Any:
     if isinstance(value, str) and (
         schema.get("type") == "datetime" or (schema.get("mapping") or {}).get("type") == "date"
     ):
+        # Elasticsearch date mappings also represent date-only fields.
+        if schema.get("type") != "datetime" and re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", value):
+            return value
         return parse_date(value)
     if isinstance(value, datetime):
         return value
