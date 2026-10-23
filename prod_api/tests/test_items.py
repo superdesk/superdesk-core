@@ -1,4 +1,7 @@
 import json
+from datetime import datetime, timezone
+
+import pytest
 
 from superdesk.flask import url_for
 from superdesk import get_resource_service
@@ -30,6 +33,45 @@ async def test_readonly(prodapi_app_with_data, prodapi_app_with_data_client):
             resp = await getattr(prodapi_app_with_data_client, method)(url_for("archive|resource"))
             # we get a response
             assert resp.status_code == status
+
+
+@pytest.mark.parametrize(
+    "prodapi_app_with_data, expected",
+    [
+        ({}, "2026-10-20T07:56:49+00:00"),
+        ({"PRODAPI_RFC3339_DATETIME": False}, "2026-10-20T07:56:49+0000"),
+    ],
+    indirect=["prodapi_app_with_data"],
+)
+async def test_datetime_format(prodapi_app_with_data, prodapi_app_with_data_client, expected):
+    guid = "urn:newsml:localhost:datetime-format"
+
+    async with prodapi_app_with_data.app_context():
+        prodapi_app_with_data.data.insert(
+            ARCHIVE,
+            [
+                {
+                    "_id": guid,
+                    "guid": guid,
+                    "type": "text",
+                    "firstcreated": datetime(2026, 10, 20, 7, 56, 49, tzinfo=timezone.utc),
+                }
+            ],
+        )
+
+    async with prodapi_app_with_data.test_request_context("/"):
+        response = await prodapi_app_with_data_client.get(
+            url_for("archive|resource", source=json.dumps({"query": {"ids": {"values": [guid]}}}))
+        )
+        assert response.status_code == 200
+        items = (await response.get_json())["_items"]
+        assert len(items) == 1
+
+        response = await prodapi_app_with_data_client.get(url_for("archive|item_lookup", _id=guid))
+        assert response.status_code == 200
+
+        for item in (items[0], await response.get_json()):
+            assert item["firstcreated"] == expected
 
 
 async def test_excluded_fields(prodapi_app_with_data, prodapi_app_with_data_client):

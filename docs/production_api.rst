@@ -15,6 +15,26 @@ Production API uses versioned endpoints to provide stable, non breaking changes 
 Current API version is **v1**
 
 
+Date and time format
+--------------------
+
+By default, datetime values in JSON responses are strings in `RFC 3339 <https://www.rfc-editor.org/rfc/rfc3339>`_
+format, for example ``2026-10-20T07:56:49+00:00``. The ``+00:00`` offset indicates UTC;
+``Z`` is an equivalent UTC designator in RFC 3339. JSON itself does not define a datetime type.
+
+Earlier versions returned UTC offsets as ``+0000``, without the colon. Consumers migrating
+from those versions should accept RFC 3339 offsets rather than requiring the old spelling.
+Date-only fields, such as user availability dates, use ``YYYY-MM-DD``.
+
+For clients that still require compact timezone offsets, set
+``PRODAPI_RFC3339_DATETIME=false`` in the environment, or
+``PRODAPI_RFC3339_DATETIME = False`` in the server settings, and restart the
+Production API. This returns ``+0000`` instead of ``+00:00`` or ``Z`` for UTC
+timestamps, including nested and Pydantic-serialized values. Fractional seconds
+and non-UTC offsets are preserved. The setting defaults to ``true`` and affects
+only Production API JSON responses, not stored data or other APIs.
+
+
 Endpoints
 ---------
 
@@ -99,7 +119,7 @@ Production API **v1** provides next endpoints:
                 "title": "Assignment",
                 "href": "assignments/60e403bc8361feb5664719b1",
                 "state": "in_progress",
-                "scheduled": "2021-07-07T02:00:00+0000",
+                "scheduled": "2021-07-07T02:00:00+00:00",
                 "content_type": "text",
             },
             "planning": {
@@ -251,7 +271,7 @@ Production API **v1** provides next endpoints:
                     "title": "Assignment",
                     "href": "assignments/60e403bc8361feb5664719b1",
                     "state": "in_progress",
-                    "scheduled": "2021-07-07T02:00:00+0000",
+                    "scheduled": "2021-07-07T02:00:00+00:00",
                     "content_type": "text",
                 }
             ],
@@ -283,7 +303,7 @@ Production API **v1** provides next endpoints:
                     "title": "Assignment",
                     "href": "assignments/60e403bc8361feb5664719b1",
                     "state": "in_progress",
-                    "scheduled": "2021-07-07T02:00:00+0000",
+                    "scheduled": "2021-07-07T02:00:00+00:00",
                     "content_type": "text",
                 }
             ],
@@ -376,7 +396,7 @@ Example
             "title": "Assignment",
             "href": "assignments/60e403bc8361feb5664719b1",
             "state": "in_progress",
-            "scheduled": "2021-07-07T02:00:00+0000",
+            "scheduled": "2021-07-07T02:00:00+00:00",
             "content_type": "text",
             "content_state": "published",
             "content_pubstatus": "usable"

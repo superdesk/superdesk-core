@@ -70,6 +70,7 @@ MEDIA_PREFIX = env("MEDIA_PREFIX", "{}/{}/{}/assets".format(PRODAPI_URL.rstrip("
 # date formats
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
 ELASTIC_DATE_FORMAT = "%Y-%m-%d"
+PRODAPI_RFC3339_DATETIME = strtobool(env("PRODAPI_RFC3339_DATETIME", "true"))
 
 # response in json
 XML = False
