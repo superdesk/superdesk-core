@@ -41,7 +41,7 @@ async def create_renditions_in_celery(
     resource: str = "upload",
     delete_all_on_error: bool = False,
     insert_metadata: bool = True,
-    temporary: bool = True,
+    temporary: bool = False,
     content_type: str | None = None,
 ) -> dict:
     task_result: AsyncTaskResult[dict] | dict = await create_renditions_in_celery_task.delay(
@@ -65,7 +65,7 @@ async def create_renditions_in_celery_task(
     resource: str = "upload",
     delete_all_on_error: bool = False,
     insert_metadata: bool = True,
-    temporary: bool = True,
+    temporary: bool = False,
     content_type: str | None = None,
 ) -> dict:
     app = get_current_app()
