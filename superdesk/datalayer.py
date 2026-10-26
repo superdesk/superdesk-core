@@ -32,6 +32,9 @@ class SuperdeskDataLayer(DataLayer):
     It handles app initialization and later it forwards eve calls to respective service.
     """
 
+    elastic_class = Elastic
+    elastic_async_class = ElasticAsync
+
     serializers = {}
     serializers.update(Mongo.serializers)
     serializers.update(
@@ -46,10 +49,10 @@ class SuperdeskDataLayer(DataLayer):
         self.mongo_async = MongoAsync(app)
         self.driver = self.mongo.driver
         self.storage = self.driver
-        self.elastic = Elastic(
+        self.elastic = self.elastic_class(
             app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True, max_retries=3
         )
-        self.elastic_async = ElasticAsync(
+        self.elastic_async = self.elastic_async_class(
             app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True, max_retries=3
         )
 

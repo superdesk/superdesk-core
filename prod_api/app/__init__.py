@@ -19,11 +19,9 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
 import os
 import importlib
 
-from eve.io.mongo.mongo import MongoJSONEncoder
 from eve.render import send_response
 
 from superdesk.flask import Config
-from superdesk.datalayer import SuperdeskDataLayer
 from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
@@ -32,6 +30,8 @@ from superdesk.cache import cache_backend
 from superdesk.logging import configure_logging, configure_graylog
 
 from prod_api.auth import JWTAuth
+from prod_api.datalayer import ProdApiDataLayer
+from prod_api.json_utils import ProdApiJSONEncoder, ProdApiLegacyJSONEncoder
 
 
 def set_prodapi_error_handlers(app):
@@ -100,9 +100,9 @@ def get_app(config=None):
     app = SuperdeskEve(
         auth=auth,
         settings=app_config,
-        data=SuperdeskDataLayer,
+        data=ProdApiDataLayer,
         media=media_storage,
-        json_encoder=MongoJSONEncoder,
+        json_encoder=ProdApiJSONEncoder if app_config["PRODAPI_RFC3339_DATETIME"] else ProdApiLegacyJSONEncoder,
         validator=SuperdeskValidator,
     )
 

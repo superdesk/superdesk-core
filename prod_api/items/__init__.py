@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import superdesk
+from superdesk.metadata.item import metadata_schema
 from .service import ItemsService
 from .resource import ItemsResource
 
@@ -21,3 +22,6 @@ def init_app(app) -> None:
     """
     service = ItemsService(datasource="archive", backend=superdesk.get_backend())
     ItemsResource(endpoint_name="archive", app=app, service=service)
+    schema = metadata_schema.copy()
+    schema["associations"] = {"type": "dict", "valuesrules": {"type": "dict", "schema": schema}}
+    app.config.setdefault("_PRODAPI_RESPONSE_SCHEMAS", {})["archive"] = schema
