@@ -306,6 +306,9 @@ paths:
           description: Assignment details with HATEOAS links
           content:
             application/json:
+              examples:
+                assignment:
+                  $ref: '#/components/examples/EventAssignment'
               schema:
                 $ref: '#/components/schemas/Assignment'
         '401':
@@ -366,6 +369,9 @@ paths:
           description: Planning details with HATEOAS links
           content:
             application/json:
+              examples:
+                planning:
+                  $ref: '#/components/examples/EventPlanning'
               schema:
                 $ref: '#/components/schemas/Planning'
         '401':
@@ -391,11 +397,26 @@ paths:
           required: false
           schema:
             type: string
+        - name: planning_source
+          in: query
+          description: Elasticsearch query over planning items; returns their primary related events
+          schema:
+            type: string
+          example: '{"query":{"match":{"slugline":"COUNCIL"}}}'
+        - name: exclude_assignments
+          in: query
+          description: Omit _links.assignments while retaining planning links and coverage summaries
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: List of events
           content:
             application/json:
+              examples:
+                events:
+                  $ref: '#/components/examples/EventList'
               schema:
                 type: object
                 properties:
@@ -421,11 +442,34 @@ paths:
             - EVENTS_READ
       parameters:
         - $ref: '#/components/parameters/guid'
+        - name: exclude_assignments
+          in: query
+          description: Omit _links.assignments while retaining planning links and coverage summaries
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: Event details with HATEOAS links
           content:
             application/json:
+              examples:
+                detailed:
+                  $ref: '#/components/examples/DetailedEvent'
+                recurring:
+                  $ref: '#/components/examples/RecurringEvent'
+                allDay:
+                  $ref: '#/components/examples/AllDayEvent'
+                unconfirmed:
+                  $ref: '#/components/examples/UnconfirmedEvent'
+                cancelled:
+                  $ref: '#/components/examples/CancelledEvent'
+                rescheduled:
+                  $ref: '#/components/examples/RescheduledEvent'
+                rescheduledReplacement:
+                  $ref: '#/components/examples/RescheduledReplacement'
+                duplicated:
+                  $ref: '#/components/examples/DuplicatedEvent'
               schema:
                 $ref: '#/components/schemas/Event'
         '401':
@@ -486,6 +530,9 @@ paths:
           description: Event file details
           content:
             application/json:
+              examples:
+                attachment:
+                  $ref: '#/components/examples/EventAttachment'
               schema:
                 $ref: '#/components/schemas/EventFile'
         '401':
@@ -546,6 +593,9 @@ paths:
           description: Event history details
           content:
             application/json:
+              examples:
+                update:
+                  $ref: '#/components/examples/EventHistoryUpdate'
               schema:
                 $ref: '#/components/schemas/EventHistory'
         '401':
@@ -701,6 +751,9 @@ paths:
           description: Contact details
           content:
             application/json:
+              examples:
+                contact:
+                  $ref: '#/components/examples/EventContact'
               schema:
                 $ref: '#/components/schemas/Contact'
         '401':
@@ -870,6 +923,645 @@ components:
         type: string
       example: "2023-05-16"
 
+  examples:
+    DetailedEvent:
+      summary: Event with venues, taxonomy, contacts, files and several coverage types
+      description: |
+        Illustrative response, not an import payload. IDs link the examples in
+        this section. Vocabulary qcodes, profile IDs and extra fields are
+        installation-specific. Optional fields are populated to demonstrate
+        their shapes, not to imply that every event returns them.
+      value:
+        _id: "urn:newsml:example.com:2026:event-council"
+        guid: "urn:newsml:example.com:2026:event-council"
+        type: event
+        name: City Council Meeting
+        slugline: COUNCIL-BUDGET
+        headline: Council to debate the annual budget
+        abstract: "<p>The council meets to discuss next year's budget.</p>"
+        definition_short: Monthly meeting of the city council
+        definition_long: "<p>Public session followed by a press briefing.</p>"
+        internal_note: Reporter access opens 30 minutes before the meeting.
+        ednote: Budget figures remain provisional until the vote.
+        dates:
+          start: "2026-11-02T09:00:00+00:00"
+          end: "2026-11-02T11:00:00+00:00"
+          tz: Europe/Prague
+          all_day: false
+          no_end_time: false
+          recurring_rule: null
+        _time_to_be_confirmed: false
+        occur_status:
+          qcode: "eocstat:eos5"
+          name: Planned, occurs certainly
+          label: Planned, occurs certainly
+        news_coverage_status:
+          qcode: "ncostat:int"
+          name: Coverage intended
+          label: Coverage intended
+        state: scheduled
+        pubstatus: usable
+        completed: false
+        priority: 2
+        urgency: 3
+        language: en
+        languages: [en, fr]
+        keywords: [council, budget]
+        subject:
+          - qcode: "11000000"
+            name: politics
+          - qcode: local-government
+            name: Local government
+            scheme: editorial-topics
+            parent: government
+            translations:
+              name:
+                en: Local government
+                fr: Gouvernement local
+        anpa_category:
+          - qcode: p
+            name: Politics
+        calendars:
+          - qcode: politics
+            name: Politics
+        agendas: ["66f0000000000000000000a1"]
+        genre:
+          - qcode: Event
+            name: Event
+        place:
+          - qcode: Prague
+            name: Prague
+            scheme: place_custom
+            code: PRG
+            locality: Prague
+            locality_code: PRG
+            state: Prague
+            state_code: "10"
+            country: Czechia
+            country_code: CZ
+            world_region: Europe
+            world_region_code: EUR
+            group: Europe
+            feature_class: P
+            rel: subject
+            location: {lat: 50.087, lon: 14.421}
+        location:
+          - name: City Hall
+            qcode: venue-city-hall
+            address:
+              line: ["1 Council Square", "Main entrance"]
+              city: Prague
+              locality: Old Town
+              area: Prague 1
+              state: Prague
+              postal_code: "11000"
+              country: CZ
+              boundingbox: ["50.08", "50.09", "14.41", "14.43"]
+              title: City Hall
+              type: civic
+              extra: {entrance: north}
+            formatted_address: 1 Council Square, 11000 Prague, CZ
+            geo: "50.087,14.421"
+            location: {lat: 50.087, lon: 14.421}
+            details: Press entrance on the north side; step-free access.
+            extra: {room: Council chamber}
+            translations:
+              details:
+                fr: Entree presse au nord.
+          - name: Remote press room
+            details: Join using the briefing link.
+            qcode: null
+            address: null
+            location: null
+        registration: Required
+        registration_details: Register through the council press office.
+        invitation_details: Accredited media and members of the public.
+        accreditation_info: Bring photo identification.
+        accreditation_deadline: "2026-10-30"
+        access_status:
+          - qcode: media
+            name: Media accreditation required
+        reference: COUNCIL-2026-11
+        links: ["https://example.com/council/agenda"]
+        files: ["60e6a117de25009b39121d81"]
+        event_contact_info:
+          - "60e6a119de25009b39121d83"
+          - "external:press-office"
+        participant:
+          - qcode: mayor
+            name: Mayor
+        participant_requirement:
+          - qcode: in-person
+            name: In-person attendance
+        organizer:
+          - qcode: city-council
+            name: City Council
+        translations:
+          - field: name
+            language: fr
+            value: Reunion du conseil municipal
+        relationships:
+          broader: "urn:newsml:example.com:2026:budget-season"
+          narrower: "urn:newsml:example.com:2026:budget-briefing"
+          related: "urn:newsml:example.com:2026:budget-publication"
+        company_codes:
+          - qcode: EXAMPLE
+            name: Example public services company
+            security_exchange: EXAMPLE-EXCHANGE
+        word_count: 12
+        item_class: "evnat:meeting"
+        extra: {public_stream: "https://example.com/council/live"}
+        version: 3
+        unique_id: 10042
+        unique_name: council-budget-2026-11
+        profile: "66f0000000000000000000b1"
+        template: "66f0000000000000000000b2"
+        original_creator: "5c489481405ecc015e5e10bd"
+        version_creator: "5c489481405ecc015e5e10bd"
+        firstcreated: "2026-10-20T08:00:00+00:00"
+        versioncreated: "2026-10-26T10:00:00+00:00"
+        versionposted: "2026-10-26T10:05:00+00:00"
+        event_created: "2026-10-20T07:00:00+00:00"
+        event_lastmodified: "2026-10-26T09:00:00+00:00"
+        source: Council press office
+        original_source: Council calendar
+        ingest_id: council-2026-11
+        ingest_provider: "66f0000000000000000000b3"
+        ingest_provider_sequence: "42"
+        ingest_firstcreated: "2026-10-20T07:00:00+00:00"
+        ingest_versioncreated: "2026-10-26T09:00:00+00:00"
+        ingest_pubstatus: usable
+        expiry: "2026-12-02T11:00:00+00:00"
+        expired: false
+        featured: true
+        flags:
+          marked_for_not_publication: false
+          overide_auto_assign_to_workflow: false
+        related_planning:
+          - _id: "urn:newsml:example.com:2026:planning-council"
+            link_type: primary
+        related_content:
+          - guid: "urn:newsml:example.com:2026:budget-preview"
+            type: text
+            state: published
+            version: 1
+            headline: What to expect from the council budget debate
+            slugline: COUNCIL-PREVIEW
+            versioncreated: "2026-10-26T09:00:00+00:00"
+            search: council budget
+            search_provider: local
+            pubstatus: usable
+            language: en
+            word_count: 450
+        coverages:
+          - coverage_id: "urn:newsml:example.com:2026:coverage-text"
+            original_coverage_id: null
+            guid: "urn:newsml:example.com:2026:coverage-text"
+            profile: "66f0000000000000000000b4"
+            news_coverage_status:
+              qcode: "ncostat:int"
+              name: Coverage intended
+              label: Coverage intended
+            workflow_status: active
+            previous_status: draft
+            flags: {no_content_linking: false}
+            _time_to_be_confirmed: false
+            add_coverage_to_workflow: true
+            original_creator: "5c489481405ecc015e5e10bd"
+            version_creator: "5c489481405ecc015e5e10bd"
+            firstcreated: "2026-10-20T08:00:00+00:00"
+            versioncreated: "2026-10-26T10:00:00+00:00"
+            assigned_to:
+              assignment_id: "60e403bc8361feb5664719b1"
+              state: in_progress
+              user: "5c489481405ecc015e5e10bd"
+              desk: "5c489481405ecc015e5e10bc"
+              contact: "60e6a119de25009b39121d83"
+              coverage_provider:
+                qcode: staff
+                name: Staff
+                contact_type: reporter
+              assignor_desk: "5c489481405ecc015e5e10bd"
+              assignor_user: "5c489481405ecc015e5e10bd"
+              assigned_date_desk: "2026-10-26T10:00:00+00:00"
+              assigned_date_user: "2026-10-26T10:00:00+00:00"
+              priority: 2
+            planning:
+              scheduled: "2026-11-02T11:30:00+00:00"
+              g2_content_type: text
+              slugline: COUNCIL-BUDGET
+              name: Budget decision report
+              headline: Council budget vote
+              abstract: "<p>Main decisions and reaction.</p>"
+              definition_short: Report on the council vote
+              definition_long: "<p>Include the result and opposition reaction.</p>"
+              internal_note: File a first take after the vote.
+              ednote: Check all figures against the approved budget.
+              language: en
+              languages: [en]
+              keywords: [council, budget]
+              priority: 2
+              urgency: 3
+              subject: [{qcode: "11000000", name: politics}]
+              anpa_category: [{qcode: p, name: Politics}]
+              genre: [{qcode: Article, name: Article}]
+              calendars: [{qcode: politics, name: Politics}]
+              agendas: ["66f0000000000000000000a1"]
+              place: [{qcode: Prague, name: Prague, country: Czechia}]
+              location: [{name: City Hall, location: {lat: 50.087, lon: 14.421}}]
+              coverage_provider: {qcode: staff, name: Staff, contact_type: reporter}
+              contact_info: "60e6a119de25009b39121d83"
+              workflow_status_reason: Reporter confirmed
+              multiple_content: true
+              fields: [{field: interview_targets, value: Mayor and opposition leader}]
+              files: ["60e6a117de25009b39121d81"]
+              xmp_file: null
+              item_class: "plinat:newscoverage"
+              item_count: 2
+              service: [{qcode: domestic, name: Domestic service}]
+              news_content_characteristics: [{name: words, value: "600"}]
+              planning_ext_property: [{qcode: delivery, name: Delivery, value: web}]
+              by: [Staff reporter]
+              credit_line: [Example newsroom]
+              dateline: [PRAGUE]
+            scheduled_updates:
+              - coverage_id: "urn:newsml:example.com:2026:coverage-text"
+                scheduled_update_id: "urn:newsml:example.com:2026:update-text"
+                news_coverage_status:
+                  qcode: "ncostat:int"
+                  name: Coverage intended
+                  label: Coverage intended
+                workflow_status: draft
+                previous_status: null
+                assigned_to: null
+                planning:
+                  scheduled: "2026-11-02T14:00:00+00:00"
+                  genre: [{qcode: Update, name: Update}]
+                  internal_note: Add reaction and final approved figures.
+                  contact_info: "60e6a119de25009b39121d83"
+                  workflow_status_reason: Awaiting reaction
+                  multiple_content: false
+          - coverage_id: "urn:newsml:example.com:2026:coverage-picture"
+            news_coverage_status:
+              qcode: "ncostat:onreq"
+              name: On request
+              label: On request
+            workflow_status: draft
+            assigned_to: null
+            planning:
+              scheduled: "2026-11-02T09:30:00+00:00"
+              g2_content_type: picture
+              slugline: COUNCIL-PICTURES
+              multiple_content: true
+          - coverage_id: "urn:newsml:example.com:2026:coverage-video"
+            news_coverage_status:
+              qcode: "ncostat:notdec"
+              name: Not decided
+              label: Not decided
+            workflow_status: draft
+            assigned_to: null
+            planning:
+              scheduled: "2026-11-02T12:00:00+00:00"
+              g2_content_type: video
+              slugline: COUNCIL-VIDEO
+        _planning_schedule:
+          - scheduled: "2026-11-02T09:00:00+00:00"
+            coverage_id: null
+          - scheduled: "2026-11-02T11:30:00+00:00"
+            coverage_id: "urn:newsml:example.com:2026:coverage-text"
+          - scheduled: "2026-11-02T09:30:00+00:00"
+            coverage_id: "urn:newsml:example.com:2026:coverage-picture"
+          - scheduled: "2026-11-02T12:00:00+00:00"
+            coverage_id: "urn:newsml:example.com:2026:coverage-video"
+        _updates_schedule:
+          - scheduled: "2026-11-02T14:00:00+00:00"
+            scheduled_update_id: "urn:newsml:example.com:2026:update-text"
+        _links:
+          self:
+            title: Event
+            href: "events/urn:newsml:example.com:2026:event-council"
+          plannings:
+            - title: Planning
+              href: "planning/urn:newsml:example.com:2026:planning-council"
+              coverages:
+                - coverage_id: "urn:newsml:example.com:2026:coverage-audio"
+                  workflow_status: active
+                  news_coverage_status:
+                    qcode: "ncostat:int"
+                    name: Coverage intended
+                    label: Coverage intended
+                  g2_content_type: audio
+          assignments:
+            - title: Assignment
+              href: "assignments/60e403bc8361feb5664719b2"
+              state: assigned
+              scheduled: "2026-11-02T12:30:00+00:00"
+              content_type: audio
+
+    EventList:
+      summary: Paginated event collection, including an event without coverage
+      value:
+        _items:
+          - _id: "urn:newsml:example.com:2026:event-council"
+            guid: "urn:newsml:example.com:2026:event-council"
+            type: event
+            name: City Council Meeting
+            dates:
+              start: "2026-11-02T09:00:00+00:00"
+              end: "2026-11-02T11:00:00+00:00"
+              tz: Europe/Prague
+            coverages: []
+            _links:
+              self: {title: Event, href: "events/urn:newsml:example.com:2026:event-council"}
+          - _id: "urn:newsml:example.com:2026:event-briefing"
+            guid: "urn:newsml:example.com:2026:event-briefing"
+            type: event
+            name: Community briefing
+            dates:
+              start: "2026-11-03T10:00:00Z"
+              end: "2026-11-03T11:00:00Z"
+              tz: Europe/London
+            location: null
+            coverages: null
+        _meta: {total: 2, page: 1, max_results: 25}
+
+    RecurringEvent:
+      summary: One occurrence of a weekly series ending after four occurrences
+      description: |
+        Each occurrence has its own _id and guid and shares recurrence_id.
+        For a date-bounded series use endRepeatMode=until, count=null and an
+        RFC 3339 until value instead.
+      value:
+        _id: "urn:newsml:example.com:2026:event-weekly-1"
+        guid: "urn:newsml:example.com:2026:event-weekly-1"
+        type: event
+        name: Weekly press briefing
+        recurrence_id: "urn:newsml:example.com:2026:series-weekly"
+        previous_recurrence_id: null
+        planning_recurrence_id: null
+        dates:
+          start: "2026-11-02T09:00:00+00:00"
+          end: "2026-11-02T09:30:00+00:00"
+          tz: Europe/Prague
+          all_day: false
+          no_end_time: false
+          recurring_rule:
+            frequency: WEEKLY
+            interval: 1
+            endRepeatMode: count
+            count: 4
+            until: null
+            byday: MO
+            _created_externally: false
+        coverages: []
+
+    RescheduledEvent:
+      summary: Original occurrence moved to a new event
+      value:
+        _id: "urn:newsml:example.com:2026:event-original"
+        guid: "urn:newsml:example.com:2026:event-original"
+        type: event
+        name: Rescheduled press briefing
+        dates:
+          start: "2026-11-02T09:00:00Z"
+          end: "2026-11-02T10:00:00Z"
+          tz: Europe/Prague
+        state: rescheduled
+        state_reason: Venue unavailable
+        reschedule_to: "urn:newsml:example.com:2026:event-new-time"
+        reschedule_from: null
+        actioned_date: "2026-10-26T10:00:00Z"
+        coverages: []
+
+    RescheduledReplacement:
+      summary: Replacement event with a link back to the original schedule
+      value:
+        _id: "urn:newsml:example.com:2026:event-new-time"
+        guid: "urn:newsml:example.com:2026:event-new-time"
+        type: event
+        name: Press briefing at the new time
+        dates:
+          start: "2026-11-03T09:00:00Z"
+          end: "2026-11-03T10:00:00Z"
+          tz: Europe/Prague
+        state: draft
+        reschedule_from: "urn:newsml:example.com:2026:event-original"
+        reschedule_to: null
+        _reschedule_from_schedule: "2026-11-02T09:00:00Z"
+        coverages: []
+
+    DuplicatedEvent:
+      summary: Copied event with duplication lineage
+      value:
+        _id: "urn:newsml:example.com:2026:event-copy"
+        guid: "urn:newsml:example.com:2026:event-copy"
+        type: event
+        name: Additional press briefing
+        dates:
+          start: "2026-11-05T09:00:00Z"
+          end: "2026-11-05T10:00:00Z"
+          tz: Europe/Prague
+        state: draft
+        duplicate_from: "urn:newsml:example.com:2026:event-original"
+        duplicate_to: []
+        coverages: []
+
+    AllDayEvent:
+      summary: All-day event with dates stored at UTC midnight
+      value:
+        _id: "urn:newsml:example.com:2026:event-open-day"
+        guid: "urn:newsml:example.com:2026:event-open-day"
+        type: event
+        name: Council open day
+        dates:
+          start: "2026-11-07T00:00:00Z"
+          end: "2026-11-07T00:00:00Z"
+          tz: Europe/Prague
+          all_day: true
+          no_end_time: false
+        completed: false
+        coverages: []
+
+    UnconfirmedEvent:
+      summary: Unconfirmed start time and no known end time
+      value:
+        _id: "urn:newsml:example.com:2026:event-unconfirmed"
+        guid: "urn:newsml:example.com:2026:event-unconfirmed"
+        type: event
+        name: Post-meeting media availability
+        _time_to_be_confirmed: true
+        dates:
+          start: "2026-11-02T00:00:00Z"
+          end: "2026-11-02T00:00:00Z"
+          tz: Europe/Prague
+          all_day: false
+          no_end_time: true
+        occur_status:
+          qcode: "eocstat:eos3"
+          name: Planned, may occur
+          label: Planned, may occur
+        coverages: null
+
+    CancelledEvent:
+      summary: Cancelled event and coverage
+      value:
+        _id: "urn:newsml:example.com:2026:event-cancelled"
+        guid: "urn:newsml:example.com:2026:event-cancelled"
+        type: event
+        name: Committee briefing
+        dates:
+          start: "2026-11-04T09:00:00Z"
+          end: "2026-11-04T10:00:00Z"
+          tz: Europe/London
+        state: cancelled
+        state_reason: Organiser cancelled the briefing
+        revert_state: scheduled
+        pubstatus: cancelled
+        actioned_date: "2026-11-01T15:00:00Z"
+        occur_status:
+          qcode: "eocstat:eos6"
+          name: Planned, then cancelled
+          label: Planned, then cancelled
+        coverages:
+          - coverage_id: "urn:newsml:example.com:2026:coverage-cancelled"
+            news_coverage_status:
+              qcode: "ncostat:notint"
+              name: Coverage not intended
+              label: Coverage not intended
+            workflow_status: cancelled
+            previous_status: active
+            assigned_to: null
+            planning:
+              scheduled: "2026-11-04T10:30:00Z"
+              g2_content_type: text
+              workflow_status_reason: Event cancelled
+
+    EventPlanning:
+      summary: Linked planning item with audio coverage and legacy aliases
+      value:
+        _id: "urn:newsml:example.com:2026:planning-council"
+        guid: "urn:newsml:example.com:2026:planning-council"
+        type: planning
+        slugline: COUNCIL-REACTION
+        definition_long: Interviews after the budget vote
+        description_text: Interviews after the budget vote
+        planning_date: "2026-11-02T09:00:00+00:00"
+        all_day: false
+        state: scheduled
+        related_events:
+          - _id: "urn:newsml:example.com:2026:event-council"
+            link_type: primary
+        coverages:
+          - coverage_id: "urn:newsml:example.com:2026:coverage-audio"
+            news_coverage_status:
+              qcode: "ncostat:int"
+              name: Coverage intended
+              label: Coverage intended
+            workflow_status: active
+            assigned_to:
+              assignment_id: "60e403bc8361feb5664719b2"
+              state: assigned
+              desk: "5c489481405ecc015e5e10bc"
+              user: "5c489481405ecc015e5e10bd"
+            planning:
+              scheduled: "2026-11-02T12:30:00+00:00"
+              g2_content_type: audio
+              slugline: COUNCIL-REACTION
+              definition_short: Interviews with council leaders
+              description_text: Interviews with council leaders
+              keywords: [council, reaction]
+              keyword: [council, reaction]
+              genre: [{qcode: Interview, name: Interview}]
+              multiple_content: true
+        _links:
+          event:
+            title: Event
+            href: "events/urn:newsml:example.com:2026:event-council"
+          assignments:
+            - title: Assignment
+              href: "assignments/60e403bc8361feb5664719b2"
+              state: assigned
+              scheduled: "2026-11-02T12:30:00+00:00"
+              content_type: audio
+
+    EventAssignment:
+      summary: Assignment for the linked planning item's audio coverage
+      value:
+        _id: "60e403bc8361feb5664719b2"
+        type: assignment
+        planning_item: "urn:newsml:example.com:2026:planning-council"
+        coverage_item: "urn:newsml:example.com:2026:coverage-audio"
+        priority: 2
+        accepted: true
+        firstcreated: "2026-10-26T10:00:00Z"
+        versioncreated: "2026-10-26T10:30:00Z"
+        assigned_to:
+          state: assigned
+          desk: "5c489481405ecc015e5e10bc"
+          user: "5c489481405ecc015e5e10bd"
+          assigned_date_desk: "2026-10-26T10:00:00Z"
+          assigned_date_user: "2026-10-26T10:00:00Z"
+        planning:
+          scheduled: "2026-11-02T12:30:00+00:00"
+          g2_content_type: audio
+          slugline: COUNCIL-REACTION
+          headline: Council leaders react to the budget
+          genre: [{qcode: Interview, name: Interview}]
+        _links:
+          planning:
+            title: Planning
+            href: "planning/urn:newsml:example.com:2026:planning-council"
+            coverages: []
+          event:
+            title: Event
+            href: "events/urn:newsml:example.com:2026:event-council"
+
+    EventContact:
+      summary: Local press-office contact referenced by the event and coverage
+      value:
+        _id: "60e6a119de25009b39121d83"
+        first_name: Jane
+        last_name: Smith
+        honorific: Ms
+        organisation: City Council
+        job_title: Press officer
+        contact_email: ["press@example.com"]
+        contact_phone:
+          - number: "+420 555 010 100"
+            usage: Business
+            public: true
+        contact_address: ["1 Council Square, Prague"]
+        is_active: true
+        public: true
+
+    EventAttachment:
+      summary: Attachment metadata resolved from an event's files array
+      description: Use the media identifier with the media endpoint to retrieve the file.
+      value:
+        _id: "60e6a117de25009b39121d81"
+        media: "5e05dd3f05add39732aa8436"
+        mimetype: application/pdf
+        filemeta:
+          media_id: "5e05dd3f05add39732aa8436"
+          filename: council-agenda.pdf
+          content_type: application/pdf
+          length: 24576
+
+    EventHistoryUpdate:
+      summary: Partial update in event history
+      description: |
+        History identifies the event with item_id, not event_id.
+        update is a change document, not necessarily a complete Event.
+      value:
+        _id: "60e6a118de25009b39121d82"
+        item_id: "urn:newsml:example.com:2026:event-council"
+        item_type: event
+        user_id: "5c489481405ecc015e5e10bd"
+        operation: update
+        update:
+          registration_details: Register through the council press office.
+          versioncreated: "2026-10-26T10:00:00+00:00"
+
   schemas:
     Meta:
       type: object
@@ -937,6 +1629,11 @@ components:
           type: string
           description: URL to the resource item
           example: "planning/60e6a115de25009b39121d7f"
+        coverages:
+          type: array
+          description: Compact coverage summaries from the linked planning item; not full Coverage records
+          items:
+            $ref: '#/components/schemas/CoverageSummary'
 
     HATEOASEvent:
       type: object
@@ -1108,14 +1805,56 @@ components:
         _id:
           type: string
           example: "60e403bc8361feb5664719b1"
-        state:
+        type:
           type: string
-          enum: [draft, assigned, in_progress, completed, submitted, cancelled]
-          example: "in_progress"
-        scheduled:
+          enum: [assignment]
+        planning_item:
+          type: string
+          description: ID of the linked planning item
+        coverage_item:
+          type: string
+          description: ID of the linked coverage
+        scheduled_update_id:
+          type: string
+          nullable: true
+        priority:
+          type: integer
+        accepted:
+          type: boolean
+        assigned_to:
+          allOf:
+            - $ref: '#/components/schemas/CoverageAssignedTo'
+          description: Assignment state is stored in assigned_to.state
+        planning:
+          $ref: '#/components/schemas/AssignmentPlanning'
+        firstcreated:
           type: string
           format: date-time
-          example: "2021-07-07T02:00:00+00:00"
+        versioncreated:
+          type: string
+          format: date-time
+        published_at:
+          type: string
+          format: date-time
+          nullable: true
+        published_state:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        description_text:
+          type: string
+          nullable: true
+        original_creator:
+          type: string
+          nullable: true
+        version_creator:
+          type: string
+          nullable: true
+        _to_delete:
+          type: boolean
+
         _links:
           type: object
           description: HATEOAS links to related resources
@@ -1124,6 +1863,10 @@ components:
               $ref: '#/components/schemas/HATEOASPlanning'
             event:
               $ref: '#/components/schemas/HATEOASEvent'
+            related_events:
+              type: array
+              items:
+                $ref: '#/components/schemas/HATEOASEvent'
             content:
               type: array
               items:
@@ -1131,7 +1874,14 @@ components:
 
     Planning:
       type: object
-      description: Planning item
+      description: |
+        Planning item. Unlike Event, dates are exposed as planning_date and all_day.
+        Coverage descriptions and keywords also include the legacy description_text
+        and keyword aliases. Lock fields, item_class, flags and internal schedules
+        are omitted by this endpoint.
+      allOf:
+        - $ref: '#/components/schemas/ItemEditorialMetadata'
+        - $ref: '#/components/schemas/ItemDetails'
       properties:
         _id:
           type: string
@@ -1153,6 +1903,24 @@ components:
         all_day:
           type: boolean
           description: Whether the planning item is scheduled for the whole day (mapped from dates.all_day)
+        type:
+          type: string
+          enum: [planning]
+        state:
+          type: string
+        related_events:
+          type: array
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              link_type:
+                type: string
+                enum: [primary, secondary]
+              recurrence_id:
+                type: string
+                nullable: true
         coverages:
           type: array
           nullable: true
@@ -1169,10 +1937,27 @@ components:
                 $ref: '#/components/schemas/HATEOASAssignment'
             event:
               $ref: '#/components/schemas/HATEOASEvent'
+            related_events:
+              type: array
+              items:
+                $ref: '#/components/schemas/HATEOASEvent'
 
     Event:
       type: object
-      description: Calendar event
+      description: |
+        Calendar event from the unified planning resource. Fields depend on the
+        content profile and stored data; optional values may be absent or null.
+        Custom vocabulary values use subject.scheme and installation-specific
+        data may appear in extra. Lock fields, _etag, _created, _updated,
+        _current_version and fields_meta are not returned.
+
+        coverages contains coverages stored directly on this event.
+        _links.plannings contains primary linked planning items with compact
+        coverage summaries; fetch the linked Planning resource for full records.
+        _links.assignments is omitted when exclude_assignments=true.
+      allOf:
+        - $ref: '#/components/schemas/ItemEditorialMetadata'
+        - $ref: '#/components/schemas/ItemDetails'
       properties:
         _id:
           type: string
@@ -1186,17 +1971,190 @@ components:
         definition_short:
           type: string
           example: "Monthly meeting of the city council"
+        type:
+          type: string
+          enum: [event]
         dates:
+          $ref: '#/components/schemas/EventDates'
+        occur_status:
+          $ref: '#/components/schemas/OccurrenceStatus'
+        news_coverage_status:
+          $ref: '#/components/schemas/NewsCoverageStatus'
+        _time_to_be_confirmed:
+          type: boolean
+        completed:
+          type: boolean
+        recurrence_id:
+          type: string
+          nullable: true
+        previous_recurrence_id:
+          type: string
+          nullable: true
+        planning_recurrence_id:
+          type: string
+          nullable: true
+        state:
+          type: string
+          enum: [draft, active, ingested, scheduled, killed, cancelled, rescheduled, postponed, spiked]
+        state_reason:
+          type: string
+          nullable: true
+        pubstatus:
+          type: string
+          nullable: true
+          enum: [usable, cancelled, null]
+        revert_state:
+          type: string
+          nullable: true
+        version:
+          type: integer
+          nullable: true
+        unique_id:
+          type: integer
+          nullable: true
+        unique_name:
+          type: string
+          nullable: true
+        profile:
+          type: string
+          nullable: true
+        template:
+          type: string
+          nullable: true
+        original_creator:
+          type: string
+          nullable: true
+        version_creator:
+          type: string
+          nullable: true
+        firstcreated:
+          type: string
+          format: date-time
+        versioncreated:
+          type: string
+          format: date-time
+        versionposted:
+          type: string
+          format: date-time
+          nullable: true
+        event_created:
+          type: string
+          format: date-time
+          nullable: true
+        event_lastmodified:
+          type: string
+          format: date-time
+          nullable: true
+        source:
+          type: string
+          nullable: true
+        original_source:
+          type: string
+          nullable: true
+        ingest_id:
+          type: string
+          nullable: true
+        ingest_provider:
+          type: string
+          nullable: true
+        ingest_provider_sequence:
+          type: string
+          nullable: true
+        ingest_firstcreated:
+          type: string
+          format: date-time
+          nullable: true
+        ingest_versioncreated:
+          type: string
+          format: date-time
+          nullable: true
+        ingest_pubstatus:
+          type: string
+          nullable: true
+          enum: [usable, cancelled, null]
+        expiry:
+          type: string
+          format: date-time
+          nullable: true
+        expired:
+          type: boolean
+        featured:
+          type: boolean
+        flags:
           type: object
           properties:
-            start:
-              type: string
-              format: date-time
-              example: "2021-07-15T14:00:00+00:00"
-            end:
-              type: string
-              format: date-time
-              example: "2021-07-15T16:00:00+00:00"
+            marked_for_not_publication:
+              type: boolean
+            overide_auto_assign_to_workflow:
+              type: boolean
+              description: Field name retains the stored spelling
+        item_class:
+          type: string
+          nullable: true
+        duplicate_from:
+          type: string
+          nullable: true
+        duplicate_to:
+          type: array
+          nullable: true
+          items:
+            type: string
+        reschedule_from:
+          type: string
+          nullable: true
+        reschedule_to:
+          type: string
+          nullable: true
+        _reschedule_from_schedule:
+          type: string
+          format: date-time
+          nullable: true
+        actioned_date:
+          type: string
+          format: date-time
+          nullable: true
+        _planning_schedule:
+          type: array
+          items:
+            type: object
+            properties:
+              scheduled:
+                type: string
+                format: date-time
+              coverage_id:
+                type: string
+                nullable: true
+        _updates_schedule:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              scheduled:
+                type: string
+                format: date-time
+              scheduled_update_id:
+                type: string
+                nullable: true
+        related_planning:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              _id:
+                type: string
+              link_type:
+                type: string
+                enum: [primary, secondary]
+              recurrence_id:
+                type: string
+                nullable: true
+        related_content:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/RelatedContent'
         coverages:
           type: array
           nullable: true
@@ -1216,6 +2174,475 @@ components:
               items:
                 $ref: '#/components/schemas/HATEOASPlanning'
 
+    ItemEditorialMetadata:
+      type: object
+      description: Editorial fields shared by events, planning items and coverage planning
+      properties:
+        slugline:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        headline:
+          type: string
+          nullable: true
+        abstract:
+          type: string
+          nullable: true
+        definition_short:
+          type: string
+          nullable: true
+        definition_long:
+          type: string
+          nullable: true
+        internal_note:
+          type: string
+          nullable: true
+        ednote:
+          type: string
+          nullable: true
+        language:
+          type: string
+        languages:
+          type: array
+          items:
+            type: string
+        priority:
+          type: integer
+          nullable: true
+        urgency:
+          type: integer
+          nullable: true
+        keywords:
+          type: array
+          nullable: true
+          items:
+            type: string
+        subject:
+          type: array
+          nullable: true
+          items:
+            allOf:
+              - $ref: '#/components/schemas/VocabularyItem'
+            properties:
+              scheme:
+                type: string
+                nullable: true
+              parent:
+                type: string
+                nullable: true
+        anpa_category:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        calendars:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        agendas:
+          type: array
+          nullable: true
+          items:
+            type: string
+        genre:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        place:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/Place'
+
+    ItemDetails:
+      type: object
+      description: Event and planning logistics, contacts, attachments and custom data
+      properties:
+        registration:
+          type: string
+          nullable: true
+        registration_details:
+          type: string
+          nullable: true
+        invitation_details:
+          type: string
+          nullable: true
+        accreditation_info:
+          type: string
+          nullable: true
+        accreditation_deadline:
+          type: string
+          format: date
+          nullable: true
+        reference:
+          type: string
+          nullable: true
+        access_status:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        links:
+          type: array
+          nullable: true
+          items:
+            type: string
+        files:
+          type: array
+          nullable: true
+          description: File IDs resolved through /events_files/{_id}
+          items:
+            type: string
+        location:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EventLocation'
+        event_contact_info:
+          type: array
+          nullable: true
+          description: Contact IDs; local IDs resolve through /contacts/{_id}, external IDs need not exist locally
+          items:
+            type: string
+        participant:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        participant_requirement:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        organizer:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        translations:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              language:
+                type: string
+              value:
+                type: string
+        relationships:
+          type: object
+          nullable: true
+          properties:
+            broader:
+              type: string
+              nullable: true
+            narrower:
+              type: string
+              nullable: true
+            related:
+              type: string
+              nullable: true
+        company_codes:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              qcode:
+                type: string
+              name:
+                type: string
+              security_exchange:
+                type: string
+                nullable: true
+        word_count:
+          type: integer
+          nullable: true
+        extra:
+          type: object
+          nullable: true
+          additionalProperties: true
+
+    VocabularyItem:
+      type: object
+      properties:
+        qcode:
+          type: string
+        name:
+          type: string
+        translations:
+          type: object
+          nullable: true
+          description: Field names mapped to language codes and translated values
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+
+    Place:
+      type: object
+      description: Geographic classification; distinct from the venue in location
+      properties:
+        qcode:
+          type: string
+          nullable: true
+        name:
+          type: string
+          nullable: true
+        scheme:
+          type: string
+          nullable: true
+        code:
+          type: string
+          nullable: true
+        locality:
+          type: string
+          nullable: true
+        state:
+          type: string
+          nullable: true
+        country:
+          type: string
+          nullable: true
+        world_region:
+          type: string
+          nullable: true
+        group:
+          type: string
+          nullable: true
+        locality_code:
+          type: string
+          nullable: true
+        state_code:
+          type: string
+          nullable: true
+        country_code:
+          type: string
+          nullable: true
+        world_region_code:
+          type: string
+          nullable: true
+        feature_class:
+          type: string
+          nullable: true
+        rel:
+          type: string
+          nullable: true
+        location:
+          $ref: '#/components/schemas/GeoPoint'
+
+    GeoPoint:
+      type: object
+      nullable: true
+      required: [lat, lon]
+      properties:
+        lat:
+          type: number
+        lon:
+          type: number
+
+    EventLocation:
+      type: object
+      nullable: true
+      description: Venue, address and geographic coordinates
+      properties:
+        name:
+          type: string
+        qcode:
+          type: string
+          nullable: true
+        address:
+          type: object
+          nullable: true
+          properties:
+            line:
+              type: array
+              nullable: true
+              items:
+                type: string
+            city:
+              type: string
+              nullable: true
+            locality:
+              type: string
+              nullable: true
+            area:
+              type: string
+              nullable: true
+            state:
+              type: string
+              nullable: true
+            postal_code:
+              type: string
+              nullable: true
+            country:
+              type: string
+              nullable: true
+            boundingbox:
+              type: array
+              nullable: true
+              items:
+                type: string
+            title:
+              type: string
+              nullable: true
+            type:
+              type: string
+              nullable: true
+            extra:
+              type: object
+              nullable: true
+              additionalProperties: true
+        formatted_address:
+          type: string
+          nullable: true
+        geo:
+          type: string
+          nullable: true
+        location:
+          $ref: '#/components/schemas/GeoPoint'
+        details:
+          type: string
+          nullable: true
+        extra:
+          type: object
+          nullable: true
+          additionalProperties: true
+        translations:
+          type: object
+          nullable: true
+          additionalProperties: true
+
+    EventDates:
+      type: object
+      properties:
+        start:
+          type: string
+          format: date-time
+        end:
+          type: string
+          format: date-time
+          nullable: true
+        tz:
+          type: string
+          nullable: true
+          description: IANA timezone, e.g. Europe/Prague
+        all_day:
+          type: boolean
+          description: Start and end are stored at UTC midnight for all-day events
+        no_end_time:
+          type: boolean
+          description: End is a date at UTC midnight, not a known end time
+        recurring_rule:
+          type: object
+          nullable: true
+          properties:
+            frequency:
+              type: string
+              enum: [DAILY, WEEKLY, MONTHLY, YEARLY]
+            interval:
+              type: integer
+            endRepeatMode:
+              type: string
+              enum: [count, until]
+            count:
+              type: integer
+              nullable: true
+            until:
+              type: string
+              format: date-time
+              nullable: true
+            byday:
+              type: string
+              description: Space-separated weekdays, e.g. MO WE FR
+              nullable: true
+            _created_externally:
+              type: boolean
+
+    OccurrenceStatus:
+      type: object
+      nullable: true
+      properties:
+        qcode:
+          type: string
+          enum: [eocstat:eos0, eocstat:eos1, eocstat:eos2, eocstat:eos3, eocstat:eos4, eocstat:eos5, eocstat:eos6]
+        name:
+          type: string
+        label:
+          type: string
+
+    NewsCoverageStatus:
+      type: object
+      nullable: true
+      properties:
+        qcode:
+          type: string
+          enum: [ncostat:int, ncostat:notint, ncostat:notdec, ncostat:onreq]
+        name:
+          type: string
+        label:
+          type: string
+
+    RelatedContent:
+      type: object
+      properties:
+        guid:
+          type: string
+        type:
+          type: string
+        state:
+          type: string
+        version:
+          type: integer
+          nullable: true
+        headline:
+          type: string
+          nullable: true
+        slugline:
+          type: string
+          nullable: true
+        versioncreated:
+          type: string
+          format: date-time
+          nullable: true
+        search:
+          type: string
+          nullable: true
+        search_provider:
+          type: string
+          nullable: true
+        pubstatus:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        word_count:
+          type: integer
+          nullable: true
+
+    CoverageSummary:
+      type: object
+      description: Compact summary included in _links.plannings[].coverages
+      properties:
+        coverage_id:
+          type: string
+          nullable: true
+        workflow_status:
+          type: string
+          nullable: true
+        news_coverage_status:
+          $ref: '#/components/schemas/NewsCoverageStatus'
+        g2_content_type:
+          type: string
+          nullable: true
+
     Coverage:
       type: object
       description: A possible content coverage associated with an event or planning item
@@ -1226,7 +2653,38 @@ components:
           example: "urn:newsml:localhost:2021-07-08T12:34:56.123456:coverage-guid"
         profile:
           type: string
+          nullable: true
           description: ID of the coverage profile
+        original_coverage_id:
+          type: string
+          nullable: true
+        guid:
+          type: string
+          nullable: true
+        original_creator:
+          type: string
+          nullable: true
+        version_creator:
+          type: string
+          nullable: true
+        firstcreated:
+          type: string
+          format: date-time
+        versioncreated:
+          type: string
+          format: date-time
+        previous_status:
+          type: string
+          nullable: true
+        _time_to_be_confirmed:
+          type: boolean
+        add_coverage_to_workflow:
+          type: boolean
+        flags:
+          type: object
+          properties:
+            no_content_linking:
+              type: boolean
         news_coverage_status:
           type: object
           description: News coverage status
@@ -1247,48 +2705,239 @@ components:
         assigned_to:
           $ref: '#/components/schemas/CoverageAssignedTo'
         planning:
-          type: object
-          description: Planning details for the expected coverage
-          properties:
-            scheduled:
-              type: string
-              format: date-time
-              description: Due date and time for the coverage
-            g2_content_type:
-              type: string
-              description: G2 content type of the coverage
-              example: "text"
-            slugline:
-              type: string
-            name:
-              type: string
-            headline:
-              type: string
-            definition_short:
-              type: string
-            definition_long:
-              type: string
-            description_text:
-              type: string
-              description: Legacy description alias included by the Planning endpoint
-            internal_note:
-              type: string
-            ednote:
-              type: string
-            keyword:
-              type: array
-              description: Legacy keyword alias included by the Planning endpoint
-              items:
-                type: string
-            workflow_status_reason:
-              type: string
-            multiple_content:
-              type: boolean
+          $ref: '#/components/schemas/CoveragePlanning'
         scheduled_updates:
           type: array
           description: Scheduled updates associated with the coverage
           items:
             $ref: '#/components/schemas/CoverageScheduledUpdate'
+
+    CoveragePlanning:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/ItemEditorialMetadata'
+      properties:
+        scheduled:
+          type: string
+          format: date-time
+        g2_content_type:
+          type: string
+          description: Content type qcode; values depend on the installation's vocabulary
+          example: text
+        description_text:
+          type: string
+          description: Legacy description alias included by the Planning endpoint
+        keyword:
+          type: array
+          description: Legacy keywords alias included by the Planning endpoint
+          items:
+            type: string
+        coverage_provider:
+          $ref: '#/components/schemas/CoverageProvider'
+        contact_info:
+          type: string
+          nullable: true
+        workflow_status_reason:
+          type: string
+          nullable: true
+        multiple_content:
+          type: boolean
+        fields:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              value:
+                type: string
+        location:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/EventLocation'
+        files:
+          type: array
+          nullable: true
+          items:
+            type: string
+        xmp_file:
+          type: string
+          nullable: true
+        item_class:
+          type: string
+          nullable: true
+        item_count:
+          type: integer
+          nullable: true
+        service:
+          type: array
+          nullable: true
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        news_content_characteristics:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+        planning_ext_property:
+          type: array
+          nullable: true
+          items:
+            type: object
+            properties:
+              qcode:
+                type: string
+              name:
+                type: string
+              value:
+                type: string
+        by:
+          type: array
+          nullable: true
+          items:
+            type: string
+        credit_line:
+          type: array
+          nullable: true
+          items:
+            type: string
+        dateline:
+          type: array
+          nullable: true
+          items:
+            type: string
+
+    AssignmentPlanning:
+      type: object
+      description: |
+        Assignment planning snapshot. The due time is planning.scheduled, not a
+        top-level scheduled field. Unlike CoveragePlanning, legacy item_count
+        and coverage_provider values are strings.
+      properties:
+        scheduled:
+          type: string
+          format: date-time
+          nullable: true
+        g2_content_type:
+          type: string
+          nullable: true
+        slugline:
+          type: string
+          nullable: true
+        headline:
+          type: string
+        description_text:
+          type: string
+          nullable: true
+        ednote:
+          type: string
+          nullable: true
+        internal_note:
+          type: string
+          nullable: true
+        keyword:
+          type: array
+          items:
+            type: string
+        genre:
+          type: array
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        subject:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        language:
+          type: string
+          nullable: true
+        priority:
+          type: integer
+          nullable: true
+        multiple_content:
+          type: boolean
+        workflow_status_reason:
+          type: string
+          nullable: true
+        coverage_provider:
+          type: string
+          nullable: true
+        contact_info:
+          type: string
+          nullable: true
+        contact:
+          type: string
+          nullable: true
+        item_class:
+          type: string
+          nullable: true
+        item_count:
+          type: string
+          nullable: true
+        files:
+          type: array
+          items:
+            type: string
+        xmp_file:
+          type: string
+          nullable: true
+        service:
+          type: array
+          items:
+            $ref: '#/components/schemas/VocabularyItem'
+        news_content_characteristics:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              value:
+                type: string
+        planning_ext_property:
+          type: array
+          items:
+            type: object
+            properties:
+              qcode:
+                type: string
+              name:
+                type: string
+              value:
+                type: string
+        by:
+          type: array
+          items:
+            type: string
+        credit_line:
+          type: array
+          items:
+            type: string
+        dateline:
+          type: array
+          items:
+            type: string
+        news_coverage_status:
+          $ref: '#/components/schemas/NewsCoverageStatus'
+        original_creator:
+          type: string
+          nullable: true
+        version_creator:
+          type: string
+          nullable: true
+        firstcreated:
+          type: string
+          format: date-time
+        versioncreated:
+          type: string
+          format: date-time
 
     CoverageScheduledUpdate:
       type: object
@@ -1313,7 +2962,8 @@ components:
           enum: [draft, active, ingested, scheduled, killed, cancelled, rescheduled, postponed, spiked]
         previous_status:
           type: string
-          enum: [draft, active, ingested, scheduled, killed, cancelled, rescheduled, postponed, spiked]
+          nullable: true
+          enum: [draft, active, ingested, scheduled, killed, cancelled, rescheduled, postponed, spiked, null]
         assigned_to:
           $ref: '#/components/schemas/CoverageAssignedTo'
         planning:
@@ -1324,8 +2974,18 @@ components:
               format: date-time
             internal_note:
               type: string
+              nullable: true
+            genre:
+              type: array
+              nullable: true
+              items:
+                $ref: '#/components/schemas/VocabularyItem'
+            contact_info:
+              type: string
+              nullable: true
             workflow_status_reason:
               type: string
+              nullable: true
             multiple_content:
               type: boolean
 
@@ -1336,15 +2996,57 @@ components:
       properties:
         assignment_id:
           type: string
+          nullable: true
         state:
           type: string
           enum: [draft, assigned, in_progress, completed, submitted, cancelled]
         contact:
           type: string
+          nullable: true
         user:
           type: string
+          nullable: true
         desk:
           type: string
+          nullable: true
+        coverage_provider:
+          $ref: '#/components/schemas/CoverageProvider'
+        assignor_desk:
+          type: string
+          nullable: true
+        assignor_user:
+          type: string
+          nullable: true
+        assigned_date_desk:
+          type: string
+          format: date-time
+          nullable: true
+        assigned_date_user:
+          type: string
+          format: date-time
+          nullable: true
+        priority:
+          type: integer
+          nullable: true
+
+    CoverageProvider:
+      type: object
+      nullable: true
+      properties:
+        qcode:
+          type: string
+        name:
+          type: string
+        translations:
+          type: object
+          nullable: true
+          additionalProperties:
+            type: object
+            additionalProperties:
+              type: string
+        contact_type:
+          type: string
+          nullable: true
 
     EventFile:
       type: object
@@ -1356,12 +3058,21 @@ components:
         media:
           type: string
           description: Media ID
+        mimetype:
+          type: string
         filemeta:
           type: object
           properties:
             media_id:
               type: string
               example: "5e05dd3f05add39732aa8436"
+            filename:
+              type: string
+            content_type:
+              type: string
+            length:
+              type: integer
+              description: File size in bytes
 
     EventHistory:
       type: object
@@ -1370,12 +3081,19 @@ components:
         _id:
           type: string
           example: "60e6a118de25009b39121d82"
-        event_id:
+        item_id:
           type: string
+          description: ID of the event whose history is recorded
           example: "60e6a116de25009b39121d80"
+        item_type:
+          type: string
+          enum: [event]
+        user_id:
+          type: string
+          nullable: true
         operation:
           type: string
-          enum: [create, update, delete]
+          description: History action, including create, update and workflow actions
           example: "update"
         update:
           type: object
@@ -1412,6 +3130,20 @@ components:
         last_name:
           type: string
           example: "Smith"
+        honorific:
+          type: string
+        organisation:
+          type: string
+        job_title:
+          type: string
+        is_active:
+          type: boolean
+        public:
+          type: boolean
+        contact_address:
+          type: array
+          items:
+            type: string
         contact_email:
           type: array
           items:
@@ -1427,6 +3159,8 @@ components:
                 type: string
               usage:
                 type: string
+              public:
+                type: boolean
 
     UserAvailability:
       type: object
