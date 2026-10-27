@@ -1,6 +1,6 @@
 import pytest
 
-from superdesk.tests.steps import json_match
+from superdesk.tests.steps import encode_url_query, json_match
 
 
 def test_empty_list_matches_empty_response():
@@ -17,3 +17,17 @@ def test_non_empty_list_matches_superset_response():
 
 def test_non_empty_list_does_not_match_missing_item():
     assert not json_match([{"key": "missing"}], [{"key": "value"}])
+
+
+@pytest.mark.parametrize(
+    ("url", "expected"),
+    [
+        ("/search?q=café", "/search?q=caf%C3%A9"),
+        (
+            '/search?where={"headline": "caf\\u00e9"}',
+            "/search?where=%7B%22headline%22:%20%22caf%C3%A9%22%7D",
+        ),
+    ],
+)
+def test_encode_url_query(url, expected):
+    assert encode_url_query(url) == expected
