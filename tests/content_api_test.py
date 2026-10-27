@@ -6,6 +6,7 @@ from bson import ObjectId
 from copy import copy
 from datetime import timedelta
 from quart.datastructures import FileStorage
+from quart.testing import make_test_body_with_headers
 
 from apps.archive.usage import update_refs
 
@@ -756,10 +757,11 @@ class ContentAPITestCase(TestCase):
             self.assertNotIn("featuremedia", data["associations"])
 
     async def test_publish_item_with_attachments(self):
-        media = io.BytesIO(b"content")
-        files = dict(media=FileStorage(media, filename="media.txt"))
         attachment = {"title": "Test", "description": "test"}
-        async with self.app.test_request_context("attachments", method="POST", files=files):
+        data, headers = make_test_body_with_headers(
+            files={"media": FileStorage(io.BytesIO(b"content"), filename="media.txt")}
+        )
+        async with self.app.test_request_context("attachments", method="POST", data=data, headers=headers):
             attachment["media"] = (await request.files)["media"]
             await store_media_files(attachment, "attachments")  # this would happen automatically otherwise
             await superdesk.get_resource_service("attachments").post_async([attachment])
@@ -796,11 +798,12 @@ class ContentAPITestCase(TestCase):
             self.assertEqual(200, response.status_code, attachments[0]["href"])
 
     async def test_publish_item_with_internal_attachments(self):
-        media = io.BytesIO(b"content")
-        files = dict(media=FileStorage(media, filename="media.txt"))
         internal_attachment = {"title": "Test Internal", "description": "test", "internal": True}
         public_attachment = {"title": "Test", "description": "test", "internal": False}
-        async with self.app.test_request_context("attachments", method="POST", files=files):
+        data, headers = make_test_body_with_headers(
+            files={"media": FileStorage(io.BytesIO(b"content"), filename="media.txt")}
+        )
+        async with self.app.test_request_context("attachments", method="POST", data=data, headers=headers):
             internal_attachment["media"] = (await request.files)["media"]
             public_attachment["media"] = (await request.files)["media"]
             await store_media_files(internal_attachment, "attachments")

@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, date
 from quart.datastructures import FileStorage
 from re import findall
 from inspect import isawaitable
-from urllib.parse import urlparse
+from urllib.parse import quote, urlparse, urlsplit, urlunsplit
 from pathlib import Path
 import yaml
 import re
@@ -492,6 +492,14 @@ def apply_placeholders(context, text):
 def get_resource_name(url):
     parsed_url = urlparse(url)
     return basename(parsed_url.path)
+
+
+def encode_url_query(url):
+    url = url.encode("ascii", "backslashreplace").decode("unicode-escape")
+    url = url.replace("\t", "%09").replace("\r", "%0D").replace("\n", "%0A")
+    parsed_url = urlsplit(url)
+    query = quote(parsed_url.query, safe="/?:@-._~!$&'()*+,;=%")
+    return urlunsplit(parsed_url._replace(query=query))
 
 
 def format_items(items):
@@ -1016,13 +1024,13 @@ async def _when_we_get_url(context, url):
 @when('we get raw "{url}"')
 @async_run_until_complete
 async def _when_we_get_raw_url(context, url):
-    url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
+    url = encode_url_query(apply_placeholders(context, url))
     async with context.app.app_context():
         context.response = await context.client.get(url, headers=context.headers)
 
 
 async def when_we_get_url(context, url):
-    url = apply_placeholders(context, url).encode("ascii").decode("unicode-escape")
+    url = encode_url_query(apply_placeholders(context, url))
     headers = []
     if context.text:
         for line in context.text.split("\n"):
