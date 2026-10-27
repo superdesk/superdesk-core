@@ -16,16 +16,24 @@ from superdesk.ai.models import AIActionType
 from superdesk.ai.prompts import (
     JSON_CONTRACT,
     SUPPORTED_ACTION_TYPES,
+    language_name,
     parse_suggestions,
+    parse_translation,
     render_system_prompt,
     render_user_message,
 )
+from superdesk.errors import SuperdeskApiError
 
 JSON_LINE = (
     'Answer with a JSON object and nothing else, of the form {"suggestions": ["first", "second"]}, '
     "with one entry per version and no formatting inside the entries."
 )
 FACTS_LINE = "Use only the facts of the article the user sends, do not add any of your own."
+TRANSLATION_LINE = (
+    "Keep every paragraph and all HTML markup exactly as they are and translate only the text. "
+    "Keep names and figures as they are. Add nothing and leave nothing out. "
+    "When the text has several fields, each introduced by its name, keep every name untranslated and in its place."
+)
 
 
 class RenderSystemPromptTestCase(IsolatedAsyncioTestCase):
@@ -84,21 +92,107 @@ class RenderSystemPromptTestCase(IsolatedAsyncioTestCase):
         self.assertEqual(prompt, "\n".join(["Write tabloid headlines.", FACTS_LINE, JSON_LINE]))
 
     async def test_an_action_type_without_a_template_is_not_supported(self):
-        for action_type in (AIActionType.REWRITE, AIActionType.TRANSLATION):
-            with self.subTest(action_type=action_type):
-                self.assertNotIn(action_type, SUPPORTED_ACTION_TYPES)
+        self.assertNotIn(AIActionType.REWRITE, SUPPORTED_ACTION_TYPES)
 
-                with self.assertRaises(NotSupportedError) as context:
-                    render_system_prompt(action_type, output_field="body_html", count=1)
+        with self.assertRaises(NotSupportedError) as context:
+            render_system_prompt(AIActionType.REWRITE, output_field="body_html", count=1)
 
-                self.assertEqual(context.exception.status_code, 400)
-                self.assertIn(action_type.value, context.exception.message)
+        self.assertEqual(context.exception.status_code, 400)
+        self.assertIn(AIActionType.REWRITE.value, context.exception.message)
 
     async def test_the_json_contract_keeps_its_braces(self):
         prompt = render_system_prompt(AIActionType.SUGGESTION, output_field="headline", count=3)
 
         self.assertIn('{"suggestions": ["first", "second"]}', JSON_CONTRACT)
         self.assertIn('{"suggestions": ["first", "second"]}', prompt)
+
+
+class RenderTranslationPromptTestCase(IsolatedAsyncioTestCase):
+    async def test_translation_is_a_supported_action_type(self):
+        self.assertIn(AIActionType.TRANSLATION, SUPPORTED_ACTION_TYPES)
+
+    async def test_translation_prompt_names_the_language_and_asks_for_plain_text(self):
+        prompt = render_system_prompt(AIActionType.TRANSLATION, output_field="body_html", count=1, language="German")
+
+        self.assertEqual(
+            prompt,
+            "\n".join(
+                [
+                    "You are an experienced news translator. Translate the article the user sends into German, "
+                    "to be used as its 'body_html'.",
+                    TRANSLATION_LINE,
+                    "Answer with the German translation and nothing else: no introduction, no notes, no code fences.",
+                ]
+            ),
+        )
+        self.assertNotIn(JSON_CONTRACT, prompt)
+        self.assertNotIn(FACTS_LINE, prompt)
+
+    async def test_a_language_code_is_named_in_the_translation_prompt(self):
+        prompt = render_system_prompt(AIActionType.TRANSLATION, output_field="body_html", count=1, language="de")
+
+        self.assertIn("into German,", prompt)
+        self.assertIn("Answer with the German translation", prompt)
+
+    async def test_the_system_prompt_of_a_translation_is_appended_as_style_guidance(self):
+        prompt = render_system_prompt(
+            AIActionType.TRANSLATION,
+            output_field="body_html",
+            count=1,
+            language="fr",
+            system_prompt="  Use the agency's wire style.  ",
+        )
+
+        lines = prompt.split("\n")
+        self.assertTrue(lines[0].startswith("You are an experienced news translator. Translate"))
+        self.assertEqual(
+            lines[2],
+            "Style guidance, to follow wherever it does not contradict the instructions above: "
+            "Use the agency's wire style.",
+        )
+        self.assertTrue(lines[3].startswith("Answer with the French translation"))
+
+    async def test_the_character_limit_is_never_in_a_translation_prompt(self):
+        prompt = render_system_prompt(
+            AIActionType.TRANSLATION, output_field="body_html", count=1, max_characters=60, language="de"
+        )
+
+        self.assertNotIn("characters", prompt)
+
+    async def test_a_translation_without_a_language_is_rejected(self):
+        for language in (None, "", "   "):
+            with self.subTest(language=language):
+                with self.assertRaises(SuperdeskApiError) as context:
+                    render_system_prompt(AIActionType.TRANSLATION, output_field="body_html", count=1, language=language)
+
+                self.assertEqual(context.exception.status_code, 400)
+                self.assertIn("language", context.exception.message)
+
+
+class LanguageNameTestCase(IsolatedAsyncioTestCase):
+    async def test_a_known_code_is_turned_into_its_name(self):
+        self.assertEqual(language_name("de"), "German")
+        self.assertEqual(language_name("EN"), "English")
+
+    async def test_the_region_of_a_known_code_is_kept_next_to_its_name(self):
+        self.assertEqual(language_name("pt-BR"), "Portuguese (BR)")
+        self.assertEqual(language_name("fr_CA"), "French (CA)")
+
+    async def test_anything_else_is_passed_through(self):
+        self.assertEqual(language_name("Swahili"), "Swahili")
+        self.assertEqual(language_name(" xx-YY "), "xx-YY")
+
+
+class ParseTranslationTestCase(IsolatedAsyncioTestCase):
+    async def test_the_whole_answer_is_the_translation_markup_and_lines_included(self):
+        content = "<p>Der Rat tagte am Dienstag.</p>\n<p>Er stimmte über den Haushalt ab.</p>"
+
+        self.assertEqual(parse_translation(content), content)
+
+    async def test_a_code_fence_around_the_translation_is_dropped(self):
+        content = "```html\n<p>Der Rat tagte am Dienstag.</p>\n```"
+
+        self.assertEqual(parse_translation(content), "<p>Der Rat tagte am Dienstag.</p>")
 
 
 class RenderUserMessageTestCase(IsolatedAsyncioTestCase):

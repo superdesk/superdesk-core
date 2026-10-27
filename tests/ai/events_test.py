@@ -31,6 +31,8 @@ from .actions_test import (
     ITEM,
     ITEM_ID,
     SUGGESTIONS_CONTENT,
+    TRANSLATION_ACTION,
+    TRANSLATION_CONTENT,
     USER_WITH_AI_PRIVILEGE,
     USER_WITH_AI_STUDIO_PRIVILEGE,
     completion_payload,
@@ -335,6 +337,29 @@ class AIEventsTestCase(AIRunLogTestCase):
 
         self.assertEqual(event.suggestions, [])
         self.assertEqual(event.output_chars, len("A whole rewritten article"))
+
+    async def test_a_translation_run_writes_an_event_without_the_translation(self):
+        action = await self._create_action(**TRANSLATION_ACTION)
+
+        _, body = await self._run_action(TRANSLATION_CONTENT, action=action, language="de")
+
+        event = await self._single_event()
+        self.assertEqual(str(event["_id"]), body["event_id"])
+        self.assertEqual(event["action_type"], AIActionType.TRANSLATION.value)
+        self.assertEqual(event["language"], "de")
+        self.assertEqual(event["status"], "ok")
+        self.assertEqual(event["suggestions"], [])
+        self.assertEqual(event["input_chars"], len(ITEM["body_html"]))
+        self.assertEqual(event["output_chars"], len(TRANSLATION_CONTENT))
+        self.assertNotIn("Der Rat", json.dumps(event, default=str))
+
+    async def test_a_translation_run_rejected_for_its_language_writes_no_event(self):
+        action = await self._create_action(**TRANSLATION_ACTION)
+
+        response = await self._run(action["_id"])
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(await self._stored_events(), [])
 
     async def test_the_event_log_lists_the_runs_that_were_made(self):
         _, body = await self._run_action()

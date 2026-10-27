@@ -56,6 +56,16 @@ def completion_payload(content: str) -> dict:
 
 SUGGESTIONS_CONTENT = json.dumps({"suggestions": ["Council meets on budget", "Council votes on budget"]})
 
+TRANSLATION_ACTION = {
+    "name": "Translate",
+    "action_type": "translation",
+    "input_fields": ["body_html"],
+    "output_field": "body_html",
+    "parameters": {"system_prompt": "Use the agency's wire style."},
+}
+
+TRANSLATION_CONTENT = "<p>Der Rat tagte am Dienstag.</p><p>Er stimmte über den Haushalt ab.</p>"
+
 
 class AIActionsRestTestCase(TestCase):
     async def asyncSetUp(self):
@@ -281,6 +291,26 @@ class AIActionsRestTestCase(TestCase):
         response = await self.test_client.patch(
             f"/api/ai_actions/{created['_id']}",
             json={"parameters": {"suggestions_count": 4}},
+            headers={"If-Match": created["_etag"]},
+        )
+        self.assertEqual(response.status_code, 200, await response.get_data())
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertEqual(action.parameters.suggestions_count, 1)
+
+    async def test_a_translation_action_is_created_with_a_single_suggestion(self):
+        created = await self._create_action(**{**TRANSLATION_ACTION, "parameters": {"suggestions_count": 5}})
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertEqual(action.action_type, "translation")
+        self.assertEqual(action.parameters.suggestions_count, 1)
+
+    async def test_turning_an_action_into_a_translation_drops_it_to_a_single_suggestion(self):
+        created = await self._create_action(parameters={"suggestions_count": 5})
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{created['_id']}",
+            json={"action_type": "translation"},
             headers={"If-Match": created["_etag"]},
         )
         self.assertEqual(response.status_code, 200, await response.get_data())
@@ -637,15 +667,104 @@ class AIActionRunTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("item_id", (await response.get_json())["_issues"])
 
-    async def test_rewrite_and_translation_are_not_supported_yet(self):
-        for action_type in ("rewrite", "translation"):
-            with self.subTest(action_type=action_type):
-                action = await self._create_action(action_type=action_type)
+    async def test_rewrite_is_not_supported_yet(self):
+        action = await self._create_action(action_type="rewrite")
 
-                response = await self._run(action["_id"])
+        response = await self._run(action["_id"])
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("not supported yet", (await response.get_json())["_message"])
+
+    async def test_a_summary_run_still_asks_for_json_in_the_language_of_the_item(self):
+        requests = await self._capture_completion(json.dumps({"suggestions": ["The council met."]}))
+        action = await self._create_action(
+            name="Summary", action_type="summary", output_field="abstract", parameters={"max_characters": 200}
+        )
+
+        response = await self._run(action["_id"])
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertEqual(
+            (await response.get_json())["suggestions"], [{"text": "The council met.", "over_limit": False}]
+        )
+        prompt = self._system_prompt(requests)
+        self.assertIn("Write a summary of the article", prompt)
+        self.assertIn("Keep every version under 200 characters.", prompt)
+        self.assertIn("Write every version in en.", prompt)
+        self.assertEqual(requests[0]["json"]["response_format"], {"type": "json_object"})
+        self.assertNotIn("max_tokens", requests[0]["json"])
+        self.assertEqual(
+            requests[0]["json"]["messages"][1]["content"], "The council met on Tuesday.\nIt voted on the budget."
+        )
+
+    async def test_a_translation_run_returns_the_whole_translation_as_one_answer(self):
+        action = await self._create_action(**TRANSLATION_ACTION)
+
+        body = await self._run_action(TRANSLATION_CONTENT, action=action, language="de")
+
+        self.assertEqual(body["suggestions"], [{"text": TRANSLATION_CONTENT, "over_limit": False}])
+        self.assertEqual(body["model"], "gpt-4o-mini-2024-07-18")
+
+    async def test_a_translation_run_sends_the_markup_and_asks_for_plain_text_in_the_language_named(self):
+        requests = await self._capture_completion(TRANSLATION_CONTENT)
+        action = await self._create_action(**TRANSLATION_ACTION)
+
+        response = await self._run(action["_id"], language="pt-BR")
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        payload = requests[0]["json"]
+        self.assertNotIn("response_format", payload)
+        self.assertNotIn("max_tokens", payload)
+        self.assertEqual(payload["messages"][1]["content"], ITEM["body_html"])
+        prompt = self._system_prompt(requests)
+        self.assertIn("into Portuguese (BR),", prompt)
+        self.assertIn("Style guidance, to follow wherever it does not contradict the instructions above: ", prompt)
+        self.assertIn("Use the agency's wire style.", prompt)
+        self.assertNotIn("in en", prompt)
+
+    async def test_a_translation_is_not_held_to_the_length_of_the_output_field(self):
+        await self._insert_profile({"body_html": {"type": "string", "maxlength": 20}})
+        requests = await self._capture_completion(TRANSLATION_CONTENT)
+        action = await self._create_action(**{**TRANSLATION_ACTION, "parameters": {"max_characters": 20}})
+
+        response = await self._run(action["_id"], language="de")
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertGreater(len(TRANSLATION_CONTENT), 20)
+        self.assertEqual((await response.get_json())["suggestions"][0]["over_limit"], False)
+        self.assertNotIn("characters", self._system_prompt(requests))
+
+    async def test_a_translation_answer_in_a_code_fence_is_unwrapped(self):
+        action = await self._create_action(**TRANSLATION_ACTION)
+
+        body = await self._run_action(f"```html\n{TRANSLATION_CONTENT}\n```", action=action, language="de")
+
+        self.assertEqual(body["suggestions"], [{"text": TRANSLATION_CONTENT, "over_limit": False}])
+
+    async def test_a_translation_run_without_a_language_is_rejected_before_the_provider_is_called(self):
+        requests = await self._capture_completion(TRANSLATION_CONTENT)
+        action = await self._create_action(**TRANSLATION_ACTION)
+
+        for payload in ({}, {"language": ""}, {"language": "  "}, {"language": None}):
+            with self.subTest(payload=payload):
+                response = await self._run(action["_id"], **payload)
 
                 self.assertEqual(response.status_code, 400)
-                self.assertIn("not supported yet", (await response.get_json())["_message"])
+                message = (await response.get_json())["_message"]
+                self.assertIn("translation", message)
+                self.assertIn("'language'", message)
+
+        self.assertEqual(requests, [])
+
+    async def test_the_run_record_of_a_translation_names_the_language_translated_into(self):
+        records = await self._capture_run_records()
+        action = await self._create_action(**TRANSLATION_ACTION)
+
+        await self._run_action(TRANSLATION_CONTENT, action=action, language="de")
+
+        self.assertEqual(records[0].language, "de")
+        self.assertEqual(records[0].input_chars, len(ITEM["body_html"]))
+        self.assertEqual(records[0].output_chars, len(TRANSLATION_CONTENT))
 
     async def test_a_provider_that_rejects_the_credentials_answers_502(self):
         action = await self._create_action()

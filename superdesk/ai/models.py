@@ -79,6 +79,9 @@ class AIActionType(str, enum.Enum):
 #: article, so storing its answers would make the log a second copy of the content.
 SHORT_OUTPUT_ACTION_TYPES = frozenset({AIActionType.SUGGESTION, AIActionType.SUMMARY})
 
+#: Action types that answer with exactly one text, so ``suggestions_count`` is always 1 for them
+SINGLE_ANSWER_ACTION_TYPES = frozenset({AIActionType.SUMMARY, AIActionType.TRANSLATION})
+
 
 class AIActionParameters(Dataclass):
     """How an action asks for its answers, as opposed to which fields it is wired to.
@@ -91,7 +94,8 @@ class AIActionParameters(Dataclass):
     temperature: float = 0.7
 
     #: Replaces the system prompt built from the action type, leaving the instructions that carry
-    #: the answer format in place
+    #: the answer format in place. A translation appends it as style guidance instead, as its own
+    #: prompt carries the target language and the rules that keep the article intact.
     system_prompt: str | None = None
 
     max_characters: int | None = None
@@ -198,7 +202,8 @@ class RunActionPayload(BaseModel):
     #: The editor the run is started from usually holds changes that were never saved.
     fields: dict[str, str] | None = None
 
-    #: Language to answer in, falls back to the language of the item
+    #: Language to answer in, a name or a code, falling back to the language of the item. Required
+    #: for a translation, where it is the language to translate into.
     language: str | None = None
 
     #: Where the run was started from, kept on the event the run writes

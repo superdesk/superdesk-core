@@ -11,6 +11,8 @@ from typing import Any, Mapping
 
 from quart_babel import gettext
 
+from superdesk.errors import SuperdeskApiError
+
 from .errors import AIErrorKind, AIProviderError, NotSupportedError
 from .models import AIActionType
 
@@ -23,6 +25,10 @@ SYSTEM_TEMPLATES: dict[AIActionType, str] = {
         "You are an experienced news editor. Write a summary of the article the user sends, "
         "to be used as its '{output_field}'."
     ),
+    AIActionType.TRANSLATION: (
+        "You are an experienced news translator. Translate the article the user sends into {language}, "
+        "to be used as its '{output_field}'."
+    ),
 }
 
 #: Action types the run flow can build a prompt for, the rest are rejected as not supported
@@ -33,6 +39,45 @@ FACTS_INSTRUCTION = "Use only the facts of the article the user sends, do not ad
 MAX_CHARACTERS_INSTRUCTION = "Keep every version under {max_characters} characters."
 
 LANGUAGE_INSTRUCTION = "Write every version in {language}."
+
+TRANSLATION_INSTRUCTION = (
+    "Keep every paragraph and all HTML markup exactly as they are and translate only the text. "
+    "Keep names and figures as they are. Add nothing and leave nothing out. "
+    "When the text has several fields, each introduced by its name, keep every name untranslated and in its place."
+)
+
+STYLE_GUIDANCE_INSTRUCTION = "Style guidance, to follow wherever it does not contradict the instructions above: {style}"
+
+#: Answer format of a translation. A whole article is asked for as plain text rather than as JSON,
+#: so a long answer full of markup does not depend on the provider escaping it correctly.
+TRANSLATION_CONTRACT = (
+    "Answer with the {language} translation and nothing else: no introduction, no notes, no code fences."
+)
+
+#: Names of the languages most often configured in Superdesk, so the prompt names the language a
+#: client sends as a code. A code that is not listed is put in the prompt as it was sent.
+LANGUAGE_NAMES = {
+    "ar": "Arabic",
+    "cs": "Czech",
+    "da": "Danish",
+    "de": "German",
+    "en": "English",
+    "es": "Spanish",
+    "fi": "Finnish",
+    "fr": "French",
+    "it": "Italian",
+    "ja": "Japanese",
+    "nb": "Norwegian",
+    "nl": "Dutch",
+    "no": "Norwegian",
+    "pl": "Polish",
+    "pt": "Portuguese",
+    "ru": "Russian",
+    "sv": "Swedish",
+    "tr": "Turkish",
+    "uk": "Ukrainian",
+    "zh": "Chinese",
+}
 
 JSON_CONTRACT = (
     'Answer with a JSON object and nothing else, of the form {"suggestions": ["first", "second"]}, '
@@ -59,6 +104,31 @@ def unsupported_action_type(action_type: AIActionType) -> NotSupportedError:
     )
 
 
+def missing_translation_language() -> SuperdeskApiError:
+    """Build the error to answer a translation run that does not name the language to translate into"""
+
+    return SuperdeskApiError.badRequestError(
+        gettext("A translation needs the 'language' to translate into, as a name or a code such as 'de'")
+    )
+
+
+def language_name(language: str) -> str:
+    """Name of the language a client sent, which may be a code with a region such as ``pt-BR``
+
+    A known code is turned into its name, keeping the region next to it. Anything else, a name
+    included, is returned as it was sent.
+    """
+
+    language = language.strip()
+    code, _, region = language.replace("_", "-").partition("-")
+    name = LANGUAGE_NAMES.get(code.lower())
+
+    if name is None:
+        return language
+
+    return f"{name} ({region})" if region else name
+
+
 def render_system_prompt(
     action_type: AIActionType,
     output_field: str,
@@ -73,15 +143,21 @@ def render_system_prompt(
     :param output_field: Name of the item field the answers are written to, named in the prompt
     :param count: Number of versions to ask for
     :param max_characters: Optional length the answers should stay under
-    :param language: Optional language to answer in, left out of the prompt when not known
+    :param language: Optional language to answer in, left out of the prompt when not known. The
+        language to translate into for a translation, which requires it.
     :param system_prompt: Optional replacement for the template of the action type. The instructions
-        that follow it are always appended, so a custom prompt cannot drop the answer format.
+        that follow it are always appended, so a custom prompt cannot drop the answer format. A
+        translation appends it as style guidance instead of replacing its template.
     :raises NotSupportedError: If the action type has no template
+    :raises SuperdeskApiError: If a translation is asked for without a language
     """
 
     template = SYSTEM_TEMPLATES.get(action_type)
     if template is None:
         raise unsupported_action_type(action_type)
+
+    if action_type == AIActionType.TRANSLATION:
+        return _render_translation_prompt(template, output_field, language, system_prompt)
 
     parts = [
         system_prompt or template.format(count=count, output_field=output_field),
@@ -98,6 +174,23 @@ def render_system_prompt(
     return "\n".join(parts)
 
 
+def _render_translation_prompt(
+    template: str, output_field: str, language: str | None, system_prompt: str | None
+) -> str:
+    if not language or not language.strip():
+        raise missing_translation_language()
+
+    name = language_name(language)
+    parts = [template.format(language=name, output_field=output_field), TRANSLATION_INSTRUCTION]
+
+    if system_prompt and system_prompt.strip():
+        parts.append(STYLE_GUIDANCE_INSTRUCTION.format(style=system_prompt.strip()))
+
+    parts.append(TRANSLATION_CONTRACT.format(language=name))
+
+    return "\n".join(parts)
+
+
 def render_user_message(texts: Mapping[str, str]) -> str:
     """Build the user message from the text of each input field
 
@@ -109,6 +202,12 @@ def render_user_message(texts: Mapping[str, str]) -> str:
         return next(iter(texts.values()))
 
     return "\n\n".join(f"{name}:\n{text}" for name, text in texts.items())
+
+
+def parse_translation(content: str) -> str:
+    """Read a translation out of a completion, dropping a code fence the provider wrapped it in"""
+
+    return _strip_code_fence(content)
 
 
 def parse_suggestions(content: str, count: int) -> list[str]:

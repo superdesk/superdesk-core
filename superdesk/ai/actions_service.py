@@ -12,10 +12,12 @@ from superdesk.utc import utcnow
 
 from .errors import AIErrorKind, AIProviderError
 from .events_service import AIRunRecord, record_run
-from .models import AIAction, AIActionType, AIProvider, RunActionPayload
+from .models import SINGLE_ANSWER_ACTION_TYPES, AIAction, AIActionType, AIProvider, RunActionPayload
 from .prompts import (
     SUPPORTED_ACTION_TYPES,
+    missing_translation_language,
     parse_suggestions,
+    parse_translation,
     render_system_prompt,
     render_user_message,
     unsupported_action_type,
@@ -30,15 +32,15 @@ logger = logging.getLogger(__name__)
 class AIActionsService(AsyncResourceService[AIAction]):
     """Service for the ``ai_actions`` resource.
 
-    A summary has a single answer by definition, so ``suggestions_count`` is forced to 1 for that
-    action type. It is forced here rather than in a model validator because only the fields present
-    in the client's payload are written to the database on a PATCH, so a value a validator derived
-    from another field would be validated and then dropped.
+    A summary or a translation has a single answer by definition, so ``suggestions_count`` is forced
+    to 1 for those action types. It is forced here rather than in a model validator because only the
+    fields present in the client's payload are written to the database on a PATCH, so a value a
+    validator derived from another field would be validated and then dropped.
     """
 
     async def on_create(self, docs: List[AIAction]) -> None:
         for doc in docs:
-            if doc.action_type == AIActionType.SUMMARY:
+            if doc.action_type in SINGLE_ANSWER_ACTION_TYPES:
                 doc.parameters.suggestions_count = 1
 
         await super().on_create(docs)
@@ -46,7 +48,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
     async def on_update(self, updates: dict[str, Any], original: AIAction) -> None:
         self._merge_parameters(updates, original)
 
-        if updates.get("action_type", original.action_type) == AIActionType.SUMMARY:
+        if updates.get("action_type", original.action_type) in SINGLE_ANSWER_ACTION_TYPES:
             parameters = updates.setdefault("parameters", original.parameters.to_dict())
             parameters["suggestions_count"] = 1
 
@@ -117,6 +119,10 @@ class AIActionsService(AsyncResourceService[AIAction]):
         if action.action_type not in SUPPORTED_ACTION_TYPES:
             raise unsupported_action_type(action.action_type)
 
+        is_translation = action.action_type == AIActionType.TRANSLATION
+        if is_translation and not (payload.language or "").strip():
+            raise missing_translation_language()
+
         item = await self._get_item(payload.item_id)
         self._check_content_profile(action, item)
         texts = self._get_input_texts(action, payload, item)
@@ -128,7 +134,8 @@ class AIActionsService(AsyncResourceService[AIAction]):
                 gettext("AI action '{name}' has no model and its provider has no default one").format(name=action.name)
             )
 
-        language = payload.language or item.get("language")
+        # The language of the item is the one a translation starts from, never one to translate into
+        language = payload.language if is_translation else payload.language or item.get("language")
         max_characters = await self._get_max_characters(action, item)
         request = CompletionRequest(
             model=model,
@@ -147,7 +154,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
                 CompletionMessage(role="user", content=render_user_message(texts)),
             ],
             temperature=action.parameters.temperature,
-            json_mode=True,
+            json_mode=not is_translation,
         )
 
         record = AIRunRecord(
@@ -218,14 +225,21 @@ class AIActionsService(AsyncResourceService[AIAction]):
                 gettext("The AI provider answered with an empty completion"),
             )
 
+        if action.action_type == AIActionType.TRANSLATION:
+            return [parse_translation(result.content)]
+
         return parse_suggestions(result.content, action.parameters.suggestions_count)
 
     async def _get_max_characters(self, action: AIAction, item: dict[str, Any]) -> int | None:
         """How long an answer may be, from the action or from the content profile of the item
 
         The profile is the length the field can actually store, so it is the default and
-        ``parameters.max_characters`` overrides it. ``None`` when neither names one.
+        ``parameters.max_characters`` overrides it. ``None`` when neither names one, and always for
+        a translation, which is as long as the article it translates.
         """
+
+        if action.action_type == AIActionType.TRANSLATION:
+            return None
 
         if action.parameters.max_characters is not None:
             return action.parameters.max_characters
@@ -276,9 +290,14 @@ class AIActionsService(AsyncResourceService[AIAction]):
             )
 
     def _get_input_texts(self, action: AIAction, payload: RunActionPayload, item: dict[str, Any]) -> dict[str, str]:
-        """Collect the text of every input field, preferring what the client sent over the item"""
+        """Collect the text of every input field, preferring what the client sent over the item
+
+        The markup is stripped, except for a translation: its answer is the field translated whole,
+        markup included, so the markup has to reach the provider to come back.
+        """
 
         provided = payload.fields or {}
+        keeps_markup = action.action_type == AIActionType.TRANSLATION
         texts: dict[str, str] = {}
 
         for name in action.input_fields:
@@ -288,7 +307,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
 
             text = get_text(value, content="html", lf_on_block=True).strip()
             if text:
-                texts[name] = text
+                texts[name] = value.strip() if keeps_markup else text
 
         if not texts:
             raise SuperdeskApiError.badRequestError(
