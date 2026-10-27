@@ -424,4 +424,8 @@ class SuperdeskGridFSMediaStorage(SuperdeskMediaStorage, GridFSMediaStorage):
         return self.fs(resource).delete(format_id(_id))
 
     async def delete_async(self, _id, resource=None):
-        return self.fs_async(resource).delete(format_id(_id))
+        """Delete a file, treating an already absent file as successfully deleted."""
+        try:
+            return await self.fs_async(resource).delete(format_id(_id))
+        except gridfs.errors.NoFile:
+            logger.debug("GridFS file %s is already absent (resource=%s)", _id, resource)

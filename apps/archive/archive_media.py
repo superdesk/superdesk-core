@@ -9,9 +9,16 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
-from quart_babel import gettext as _
+from datetime import timedelta
+from tempfile import TemporaryFile
+from typing import Any
 
+from quart_babel import gettext as _
+from werkzeug.datastructures import FileStorage
+
+from superdesk import get_resource_service
 from superdesk.core import get_current_app, get_app_config
+from apps.auth import get_user
 from superdesk.resource_fields import ID_FIELD, VERSION
 from superdesk.flask import abort
 from apps.archive.common import copy_metadata_from_user_preferences
@@ -27,9 +34,12 @@ from .common import (
     set_item_expiry,
 )
 from superdesk.activity import add_activity
-from superdesk.filemeta import set_filemeta
+from superdesk.filemeta import set_filemeta, get_filemeta
+from superdesk.errors import SuperdeskApiError
+from superdesk.utc import utcnow
 from superdesk.timer import timer
 from superdesk.media.video_editor import VideoEditorWrapper
+from .upload_staging_types import ClaimedStagedUpload, StagedBinaryDocument, StagedMediaInfo, UploadStatus
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +49,7 @@ class ArchiveMediaService:
 
     type_av = {"image": CONTENT_TYPE.PICTURE, "audio": CONTENT_TYPE.AUDIO, "video": CONTENT_TYPE.VIDEO}
 
-    async def on_create_async(self, docs):
+    async def on_create_async(self, docs: list[dict[str, Any]]) -> None:
         """Create corresponding item on file upload."""
 
         app = get_current_app()
@@ -47,14 +57,21 @@ class ArchiveMediaService:
             res = None
             file_id: str | None = None
             delete_all_on_error = not doc.get("_import", None)
+            staged = await self._pop_staged_upload(doc)
 
-            if "media" not in doc or doc["media"] is None:
-                abort(400, description=_("No media found"))
-            # check content type of video by python-magic
-            content_type = app.media._get_mimetype(doc["media"])
-            doc["media"].seek(0)
+            if staged:
+                content_type = staged["mimetype"]
+            else:
+                if "media" not in doc or doc["media"] is None:
+                    abort(400, description=_("No media found"))
+                # check content type of video by python-magic
+                content_type = app.media._get_mimetype(doc["media"])
+                doc["media"].seek(0)
             file_type = content_type.split("/")[0]
-            if file_type == "video" and get_app_config("VIDEO_SERVER_ENABLED"):
+            if staged:
+                renditions = staged["renditions"]
+                metadata = get_filemeta(staged)
+            elif file_type == "video" and get_app_config("VIDEO_SERVER_ENABLED"):
                 # upload media to video server
                 res, renditions, metadata = self.upload_file_to_video_server(doc)
                 # get thumbnails for timeline bar
@@ -97,7 +114,81 @@ class ArchiveMediaService:
                     self.video_editor._delete(res.get("_id"))
                 abort(500)
 
-    async def _set_metadata(self, doc):
+    async def on_created_async(self, docs: list[dict[str, Any]]) -> None:
+        service = get_resource_service("upload_staging")
+        for doc in docs:
+            staged = await service.find_one_async(req=None, archive_id=doc[ID_FIELD])
+            if staged:
+                await service.finish_commit(staged)
+
+    async def _pop_staged_upload(self, doc: dict[str, Any]) -> ClaimedStagedUpload | None:
+        """Resolve ``staged_id`` into a staged upload and make ``doc`` reference its media.
+
+        Metadata read from the file is used as defaults for fields the client did not send.
+        """
+        staged_id = doc.pop("staged_id", None)
+        if not staged_id:
+            return None
+
+        app = get_current_app()
+        staged = await get_resource_service("upload_staging").find_one_async(req=None, _id=staged_id)
+        if not staged or staged["expires"] <= utcnow():
+            abort(404, description=_("Staged upload not found or expired"))
+        if str(staged.get("user")) != str(get_user(required=True)[ID_FIELD]):
+            abort(403, description=_("Staged upload belongs to another user"))
+        if staged.get("status") not in (UploadStatus.READY, UploadStatus.COMMITTING):
+            raise SuperdeskApiError.conflictError(
+                staged.get("error") or _("Staged upload is not ready to commit"),
+                payload={"status": staged.get("status")},
+            )
+
+        if not await app.media.exists_async(staged["media"]):
+            abort(404, description=_("Staged upload not found or expired"))
+
+        service = get_resource_service("upload_staging")
+        updates = {"expires": utcnow() + timedelta(seconds=app.config["UPLOAD_STAGING_TTL"])}
+        if staged["status"] == UploadStatus.READY:
+            updates.update(status=UploadStatus.COMMITTING, archive_id=generate_guid(type=GUID_TAG))
+        await service.update_processing(
+            {"_id": staged["_id"], "status": staged["status"], "expires": {"$gt": utcnow()}},
+            updates,
+        )
+        staged = await service.find_one_async(req=None, _id=staged["_id"])
+        if not staged or staged["status"] != UploadStatus.COMMITTING or staged["expires"] <= utcnow():
+            raise SuperdeskApiError.conflictError(_("Staged upload is no longer available"))
+        if await get_resource_service("archive").find_one_async(req=None, _id=staged["archive_id"]):
+            raise SuperdeskApiError.conflictError(_("Staged upload has already been committed"))
+        # Retries and concurrent requests share one MongoDB identity, preventing duplicate items.
+        doc[ID_FIELD] = doc["guid"] = staged["archive_id"]
+
+        for key, value in (staged.get("meta") or {}).items():
+            if key == "extra" and isinstance(value, dict) and isinstance(doc.get("extra"), dict):
+                for field, default in value.items():
+                    doc["extra"].setdefault(field, default)
+            else:
+                doc.setdefault(key, value)
+
+        doc["media"] = staged.get("video_server_id") or staged["media"]
+        return staged
+
+    async def load_staged_binary(self, doc: StagedBinaryDocument, staged: StagedMediaInfo) -> None:
+        file = doc.pop("media_fetched")
+        stream = TemporaryFile()
+        try:
+            async with file:
+                async for chunk in file:
+                    stream.write(chunk)
+            stream.seek(0)
+        except BaseException:
+            stream.close()
+            raise
+        doc["media"] = FileStorage(
+            stream,
+            filename=staged.get("filename"),
+            content_type=staged["mimetype"],
+        )
+
+    async def _set_metadata(self, doc: dict[str, Any]) -> None:
         """
         Adds metadata to doc.
         """
@@ -115,7 +206,7 @@ class ArchiveMediaService:
         doc.setdefault(ITEM_STATE, CONTENT_STATE.DRAFT)
 
         if not doc.get("ingest_provider"):
-            doc["source"] = get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES")
+            doc.setdefault("source", get_app_config("DEFAULT_SOURCE_VALUE_FOR_MANUAL_ARTICLES"))
 
         copy_metadata_from_user_preferences(doc)
 

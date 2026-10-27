@@ -42,8 +42,8 @@ async def download_file(id, folder=None):
 
 
 def download_url(media_id):
-    prefered_url_scheme = get_config(str, "PREFERRED_URL_SCHEME", "http")
-    return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=prefered_url_scheme)
+    preferred_url_scheme = get_config(str, "PREFERRED_URL_SCHEME", None)
+    return url_for("download_raw.download_file", id=media_id, _external=True, _scheme=preferred_url_scheme)
 
 
 def init_app(app) -> None:

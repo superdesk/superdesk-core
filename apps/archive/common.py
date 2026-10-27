@@ -173,7 +173,7 @@ async def on_create_item(docs, repo_type=ARCHIVE, media_service=None):
     """Make sure item has basic fields populated."""
 
     for doc in docs:
-        if doc.get("media") and media_service:
+        if (doc.get("media") or doc.get("staged_id")) and media_service:
             await media_service.on_create_async([doc])
 
         editor_utils.generate_fields(doc)

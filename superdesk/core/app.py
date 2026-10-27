@@ -27,10 +27,10 @@ CONFIG_DEFAULT_TYPE = TypeVar("CONFIG_DEFAULT_TYPE")
 def get_app_config(key: str, default: Any | None = None) -> Any | None:
     """
     Retrieves the value of a configuration key from the application configuration. If the key is
-    not present, it will return the provided default value. The function first checks if there is
-    a global application instance, and it retrieves the configuration from it. If no global
-    application is available, it attempts to retrieve the configuration using the Quart current
-    application context. If both approaches fail, the function raises an exception.
+    not present, it will return the provided default value. The function first uses the Quart
+    current application context. If no application context is available, it retrieves the
+    configuration from the global application instance. If neither is available, the function
+    raises an exception.
 
     :param key: The configuration key to retrieve.
     :param default: The default value to return if the key is not found. Defaults to None.
@@ -38,15 +38,15 @@ def get_app_config(key: str, default: Any | None = None) -> Any | None:
     :raises RuntimeError: If no application context or global application is running.
     """
 
-    if _global_app is not None:
-        return _global_app.wsgi.config.get(key, default)
-
     from quart import current_app
 
     try:
         return current_app.config.get(key, default)
     except RuntimeError:
         pass
+
+    if _global_app is not None:
+        return _global_app.wsgi.config.get(key, default)
 
     raise RuntimeError("Superdesk app is not running")
 

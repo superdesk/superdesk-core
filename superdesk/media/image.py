@@ -176,13 +176,13 @@ def get_meta_iptc(file_stream: BinaryIO):
     return metadata
 
 
-def read_metadata(input: bytes) -> MediaMetadata:
+def read_metadata(input: bytes | str) -> MediaMetadata:
     """Reads the metadata from the image file.
 
     @param file_stream: stream
     """
     try:
-        with pyexiv2.ImageData(input) as img:
+        with pyexiv2.Image(input) if isinstance(input, str) else pyexiv2.ImageData(input) as img:
             xmp = img.read_xmp()
     except (RuntimeError, ValueError) as e:
         logger.warning("Failed to read image metadata with pyexiv2: %s, trying exiftool fallback", e, exc_info=True)

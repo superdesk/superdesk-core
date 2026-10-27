@@ -32,6 +32,22 @@ Default: ``'Superdesk'``
 
 Default: ``'http://localhost:9000'``
 
+``PREFERRED_URL_SCHEME``
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: the scheme from the final ``SERVER_URL``, after application settings
+and configuration overrides are loaded. ``SERVER_URL`` initially comes from
+``SUPERDESK_URL`` (``http://localhost:5000/api`` by default).
+
+Controls the scheme used for generated download links, including export ZIP
+downloads, even when the API receives HTTP requests behind a TLS-terminating
+proxy. Set the ``PREFERRED_URL_SCHEME`` environment variable or application
+setting explicitly to override this default. HTTPS deployments should configure
+an HTTPS ``SERVER_URL`` or explicitly set ``PREFERRED_URL_SCHEME=https``.
+Setting ``PREFERRED_URL_SCHEME`` to ``None`` in application settings preserves
+the request scheme. Outside the application factory, a missing setting also
+preserves the request scheme.
+
 ``DEFAULT_TIMEZONE``
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -118,6 +134,9 @@ Default: ``9999``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Default: ``'Superdesk'``
+
+For uploaded media without an ingest provider, this default is used only when
+the source field is absent. A supplied source value is preserved.
 
 .. versionchanged:: 1.8
     Change default value to ``'Superdesk'``.
