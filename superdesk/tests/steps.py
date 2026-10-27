@@ -496,6 +496,7 @@ def get_resource_name(url):
 
 def encode_url_query(url):
     url = url.encode("ascii", "backslashreplace").decode("unicode-escape")
+    url = url.replace("\t", "%09").replace("\r", "%0D").replace("\n", "%0A")
     parsed_url = urlsplit(url)
     query = quote(parsed_url.query, safe="/?:@-._~!$&'()*+,;=%")
     return urlunsplit(parsed_url._replace(query=query))

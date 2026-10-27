@@ -27,6 +27,9 @@ def test_non_empty_list_does_not_match_missing_item():
             '/search?where={"headline": "caf\\u00e9"}',
             "/search?where=%7B%22headline%22:%20%22caf%C3%A9%22%7D",
         ),
+        ("/search?q=foo\\tbar", "/search?q=foo%09bar"),
+        ("/search?q=foo\\rbar", "/search?q=foo%0Dbar"),
+        ("/search?q=foo\\nbar", "/search?q=foo%0Abar"),
     ],
 )
 def test_encode_url_query(url, expected):
