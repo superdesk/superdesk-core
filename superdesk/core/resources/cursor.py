@@ -166,6 +166,9 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         self.cursor.rewind()
 
     async def count(self):
+        if not self.lookup:
+            # ``count_documents({})`` reads every document, use collection metadata instead
+            return await self.collection.estimated_document_count()
         return await self.collection.count_documents(self.lookup, collation=self.collation)
 
 
