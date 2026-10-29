@@ -465,6 +465,22 @@ class TestResourceService(AsyncTestCase):
         self.assertEqual(users[0], docs[0])
         self.assertEqual(users[1], docs[1])
 
+    async def test_mongo_count_without_filter_uses_collection_metadata(self):
+        await self.service.create(all_users())
+
+        cursor = await self.service.search({}, use_mongo=True)
+        with mock.patch.object(cursor.collection, "count_documents", wraps=cursor.collection.count_documents) as count:
+            self.assertEqual(await cursor.count(), 3)
+        count.assert_not_called()
+
+        cursor = await self.service.find({}, use_mongo=True)
+        self.assertEqual(await cursor.count(), 3)
+
+        cursor = await self.service.search({"last_name": "Doe"}, use_mongo=True)
+        with mock.patch.object(cursor.collection, "count_documents", wraps=cursor.collection.count_documents) as count:
+            self.assertEqual(await cursor.count(), 2)
+        count.assert_called_once()
+
     async def test_events(self):
         test_user = john_doe()
         self.service.on_create = mock.AsyncMock()
