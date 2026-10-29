@@ -150,7 +150,10 @@ class UploadStagingService(AsyncBaseService):
             if content is None:
                 raise SuperdeskApiError.badRequestError(_("No media found"))
 
-            content_type = app.media._get_mimetype(content)
+            upload_name = getattr(content, "filename", None)
+            # libmagic only sniffs the first 16 KB, which can be all ID3 tag for mp3s with cover art,
+            # so let it fall back to the file extension (`None` if that is unknown too)
+            content_type = app.media._get_mimetype(content, upload_name) or "application/octet-stream"
             logger.info("Staged upload detected upload=%s mimetype=%s", file_name, content_type)
             content.seek(0)
             file_type = content_type.split("/")[0]
@@ -160,7 +163,7 @@ class UploadStagingService(AsyncBaseService):
             content.seek(0, 2)
             size = content.tell()
             content.seek(0)
-            upload_name = getattr(content, "filename", None) or file_name
+            upload_name = upload_name or file_name
             logger.info("Staged upload storing binary upload=%s size=%s", file_name, size)
             doc["media"] = await app.media.put_async(
                 content, filename=file_name, content_type=content_type, metadata={"length": str(size)}
