@@ -646,6 +646,9 @@ def step_create_new_macro(context, macro_name):
     src = get_fixture_path(context, macro_name)
     dst = get_macro_path(macro_name)
     shutil.copyfile(src, dst)
+    macro_fixtures: list[str] = getattr(context, "macro_fixtures", [])
+    macro_fixtures.append(dst)
+    setattr(context, "macro_fixtures", macro_fixtures)
 
 
 @when('we fetch from "{provider_name}" ingest "{guid}"')
