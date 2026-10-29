@@ -27,10 +27,14 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
         return self
 
     async def __anext__(self) -> ResourceModelType:
-        raise NotImplementedError()
+        item = await self.next()
+        if item is not None:
+            return item
+        raise StopAsyncIteration
 
     async def next(self) -> ResourceModelType | None:
-        raise NotImplementedError()
+        item_dict = await self.next_raw()
+        return None if item_dict is None else self.get_model_instance(item_dict)
 
     async def next_raw(self) -> dict[str, Any] | None:
         raise NotImplementedError()
@@ -72,6 +76,30 @@ class ResourceCursorAsync(Generic[ResourceModelType]):
         return self.data_class.from_dict(data)
 
 
+class InMemoryCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[ResourceModelType]):
+    _index: int
+
+    def __init__(self, data_class: type[ResourceModelType], items: list[dict]):
+        super().__init__(data_class)
+        self._index = 0
+        self._items = items
+
+    async def next_raw(self) -> dict[str, Any] | None:
+        try:
+            item = self._items[self._index]
+            self._index += 1
+            return item
+        except IndexError:
+            self.rewind()
+            return None
+
+    def rewind(self):
+        self._index = 0
+
+    async def count(self) -> int:
+        return len(self._items)
+
+
 class ElasticsearchResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[ResourceModelType]):
     _index: int
     hits: dict[str, Any]
@@ -84,16 +112,6 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync[ResourceModelType], G
         self._index = 0
         self.hits = hits if hits else self.no_hits
 
-    async def __anext__(self) -> ResourceModelType:
-        item = await self.next()
-        if item is not None:
-            return item
-        raise StopAsyncIteration
-
-    async def next(self) -> ResourceModelType | None:
-        item_dict = await self.next_raw()
-        return None if item_dict is None else self.get_model_instance(item_dict)
-
     async def next_raw(self, as_hit: bool = False) -> dict[str, Any] | None:
         try:
             data = self.hits["hits"]["hits"][self._index]
@@ -103,7 +121,7 @@ class ElasticsearchResourceCursorAsync(ResourceCursorAsync[ResourceModelType], G
             self._index += 1
             return data if as_hit else source
         except (IndexError, KeyError, TypeError):
-            self._index = 0
+            self.rewind()
             return None
 
     def rewind(self):
@@ -142,24 +160,11 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         self.lookup = lookup
         self.collation = collation
 
-    async def __anext__(self) -> ResourceModelType:
-        item = await self.next()
-        if item is not None:
-            return item
-        raise StopAsyncIteration
-
-    async def next(self) -> ResourceModelType | None:
-        try:
-            return self.get_model_instance(dict(await self.cursor.next()))
-        except StopAsyncIteration:
-            self.cursor.rewind()
-            return None
-
     async def next_raw(self) -> dict[str, Any] | None:
         try:
             return dict(await self.cursor.next())
         except StopAsyncIteration:
-            self.cursor.rewind()
+            self.rewind()
             return None
 
     def rewind(self):
@@ -172,8 +177,9 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
 class DictCursorAsync(Generic[ResourceModelType]):
     """Wraps a ResourceCursorAsync and yields raw dicts instead of ResourceModel instances"""
 
-    def __init__(self, cursor: ResourceCursorAsync[ResourceModelType]):
+    def __init__(self, cursor: ResourceCursorAsync[ResourceModelType], **to_dict_kwargs):
         self._cursor = cursor
+        self._to_dict_kwargs = to_dict_kwargs or {}
 
     def __aiter__(self):
         return self
@@ -181,12 +187,12 @@ class DictCursorAsync(Generic[ResourceModelType]):
     async def __anext__(self) -> dict:
         item = await self._cursor.next()
         if item is not None:
-            return item.to_dict()
+            return item.to_dict(**self._to_dict_kwargs)
         raise StopAsyncIteration
 
     async def next(self) -> dict[str, Any] | None:
         item = await self._cursor.next()
-        return item.to_dict() if item else None
+        return item.to_dict(**self._to_dict_kwargs) if item else None
 
     async def next_raw(self) -> dict[str, Any] | None:
         return await self._cursor.next_raw()
@@ -195,7 +201,7 @@ class DictCursorAsync(Generic[ResourceModelType]):
         self._cursor.rewind()
 
     async def to_list(self) -> list[dict[str, Any]]:
-        return [item.to_dict() async for item in self._cursor]
+        return [item.to_dict(**self._to_dict_kwargs) async for item in self._cursor]
 
     async def count(self) -> int:
         return await self._cursor.count()

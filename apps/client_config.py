@@ -3,6 +3,7 @@ import superdesk
 from superdesk.core import get_current_app
 from superdesk.utils import ListCursor
 from superdesk.default_schema import DEFAULT_SCHEMA, DEFAULT_EDITOR
+from superdesk.utc import MAX_CONTENT_EXPIRY_MINUTES
 
 
 class ClientConfigResource(superdesk.Resource):
@@ -35,6 +36,7 @@ def init_app(app) -> None:
             "japanese_characters_per_minute": app.config.get("JAPANESE_CHARACTERS_PER_MINUTE"),
             "validator_media_metadata": app.config.get("VALIDATOR_MEDIA_METADATA", {}),
             "publish_content_expiry_minutes": app.config.get("PUBLISHED_CONTENT_EXPIRY_MINUTES", 0),
+            "max_content_expiry_minutes": MAX_CONTENT_EXPIRY_MINUTES,
             "high_priority_queue_enabled": app.config.get("HIGH_PRIORITY_QUEUE_ENABLED"),
             "default_language": app.config.get("DEFAULT_LANGUAGE"),
             "workflow_allow_multiple_updates": app.config.get("WORKFLOW_ALLOW_MULTIPLE_UPDATES"),

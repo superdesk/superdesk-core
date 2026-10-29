@@ -19,16 +19,41 @@ thus essentially just a normal `Flask <http://flask.pocoo.org/>`_ application.
 import os
 import importlib
 
-from eve.io.mongo.mongo import MongoJSONEncoder
+from eve.render import send_response
 
 from superdesk.flask import Config
-from superdesk.datalayer import SuperdeskDataLayer
+from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
-from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
+from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class, log_server_error
 from superdesk.cache import cache_backend
+from superdesk.logging import configure_logging, configure_graylog
 
 from prod_api.auth import JWTAuth
+from prod_api.datalayer import ProdApiDataLayer
+from prod_api.json_utils import ProdApiJSONEncoder, ProdApiLegacyJSONEncoder
+
+
+def set_prodapi_error_handlers(app):
+    """Render errors as ``{"_status": "ERR", "_error": {"code", "message"}}`` like eve and auth errors."""
+
+    async def render_error(error):
+        status_code = error.status_code or 422
+        body = {"_status": "ERR", "_error": {"code": status_code, "message": str(error.message or "")}}
+        if getattr(error, "payload", None):
+            body["_issues"] = error.payload
+        return await send_response(None, (body, None, None, status_code))
+
+    @app.errorhandler(SuperdeskError)
+    async def prodapi_error_handler(error):
+        if error.status_code and error.status_code >= 500:
+            log_server_error(app, error)
+        return await render_error(error)
+
+    @app.errorhandler(500)
+    async def prodapi_server_error_handler(error):
+        log_server_error(app, error)
+        return await render_error(SuperdeskApiError.internalError(error))
 
 
 def get_app(config=None):
@@ -61,6 +86,9 @@ def get_app(config=None):
     if config:
         app_config.update(config)
 
+    configure_logging(app_config["LOG_CONFIG_FILE"])
+    configure_graylog(app_config)
+
     # media storage
     media_storage = get_media_storage_class(app_config)
 
@@ -72,13 +100,14 @@ def get_app(config=None):
     app = SuperdeskEve(
         auth=auth,
         settings=app_config,
-        data=SuperdeskDataLayer,
+        data=ProdApiDataLayer,
         media=media_storage,
-        json_encoder=MongoJSONEncoder,
+        json_encoder=ProdApiJSONEncoder if app_config["PRODAPI_RFC3339_DATETIME"] else ProdApiLegacyJSONEncoder,
         validator=SuperdeskValidator,
     )
 
     set_error_handlers(app)
+    set_prodapi_error_handlers(app)
     setup_apm(app, "Production API")
     cache_backend.init_app(app)
 

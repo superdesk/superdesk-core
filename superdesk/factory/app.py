@@ -26,7 +26,7 @@ from babel import parse_locale
 from eve.auth import TokenAuth
 from eve.render import send_response
 from eve.io.media import MediaStorage
-from werkzeug.exceptions import NotFound
+from werkzeug.exceptions import InternalServerError, NotFound
 from pymongo.errors import DuplicateKeyError
 from eve.io.mongo.mongo import _create_index as create_index
 from sentry_sdk.integrations.quart import QuartIntegration
@@ -50,7 +50,7 @@ from superdesk.flask import (
 from superdesk.celery_app import init_celery
 from superdesk.datalayer import SuperdeskDataLayer  # noqa
 from superdesk.errors import SuperdeskError, SuperdeskApiError, DocumentError
-from superdesk.logging import configure_logging
+from superdesk.logging import configure_logging, configure_graylog
 from superdesk.storage import ProxyMediaStorage
 from superdesk.validator import SuperdeskValidator
 from superdesk.json_utils import SuperdeskFlaskJSONProvider, SuperdeskJSONEncoder
@@ -183,6 +183,15 @@ class HttpFlaskRequest(Request):
         return self.request.accept_mimetypes.best_match(["application/json", "text/html"]) == "application/json"
 
 
+def log_server_error(app, error: Exception) -> None:
+    if isinstance(error, SuperdeskApiError) and error._logged:
+        return
+    if isinstance(error, InternalServerError) and error.original_exception is not None:
+        # Quart already logged the original unhandled exception.
+        return
+    app.log_exception((type(error), error, error.__traceback__))
+
+
 def set_error_handlers(app):
     """Set error handlers for the given application object.
 
@@ -203,12 +212,17 @@ def set_error_handlers(app):
         error_dict = convert_pydantic_validation_error_for_response(error)
         return await send_response(None, (error_dict, None, None, 400))
 
-    @app.errorhandler(SuperdeskError)
-    async def client_error_handler(error):
+    async def render_error(error):
         error_dict = error.to_dict()
         error_dict.update(internal_error=error.status_code)
         status_code = error.status_code or 422
         return await send_response(None, (error_dict, None, None, status_code))
+
+    @app.errorhandler(SuperdeskError)
+    async def client_error_handler(error):
+        if error.status_code and error.status_code >= 500:
+            log_server_error(app, error)
+        return await render_error(error)
 
     @app.errorhandler(403)
     async def server_forbidden_handler(error):
@@ -229,8 +243,9 @@ def set_error_handlers(app):
     @app.errorhandler(500)
     async def server_error_handler(error):
         """Log server errors."""
+        log_server_error(app, error)
         return_error = SuperdeskApiError.internalError(error)
-        return await client_error_handler(return_error)
+        return await render_error(return_error)
 
 
 class SuperdeskEve(eve.Eve):
@@ -646,6 +661,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
         app.jinja_env.filters[name] = jinja_filter
 
     configure_logging(app.config["LOG_CONFIG_FILE"])
+    configure_graylog(app.config)
 
     # configure the CLI only after modules and apps have been loaded
     # to make sure all commands are registered

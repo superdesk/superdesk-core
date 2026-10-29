@@ -30,6 +30,7 @@ from superdesk.factory.elastic_apm import setup_apm
 from superdesk.validator import SuperdeskValidator
 from superdesk.factory.app import SuperdeskEve, set_error_handlers, get_media_storage_class
 from superdesk.cache import cache_backend
+from superdesk.logging import configure_logging, configure_graylog
 
 
 def get_app(config=None):
@@ -63,6 +64,9 @@ def get_app(config=None):
 
     if config:
         app_config.update(config)
+
+    configure_logging(app_config["LOG_CONFIG_FILE"])
+    configure_graylog(app_config)
 
     media_storage = get_media_storage_class(app_config)
 

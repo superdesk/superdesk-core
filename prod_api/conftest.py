@@ -20,6 +20,7 @@ from prod_api.app import get_app as get_prodapi_api
 
 from planning.prod_api.events.resource import EventsResource
 from planning.events.events_schema import events_schema
+from planning.planning.planning_schema import planning_schema
 
 
 MONGO_DB = "prodapi_tests"
@@ -168,6 +169,13 @@ async def prodapi_app_with_data(request):
                 values = json.load(f)
                 docs = [parse(value, resource) for value in values]
                 app.data.insert(resource=resource, docs=docs)
+
+        # Event response hooks query nested links absent from these older fixtures.
+        app.data.elastic._put_mappings(
+            app.data.elastic.es,
+            app.data.elastic._resource_index("planning"),
+            {"properties": {"related_events": planning_schema["related_events"]["mapping"]}},
+        )
 
     return app
 

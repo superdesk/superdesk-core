@@ -413,10 +413,49 @@ Default: ``False``
 Monitoring settings
 -------------------
 
+Logging
+^^^^^^^
+
+Superdesk, Production API, and Content API load the Python logging configuration
+from the YAML file specified by ``LOG_CONFIG_FILE`` (default:
+``logging_config.yml``). Without a custom configuration, basic application logs
+go to stderr.
+
+All three APIs support the ``GRAYLOG_HOST``, ``GRAYLOG_PORT`` (default: ``12201``),
+``GRAYLOG_FACILITY`` (default: ``superdesk``), and ``GRAYLOG_LEVEL`` (default:
+``INFO``) environment variables. Setting ``GRAYLOG_HOST`` adds a GELF UDP handler
+after the logging configuration is loaded.
+
+Unhandled exceptions and handled server errors (HTTP 5xx) are logged with
+tracebacks. Handled client errors are not generally logged automatically.
+Hypercorn's error log defaults to stderr; access logging is separate and can be
+enabled with ``--access-logfile -`` to write request records to stdout.
+
 ``SENTRY_DSN``
 ^^^^^^^^^^^^^^
 
 Default: ``None``
+
+Set the ``SENTRY_DSN`` environment variable to enable Sentry error reporting
+for Superdesk, Production API, and Content API. Without a DSN, Sentry remains
+disabled.
+
+``SENTRY_TRACES_SAMPLE_RATE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+Set the environment variable to a number between ``0.0`` and ``1.0`` to enable
+transaction tracing at that sampling rate.
+
+``SENTRY_PROFILES_SAMPLE_RATE``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``None``
+
+Set the environment variable to a number between ``0.0`` and ``1.0`` to profile
+that fraction of sampled transactions. Profiling requires tracing to be enabled.
+Both sampling settings apply to Superdesk, Production API, and Content API.
 
 .. _settings.ldap:
 

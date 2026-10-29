@@ -14,6 +14,8 @@ import json
 import click
 
 from superdesk import get_resource_service
+from superdesk.core import get_current_async_app
+from superdesk.core.resources import AsyncResourceService
 from superdesk.commands import cli
 
 
@@ -43,11 +45,23 @@ async def cli_app_populate(filepath):
 
 
 async def populate_table_json(service_name, json_data):
-    service = get_resource_service(service_name)
+    try:
+        service = get_resource_service(service_name)
+    except KeyError:
+        # Eve service doesn't exist for this resource.
+        # Try the Pydantic one
+        async_app = get_current_async_app()
+        service = async_app.resources.get_resource_service(service_name)
+
     for item in json_data:
         id_name = item.get("_id")
 
-        if hasattr(service, "find_one_async"):
+        if isinstance(service, AsyncResourceService):
+            if id_name and await service.find_by_id(id_name):
+                await service.update(id_name, item)
+            else:
+                await service.create([item])
+        elif hasattr(service, "find_one_async"):
             # This is an async resource service, use async methods
             if id_name and await service.find_one_async(_id=id_name, req=None):
                 await service.put_async(id_name, item)

@@ -100,6 +100,34 @@ Feature: Desks
         """
         And we get desk members count as 1
 
+    @auth
+    Scenario: Desk content expiry cannot exceed 99999 days
+        Given empty "desks"
+        When we post to "/desks"
+        """
+        {"name": "Sports Desk", "content_expiry": 144000000}
+        """
+        Then we get error 400
+        """
+        {"_issues": {"content_expiry": "max value is 143999999"}}
+        """
+        When we post to "/desks"
+        """
+        {"name": "Sports Desk", "content_expiry": 143999999}
+        """
+        Then we get new resource
+        """
+        {"name": "Sports Desk", "content_expiry": 143999999}
+        """
+        When we patch "/desks/#desks._id#"
+        """
+        {"content_expiry": 14399999998560}
+        """
+        Then we get error 400
+        """
+        {"_issues": {"content_expiry": "max value is 143999999"}}
+        """
+
 	@auth
     @notification
 	Scenario: Delete desk

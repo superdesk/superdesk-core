@@ -22,6 +22,7 @@ from superdesk.core.resources.validators import validate_data_relation_async
 from superdesk.types.search_providers import SearchProvider
 from superdesk.utc import utcnow
 from superdesk.utils import ListCursor
+from superdesk.eve_async import AsyncListCursor
 from superdesk.core.web import endpoint
 from superdesk.core.types import Request, Response
 from superdesk.users.services import current_user_has_item_privilege
@@ -88,7 +89,7 @@ async def _set_item_defaults(item: dict[str, Any], provider: dict[str, Any]) -> 
     item.setdefault("ingest_provider", str(provider["_id"]))
 
 
-async def search_items(lookup: dict[str, Any], provider_id: str | None = None) -> ListCursor:
+async def search_items(lookup: dict[str, Any], provider_id: str | None = None) -> AsyncListCursor:
     """Search using provider."""
     # TODO-ASYNC [search_providers]: to be checked when search providers are async.
     provider = await get_provider(provider_id)
@@ -106,7 +107,9 @@ async def search_items(lookup: dict[str, Any], provider_id: str | None = None) -
     items = await service.find(query, params)
 
     if isinstance(items, list):
-        items = ListCursor(items)
+        items = AsyncListCursor(items)
+    elif isinstance(items, ListCursor):
+        items = AsyncListCursor(items.docs)
 
     for item in items:
         assert not isinstance(provider, str)

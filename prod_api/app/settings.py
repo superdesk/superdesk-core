@@ -35,6 +35,14 @@ from superdesk.default_settings import (  # noqa
     APM_SERVER_URL,
     APM_SECRET_TOKEN,
     APM_SERVICE_NAME,
+    SENTRY_DSN,
+    SENTRY_TRACES_SAMPLE_RATE,
+    SENTRY_PROFILES_SAMPLE_RATE,
+    LOG_CONFIG_FILE,
+    GRAYLOG_HOST,
+    GRAYLOG_PORT,
+    GRAYLOG_FACILITY,
+    GRAYLOG_LEVEL,
     CLIENT_URL,
 )
 
@@ -50,6 +58,7 @@ PRODAPI_INSTALLED_APPS = (
     "prod_api.content_types",
     "prod_api.user_availability",
     "prod_api.user_metrics",
+    "prod_api.content_lists",
 )
 
 # NOTE: no trailing slash for the PRODAPI_URL setting!
@@ -61,6 +70,7 @@ MEDIA_PREFIX = env("MEDIA_PREFIX", "{}/{}/{}/assets".format(PRODAPI_URL.rstrip("
 # date formats
 DATE_FORMAT = "%Y-%m-%dT%H:%M:%S+0000"
 ELASTIC_DATE_FORMAT = "%Y-%m-%d"
+PRODAPI_RFC3339_DATETIME = strtobool(env("PRODAPI_RFC3339_DATETIME", "true"))
 
 # response in json
 XML = False

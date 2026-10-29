@@ -24,6 +24,7 @@ class AuthServerScope(str, Enum):
     USERS_READ = "USERS_READ"
     ASSIGNMENTS_READ = "ASSIGNMENTS_READ"
     EVENTS_READ = "EVENTS_READ"
+    CONTENT_LISTS_READ = "CONTENT_LISTS_READ"
 
 
 allowed_auth_server_scopes = {s.name for s in AuthServerScope}

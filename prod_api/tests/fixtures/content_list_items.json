@@ -1,0 +1,43 @@
+[
+    {
+        "_id": "66f0000000000000000000b1",
+        "list_id": "66f0000000000000000000a1",
+        "content": "urn:newsml:localhost:5000:2019-07-24T16:04:06.163986:1a9710cf-58ed-4fe8-a16d-5178db7bcdb4",
+        "position": 2,
+        "sticky": false,
+        "enabled": true
+    },
+    {
+        "_id": "66f0000000000000000000b2",
+        "list_id": "66f0000000000000000000a1",
+        "content": "urn:newsml:localhost:5000:2019-08-14T15:02:48.032188:d1be79f4-1d08-464a-90ac-90542dde4e90",
+        "position": 0,
+        "sticky": true,
+        "sticky_position": 0,
+        "enabled": true
+    },
+    {
+        "_id": "66f0000000000000000000b3",
+        "list_id": "66f0000000000000000000a1",
+        "content": "urn:newsml:localhost:5000:does-not-exist",
+        "position": 1,
+        "sticky": false,
+        "enabled": true
+    },
+    {
+        "_id": "66f0000000000000000000b4",
+        "list_id": "66f0000000000000000000a1",
+        "content": "tag:localhost:5000:2019:1dbebe89-e808-43f5-a27c-91545dac896f",
+        "position": 3,
+        "sticky": false,
+        "enabled": false
+    },
+    {
+        "_id": "66f0000000000000000000b5",
+        "list_id": "66f0000000000000000000a3",
+        "content": "tag:localhost:5000:2019:bdb18c59-5048-462d-8836-a39975d050ba",
+        "position": 0,
+        "sticky": false,
+        "enabled": true
+    }
+]

@@ -37,7 +37,7 @@ from pydantic import (
 from pydantic.dataclasses import dataclass as pydataclass
 from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 
-from superdesk.core.types import BaseModel
+from superdesk.core.types import BaseModel, DefaultNoValue
 from superdesk.core.utils import generate_guid, GUID_NEWSML
 from superdesk.utils import merge_dicts_deep
 
@@ -63,7 +63,36 @@ def dataclass(*args, **kwargs):
     # By default, we allow extra values in dataclasses, but they won't be included in to_dict output.
     config.update(kwargs.pop("config", {}))
 
-    return pydataclass(*args, **kwargs, config=config)
+    return _pydataclass_with_extra_preserving_setattr(*args, **kwargs, config=config)
+
+
+def _pydataclass_with_extra_preserving_setattr(*args, **kwargs):
+    cls = pydataclass(*args, **kwargs)
+    original_setattr = cls.__setattr__
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        instance_dict = getattr(self, "__dict__", None)
+        extra_values = {}
+
+        if isinstance(instance_dict, dict):
+            fields = get_model_annotations(self.__class__).keys()
+            aliased_fields = get_model_aliased_fields(self.__class__)
+
+            extra_values = {
+                key: val
+                for key, val in instance_dict.items()
+                if key not in fields and key not in aliased_fields and not key.startswith("__pydantic_")
+            }
+
+        original_setattr(self, name, value)
+
+        instance_dict = getattr(self, "__dict__", None)
+        if isinstance(instance_dict, dict):
+            for key, val in extra_values.items():
+                instance_dict.setdefault(key, val)
+
+    cls.__setattr__ = __setattr__
+    return cls
 
 
 class DataclassBase:
@@ -122,7 +151,7 @@ class DataclassBase:
 
     def clone_with(self, updates: dict) -> Self:
         cloned_data = deepcopy(self.to_dict())
-        cloned_data = dict(merge_dicts_deep(cloned_data, updates))
+        cloned_data = dict(merge_dicts_deep(cloned_data, updates, merge_sequences=False))
         return self.from_dict(cloned_data)
 
 
@@ -142,7 +171,9 @@ class DataclassMeta(type):
 
         # create the class and apply the Pydantic dataclass decorator
         new_cls = super().__new__(cls, name, bases, attrs)  # type: ignore[misc]
-        return pydataclass(new_cls, config=deepcopy(model_config or default_model_config))
+        return _pydataclass_with_extra_preserving_setattr(
+            new_cls, config=deepcopy(model_config or default_model_config)
+        )
 
 
 class Dataclass(DataclassBase, metaclass=DataclassMeta):
@@ -263,6 +294,13 @@ class ResourceModel(BaseModel):
 
         return super().from_dict(values, context, include_unknown)
 
+    def clone_with(self, updates: dict[str, Any], deep: bool | object = DefaultNoValue, **kwargs) -> Self:
+        if deep is DefaultNoValue:
+            # If `deep` wasn't provided, fallback to using resource configured one
+            deep = self.get_config().update_strategy == UpdateStrategy.DEEP_MERGE
+
+        return super().clone_with(updates, cast(bool, deep), **kwargs)
+
     @classmethod
     def get_service(cls) -> "AsyncResourceService[Self]":
         """Helper function to get the service for this resource, without needing to import the service directly.
@@ -287,6 +325,13 @@ class ResourceModel(BaseModel):
 
         app = get_current_async_app()
         return app.resources.get_resource_service(cls.model_resource_name)
+
+    @classmethod
+    def get_config(cls) -> "ResourceConfig":
+        from superdesk.core import get_current_async_app
+
+        app = get_current_async_app()
+        return app.resources.get_config(cls.model_resource_name)
 
     @classmethod
     def get_related_links(cls, item: dict[str, Any]) -> dict[str, Any]:
@@ -402,3 +447,4 @@ def get_versioned_model(model: ResourceModel) -> ModelWithVersions | None:
 
 from .service import AsyncResourceService  # noqa: E402
 from .resource_signals import ResourceSignals  # noqa: E402
+from .resource_config import ResourceConfig, UpdateStrategy  # noqa: E402

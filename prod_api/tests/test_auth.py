@@ -9,7 +9,7 @@ from superdesk.types import AuthServerScope
 from ..conftest import get_test_prodapi_app
 
 
-RESOURCES = ("archive", "assignments", "contacts", "desks", "events", "planning", "users")
+RESOURCES = ("archive", "assignments", "contacts", "desks", "events", "planning", "users", "content_lists")
 
 SCOPES = tuple(i.name for i in AuthServerScope)
 
@@ -34,6 +34,10 @@ async def test_not_authenticated(prodapi_app, prodapi_client):
             # we get a 401 response
             assert resp.status_code == 401
             assert resp_data["_status"] == "ERR"
+
+        # content list items is a sub-resource, it needs a list id in the url
+        resp = await prodapi_client.get(url_for("content_list_items|resource", list_id="5d76113ab3af37dea3a2eb9e"))
+        assert resp.status_code == 401
 
 
 @pytest.mark.parametrize("auth_server_registered_clients", [(("ARCHIVE_READ",),)], indirect=True)

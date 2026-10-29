@@ -32,6 +32,9 @@ class SuperdeskDataLayer(DataLayer):
     It handles app initialization and later it forwards eve calls to respective service.
     """
 
+    elastic_class = Elastic
+    elastic_async_class = ElasticAsync
+
     serializers = {}
     serializers.update(Mongo.serializers)
     serializers.update(
@@ -46,10 +49,10 @@ class SuperdeskDataLayer(DataLayer):
         self.mongo_async = MongoAsync(app)
         self.driver = self.mongo.driver
         self.storage = self.driver
-        self.elastic = Elastic(
+        self.elastic = self.elastic_class(
             app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True, max_retries=3
         )
-        self.elastic_async = ElasticAsync(
+        self.elastic_async = self.elastic_async_class(
             app, serializer=SuperdeskJSONEncoder(), skip_index_init=True, retry_on_timeout=True, max_retries=3
         )
 
@@ -216,15 +219,17 @@ class SuperdeskDataLayer(DataLayer):
     def _search_backend(self, resource, use_async: bool = False) -> Elastic | ElasticAsync | None:
         if resource.endswith(get_config(str, "VERSIONS")):
             return None
-        datasource = self.datasource(resource)
+        sources = get_config(dict, "SOURCES", {})
         try:
-            backend = get_config(dict, "SOURCES", {})[datasource[0]]["search_backend"]
+            backend = sources[self.datasource(resource)[0]]["search_backend"]
         except (KeyError, TypeError, AttributeError):
-            backend = None
+            # The datasource source may not itself be an endpoint (SOURCES is keyed by
+            # endpoint), so fall back to the endpoint's own config.
+            backend = (sources.get(resource) or {}).get("search_backend")
 
         if backend and use_async:
             backend += "_async"
-        return getattr(self, backend) if backend is not None else None
+        return getattr(self, backend) if backend else None
 
     @overload
     def _backend(self, resource: str) -> Mongo | None:

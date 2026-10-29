@@ -180,13 +180,14 @@ def merge_dicts(dict_args):
     return result
 
 
-def merge_dicts_deep(dict1, dict2):
+def merge_dicts_deep(dict1, dict2, merge_sequences: bool = True):
     """
     Deep merge of two dictionaries.
     Example: merged_dict = dict(merge_dicts_deep(dict1, dict2))
 
     :param dict1: first dictionary
     :param dict2: second dictionary
+    :param merge_sequences: If `False` will prioritise `dict2` for data types lists, sets etc.
     :return: generator which will build a merged dict
     """
     unique_keys = set(dict1.keys()).union(dict2.keys())
@@ -196,26 +197,32 @@ def merge_dicts_deep(dict1, dict2):
             val1, val2 = dict1[k], dict2[k]
 
             if isinstance(val1, dict) and isinstance(val2, dict):
-                yield (k, dict(merge_dicts_deep(val1, val2)))
+                yield (k, dict(merge_dicts_deep(val1, val2, merge_sequences)))
 
             elif isinstance(val1, list) and isinstance(val2, list):
-                if not len(val1) or not len(val2):
+                if not merge_sequences:
                     yield (k, val2)
                 else:
-                    merged_list = []
-                    for i in range(max(len(val1), len(val2))):
-                        if i >= len(val1):
-                            merged_list.append(val2[i])
-                        elif i >= len(val2):
-                            merged_list.append(val1[i])
-                        elif isinstance(val1[i], dict) and isinstance(val2[i], dict):
-                            merged_list.append(dict(merge_dicts_deep(val1[i], val2[i])))
-                        else:
-                            merged_list.append(val2[i])
-                    yield (k, merged_list)
+                    if not len(val1) or not len(val2):
+                        yield (k, val2)
+                    else:
+                        merged_list = []
+                        for i in range(max(len(val1), len(val2))):
+                            if i >= len(val1):
+                                merged_list.append(val2[i])
+                            elif i >= len(val2):
+                                merged_list.append(val1[i])
+                            elif isinstance(val1[i], dict) and isinstance(val2[i], dict):
+                                merged_list.append(dict(merge_dicts_deep(val1[i], val2[i], merge_sequences)))
+                            else:
+                                merged_list.append(val2[i])
+                        yield (k, merged_list)
 
             elif isinstance(val1, set) and isinstance(val2, set):
-                yield (k, val1 | val2)
+                if not merge_sequences:
+                    yield (k, val2)
+                else:
+                    yield (k, val1 | val2)
 
             else:
                 # Scalar or mismatched types — dict2 wins

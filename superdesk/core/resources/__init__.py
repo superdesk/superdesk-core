@@ -19,7 +19,7 @@ from .model import (
     Dataclass,
     default_model_config,
 )
-from .resource_config import ResourceConfig
+from .resource_config import ResourceConfig, UpdateStrategy
 from .resource_manager import Resources
 from .resource_rest_endpoints import (
     RestEndpointConfig,
@@ -41,6 +41,7 @@ __all__ = [
     "ResourceModelWithObjectId",
     "ModelWithVersions",
     "ResourceConfig",
+    "UpdateStrategy",
     "dataclass",
     "Dataclass",
     "fields",

@@ -36,3 +36,35 @@ class DataclassTest(TestCase):
         with self.assertRaises(ValidationError):
             frodo = RingBearer(name="Frodo", race="Hobbit")
             frodo.name = 1
+
+    def test_dataclass_should_keep_extra_fields_after_assignment(self):
+        frodo = RingBearer(name="Frodo", race="Hobbit", title="Ring Bearer")
+        self.assertEqual(
+            frodo.to_dict(),
+            dict(
+                name="Frodo",
+                race="Hobbit",
+                title="Ring Bearer",
+            ),
+        )
+
+        frodo.name = "Mr. Frodo"
+        self.assertEqual(
+            frodo.to_dict(),
+            dict(
+                name="Mr. Frodo",
+                race="Hobbit",
+                title="Ring Bearer",
+            ),
+        )
+
+        setattr(frodo, "something_new", True)
+        self.assertEqual(
+            frodo.to_dict(),
+            dict(
+                name="Mr. Frodo",
+                race="Hobbit",
+                title="Ring Bearer",
+                something_new=True,
+            ),
+        )

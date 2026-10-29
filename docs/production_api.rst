@@ -15,6 +15,31 @@ Production API uses versioned endpoints to provide stable, non breaking changes 
 Current API version is **v1**
 
 
+Date and time format
+--------------------
+
+By default, datetime values in JSON responses are strings in `RFC 3339 <https://www.rfc-editor.org/rfc/rfc3339>`_
+format, for example ``2026-10-20T07:56:49+00:00``. The ``+00:00`` offset indicates UTC;
+``Z`` is an equivalent UTC designator in RFC 3339. JSON itself does not define a datetime type.
+
+Earlier versions returned UTC offsets as ``+0000``, without the colon. Consumers migrating
+from those versions should accept RFC 3339 offsets rather than requiring the old spelling.
+Date-only fields, such as user availability dates, use ``YYYY-MM-DD``.
+Date-only strings remain unchanged in both modes, including Planning recurrence
+dates, exception dates, and accreditation deadlines mapped as Elasticsearch dates.
+
+For clients that still require compact timezone offsets, set
+``PRODAPI_RFC3339_DATETIME=false`` in the environment, or
+``PRODAPI_RFC3339_DATETIME = False`` in the server settings, and restart the
+Production API. This returns ``+0000`` instead of ``+00:00`` or ``Z`` for UTC
+timestamps, including nested and Pydantic-serialized values. Fractional seconds
+and non-UTC offsets are preserved. The setting defaults to ``true`` and affects
+only Production API JSON responses, not stored data or other APIs.
+The Production API data layer restores datetime types using resource schemas.
+The JSON encoder formats only datetime objects; editorial text and unknown string
+fields are left unchanged, even if their contents look like timestamps.
+
+
 Endpoints
 ---------
 
@@ -99,7 +124,7 @@ Production API **v1** provides next endpoints:
                 "title": "Assignment",
                 "href": "assignments/60e403bc8361feb5664719b1",
                 "state": "in_progress",
-                "scheduled": "2021-07-07T02:00:00+0000",
+                "scheduled": "2021-07-07T02:00:00+00:00",
                 "content_type": "text",
             },
             "planning": {
@@ -128,6 +153,70 @@ Production API **v1** provides next endpoints:
 - desks details
     | path: **/prodapi/v1/desks/<_id>**
     | allowed methods: GET
+
+- content lists
+    | path: **/prodapi/v1/content_lists**
+    | search backend: mongo
+    | allowed methods: GET
+    | Only enabled lists are returned by default. Use the ``enabled`` parameter to change that:
+      ``enabled=true`` (default), ``enabled=false`` (disabled lists only) or ``enabled=all``.
+      The ``filters`` and ``cache_life_time`` fields are not exposed.
+    | query examples:
+
+    - list disabled lists
+
+    .. code::
+
+            http://hostname/prodapi/v1/content_lists?enabled=false
+
+    - filter by ``type``
+
+    .. code::
+
+            http://hostname/prodapi/v1/content_lists?where={"type": "manual"}
+
+- content lists HATEOAS:
+    | **items**: the items of the list (see content list items below)
+    | Example:
+
+    .. code::
+
+        "_links": {
+            "items": {
+                "title": "Items",
+                "href": "content_lists/66f0000000000000000000a1/items"
+            }
+        }
+
+- content list items
+    | path: **/prodapi/v1/content_lists/<list_id>/items**
+    | search backend: mongo
+    | allowed methods: GET
+    | Items of one content list sorted by ``position``. Items of a disabled list are served as well,
+      an unknown ``list_id`` returns 404. Only enabled items are returned by default, the ``enabled``
+      parameter works the same way as for content lists.
+    | Every item carries an ``article_content`` summary of the referenced article
+      (``title``, ``state``, ``thumbnail``, ``anpa_category``, ``subject``, ``firstpublished``,
+      ``_created``, ``_updated``), or ``null`` when the article no longer exists. The ``thumbnail``
+      rendition is returned as stored on the article, so its ``href`` is the public media url
+      (``upload-raw`` or the configured S3 url).
+    | Example:
+
+    .. code::
+
+        {
+            "_id": "66f0000000000000000000b2",
+            "list_id": "66f0000000000000000000a1",
+            "content": "urn:newsml:localhost:5000:2019-08-14T15:02:48.032188:d1be79f4-1d08-464a-90ac-90542dde4e90",
+            "position": 0,
+            "sticky": true,
+            "enabled": true,
+            "article_content": {
+                "title": "GDPR Headline",
+                "state": "published",
+                "firstpublished": "2019-08-14T15:03:00+0000"
+            }
+        }
 
 - assignments list
     | path: **/prodapi/v1/assignments**
@@ -187,7 +276,7 @@ Production API **v1** provides next endpoints:
                     "title": "Assignment",
                     "href": "assignments/60e403bc8361feb5664719b1",
                     "state": "in_progress",
-                    "scheduled": "2021-07-07T02:00:00+0000",
+                    "scheduled": "2021-07-07T02:00:00+00:00",
                     "content_type": "text",
                 }
             ],
@@ -219,7 +308,7 @@ Production API **v1** provides next endpoints:
                     "title": "Assignment",
                     "href": "assignments/60e403bc8361feb5664719b1",
                     "state": "in_progress",
-                    "scheduled": "2021-07-07T02:00:00+0000",
+                    "scheduled": "2021-07-07T02:00:00+00:00",
                     "content_type": "text",
                 }
             ],
@@ -312,7 +401,7 @@ Example
             "title": "Assignment",
             "href": "assignments/60e403bc8361feb5664719b1",
             "state": "in_progress",
-            "scheduled": "2021-07-07T02:00:00+0000",
+            "scheduled": "2021-07-07T02:00:00+00:00",
             "content_type": "text",
             "content_state": "published",
             "content_pubstatus": "usable"
