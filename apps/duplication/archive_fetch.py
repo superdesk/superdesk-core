@@ -122,10 +122,12 @@ class FetchService(AsyncBaseService):
                     )
                     dest_doc.pop("profile", None)
 
-            if dest_doc.get("type") not in MEDIA_TYPES:
+            if dest_doc.get("type") not in MEDIA_TYPES and not dest_doc.get("profile"):
                 desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
                 if desk and desk.get("default_content_profile"):
-                    dest_doc.setdefault("profile", desk["default_content_profile"])
+                    dest_doc["profile"] = desk["default_content_profile"]
+                else:
+                    dest_doc.pop("profile", None)
 
             await update_refs(dest_doc, {})
 
