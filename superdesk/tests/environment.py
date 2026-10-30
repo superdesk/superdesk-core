@@ -160,11 +160,14 @@ def after_scenario(context, scenario):
         tests.teardown_notification(context)
 
     if "clean" in scenario.tags:
-        try:
-            os.remove(get_macro_path("behave_macro.py"))
-            os.remove(get_macro_path("validate_headline_macro.py"))
-        except Exception:
-            pass
+        macro_fixtures: list[str] = getattr(context, "macro_fixtures", [])
+        for macro_name in macro_fixtures:
+            try:
+                os.remove(get_macro_path(macro_name))
+            except Exception:
+                pass
+
+        setattr(context, "macro_fixtures", [])
 
     try:
         loop = asyncio.get_event_loop()

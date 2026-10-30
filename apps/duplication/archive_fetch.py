@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import logging
 import superdesk
 
 from copy import deepcopy
@@ -29,6 +30,8 @@ from superdesk import get_resource_service
 from superdesk.metadata.packages import RESIDREF, REFS, GROUPS
 from superdesk.metadata.item import MEDIA_TYPES, ASSOCIATIONS, get_schema
 
+
+logger = logging.getLogger(__name__)
 custom_hateoas = {"self": {"title": "Archive", "href": "/archive/{_id}"}}
 
 
@@ -110,9 +113,21 @@ class FetchService(AsyncBaseService):
 
             await self.__fetch_associated_items(dest_doc, desk_id, stage_id, doc.get(ITEM_STATE, CONTENT_STATE.FETCHED))
 
-            desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
-            if desk and desk.get("default_content_profile") and dest_doc.get("type") not in MEDIA_TYPES:
-                dest_doc["profile"] = desk["default_content_profile"]
+            if profile_id := dest_doc.get("profile"):
+                content_profile = await get_resource_service("content_types").find_one_async(req=None, _id=profile_id)
+                if not content_profile:
+                    logger.warning(
+                        "Fetched item has unknown content profile, using desk default instead",
+                        extra={"profile_id": profile_id},
+                    )
+                    dest_doc.pop("profile", None)
+
+            if dest_doc.get("type") not in MEDIA_TYPES and not dest_doc.get("profile"):
+                desk = await get_resource_service("desks").find_one_async(req=None, _id=desk_id)
+                if desk and desk.get("default_content_profile"):
+                    dest_doc["profile"] = desk["default_content_profile"]
+                else:
+                    dest_doc.pop("profile", None)
 
             await update_refs(dest_doc, {})
 

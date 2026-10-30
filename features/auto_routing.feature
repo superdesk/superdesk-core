@@ -1308,3 +1308,85 @@ Feature: Auto Routing
             ]
         }
         """
+
+    @auth @clean @vocabulary @provider
+    Scenario: Content profile can be set by a macro on ingest and fetched
+        Given empty "desks"
+        When we post to "content_types"
+        """
+        [{
+            "_id": "foo",
+            "label": "Foo",
+            "type": "text",
+            "schema" : {"body_html" : {"required" : true, "type" : "string"}}
+        }, {
+            "_id": "bar",
+            "label": "Bar",
+            "type": "text",
+            "schema" : {"body_html" : {"required" : true, "type" : "string"}}
+        }]
+        """
+        Then we get response code 201
+        When we post to "/desks"
+        """
+        {
+            "name": "Finance Desk",
+            "members": [{"user": "#CONTEXT_USER_ID#"}],
+            "default_content_profile": "foo"
+        }
+        """
+        Then we get response code 201
+        Given we create a new macro "set_valid_content_profile.py"
+        And we create a new macro "set_invalid_content_profile.py"
+        When we post to "/routing_schemes"
+        """
+        [{
+            "_id": "6ae3d4fb4169b8a015b19b10",
+            "name": "Set valid profile id",
+            "rules": [{
+                "name": "Set valid profile id",
+                "handler": "desk_fetch_publish",
+                "actions": {
+                    "fetch": [
+                        {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "macro": "set_valid_profile_id"}
+                    ],
+                    "exit": true
+                }
+            }]
+        }, {
+            "_id": "6ae3d4fb4169b8a015b19b11",
+            "name": "Set invalid profile id",
+            "rules": [{
+                "name": "Set invalid profile id",
+                "handler": "desk_fetch_publish",
+                "actions": {
+                    "fetch": [
+                        {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "macro": "set_invalid_profile_id"}
+                    ],
+                    "exit": true
+                }
+            }]
+        }]
+        """
+        Then we get response code 201
+        When we ingest with routing scheme "AAP" "aap-finance.xml"
+        """
+        6ae3d4fb4169b8a015b19b10
+        """
+        When we get "/archive"
+        Then we get list with 1 items
+        """
+        {"_items": [{"uri": "AFP.121974877.6504909", "profile": "bar"}]}
+        """
+        When we ingest with routing scheme "AAP" "aap-sports.xml"
+        """
+        6ae3d4fb4169b8a015b19b11
+        """
+        When we get "/archive"
+        Then we get list with 2 items
+        """
+        {"_items": [
+            {"uri": "AFP.121974877.6504909", "profile": "bar"},
+            {"uri": "AAP.123253116.6697929", "profile": "foo"}
+        ]}
+        """
