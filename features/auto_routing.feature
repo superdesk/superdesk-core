@@ -1309,7 +1309,7 @@ Feature: Auto Routing
         }
         """
 
-    @auth @clean @vocabulary @provider @wip
+    @auth @clean @vocabulary @provider
     Scenario: Content profile can be set by a macro on ingest and fetched
         Given empty "desks"
         When we post to "content_types"
