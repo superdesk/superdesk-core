@@ -11,6 +11,7 @@
 """Amazon media storage module."""
 
 from typing import Optional
+from types import TracebackType
 import re
 import boto3
 import aioboto3
@@ -84,6 +85,12 @@ class AmazonObjectAsyncWrapper(SuperdeskAsyncFile):
             begin=begin,
             end=end,
         )
+        self._body = s3_object["Body"]
+
+    async def __aexit__(self, exc_type: type, exc_value: BaseException, tb: TracebackType) -> None:
+        # A body that is not read to the end keeps its connection from the client's pool,
+        # once the pool is empty every following S3 call in the process waits forever
+        self._body.close()
 
 
 class AmazonMediaStorage(SuperdeskMediaStorage):

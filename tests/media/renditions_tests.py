@@ -1,9 +1,17 @@
 import os
 import tempfile
+from unittest.mock import AsyncMock, Mock, patch
 
 from PIL import Image
 from superdesk.tests import TestCase
-from superdesk.media.renditions import generate_renditions, get_renditions_spec
+from superdesk.utc import utcnow
+from superdesk.media.renditions import (
+    create_renditions_for_file,
+    generate_renditions,
+    get_renditions_spec,
+    transfer_renditions,
+)
+from superdesk.storage.amazon_media_storage import AmazonObjectAsyncWrapper
 
 IMG_PATH = os.path.join(os.path.dirname(__file__), "fixtures", "iphone_gpsinfo_exif.JPG")
 BIG_IMG_PATH = os.path.join(
@@ -89,3 +97,41 @@ class GenerateRenditionsTestCase(TestCase):
         self.assertEqual(1200, landscape["CropRight"])
         self.assertEqual(500, landscape["CropTop"])
         self.assertEqual(1100, landscape["CropBottom"])
+
+
+def s3_file(content_type):
+    body = Mock(spec=["read", "close"])
+    s3_object = {
+        "Body": body,
+        "ContentType": content_type,
+        "ContentLength": 4,
+        "LastModified": utcnow(),
+        "ETag": '"md5"',
+        "Metadata": {},
+    }
+    return body, AmazonObjectAsyncWrapper(s3_object, "media-id", {})
+
+
+class StoredRenditionsTestCase(TestCase):
+    async def test_create_renditions_closes_unread_media(self):
+        body, media_file = s3_file("audio/mpeg")
+        with patch.object(self.app.media, "get_async", AsyncMock(return_value=media_file)):
+            renditions = await create_renditions_for_file("media-id", {}, "audio")
+        self.assertEqual("audio/mpeg", renditions["original"]["mimetype"])
+        body.read.assert_not_called()
+        body.close.assert_called_once_with()
+
+    async def test_create_renditions_does_not_fetch_media_with_known_content_type(self):
+        with patch.object(self.app.media, "get_async", AsyncMock()) as get_async:
+            renditions = await create_renditions_for_file("media-id", {}, "audio", content_type="audio/mpeg")
+        get_async.assert_not_called()
+        self.assertEqual("audio/mpeg", renditions["original"]["mimetype"])
+
+    async def test_transfer_renditions_closes_existing_media(self):
+        body, media_file = s3_file("image/jpeg")
+        renditions = {"original": {"media": "media-id", "href": "http://example.com/original.jpg"}}
+        with patch.object(self.app.media, "get_async", AsyncMock(return_value=media_file)):
+            await transfer_renditions(renditions)
+        self.assertEqual("media-id", renditions["original"]["media"])
+        body.read.assert_not_called()
+        body.close.assert_called_once_with()
