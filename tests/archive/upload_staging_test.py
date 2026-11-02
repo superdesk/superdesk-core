@@ -218,6 +218,24 @@ class UploadStagingTestCase(TestCase):
         self.assertEqual(doc["metadata_status"], "pending")
         self.assertEqual(doc["size"], len(self.binary))
 
+    async def test_detects_mp3_with_large_id3_tag_by_filename(self):
+        # cover art makes the ID3 tag longer than the 16 KB libmagic sniffs
+        tag_size = 20000
+        syncsafe = bytes((tag_size >> shift) & 0x7F for shift in (21, 14, 7, 0))
+        binary = b"ID3\x03\x00\x00" + syncsafe + b"\x00" * tag_size
+        doc = {"media": FileStorage(BytesIO(binary), filename="podcast.mp3")}
+        await self.service.on_create_async([doc])
+        self.assertEqual(doc["mimetype"], "audio/mpeg")
+        self.assertEqual(doc["filename"], "podcast.mp3")
+
+    async def test_rejects_unknown_media_type(self):
+        for filename in ("notes.txt", "notes", None):
+            with self.subTest(filename=filename):
+                doc = {"media": FileStorage(BytesIO(b"plain text"), filename=filename)}
+                with self.assertRaises(SuperdeskApiError) as error:
+                    await self.service.on_create_async([doc])
+                self.assertEqual(error.exception.status_code, 400)
+
     async def test_worker_parses_disk_file_and_notifies_after_persisting_metadata(self):
         staged = await self.stage()
         paths = []
