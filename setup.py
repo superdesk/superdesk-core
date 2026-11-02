@@ -57,9 +57,9 @@ install_requires = [
     # There's a breaking change in 2.13 that's affecting our usage, so pinning to 2.12
     "pydantic>=2.7.4,<2.13",
     # Custom repos, with patches applied
-    "eve @ git+https://github.com/superdesk/eve@async",
-    "eve-elastic @ git+https://github.com/superdesk/eve-elastic@async",
-    "quart @ git+https://github.com/MarkLark86/quart@fix-test-client-with-utf8-url",
+    "eve @ git+https://github.com/superdesk/eve@1cc21d9f831479642abd6d060c836b01ff8f0472",
+    "eve-elastic @ git+https://github.com/superdesk/eve-elastic@8d1c3c4818a39f3e35037fc4ca723041285da80f",
+    "quart>=0.19,<0.23",
     "quart_babel>=1.0.7,<1.1",
     "asgiref>=3.8.1",
     "aioboto3>=14.1.0,<16",
