@@ -54,23 +54,6 @@ jobs:
     - run: pytest --log-level=ERROR --disable-warnings tests/core
     - run: pytest --log-level=ERROR --disable-warnings --ignore=tests/core
 
-  pip-compile:
-    runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        python-version: ['3.12']
-
-    steps:
-    - uses: actions/checkout@v7.0.1
-    - uses: actions/setup-python@v7.0.0
-      with:
-        python-version: ${{ matrix.python-version }}
-        cache: 'pip'
-
-    - run: pip install -Ur dev-requirements.txt
-    - run: pip-compile -U setup.py
-
   behave:
     env:
       ELASTIC_CLIENT_APIVERSIONING: 1
