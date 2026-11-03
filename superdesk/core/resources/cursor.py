@@ -135,12 +135,14 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         cursor: AsyncIOMotorCursor,
         lookup: dict[str, Any],
         collation: Collation | None = None,
+        estimate_count: bool = False,
     ):
         super().__init__(data_class)
         self.collection = collection
         self.cursor = cursor
         self.lookup = lookup
         self.collation = collation
+        self.estimate_count = estimate_count
 
     async def __anext__(self) -> ResourceModelType:
         item = await self.next()
@@ -166,7 +168,7 @@ class MongoResourceCursorAsync(ResourceCursorAsync[ResourceModelType], Generic[R
         self.cursor.rewind()
 
     async def count(self):
-        if not self.lookup:
+        if self.estimate_count and not self.lookup:
             # ``count_documents({})`` reads every document, use collection metadata instead
             return await self.collection.estimated_document_count()
         return await self.collection.count_documents(self.lookup, collation=self.collation)
