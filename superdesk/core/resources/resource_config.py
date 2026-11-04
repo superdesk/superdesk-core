@@ -72,6 +72,10 @@ class ResourceConfig:
     #: Update strategy (shallow or deep merge) used to apply updates to an item
     update_strategy: UpdateStrategy = UpdateStrategy.SHALLOW_MERGE
 
+    #: Boolean to indicate if the count of all documents can be an estimate (``True``) or must be accurate (``False``).
+    #: The estimate comes from collection metadata, so unfiltered counts don't read every document in MongoDB.
+    estimate_doc_count: bool = False
+
 
 from .resource_rest_endpoints import RestEndpointConfig  # noqa: E402
 from .model import ResourceModel  # noqa: E402
