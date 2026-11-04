@@ -340,7 +340,11 @@ class AsyncResourceService(Generic[ResourceModelType]):
             response = self.mongo_async.find(lookup)
 
         return MongoResourceCursorAsync(
-            cast(Type[ResourceModelType], self.config.data_class), self.mongo_async, response, lookup
+            cast(Type[ResourceModelType], self.config.data_class),
+            self.mongo_async,
+            response,
+            lookup,
+            estimate_count=self.config.estimate_doc_count,
         )
 
     async def on_create(self, docs: List[ResourceModelType]) -> None:
@@ -959,6 +963,7 @@ class AsyncResourceService(Generic[ResourceModelType]):
             cursor,
             where,
             collation=kwargs["collation"],
+            estimate_count=self.config.estimate_doc_count,
         )
 
     def _convert_req_to_mongo_sort(self, sort: SortParam | None) -> SortListParam:

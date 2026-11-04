@@ -59,6 +59,10 @@ class ResourceConfig:
     #: Boolean to indicate if websocket notifications should be sent for this resource (defaults to ``True``)
     send_ws_notifications: bool = True
 
+    #: Boolean to indicate if the count of all documents can be an estimate (``True``) or must be accurate (``False``).
+    #: The estimate comes from collection metadata, so unfiltered counts don't read every document in MongoDB.
+    estimate_doc_count: bool = False
+
 
 from .resource_rest_endpoints import RestEndpointConfig  # noqa: E402
 from .model import ResourceModel  # noqa: E402

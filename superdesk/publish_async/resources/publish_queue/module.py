@@ -34,4 +34,5 @@ publish_queue_resource_config = ResourceConfig(
     etag_ignore_fields=["moved_to_legal"],
     default_sort=[("_id", -1)],
     send_ws_notifications=False,
+    estimate_doc_count=True,
 )
