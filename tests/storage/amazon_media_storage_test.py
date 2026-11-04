@@ -48,6 +48,23 @@ class AmazonMediaStorageTestCase(TestCase):
         self.assertIn("S3 upload sending body media=media-id method=put_object", messages)
         self.assertFalse(any("S3 upload completed" in msg for msg in messages))
 
+    async def test_async_file_closes_body_on_exit(self):
+        body = Mock(spec=["read", "close"])
+        s3_object = {
+            "Body": body,
+            "ContentType": "audio/mpeg",
+            "ContentLength": 4,
+            "LastModified": utcnow(),
+            "ETag": '"md5"',
+            "Metadata": {},
+        }
+        with patch.object(self.amazon, "call_async", new_callable=AsyncMock, return_value=s3_object):
+            media = await self.amazon.get_async("media-id")
+        async with media:
+            self.assertEqual("audio/mpeg", media.content_type)
+        body.read.assert_not_called()
+        body.close.assert_called_once_with()
+
     async def asyncSetUp(self):
         await super().asyncSetUp()
         self.amazon = AmazonMediaStorage(self.app)
