@@ -87,13 +87,16 @@ async def create_renditions_for_file(
 ) -> dict:
     """Generate renditions in the current process, without dispatching another task."""
     app = get_current_app()
-    if original_content is None:
+    if original_content is not None:
+        if not content_type:
+            raise ValueError("content_type is required when supplying original_content")
+    elif file_type == "image" or not content_type:
         media_file: SuperdeskAsyncFile = await app.media.get_async(image_id, resource=resource)
-        content_type = content_type or media_file.content_type
-        if file_type == "image":
-            original_content = await media_file.to_buffer_sync()
-    elif not content_type:
-        raise ValueError("content_type is required when supplying original_content")
+        # close the file even when only its content type is needed, an unread S3 response keeps its connection
+        async with media_file:
+            content_type = content_type or media_file.content_type
+            if file_type == "image":
+                original_content = await media_file.to_buffer_sync()
     if file_type != "image":
         return {
             "original": {
@@ -640,7 +643,8 @@ async def transfer_renditions(
         if rend.get("media"):
             local = await app.media.get_async(rend["media"])
             if local:
-                rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
+                async with local:
+                    rend["href"] = app.media.url_for_media(rend["media"], local.content_type)
                 continue
 
         content, filename, content_type = await download_file_from_feeding_service_or_directly_async(
