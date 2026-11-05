@@ -123,7 +123,9 @@ class SuperdeskApiError(SuperdeskError):
     status_code = 400
 
     def __init__(self, message=None, status_code=None, payload=None, exception=None, extra=None):
-        Exception.__init__(self)
+        # ``args`` is what survives serialization: Celery's JSON result backend and pickle rebuild
+        # the error as ``cls(*args)``, so the message, status and payload have to be in there.
+        Exception.__init__(self, message, status_code, payload)
 
         #: a human readable error description
         self.message = message

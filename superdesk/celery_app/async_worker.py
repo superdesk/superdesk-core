@@ -27,7 +27,6 @@ class ThreadData(Protocol):
 
 class CeleryAsyncWorkerTask(HybridAppContextWorkerTask):
     acks_late = True
-    store_async_result = False
 
     def __call__(self, *args, **kwargs):
         if self._is_always_eager():
