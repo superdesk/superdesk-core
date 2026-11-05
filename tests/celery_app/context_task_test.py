@@ -4,7 +4,7 @@ from unittest.mock import patch
 from celery.app.trace import build_tracer
 from kombu.utils.uuid import uuid
 
-from superdesk.errors import SuperdeskError
+from superdesk.errors import SuperdeskError, SuperdeskApiError
 from superdesk.celery_app import HybridAppContextTask
 from superdesk.tests import AsyncFlaskTestCase
 from superdesk.tests import worker_test
@@ -124,3 +124,30 @@ class TestStoreAsyncResultInWorker(AsyncFlaskTestCase):
             await failing_task.AsyncResult(task_id).get_result_async(max_timeout=5)
         self.assertNotIsInstance(context.exception, asyncio.TimeoutError)
         self.assertIn("Rendering failed", str(context.exception))
+
+    async def test_list_and_falsy_results_are_stored(self):
+        # ``get_result_async`` unwraps the stored list envelope, so these must come back unchanged
+        for value in ([1, 2], [], 0, False, None, {"a": 1}):
+            with self.subTest(value=value):
+
+                @self.app.celery.task(store_async_result=True, name=f"value_task_{type(value).__name__}")
+                def value_task():
+                    return value
+
+                task_id = await self._run_in_worker(value_task)
+                result = await value_task.AsyncResult(task_id).get_result_async(max_timeout=5)
+                self.assertEqual(result, value)
+
+    async def test_api_error_round_trips(self):
+        @self.app.celery.task(store_async_result=True)
+        async def failing_api_task():
+            raise SuperdeskApiError.internalError("Generating renditions failed", payload={"renditions": 1})
+
+        with patch("superdesk.celery_app.context_task.logger"):
+            task_id = await self._run_in_worker(failing_api_task)
+
+        with self.assertRaises(SuperdeskApiError) as context:
+            await failing_api_task.AsyncResult(task_id).get_result_async(max_timeout=5)
+        self.assertEqual(context.exception.status_code, 500)
+        self.assertEqual(context.exception.message, "Generating renditions failed")
+        self.assertEqual(context.exception.payload, {"renditions": 1})

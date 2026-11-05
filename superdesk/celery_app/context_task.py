@@ -101,7 +101,10 @@ class HybridAppContextTask(Task):
             if store_result:
                 # Not ``mark_as_done``: it skips storing when the request has ``ignore_result`` set,
                 # which every message carries while ``CELERY_TASK_IGNORE_RESULT`` is on.
-                self.backend.store_result(self.request.id, result, states.SUCCESS, request=self.request)
+                # The async worker stores its ``(execution_task, result)`` pair, and
+                # ``AsyncTaskResult.get_result_async`` drops the first element of a stored list,
+                # so the value is wrapped the same way here.
+                self.backend.store_result(self.request.id, [None, result], states.SUCCESS, request=self.request)
             return result
 
         if is_always_eager:
