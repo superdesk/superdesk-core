@@ -107,10 +107,20 @@ class AIProvidersEndpoints(ResourceRestEndpoints):
 
 
 class AIActionsEndpoints(ResourceRestEndpoints):
-    """Adds the route that runs an action against an item"""
+    """Adds the routes an editor uses: the actions available for an item, and running one"""
 
     def add_endpoints(self):
         super().add_endpoints()
+        self.endpoints.append(
+            Endpoint(
+                url=f"{self.get_resource_url()}/available",
+                name="ai_actions_available",
+                func=self.list_available,
+                methods=["GET"],
+                auth=[required_privilege_rule(AI_PRIVILEGE)],
+                parent=self,
+            )
+        )
         self.endpoints.append(
             Endpoint(
                 url=f"{self.get_item_url()}/run",
@@ -123,6 +133,41 @@ class AIActionsEndpoints(ResourceRestEndpoints):
                 parent=self,
             )
         )
+
+    async def list_available(self, request: Request) -> Response:
+        """List the actions the authenticated user can run against the item named by ``item_id``"""
+
+        item_id = request.get_url_arg("item_id")
+        if not item_id:
+            raise SuperdeskApiError.badRequestError(message=gettext("'item_id' is required"))
+
+        service = cast(AIActionsService, self.service)
+        item = await service.get_item(item_id, require_request_user_id(request))
+        actions = await service.find_available(item)
+
+        return Response(
+            body={
+                "_items": [self._describe_available(action) for action in actions],
+                "_meta": {"total": len(actions)},
+            },
+            status_code=200,
+        )
+
+    def _describe_available(self, action: AIAction) -> dict:
+        """What an editor is told about an action
+
+        The provider, the model and the prompt are left out: they belong to the holders of
+        ``ai_studio``, and the editor only needs what to send and where the answers go.
+        """
+
+        return {
+            "_id": str(action.id),
+            "name": action.name,
+            "action_type": action.action_type.value,
+            "input_fields": action.input_fields,
+            "output_field": action.output_field,
+            "suggestions_count": action.parameters.suggestions_count,
+        }
 
     async def run(self, request: Request) -> Response:
         action = await self._get_action(request)

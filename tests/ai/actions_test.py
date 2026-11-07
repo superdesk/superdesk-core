@@ -833,3 +833,133 @@ class AIActionRunTestCase(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(records, [])
+
+
+class AIAvailableActionsTestCase(TestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self._original_auth = self.async_app.auth
+        self.async_app.auth = StubUserAuth(ADMIN_USER)
+        self.addCleanup(self._restore_auth)
+
+        self.provider = await self._create_provider()
+        await self.async_app.mongo.get_collection_async("archive").insert_one(dict(ITEM))
+
+    def _restore_auth(self):
+        self.async_app.auth = self._original_auth
+
+    async def _create_provider(self, **updates):
+        response = await self.test_client.post("/api/ai_providers", json={**PROVIDER, **updates})
+        self.assertEqual(response.status_code, 201, await response.get_data())
+        return await response.get_json()
+
+    async def _create_action(self, **updates):
+        response = await self.test_client.post(
+            "/api/ai_actions", json={**ACTION, "provider": self.provider["_id"], **updates}
+        )
+        self.assertEqual(response.status_code, 201, await response.get_data())
+        return await response.get_json()
+
+    async def _available(self, item_id=ITEM_ID):
+        return await self.test_client.get(f"/api/ai_actions/available?item_id={item_id}")
+
+    async def _available_names(self):
+        response = await self._available()
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        return [action["name"] for action in (await response.get_json())["_items"]]
+
+    async def test_actions_for_every_profile_and_for_the_profile_of_the_item_are_listed(self):
+        await self._create_action(name="Any profile")
+        await self._create_action(name="Story profile", content_profiles=["story"])
+        await self._create_action(name="Other profile", content_profiles=["blog"])
+
+        self.assertEqual(await self._available_names(), ["Any profile", "Story profile"])
+
+    async def test_actions_are_listed_by_name(self):
+        for name in ("headline", "Abstract", "Byline"):
+            await self._create_action(name=name)
+
+        self.assertEqual(await self._available_names(), ["Abstract", "Byline", "headline"])
+
+    async def test_an_inactive_action_is_left_out(self):
+        await self._create_action(name="Inactive", active=False)
+
+        self.assertEqual(await self._available_names(), [])
+
+    async def test_an_action_of_an_inactive_provider_is_left_out(self):
+        inactive = await self._create_provider(name="Inactive", active=False)
+        await self._create_action(name="Inactive provider", provider=inactive["_id"])
+
+        self.assertEqual(await self._available_names(), [])
+
+    async def test_an_action_type_that_cannot_be_run_yet_is_left_out(self):
+        await self._create_action(name="Translation", action_type="translation")
+
+        self.assertEqual(await self._available_names(), [])
+
+    async def test_an_action_with_no_model_to_run_with_is_left_out(self):
+        no_default = await self._create_provider(name="No default", default_model=None)
+        await self._create_action(name="No model", provider=no_default["_id"])
+        await self._create_action(name="Own model", provider=no_default["_id"], model="openai/gpt-4o")
+
+        self.assertEqual(await self._available_names(), ["Own model"])
+
+    async def test_an_action_is_described_without_its_provider_model_or_prompt(self):
+        action = await self._create_action(
+            model="openai/gpt-4o", parameters={"system_prompt": "Be brief", "suggestions_count": 2}
+        )
+
+        response = await self._available()
+
+        self.assertEqual(
+            (await response.get_json())["_items"],
+            [
+                {
+                    "_id": action["_id"],
+                    "name": ACTION["name"],
+                    "action_type": "suggestion",
+                    "input_fields": ["body_html"],
+                    "output_field": "headline",
+                    "suggestions_count": 2,
+                }
+            ],
+        )
+
+    async def test_the_ai_privilege_is_enough_to_list_the_available_actions(self):
+        await self._create_action()
+        self.async_app.auth = StubUserAuth(USER_WITH_AI_PRIVILEGE)
+
+        response = await self._available()
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertEqual(len((await response.get_json())["_items"]), 1)
+
+    async def test_listing_the_available_actions_needs_the_ai_privilege(self):
+        for user in (USER_WITHOUT_PRIVILEGES, USER_WITH_AI_STUDIO_PRIVILEGE):
+            with self.subTest(user=user["_id"]):
+                self.async_app.auth = StubUserAuth(user)
+
+                response = await self._available()
+
+                self.assertEqual(response.status_code, 403)
+
+    async def test_an_item_the_user_cannot_read_is_refused(self):
+        item_id = f"urn:newsml:localhost:{ObjectId()}"
+        await self.async_app.mongo.get_collection_async("archive").insert_one(
+            {**ITEM, "_id": item_id, "guid": item_id, "task": {"user": str(ObjectId())}}
+        )
+        self.async_app.auth = StubUserAuth(USER_WITH_AI_PRIVILEGE)
+
+        response = await self._available(item_id)
+
+        self.assertEqual(response.status_code, 403)
+
+    async def test_an_item_that_does_not_exist_is_not_found(self):
+        response = await self._available("urn:newsml:localhost:missing")
+
+        self.assertEqual(response.status_code, 404)
+
+    async def test_a_request_without_an_item_id_is_rejected(self):
+        response = await self.test_client.get("/api/ai_actions/available")
+
+        self.assertEqual(response.status_code, 400)

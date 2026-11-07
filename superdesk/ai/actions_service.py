@@ -301,8 +301,39 @@ class AIActionsService(AsyncResourceService[AIAction]):
 
         return str(desk_id) if desk_id else None
 
+    async def find_available(self, item: dict[str, Any]) -> list[AIAction]:
+        """Actions that can be run against the item, sorted by name
+
+        Leaves out every action a run would refuse before calling the provider: an inactive action
+        or provider, an action type with no prompt yet, an action limited to other content profiles,
+        and an action with no model to run with.
+        """
+
+        actions = [action async for action in self.get_all({"active": True})]
+        provider_ids = list({action.provider for action in actions})
+        providers = {
+            provider.id: provider
+            async for provider in AIProvidersService().get_all({"_id": {"$in": provider_ids}, "active": True})
+        }
+
+        available = []
+        for action in actions:
+            provider = providers.get(action.provider)
+            if (
+                provider is not None
+                and action.action_type in SUPPORTED_ACTION_TYPES
+                and self._is_offered_for(action, item)
+                and (action.model or provider.default_model)
+            ):
+                available.append(action)
+
+        return sorted(available, key=lambda action: action.name.lower())
+
+    def _is_offered_for(self, action: AIAction, item: dict[str, Any]) -> bool:
+        return not action.content_profiles or item.get("profile") in action.content_profiles
+
     def _check_content_profile(self, action: AIAction, item: dict[str, Any]) -> None:
-        if action.content_profiles and item.get("profile") not in action.content_profiles:
+        if not self._is_offered_for(action, item):
             raise SuperdeskApiError.badRequestError(
                 gettext("AI action '{name}' is not available for the content profile of this item").format(
                     name=action.name

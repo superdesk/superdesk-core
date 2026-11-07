@@ -137,6 +137,32 @@ than the field allows:
 
     {"_id": "68af1c0e2b1a4c0f9a3d1e02", "name": "Headline suggestions", "_status": "OK", ...}
 
+Ask which actions can be run against an item. This is the call an editor makes, so it needs only
+``ai``, and it describes each action without its provider, model or prompt. Actions that are
+inactive, that belong to an inactive provider, that are limited to other content profiles, that
+have no model to run with or whose type cannot be run yet are left out:
+
+.. code:: sh
+
+    curl "$API/ai_actions/available?item_id=urn:newsml:localhost:2026-08-27T10:00:00:1234" -H "$AUTH"
+
+    {
+        "_items": [
+            {
+                "_id": "68af1c0e2b1a4c0f9a3d1e02",
+                "name": "Headline suggestions",
+                "action_type": "suggestion",
+                "input_fields": ["body_html"],
+                "output_field": "headline",
+                "suggestions_count": 3
+            }
+        ],
+        "_meta": {"total": 1}
+    }
+
+Both this call and a run refuse an item the user cannot read with a ``403``: one in a stage hidden
+from them, or one in the personal space of another user.
+
 Run it against an item. ``fields`` is optional and holds the text as the client currently has it,
 which is what an editor with unsaved changes should send; without it the stored item is used. An
 answer longer than ``max_characters`` is returned whole and flagged, never cut:

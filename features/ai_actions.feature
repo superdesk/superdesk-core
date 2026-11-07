@@ -306,6 +306,69 @@ Feature: AI actions
         Then we get error 403
 
     @auth
+    Scenario: An editor lists the actions available for an item
+        Given an archive item "article-1" with data
+        """
+        {"profile": "story", "language": "en", "body_html": "<p>The council met on Tuesday.</p>"}
+        """
+        When we post to "/ai_providers"
+        """
+        {
+            "name": "OpenRouter",
+            "provider_type": "openai_compatible",
+            "base_url": "https://provider.test/v1",
+            "default_model": "openai/gpt-4o-mini"
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Headline suggestions",
+            "action_type": "suggestion",
+            "input_fields": ["body_html"],
+            "output_field": "headline",
+            "content_profiles": ["story"],
+            "parameters": {"system_prompt": "Be brief"},
+            "provider": "#ai_providers._id#"
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Blog summary",
+            "action_type": "summary",
+            "input_fields": ["body_html"],
+            "output_field": "abstract",
+            "content_profiles": ["blog"],
+            "provider": "#ai_providers._id#"
+        }
+        """
+        Then we get OK response
+        When we login as user "ai_editor" with password "editor123" and user type "user"
+        """
+        {"privileges": {"ai": 1}}
+        """
+        And we get "/ai_actions/available?item_id=article-1"
+        Then we get list with 1 items
+        """
+        {
+            "_items": [
+                {
+                    "name": "Headline suggestions",
+                    "action_type": "suggestion",
+                    "input_fields": ["body_html"],
+                    "output_field": "headline",
+                    "suggestions_count": 3,
+                    "provider": "__no_value__",
+                    "parameters": "__no_value__"
+                }
+            ]
+        }
+        """
+
+    @auth
     Scenario: An item in the personal space of another user cannot be run against
         Given a mocked AI provider at "https://provider.test/v1"
         And an archive item "article-1" with data
