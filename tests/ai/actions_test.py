@@ -719,6 +719,28 @@ class AIActionRunTestCase(TestCase):
 
         self.assertEqual(response.status_code, 502)
 
+    async def test_a_provider_failure_is_answered_with_its_kind_and_a_message_for_the_editor(self):
+        failures = [
+            (dict(status=401), 502, "auth"),
+            (dict(status=429), 429, "rate_limit"),
+            (dict(exception=asyncio.TimeoutError()), 504, "timeout"),
+            (dict(status=500), 502, "upstream"),
+            (dict(payload={"error": "no choices here"}), 502, "invalid_response"),
+        ]
+
+        for mocked, status_code, error_kind in failures:
+            with self.subTest(error_kind=error_kind):
+                action = await self._create_action()
+                self.http_mock.post(COMPLETIONS_URL, **mocked)
+
+                response = await self._run(action["_id"])
+                body = await response.get_json()
+
+                self.assertEqual(response.status_code, status_code)
+                self.assertEqual(body["error_kind"], error_kind)
+                self.assertNotIn("HTTP", body["_message"])
+                self.assertNotIn(PROVIDER["api_key"], body["_message"])
+
     async def test_a_user_with_only_the_ai_privilege_can_run_an_action(self):
         action = await self._create_action()
         self.http_mock.post(COMPLETIONS_URL, payload=completion_payload(SUGGESTIONS_CONTENT))

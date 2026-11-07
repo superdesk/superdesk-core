@@ -75,7 +75,7 @@ class AIProvidersEndpoints(ResourceRestEndpoints):
         try:
             models = await get_client(provider).list_models()
         except AIProviderError as error:
-            raise to_api_error(error)
+            raise to_api_error(error, for_administrator=True)
 
         return Response(body={"models": models}, status_code=200)
 

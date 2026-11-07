@@ -303,8 +303,12 @@ class AIProviderEndpointsTestCase(TestCase):
 
         response = await self.test_client.get(f"/api/ai_providers/{self.provider_id}/models")
 
+        body = await response.get_json()
         self.assertEqual(response.status_code, 502)
-        self.assertNotIn(API_KEY, (await response.get_json())["_message"])
+        self.assertNotIn(API_KEY, body["_message"])
+        # Administrators set the provider up, so they are told what the provider answered
+        self.assertIn("HTTP 401", body["_message"])
+        self.assertEqual(body["error_kind"], "auth")
 
     async def test_models_endpoint_answers_429_when_the_provider_rate_limits(self):
         self.http_mock.get(MODELS_URL, status=429)

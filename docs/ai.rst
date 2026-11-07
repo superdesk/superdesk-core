@@ -68,6 +68,26 @@ action and reporting what was done with its answers need ``ai``, which is the ri
 holds: provider credentials are stored unencrypted, so ``ai_studio`` amounts to access to every
 key and belongs to administrators only.
 
+Errors
+^^^^^^
+
+A run that fails at the provider is answered with a message written for an editor and an
+``error_kind`` the client can word its own message on:
+
+=====================  ======  ======================================================================
+``error_kind``         Status  Meaning
+=====================  ======  ======================================================================
+``auth``               502     The provider refused the stored credentials, an administrator has to
+                               fix them
+``rate_limit``         429     The provider is rate limiting Superdesk
+``timeout``            504     The provider did not answer within ``AI_REQUEST_TIMEOUT``
+``upstream``           502     The provider could not be reached or failed
+``invalid_response``   502     The provider answered with something no suggestion could be read from
+=====================  ======  ======================================================================
+
+What the provider itself answered is written to the server log. ``GET /api/ai_providers/<id>/models``
+is used by administrators setting a provider up, so it returns that detail as its message instead.
+
 Timeouts
 ^^^^^^^^
 
