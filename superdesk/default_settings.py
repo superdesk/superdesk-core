@@ -1188,6 +1188,9 @@ EMAIL_TIMEOUT = 10
 #: The server and proxy request timeouts have to be above this one, see :ref:`ai_providers_and_actions`
 AI_REQUEST_TIMEOUT = int(env("AI_REQUEST_TIMEOUT", 60))
 
+#: how many AI actions one user may run per minute, ``0`` for no limit
+AI_RATE_LIMIT_PER_MINUTE = int(env("AI_RATE_LIMIT_PER_MINUTE", 20))
+
 #: This setting is used to overide the desk/stage expiry for items when spiked
 #:
 #: .. versionchanged:: 2.10

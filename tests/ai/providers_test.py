@@ -25,7 +25,7 @@ from superdesk.ai.providers.openai_compatible import OpenAICompatibleClient
 from superdesk.ai.providers_service import AIProvidersService
 from superdesk.core.auth.user_auth import UserAuthProtocol
 from superdesk.core.types import Request
-from superdesk.default_settings import AI_REQUEST_TIMEOUT
+from superdesk.default_settings import AI_RATE_LIMIT_PER_MINUTE, AI_REQUEST_TIMEOUT
 from superdesk.errors import AlreadyExistsError
 from superdesk.tests import TestCase
 
@@ -395,6 +395,9 @@ class AIConfigTestCase(TestCase):
     async def test_the_module_config_default_matches_the_ai_request_timeout_setting(self):
         self.assertEqual(AIConfig.model_fields["request_timeout"].default, AI_REQUEST_TIMEOUT)
         self.assertEqual(ai_config.request_timeout, AI_REQUEST_TIMEOUT)
+
+    async def test_the_module_config_default_matches_the_ai_rate_limit_setting(self):
+        self.assertEqual(AIConfig.model_fields["rate_limit_per_minute"].default, AI_RATE_LIMIT_PER_MINUTE)
 
 
 class AIProviderClientTestCase(TestCase):

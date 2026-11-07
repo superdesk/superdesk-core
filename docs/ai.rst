@@ -85,6 +85,12 @@ A run that fails at the provider is answered with a message written for an edito
 ``invalid_response``   502     The provider answered with something no suggestion could be read from
 =====================  ======  ======================================================================
 
+A user who runs actions more often than ``AI_RATE_LIMIT_PER_MINUTE`` allows, 20 by default, is
+answered with a ``429`` before the provider is called, an ``error_kind`` of ``too_many_runs`` and
+``retry_after``, the seconds until the count starts again, also sent as the ``Retry-After`` header.
+The count is kept per user in Redis, so every server process shares it; ``0`` turns the limit off.
+When Redis cannot be reached the limit is not enforced rather than blocking every run.
+
 What the provider itself answered is written to the server log. ``GET /api/ai_providers/<id>/models``
 is used by administrators setting a provider up, so it returns that detail as its message instead.
 

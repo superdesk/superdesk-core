@@ -76,6 +76,8 @@ def get_mongo_uri(key, dbname):
 def update_config(conf, auto_add_apps: bool = True, include_planning: bool = True):
     conf["ELASTICSEARCH_INDEX"] = "sptest"
     conf["MONGO_DBNAME"] = "sptests"
+    # Redis is not reset between tests, so a run limit would count the runs of every test before
+    conf["AI_RATE_LIMIT_PER_MINUTE"] = 0
     conf["MONGO_URI"] = get_mongo_uri("MONGO_URI", "sptests")
     conf["LEGAL_ARCHIVE_DBNAME"] = "sptests_legal_archive"
     conf["LEGAL_ARCHIVE_URI"] = get_mongo_uri("LEGAL_ARCHIVE_URI", "sptests_legal_archive")

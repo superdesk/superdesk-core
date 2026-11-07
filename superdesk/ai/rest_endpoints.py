@@ -15,6 +15,7 @@ from .errors import AIProviderError, to_api_error
 from .models import AIAction, AIEvent, AIProvider, RunActionPayload
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
 from .providers import get_client
+from .rate_limit import TooManyRunsError, check_run_rate
 
 
 def get_request_user_id(request: Request) -> str | None:
@@ -181,9 +182,15 @@ class AIActionsEndpoints(ResourceRestEndpoints):
             )
 
         service = cast(AIActionsService, self.service)
+        user_id = require_request_user_id(request)
 
         try:
-            result = await service.run(action, payload, user_id=require_request_user_id(request))
+            check_run_rate(user_id)
+        except TooManyRunsError as error:
+            return Response(body=error.to_dict(), status_code=429, headers=[("Retry-After", str(error.retry_after))])
+
+        try:
+            result = await service.run(action, payload, user_id=user_id)
         except AIProviderError as error:
             raise to_api_error(error)
 

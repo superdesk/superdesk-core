@@ -346,6 +346,59 @@ Feature: AI actions
         """
 
     @auth
+    Scenario: A user running actions too often is told when to try again
+        Given a mocked AI provider at "https://provider.test/v1"
+        And AI actions are limited to 2 runs per minute
+        And an archive item "article-1" with data
+        """
+        {"profile": "story", "language": "en", "body_html": "<p>The council met on Tuesday.</p>"}
+        """
+        When we post to "/ai_providers"
+        """
+        {
+            "name": "OpenRouter",
+            "provider_type": "openai_compatible",
+            "base_url": "https://provider.test/v1",
+            "default_model": "openai/gpt-4o-mini"
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Headline suggestions",
+            "action_type": "suggestion",
+            "input_fields": ["body_html"],
+            "output_field": "headline",
+            "provider": "#ai_providers._id#"
+        }
+        """
+        Then we get OK response
+        When we login as user "ai_editor" with password "editor123" and user type "user"
+        """
+        {"privileges": {"ai": 1}}
+        """
+        And we run the AI action at "/ai_actions/#ai_actions._id#/run"
+        """
+        {"item_id": "article-1"}
+        """
+        Then we get OK response
+        When we run the AI action at "/ai_actions/#ai_actions._id#/run"
+        """
+        {"item_id": "article-1"}
+        """
+        Then we get OK response
+        When we run the AI action at "/ai_actions/#ai_actions._id#/run"
+        """
+        {"item_id": "article-1"}
+        """
+        Then we get error 429
+        """
+        {"error_kind": "too_many_runs", "retry_after": 30}
+        """
+        And we get "Retry-After" header with "30" type
+
+    @auth
     Scenario: An editor lists the actions available for an item
         Given an archive item "article-1" with data
         """
