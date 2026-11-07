@@ -8,6 +8,7 @@ from superdesk.core import get_current_async_app
 from superdesk.core.resources import AsyncResourceService
 from superdesk.errors import SuperdeskApiError
 from superdesk.text_utils import get_text
+from superdesk.users.services import get_invisible_stages_async
 from superdesk.utc import utcnow
 
 from .errors import AIErrorKind, AIProviderError
@@ -105,7 +106,8 @@ class AIActionsService(AsyncResourceService[AIAction]):
 
         :param action: The action to run
         :param payload: The item to run it against, with the text the client currently holds
-        :param user_id: ID of the user the run is made for, stored on the event
+        :param user_id: ID of the user the run is made for, stored on the event. The item has to be
+            one this user can read. ``None`` only for a run made by the system itself.
         :raises SuperdeskApiError: If the action, the item or the provider cannot be used as asked
         :raises AIProviderError: If the provider does not produce a usable answer
         """
@@ -117,7 +119,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
         if action.action_type not in SUPPORTED_ACTION_TYPES:
             raise unsupported_action_type(action.action_type)
 
-        item = await self._get_item(payload.item_id)
+        item = await self.get_item(payload.item_id, user_id)
         self._check_content_profile(action, item)
         texts = self._get_input_texts(action, payload, item)
 
@@ -244,11 +246,15 @@ class AIActionsService(AsyncResourceService[AIAction]):
         except (KeyError, TypeError, ValueError):
             return None
 
-    async def _get_item(self, item_id: str) -> dict[str, Any]:
+    async def get_item(self, item_id: str, user_id: str | None) -> dict[str, Any]:
         """Load the item as stored, without validating it against the archive model.
 
         An action names the fields it reads by name, including the custom fields a content profile
         adds, which the model does not declare.
+
+        :param item_id: ID of the item in ``archive``
+        :param user_id: ID of the user who has to be able to read the item, ``None`` to skip the check
+        :raises SuperdeskApiError: If the item does not exist, or the user cannot read it
         """
 
         archive_service = get_current_async_app().resources.get_resource_service("archive")
@@ -257,7 +263,35 @@ class AIActionsService(AsyncResourceService[AIAction]):
         if item is None:
             raise SuperdeskApiError.notFoundError(gettext("Item with ID '{item_id}' not found").format(item_id=item_id))
 
+        if user_id is not None:
+            await self._check_item_readable(item, user_id)
+
         return item
+
+    async def _check_item_readable(self, item: dict[str, Any], user_id: str) -> None:
+        """Refuse an item the user could not open in Superdesk
+
+        The answers are written from the text of the item, so a run must not reach an item its user
+        cannot read. Two rules of ``archive`` apply: an item in a stage that is hidden from the user
+        (what ``GET /archive/<id>`` refuses), and an item in the personal space of another user
+        (what listings and editing refuse).
+
+        :raises SuperdeskApiError: If the user cannot read the item
+        """
+
+        task = item.get("task")
+        task = task if isinstance(task, dict) else {}
+
+        owner = task.get("user")
+        in_other_personal_space = not task.get("desk") and owner and str(owner) != user_id
+
+        stage = task.get("stage")
+        in_hidden_stage = bool(stage) and str(stage) in {
+            str(hidden["_id"]) for hidden in await get_invisible_stages_async(user_id)
+        }
+
+        if in_other_personal_space or in_hidden_stage:
+            raise SuperdeskApiError.forbiddenError(message=gettext("You do not have permission to read this item"))
 
     def _get_desk_id(self, item: dict[str, Any]) -> str | None:
         """ID of the desk the item sits on, ``None`` for an item that is not on one"""

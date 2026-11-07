@@ -43,8 +43,9 @@ class StubUserAuth(UserAuthProtocol):
         return self.user
 
 
-ADMIN_USER = {"_id": "test-admin", "user_type": "administrator"}
-USER_WITHOUT_PRIVILEGES = {"_id": "test-user", "user_type": "user", "privileges": {}}
+# User IDs are ObjectIds, as stored ones are: checking the desks of a user needs a real one
+ADMIN_USER = {"_id": "6a0000000000000000000001", "user_type": "administrator"}
+USER_WITHOUT_PRIVILEGES = {"_id": "6a0000000000000000000002", "user_type": "user", "privileges": {}}
 
 PROVIDER = {
     "name": "OpenRouter",

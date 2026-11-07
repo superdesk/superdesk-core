@@ -31,6 +31,20 @@ def get_request_user_id(request: Request) -> str | None:
     return str(user_id) if user_id else None
 
 
+def require_request_user_id(request: Request) -> str:
+    """ID of the authenticated user, refusing a request that is not made for one
+
+    Running an action checks the item against the user it is run for, so a request with no user
+    has nothing to check against and is refused rather than let through unchecked.
+    """
+
+    user_id = get_request_user_id(request)
+    if user_id is None:
+        raise SuperdeskApiError.forbiddenError(message=gettext("AI actions can only be used by a signed in user"))
+
+    return user_id
+
+
 class AIProvidersEndpoints(ResourceRestEndpoints):
     """Adds the routes an administrator needs to check a provider before saving actions against it"""
 
@@ -124,7 +138,7 @@ class AIActionsEndpoints(ResourceRestEndpoints):
         service = cast(AIActionsService, self.service)
 
         try:
-            result = await service.run(action, payload, user_id=get_request_user_id(request))
+            result = await service.run(action, payload, user_id=require_request_user_id(request))
         except AIProviderError as error:
             raise to_api_error(error)
 

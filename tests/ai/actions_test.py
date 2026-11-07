@@ -14,6 +14,7 @@ from dataclasses import fields
 from unittest.mock import patch
 
 import aiohttp
+from bson import ObjectId
 
 from superdesk.ai.actions_service import AIActionsService
 from superdesk.tests import TestCase
@@ -42,8 +43,12 @@ ITEM = {
     "body_html": "<p>The council met on Tuesday.</p><p>It voted on the budget.</p>",
 }
 
-USER_WITH_AI_PRIVILEGE = {"_id": "test-editor", "user_type": "user", "privileges": {"ai": 1}}
-USER_WITH_AI_STUDIO_PRIVILEGE = {"_id": "test-configurator", "user_type": "user", "privileges": {"ai_studio": 1}}
+USER_WITH_AI_PRIVILEGE = {"_id": "6a0000000000000000000003", "user_type": "user", "privileges": {"ai": 1}}
+USER_WITH_AI_STUDIO_PRIVILEGE = {
+    "_id": "6a0000000000000000000004",
+    "user_type": "user",
+    "privileges": {"ai_studio": 1},
+}
 
 
 def completion_payload(content: str) -> dict:
@@ -740,3 +745,91 @@ class AIActionRunTestCase(TestCase):
         response = await self._run(action["_id"])
 
         self.assertEqual(response.status_code, 403)
+
+    async def _insert_item(self, **updates):
+        item_id = f"urn:newsml:localhost:{ObjectId()}"
+        await self.async_app.mongo.get_collection_async("archive").insert_one(
+            {**ITEM, "_id": item_id, "guid": item_id, **updates}
+        )
+        return item_id
+
+    def _editor(self):
+        """An editor with only the ``ai`` privilege and a real user ID, which desk lookups need"""
+
+        return {"_id": str(ObjectId()), "user_type": "user", "privileges": {"ai": 1}}
+
+    async def _insert_hidden_stage(self, members=()):
+        desk_id = ObjectId()
+        stage_id = ObjectId()
+        await self.async_app.mongo.get_collection_async("desks").insert_one(
+            {"_id": desk_id, "name": f"Desk {desk_id}", "members": [{"user": ObjectId(user)} for user in members]}
+        )
+        self.app.data.insert("stages", [{"_id": stage_id, "name": "Hidden", "desk": desk_id, "is_visible": False}])
+        return desk_id, stage_id
+
+    async def test_an_item_in_the_personal_space_of_another_user_is_refused(self):
+        action = await self._create_action()
+        requests = await self._capture_completion()
+        item_id = await self._insert_item(task={"user": str(ObjectId())})
+        self.async_app.auth = StubUserAuth(self._editor())
+
+        response = await self._run(action["_id"], item_id=item_id)
+
+        self.assertEqual(response.status_code, 403, await response.get_data())
+        self.assertEqual(requests, [])
+
+    async def test_an_item_in_the_personal_space_of_the_user_runs(self):
+        action = await self._create_action()
+        await self._capture_completion()
+        editor = self._editor()
+        item_id = await self._insert_item(task={"user": editor["_id"]})
+        self.async_app.auth = StubUserAuth(editor)
+
+        response = await self._run(action["_id"], item_id=item_id)
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+
+    async def test_an_item_in_a_stage_hidden_from_the_user_is_refused(self):
+        action = await self._create_action()
+        requests = await self._capture_completion()
+        desk_id, stage_id = await self._insert_hidden_stage()
+        item_id = await self._insert_item(task={"desk": desk_id, "stage": stage_id})
+        self.async_app.auth = StubUserAuth(self._editor())
+
+        response = await self._run(action["_id"], item_id=item_id)
+
+        self.assertEqual(response.status_code, 403, await response.get_data())
+        self.assertEqual(requests, [])
+
+    async def test_an_item_in_a_hidden_stage_of_a_desk_of_the_user_runs(self):
+        action = await self._create_action()
+        await self._capture_completion()
+        editor = self._editor()
+        desk_id, stage_id = await self._insert_hidden_stage(members=[editor["_id"]])
+        item_id = await self._insert_item(task={"desk": desk_id, "stage": stage_id})
+        self.async_app.auth = StubUserAuth(editor)
+
+        response = await self._run(action["_id"], item_id=item_id)
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+
+    async def test_an_item_on_a_desk_of_another_user_runs_when_its_stage_is_visible(self):
+        action = await self._create_action()
+        await self._capture_completion()
+        item_id = await self._insert_item(task={"desk": ObjectId(), "stage": ObjectId(), "user": str(ObjectId())})
+        self.async_app.auth = StubUserAuth(self._editor())
+
+        response = await self._run(action["_id"], item_id=item_id)
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+
+    async def test_a_refused_item_is_not_written_to_the_run_log(self):
+        action = await self._create_action()
+        records = await self._capture_run_records()
+        item_id = await self._insert_item(task={"user": str(ObjectId())})
+        self.async_app.auth = StubUserAuth(self._editor())
+
+        response = await self._run(action["_id"], item_id=item_id)
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(records, [])
