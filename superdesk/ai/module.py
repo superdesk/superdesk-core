@@ -21,7 +21,7 @@ from superdesk.core.resources import (
 )
 
 from .actions_service import AIActionsService
-from .config import config
+from .config import check_request_timeout, config
 from .events_service import AIEventsService
 from .models import AIAction, AIEvent, AIProvider
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
@@ -95,6 +95,7 @@ module = Module(
     resources=[ai_providers_config, ai_actions_config, ai_events_config],
     config=config,
     config_prefix="AI",
+    init=lambda app: check_request_timeout(),
     privileges=[
         Privilege(
             name=AI_STUDIO_PRIVILEGE,

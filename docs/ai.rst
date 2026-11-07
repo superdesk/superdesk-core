@@ -97,15 +97,23 @@ is used by administrators setting a provider up, so it returns that detail as it
 Timeouts
 ^^^^^^^^
 
-``AI_REQUEST_TIMEOUT``, 60 seconds by default, is how long Superdesk waits for a provider before it
+``AI_REQUEST_TIMEOUT``, 25 seconds by default, is how long Superdesk waits for a provider before it
 gives up on a run and answers with a ``timeout`` error.
 
-It is not the only timeout in the path. Hypercorn and whatever proxy sits in front of it, usually
-nginx, each have their own request timeout, and a run is one HTTP request the client holds open for
-as long as the provider takes. The shortest of the three wins: when the proxy gives up first the
-editor gets a gateway error instead of the ``timeout`` message, and the run carries on server side
-until the provider answers. Large models and long articles take tens of seconds, so raising
-``AI_REQUEST_TIMEOUT`` has no effect unless the proxy and server timeouts are above it.
+It is not the only timeout in the path. A run is one HTTP request the client holds open for as long
+as the provider takes, and the server and the proxy in front of it each stop waiting at some point:
+
+* Hypercorn drops the connection of a request it has not answered within ``WEB_TIMEOUT``, 30 seconds
+  by default in a Superdesk deployment (its ``read_timeout``).
+* nginx answers a gateway error after ``proxy_read_timeout``, 60 seconds unless configured.
+
+The shortest of the three wins. When the server or the proxy gives up first the editor gets a
+dropped connection or a gateway error instead of the ``timeout`` message, and the provider is paid
+for a run nobody sees. Large models and long articles can take tens of seconds, so raising
+``AI_REQUEST_TIMEOUT`` only helps together with ``WEB_TIMEOUT`` and the proxy timeout. Superdesk logs
+a warning at startup when ``AI_REQUEST_TIMEOUT`` is not below ``WEB_TIMEOUT`` or the nginx default;
+it cannot read the proxy configuration, so a proxy with a shorter timeout still has to be checked
+by hand.
 
 Walkthrough
 ^^^^^^^^^^^
