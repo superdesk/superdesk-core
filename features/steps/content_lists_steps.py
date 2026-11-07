@@ -39,6 +39,13 @@ async def step_given_archive_item_with_data(context, item_id):
     await _insert_archive_item(item_id, json.loads(context.text))
 
 
+@when('we head "{url}"')
+@async_run_until_complete
+async def step_when_we_head(context, url):
+    url = apply_placeholders(context, url)
+    context.response = await context.client.head(get_prefixed_url(context.app, url), headers=context.headers)
+
+
 @when('we bulk patch items for "{url}"')
 @async_run_until_complete
 async def step_bulk_patch_items_for(context, url):

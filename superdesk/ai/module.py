@@ -84,12 +84,8 @@ ai_events_config = ResourceConfig(
         resource_methods=["GET"],
         item_methods=["GET", "PATCH"],
         # Reading the log is a configuration right, reporting what happened to a suggestion is part
-        # of running actions, so the editor doing it needs nothing more than ``ai``. ``HEAD`` is
-        # answered by the ``GET`` handler and a method these rules do not name keeps the login rule
-        # alone, so it has to be listed next to ``GET`` rather than left out.
-        auth=http_method_privilege_based_rules(
-            {"GET": AI_STUDIO_PRIVILEGE, "HEAD": AI_STUDIO_PRIVILEGE, "PATCH": AI_PRIVILEGE}
-        ),
+        # of running actions, so the editor doing it needs nothing more than ``ai``
+        auth=http_method_privilege_based_rules({"GET": AI_STUDIO_PRIVILEGE, "PATCH": AI_PRIVILEGE}),
         endpoints_class=AIEventsEndpoints,
     ),
 )
