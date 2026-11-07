@@ -185,7 +185,7 @@ class AIActionsEndpoints(ResourceRestEndpoints):
         user_id = require_request_user_id(request)
 
         try:
-            check_run_rate(user_id)
+            await check_run_rate(user_id)
         except TooManyRunsError as error:
             return Response(body=error.to_dict(), status_code=429, headers=[("Retry-After", str(error.retry_after))])
 

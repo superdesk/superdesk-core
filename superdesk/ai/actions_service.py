@@ -279,7 +279,9 @@ class AIActionsService(AsyncResourceService[AIAction]):
         The answers are written from the text of the item, so a run must not reach an item its user
         cannot read. Two rules of ``archive`` apply: an item in a stage that is hidden from the user
         (what ``GET /archive/<id>`` refuses), and an item in the personal space of another user
-        (what listings and editing refuse).
+        (what listings and editing refuse). An item with no desk belongs to the user it is assigned
+        to or, when it is assigned to nobody, to the users who created and last changed it, as in
+        the search filter of ``archive``.
 
         :raises SuperdeskApiError: If the user cannot read the item
         """
@@ -287,8 +289,12 @@ class AIActionsService(AsyncResourceService[AIAction]):
         task = item.get("task")
         task = task if isinstance(task, dict) else {}
 
-        owner = task.get("user")
-        in_other_personal_space = not task.get("desk") and owner and str(owner) != user_id
+        in_other_personal_space = False
+        if not task.get("desk"):
+            owner = task.get("user")
+            candidates = [owner] if owner else [item.get("original_creator"), item.get("version_creator")]
+            owners = {str(candidate) for candidate in candidates if candidate}
+            in_other_personal_space = bool(owners) and user_id not in owners
 
         stage = task.get("stage")
         in_hidden_stage = bool(stage) and str(stage) in {

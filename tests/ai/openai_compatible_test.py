@@ -260,6 +260,23 @@ class OpenAICompatibleClientTestCase(TestCase):
         self.assertEqual(context.exception.kind, AIErrorKind.UPSTREAM)
         self.assertEqual(requests, [])
 
+    async def test_a_refused_connection_is_not_tried_again_when_the_pause_ends_after_the_deadline(self):
+        """A busy server can resume the run long after the pause it asked for"""
+
+        self.http_mock.post(COMPLETIONS_URL, exception=refused_connection())
+        requests = self._capture_requests(COMPLETIONS_URL, "POST", payload=COMPLETION_PAYLOAD)
+        clock = iter([100.0, 100.1, 106.0])
+
+        with (
+            mock.patch.object(ai_config, "request_timeout", 5),
+            mock.patch("superdesk.ai.providers.openai_compatible._clock", side_effect=lambda: next(clock)),
+        ):
+            with self.assertRaises(AIProviderError) as context:
+                await self._without_retry_delay(self.client.complete(completion_request()))
+
+        self.assertEqual(context.exception.kind, AIErrorKind.UPSTREAM)
+        self.assertEqual(requests, [])
+
     async def test_a_failure_after_the_request_was_sent_is_not_tried_again(self):
         """The provider may already be working on it, and would be paid twice"""
 

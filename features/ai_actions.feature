@@ -585,6 +585,47 @@ Feature: AI actions
         """
 
     @auth
+    Scenario: A draft another user created and assigned to nobody cannot be run against
+        Given a mocked AI provider at "https://provider.test/v1"
+        And an archive item "article-1" with data
+        """
+        {"profile": "story", "language": "en", "body_html": "<p>Private notes.</p>", "state": "draft", "original_creator": "6a00000000000000000000ff", "version_creator": "6a00000000000000000000ff"}
+        """
+        When we post to "/ai_providers"
+        """
+        {
+            "name": "OpenRouter",
+            "provider_type": "openai_compatible",
+            "base_url": "https://provider.test/v1",
+            "default_model": "openai/gpt-4o-mini"
+        }
+        """
+        Then we get OK response
+        When we post to "/ai_actions"
+        """
+        {
+            "name": "Headline suggestions",
+            "action_type": "suggestion",
+            "input_fields": ["body_html"],
+            "output_field": "headline",
+            "provider": "#ai_providers._id#"
+        }
+        """
+        Then we get OK response
+        When we login as user "ai_editor" with password "editor123" and user type "user"
+        """
+        {"privileges": {"ai": 1}}
+        """
+        And we run the AI action at "/ai_actions/#ai_actions._id#/run"
+        """
+        {"item_id": "article-1"}
+        """
+        Then we get error 403
+        """
+        {"_message": "You do not have permission to read this item"}
+        """
+
+    @auth
     Scenario: Managing actions needs the ai_studio privilege
         When we post to "/ai_providers"
         """

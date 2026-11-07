@@ -835,6 +835,41 @@ class AIActionRunTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200, await response.get_data())
 
+    async def test_a_draft_of_another_user_that_is_assigned_to_nobody_is_refused(self):
+        action = await self._create_action()
+        requests = await self._capture_completion()
+        other_user = str(ObjectId())
+        self.async_app.auth = StubUserAuth(self._editor())
+
+        for name, task in (("no task", {}), ("empty task", {"task": {}})):
+            with self.subTest(name):
+                item_id = await self._insert_item(
+                    state="draft", original_creator=other_user, version_creator=other_user, **task
+                )
+
+                response = await self._run(action["_id"], item_id=item_id)
+
+                self.assertEqual(response.status_code, 403, await response.get_data())
+                self.assertEqual(requests, [])
+
+    async def test_a_draft_assigned_to_nobody_runs_for_the_user_who_created_or_last_changed_it(self):
+        action = await self._create_action()
+        capture_requests(
+            self.http_mock, COMPLETIONS_URL, "POST", repeat=True, payload=completion_payload(SUGGESTIONS_CONTENT)
+        )
+        editor = self._editor()
+        other_user = str(ObjectId())
+        self.async_app.auth = StubUserAuth(editor)
+
+        for field in ("original_creator", "version_creator"):
+            with self.subTest(field):
+                creators = {"original_creator": other_user, "version_creator": other_user, field: editor["_id"]}
+                item_id = await self._insert_item(state="draft", **creators)
+
+                response = await self._run(action["_id"], item_id=item_id)
+
+                self.assertEqual(response.status_code, 200, await response.get_data())
+
     async def test_an_item_in_a_stage_hidden_from_the_user_is_refused(self):
         action = await self._create_action()
         requests = await self._capture_completion()

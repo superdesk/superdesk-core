@@ -8,13 +8,16 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+import asyncio
 import json
+import time
 from unittest.mock import MagicMock, patch
 
 from bson import ObjectId
 from redis.exceptions import RedisError
 
 from superdesk.ai.config import config
+from superdesk.ai.rate_limit import check_run_rate
 from superdesk.tests import TestCase
 from superdesk.tests.http_mocks import mock_http
 
@@ -86,6 +89,15 @@ class AIRunRateLimitTestCase(TestCase):
         self.assertIn("30 seconds", body["_message"])
         self.assertEqual(len(self.requests), 2)
 
+    async def test_the_wait_before_a_retry_is_rounded_up_to_reach_the_next_minute(self):
+        self.now = NOW + 0.5
+        await self._run_times(2)
+
+        response = await self._run()
+
+        self.assertEqual((await response.get_json())["retry_after"], 30)
+        self.assertEqual(response.headers["Retry-After"], "30")
+
     async def test_a_refused_run_is_not_written_to_the_run_log(self):
         await self._run_times(2)
 
@@ -118,3 +130,22 @@ class AIRunRateLimitTestCase(TestCase):
 
         with patch("superdesk.ai.rate_limit.get_current_app", return_value=app):
             await self._run_times(3)
+
+    async def test_a_slow_redis_does_not_hold_up_other_requests(self):
+        app = MagicMock()
+        app.redis.pipeline.return_value.execute.side_effect = lambda: time.sleep(0.3) or [1, True]
+        events = []
+
+        async def count_run():
+            await check_run_rate(str(ObjectId()))
+            events.append("counted")
+
+        async def other_request():
+            for _ in range(3):
+                await asyncio.sleep(0.02)
+                events.append("other request")
+
+        with patch("superdesk.ai.rate_limit.get_current_app", return_value=app):
+            await asyncio.gather(count_run(), other_request())
+
+        self.assertEqual(events, ["other request"] * 3 + ["counted"])

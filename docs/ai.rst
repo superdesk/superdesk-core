@@ -216,7 +216,8 @@ have no model to run with or whose type cannot be run yet are left out:
     }
 
 Both this call and a run refuse an item the user cannot read with a ``403``: one in a stage hidden
-from them, or one in the personal space of another user.
+from them, or one in the personal space of another user. An item with no desk that is assigned to
+nobody belongs to the users who created and last changed it.
 
 Run it against an item. ``fields`` is optional and holds the text as the client currently has it,
 which is what an editor with unsaved changes should send; without it the stored item is used. An

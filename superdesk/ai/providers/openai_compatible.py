@@ -93,12 +93,17 @@ class OpenAICompatibleClient(AIProviderClient):
                 return await self._send(method, path, payload, timeout)
             except aiohttp.ClientConnectorError:
                 elapsed = _clock() - started
-                time_left = timeout - elapsed - CONNECT_RETRY_DELAY
-                # aiohttp reads a total of zero or less as no timeout at all
-                if elapsed > CONNECT_RETRY_WITHIN or time_left <= 0:
+                if elapsed > CONNECT_RETRY_WITHIN or timeout - elapsed - CONNECT_RETRY_DELAY <= 0:
                     raise
 
                 await asyncio.sleep(CONNECT_RETRY_DELAY)
+
+                # A busy server can wake up well after the delay, so the time left is read again
+                time_left = timeout - (_clock() - started)
+                # aiohttp reads a total of zero or less as no timeout at all
+                if time_left <= 0:
+                    raise
+
                 return await self._send(method, path, payload, time_left)
         except asyncio.TimeoutError:
             raise AIProviderError(
