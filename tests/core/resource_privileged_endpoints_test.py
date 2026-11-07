@@ -88,3 +88,18 @@ class PrivilegedResourceEndpointsTestCase(AsyncFlaskTestCase):
         response = await self.test_client.get("/api/privileged_resource", headers=headers)
 
         self.assertEqual(response.status_code, 403)
+
+    async def test_head_needs_the_privilege_of_get(self):
+        from tests.core.modules.module_with_privileges import test_privileges
+
+        can_create_only_role = {"name": "Can Create Role", "privileges": {test_privileges[1]: 1}}
+        self.app.data.insert("roles", [can_create_only_role])
+
+        regular_user = deepcopy(test_user)
+        regular_user["user_type"] = "user"
+        regular_user["role"] = can_create_only_role["_id"]
+
+        headers = [await self._get_auth_header(regular_user)]
+        response = await self.test_client.head("/api/privileged_resource", headers=headers)
+
+        self.assertEqual(response.status_code, 403)

@@ -1,8 +1,12 @@
 import json
+from unittest.mock import MagicMock, patch
+
+import aiohttp
 
 from behave import given, then, when
 from behave.api.async_step import async_run_until_complete
 
+from superdesk.ai.config import config as ai_config
 from superdesk.tests import get_prefixed_url
 from superdesk.tests.http_mocks import CallbackResult, mock_http
 from superdesk.tests.steps import apply_placeholders
@@ -54,6 +58,39 @@ def step_given_mocked_ai_provider(context, base_url):
     http_mock = mock_http(context)
     http_mock.add(f"{base_url}/models", "GET", callback=list_models, repeat=True)
     http_mock.add(f"{base_url}/chat/completions", "POST", callback=complete, repeat=True)
+
+
+@given('the AI provider at "{base_url}" refuses the first connection')
+def step_given_provider_refuses_first_connection(context, base_url):
+    """Fail the next completion request as if the connection could not be opened
+
+    Has to come before ``a mocked AI provider``: the first mocked route that matches answers.
+    """
+
+    refused = aiohttp.ClientConnectorError(
+        MagicMock(host="provider.test", port=443, ssl=True), ConnectionRefusedError()
+    )
+    mock_http(context).post(f"{base_url}/chat/completions", exception=refused)
+
+    patcher = patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY", 0)
+    patcher.start()
+    context.add_cleanup(patcher.stop)
+
+
+@given("AI actions are limited to {count:d} runs per minute")
+def step_given_ai_run_limit(context, count):
+    """Set ``AI_RATE_LIMIT_PER_MINUTE`` for the scenario, with a clock that stays in one minute
+
+    Without the fixed clock a scenario running across the turn of a minute would start counting
+    again halfway through.
+    """
+
+    for patcher in (
+        patch.object(ai_config, "rate_limit_per_minute", count),
+        patch("superdesk.ai.rate_limit._now", return_value=1_800_000_030.0),
+    ):
+        patcher.start()
+        context.add_cleanup(patcher.stop)
 
 
 @then('the AI provider was called with the api key "{api_key}"')
