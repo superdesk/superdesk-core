@@ -107,6 +107,11 @@ answered with a ``429`` before the provider is called, an ``error_kind`` of ``to
 The count is kept per user in Redis, so every server process shares it; ``0`` turns the limit off.
 When Redis cannot be reached the limit is not enforced rather than blocking every run.
 
+A connection to the provider that cannot be opened at all, refused or failing its DNS lookup
+within two seconds, is tried once more half a second later, within what is left of
+``AI_REQUEST_TIMEOUT``. Nothing else is retried: once the request has been sent the provider may be
+working on it, and a second request would be paid for twice.
+
 What the provider itself answered is written to the server log. ``GET /api/ai_providers/<id>/models``
 is used by administrators setting a provider up, so it returns that detail as its message instead.
 

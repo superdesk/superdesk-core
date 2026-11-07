@@ -1,4 +1,5 @@
 import asyncio
+import time
 from typing import Any
 
 import aiohttp
@@ -7,6 +8,19 @@ from quart_babel import gettext
 from ..config import config as ai_config
 from ..errors import AIErrorKind, AIProviderError
 from .base import AIProviderClient, CompletionRequest, CompletionResult
+
+
+#: A connection that could not be opened within this many seconds failed instantly, a refused
+#: connection or a failed DNS lookup, and is tried once more. A slower failure is not: it has used up
+#: time the run does not have.
+CONNECT_RETRY_WITHIN = 2.0
+
+#: Seconds to wait before trying a refused connection again
+CONNECT_RETRY_DELAY = 0.5
+
+
+def _clock() -> float:
+    return time.monotonic()
 
 
 class OpenAICompatibleClient(AIProviderClient):
@@ -65,31 +79,56 @@ class OpenAICompatibleClient(AIProviderClient):
             )
 
     async def _request(self, method: str, path: str, payload: dict[str, Any] | None = None) -> Any:
-        url = f"{self.base_url}/{path}"
-        timeout = aiohttp.ClientTimeout(total=ai_config.request_timeout)
+        """Send one request, trying again once when the connection could not be opened at all
+
+        Only a connection that was never opened is tried again: the request was not sent, so the
+        provider cannot have started on it, or charged for it. Any later failure is not retried.
+        """
+
+        timeout = ai_config.request_timeout
+        started = _clock()
 
         try:
-            async with aiohttp.ClientSession(timeout=timeout) as session:
-                async with session.request(method, url, json=payload, headers=self._headers()) as response:
-                    if response.status >= 400:
-                        raise self._error_for_status(response.status)
+            try:
+                return await self._send(method, path, payload, timeout)
+            except aiohttp.ClientConnectorError:
+                elapsed = _clock() - started
+                time_left = timeout - elapsed - CONNECT_RETRY_DELAY
+                # aiohttp reads a total of zero or less as no timeout at all
+                if elapsed > CONNECT_RETRY_WITHIN or time_left <= 0:
+                    raise
 
-                    try:
-                        return await response.json(content_type=None)
-                    except ValueError:
-                        raise AIProviderError(
-                            AIErrorKind.INVALID_RESPONSE,
-                            gettext("The AI provider answered with a body that is not JSON"),
-                        )
+                await asyncio.sleep(CONNECT_RETRY_DELAY)
+                return await self._send(method, path, payload, time_left)
         except asyncio.TimeoutError:
             raise AIProviderError(
                 AIErrorKind.TIMEOUT,
-                gettext("The AI provider did not answer within {seconds} seconds").format(
-                    seconds=ai_config.request_timeout
-                ),
+                gettext("The AI provider did not answer within {seconds} seconds").format(seconds=timeout),
             )
         except aiohttp.ClientError:
             raise AIProviderError(AIErrorKind.UPSTREAM, gettext("The AI provider could not be reached"))
+
+    async def _send(self, method: str, path: str, payload: dict[str, Any] | None, timeout: float) -> Any:
+        url = f"{self.base_url}/{path}"
+
+        async with aiohttp.ClientSession() as session:
+            async with session.request(
+                method,
+                url,
+                json=payload,
+                headers=self._headers(),
+                timeout=aiohttp.ClientTimeout(total=timeout),
+            ) as response:
+                if response.status >= 400:
+                    raise self._error_for_status(response.status)
+
+                try:
+                    return await response.json(content_type=None)
+                except ValueError:
+                    raise AIProviderError(
+                        AIErrorKind.INVALID_RESPONSE,
+                        gettext("The AI provider answered with a body that is not JSON"),
+                    )
 
     def _headers(self) -> dict[str, str]:
         headers = {"Content-Type": "application/json"}
