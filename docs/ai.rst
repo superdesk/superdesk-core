@@ -68,6 +68,22 @@ action and reporting what was done with its answers need ``ai``, which is the ri
 holds: provider credentials are stored unencrypted, so ``ai_studio`` amounts to access to every
 key and belongs to administrators only.
 
+What is sent to the provider
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The instructions go in the system message and the article in the user message, between
+``<article>`` and ``</article>``. The instructions say everything between those tags is text to work
+on and never instructions to follow, and a reminder after the article repeats it, so an article
+saying "ignore your instructions" is edited rather than obeyed. An ``<article>`` tag inside the
+article is escaped, so the text cannot close the article early. A ``system_prompt`` set on an
+action only replaces the first line of the instructions; these rules and the answer format are
+always kept.
+
+This makes injection harder, it does not make it impossible: no prompt wording can guarantee what a
+model does. Answers are therefore treated as untrusted. Suggestions and summaries are plain text, so any
+markup in them is dropped before they are returned, and clients have to insert them as text, never
+as HTML.
+
 Errors
 ^^^^^^
 

@@ -15,6 +15,7 @@ from .errors import AIErrorKind, AIProviderError
 from .events_service import AIRunRecord, record_run
 from .models import AIAction, AIActionType, AIProvider, RunActionPayload
 from .prompts import (
+    PLAIN_TEXT_ACTION_TYPES,
     SUPPORTED_ACTION_TYPES,
     parse_suggestions,
     render_system_prompt,
@@ -220,7 +221,11 @@ class AIActionsService(AsyncResourceService[AIAction]):
                 gettext("The AI provider answered with an empty completion"),
             )
 
-        return parse_suggestions(result.content, action.parameters.suggestions_count)
+        return parse_suggestions(
+            result.content,
+            action.parameters.suggestions_count,
+            plain_text=action.action_type in PLAIN_TEXT_ACTION_TYPES,
+        )
 
     async def _get_max_characters(self, action: AIAction, item: dict[str, Any]) -> int | None:
         """How long an answer may be, from the action or from the content profile of the item
