@@ -1,5 +1,6 @@
-from typing import Any, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 from copy import deepcopy
+from dataclasses import is_dataclass
 from types import UnionType
 from typing_extensions import Self, override
 from pydantic import (
@@ -16,16 +17,30 @@ from superdesk.utils import merge_dicts_deep
 from .web import Request
 
 
-def _is_dict_annotation(annotation: Any) -> bool:
-    if annotation is dict or get_origin(annotation) is dict:
+def _is_untyped_dict_annotation(annotation: Any) -> bool:
+    """Returns ``True`` for ``dict`` and ``dict[str, Any]``, including in ``Annotated`` and ``Optional`` types
+
+    Typed dictionaries (such as ``dict[str, UTCDatetime]``) are left to their own Pydantic serializers
+    """
+
+    origin = get_origin(annotation)
+    if origin is Annotated:
+        return _is_untyped_dict_annotation(get_args(annotation)[0])
+    elif annotation is dict:
         return True
-    elif get_origin(annotation) in (Union, UnionType):
-        return any(_is_dict_annotation(arg) for arg in get_args(annotation))
+    elif origin is dict:
+        args = get_args(annotation)
+        return not args or args[1] is Any
+    elif origin in (Union, UnionType):
+        return any(_is_untyped_dict_annotation(arg) for arg in get_args(annotation))
     return False
 
 
 def _encode_value(encoder: Any, value: Any) -> Any:
-    if isinstance(value, (str, int, float, bool, type(None))):
+    if isinstance(value, (str, int, float, bool, type(None), PydanticModel)) or (
+        is_dataclass(value) and not isinstance(value, type)
+    ):
+        # Models and dataclasses are left to Pydantic, so the serialization options are applied to them
         return value
     elif isinstance(value, dict):
         return {key: _encode_value(encoder, item) for key, item in value.items()}
@@ -57,7 +72,7 @@ def get_json_encoded_dict_fields(instance: Any, fields: dict[str, FieldInfo]) ->
     return {
         name: _encode_value(encoder, getattr(instance, name))
         for name, field in fields.items()
-        if _is_dict_annotation(field.annotation) and isinstance(getattr(instance, name, None), dict)
+        if _is_untyped_dict_annotation(field.annotation) and isinstance(getattr(instance, name, None), dict)
     }
 
 
@@ -73,7 +88,13 @@ class BaseModel(PydanticModel):
             return handler(self)
 
         encoded = get_json_encoded_dict_fields(self, type(self).model_fields)
-        return handler(self.model_copy(update=encoded) if encoded else self)
+        if not encoded:
+            return handler(self)
+
+        instance = self.model_copy(update=encoded)
+        # Keep the fields set on the original, so ``exclude_unset`` still applies to the encoded fields
+        object.__setattr__(instance, "__pydantic_fields_set__", set(self.model_fields_set))
+        return handler(instance)
 
     @classmethod
     def get_field_names(cls) -> list[str]:

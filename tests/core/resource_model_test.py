@@ -8,6 +8,7 @@ from bson import ObjectId
 from superdesk.core import json
 from superdesk.core.resources import fields, ResourceModel, ResourceModelWithObjectId, dataclass, Dataclass, BaseModel
 from superdesk.core.elastic.resources import get_elastic_mapping_from_model
+from superdesk.types.base import ContentAssociation
 from tests.core.modules.module_related_resources import RingOfPower
 
 from .modules.users import User
@@ -280,3 +281,36 @@ class ResourceModelTest(TestCase):
         self.assertEqual(item.to_dict()["data"]["user"], oid)
         self.assertEqual(item.to_dict()["data"]["dates"]["start"], date)
         self.assertEqual(item.data["user"], oid)
+
+    def test_dict_field_serialization_keeps_pydantic_behaviour(self):
+        class Inner(BaseModel):
+            value: int = 1
+
+        class Template(BaseModel):
+            name: str = ""
+            data: dict = {}
+            dates: dict[str, fields.UTCDatetime] = {}
+            associations: ContentAssociation | None = None
+
+        oid = ObjectId()
+        date = datetime(2026, 11, 5, 10, 0, tzinfo=timezone.utc)
+
+        # Unset defaults are still excluded
+        self.assertEqual(Template(name="test").to_dict(mode="json"), {"name": "test"})
+
+        # Typed dictionaries keep their own serializers
+        self.assertEqual(
+            Template(dates={"start": date}).to_dict(mode="json"), {"dates": {"start": "2026-11-05T10:00:00+0000"}}
+        )
+
+        # Optional ``Annotated`` dictionaries are encoded
+        self.assertEqual(
+            Template(associations={"featuremedia": {"_id": oid}}).to_dict(mode="json"),
+            {"associations": {"featuremedia": {"_id": str(oid)}}},
+        )
+
+        # Nested models are serialized using the caller's options
+        self.assertEqual(
+            Template(data={"inner": Inner()}).to_dict(mode="json", exclude_unset=False)["data"],
+            {"inner": {"value": 1}},
+        )
