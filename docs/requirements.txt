@@ -22,7 +22,7 @@ colorama==0.4.6
     # via sphinx-autobuild
 docutils==0.22.4
     # via
-    #   -r requirements.in
+    #   -r docs/requirements.in
     #   sphinx
 h11==0.16.0
     # via uvicorn
@@ -34,7 +34,7 @@ imagesize==2.0.0
     # via sphinx
 jinja2==3.1.6
     # via sphinx
-markupsafe==3.0.3
+markupsafe==3.0.4
     # via jinja2
 packaging==26.2
     # via sphinx
@@ -48,11 +48,11 @@ snowballstemmer==3.1.1
     # via sphinx
 sphinx==9.1.0
     # via
-    #   -r requirements.in
+    #   -r docs/requirements.in
     #   sphinx-autobuild
     #   sphinxcontrib-plantuml
 sphinx-autobuild==2025.8.25
-    # via -r requirements.in
+    # via -r docs/requirements.in
 sphinxcontrib-applehelp==2.0.0
     # via sphinx
 sphinxcontrib-devhelp==2.0.0
@@ -62,7 +62,7 @@ sphinxcontrib-htmlhelp==2.1.0
 sphinxcontrib-jsmath==1.0.1
     # via sphinx
 sphinxcontrib-plantuml==0.31
-    # via -r requirements.in
+    # via -r docs/requirements.in
 sphinxcontrib-qthelp==2.0.0
     # via sphinx
 sphinxcontrib-serializinghtml==2.0.0
