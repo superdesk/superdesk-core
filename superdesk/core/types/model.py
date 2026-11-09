@@ -1,14 +1,101 @@
-from typing import Any
+from typing import Annotated, Any, Union, get_args, get_origin
 from copy import deepcopy
+from dataclasses import is_dataclass
+from types import UnionType
 from typing_extensions import Self, override
-from pydantic import BaseModel as PydanticModel, AliasChoices
+from pydantic import (
+    BaseModel as PydanticModel,
+    AliasChoices,
+    SerializationInfo,
+    SerializerFunctionWrapHandler,
+    model_serializer,
+)
+from pydantic.fields import FieldInfo
 
 from superdesk.utils import merge_dicts_deep
 
 from .web import Request
 
 
+def _is_untyped_dict_annotation(annotation: Any) -> bool:
+    """Returns ``True`` for ``dict`` and ``dict[str, Any]``, including in ``Annotated`` and ``Optional`` types
+
+    Typed dictionaries (such as ``dict[str, UTCDatetime]``) are left to their own Pydantic serializers
+    """
+
+    origin = get_origin(annotation)
+    if origin is Annotated:
+        return _is_untyped_dict_annotation(get_args(annotation)[0])
+    elif annotation is dict:
+        return True
+    elif origin is dict:
+        args = get_args(annotation)
+        return not args or args[1] is Any
+    elif origin in (Union, UnionType):
+        return any(_is_untyped_dict_annotation(arg) for arg in get_args(annotation))
+    return False
+
+
+def _encode_value(encoder: Any, value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool, type(None), PydanticModel)) or (
+        is_dataclass(value) and not isinstance(value, type)
+    ):
+        # Models and dataclasses are left to Pydantic, so the serialization options are applied to them
+        return value
+    elif isinstance(value, dict):
+        return {key: _encode_value(encoder, item) for key, item in value.items()}
+    elif isinstance(value, (list, tuple)):
+        return [_encode_value(encoder, item) for item in value]
+
+    try:
+        return encoder.default(value)
+    except TypeError:
+        # Not supported by our encoder, leave it for Pydantic to serialize
+        return value
+
+
+def get_json_encoded_dict_fields(instance: Any, fields: dict[str, FieldInfo]) -> dict[str, Any]:
+    """Encode values of ``dict`` fields using ``SuperdeskJSONEncoder``
+
+    Pydantic does not know how to serialize types such as ``ObjectId`` inside untyped ``dict`` fields,
+    so these are encoded the same way as Eve encodes them.
+
+    :param instance: The model or dataclass instance
+    :param fields: The Pydantic fields of the instance
+    :returns: The encoded values, keyed by field name
+    """
+
+    # Need to import here, cyclic import error
+    from superdesk.json_utils import SuperdeskJSONEncoder
+
+    encoder = SuperdeskJSONEncoder()
+    return {
+        name: _encode_value(encoder, getattr(instance, name))
+        for name, field in fields.items()
+        if _is_untyped_dict_annotation(field.annotation) and isinstance(getattr(instance, name, None), dict)
+    }
+
+
 class BaseModel(PydanticModel):
+    @model_serializer(mode="wrap")
+    def _serialize_dict_fields(self, handler: SerializerFunctionWrapHandler, info: SerializationInfo):
+        """Use our JSON encoder for values of ``dict`` fields, when serializing to JSON
+
+        No return annotation, so Pydantic keeps the model's own JSON schema (used for the Elastic mapping)
+        """
+
+        if not info.mode_is_json():
+            return handler(self)
+
+        encoded = get_json_encoded_dict_fields(self, type(self).model_fields)
+        if not encoded:
+            return handler(self)
+
+        instance = self.model_copy(update=encoded)
+        # Keep the fields set on the original, so ``exclude_unset`` still applies to the encoded fields
+        object.__setattr__(instance, "__pydantic_fields_set__", set(self.model_fields_set))
+        return handler(instance)
+
     @classmethod
     def get_field_names(cls) -> list[str]:
         names: list[str] = []

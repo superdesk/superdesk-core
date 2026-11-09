@@ -1,5 +1,7 @@
+from typing import Any
 from unittest import TestCase
 
+from bson import ObjectId
 from pydantic_core import ValidationError
 from superdesk.core.resources import Dataclass
 
@@ -68,3 +70,15 @@ class DataclassTest(TestCase):
                 something_new=True,
             ),
         )
+
+    def test_dataclass_dict_field_with_objectid_value(self):
+        class Ring(Dataclass):
+            name: str
+            meta: dict[str, Any] | None = None
+
+        oid = ObjectId()
+        ring = Ring(name="One Ring", meta={"bearer": oid})
+
+        self.assertEqual(ring.to_dict(mode="json"), {"name": "One Ring", "meta": {"bearer": str(oid)}})
+        self.assertEqual(ring.to_json(), f'{{"name":"One Ring","meta":{{"bearer":"{oid}"}}}}')
+        self.assertEqual(ring.to_dict()["meta"]["bearer"], oid)
