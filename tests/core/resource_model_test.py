@@ -1,4 +1,5 @@
-from typing import Annotated
+from typing import Annotated, Any
+from datetime import datetime, timezone
 from unittest import TestCase
 
 from pydantic import ValidationError
@@ -257,3 +258,25 @@ class ResourceModelTest(TestCase):
         self.assertEqual(item.single_oid, ids[0])
         self.assertEqual(item.list_ids, [str(ids[1]), str(ids[2])])
         self.assertEqual(item.list_oids, [ids[1], ids[2]])
+
+    def test_dict_field_with_objectid_value(self):
+        class Template(BaseModel):
+            data: dict = {}
+            extra: dict[str, Any] | None = None
+
+        oid = ObjectId()
+        date = datetime(2026, 11, 5, 10, 0, tzinfo=timezone.utc)
+        item = Template(data={"user": oid, "dates": {"start": date}, "users": [oid]}, extra={"user": oid})
+
+        # Values are serialized the same way as Eve does in JSON mode
+        expected = {
+            "data": {"user": str(oid), "dates": {"start": "2026-11-05T10:00:00+0000"}, "users": [str(oid)]},
+            "extra": {"user": str(oid)},
+        }
+        self.assertEqual(item.to_dict(mode="json"), expected)
+        self.assertEqual(json.loads(item.to_json()), expected)
+
+        # Python mode and the instance keep the original types
+        self.assertEqual(item.to_dict()["data"]["user"], oid)
+        self.assertEqual(item.to_dict()["data"]["dates"]["start"], date)
+        self.assertEqual(item.data["user"], oid)

@@ -20,7 +20,7 @@ from typing import (
     get_args,
 )
 from inspect import get_annotations
-from copy import deepcopy
+from copy import copy, deepcopy
 from dataclasses import field as dataclass_field
 from typing_extensions import dataclass_transform, Self, overload
 
@@ -31,6 +31,7 @@ from pydantic import (
     ValidationError,
     model_serializer,
     SerializerFunctionWrapHandler,
+    SerializationInfo,
     RootModel,
     AliasChoices,
 )
@@ -38,6 +39,7 @@ from pydantic.dataclasses import dataclass as pydataclass
 from pydantic_core import InitErrorDetails, PydanticCustomError, from_json
 
 from superdesk.core.types import BaseModel, DefaultNoValue
+from superdesk.core.types.model import get_json_encoded_dict_fields
 from superdesk.core.utils import generate_guid, GUID_NEWSML
 from superdesk.utils import merge_dicts_deep
 
@@ -99,13 +101,25 @@ class DataclassBase:
     """Provides type-safe utility methods for Dataclass."""
 
     @model_serializer(mode="wrap")
-    def ser_model(self, nxt: SerializerFunctionWrapHandler):
+    def ser_model(self, nxt: SerializerFunctionWrapHandler, info: SerializationInfo):
         """
         Serialize the model, including extra fields not part of the schema.
         """
         fields = get_annotations(self.__class__).keys()
         aliased_fields = get_model_aliased_fields(self.__class__)
-        result = nxt(self)
+
+        encoded = {}
+        if info.mode_is_json():
+            encoded = get_json_encoded_dict_fields(self, getattr(self, "__pydantic_fields__", {}))
+
+        if encoded:
+            # Use our JSON encoder for values of ``dict`` fields
+            instance = copy(self)
+            for name, value in encoded.items():
+                object.__setattr__(instance, name, value)
+            result = nxt(instance)
+        else:
+            result = nxt(self)
 
         # Include extra fields that were not part of the schema for this class
         instance_dict = getattr(self, "__dict__", None)
