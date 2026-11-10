@@ -3107,7 +3107,7 @@ async def step_given_archive_item(context, item_id):
 @async_run_until_complete
 async def step_given_archive_item_with_data(context, item_id):
     """Insert an archive document with extra fields taken from the docstring."""
-    await _insert_archive_item(item_id, json.loads(context.text))
+    await _insert_archive_item(item_id, json.loads(apply_placeholders(context, context.text)))
 
 
 def test_items_contain_items(items, context_items):
