@@ -4,46 +4,11 @@ import re
 from behave import given, when, then, step
 from behave.api.async_step import async_run_until_complete
 
-from superdesk.core import get_current_async_app
 from superdesk.tests import get_prefixed_url, set_placeholder
 from superdesk.tests.http_mocks import mock_http
-from superdesk.tests.steps import apply_placeholders, get_resource_name, get_json_data, json_match
+from superdesk.tests.steps import apply_placeholders, get_resource_name, json_match
 
 from apps.content_lists.webhooks import ContentListWebhooksService
-
-
-async def _insert_archive_item(item_id, extra=None):
-    """Insert a minimal archive document directly into MongoDB.
-
-    Avoids archive service validation complexity while satisfying the
-    validate_data_relation_async("archive") check on ContentListItem.content.
-    """
-    doc = {"_id": item_id, "guid": item_id, "type": "text"}
-    if extra:
-        doc.update(extra)
-    async_app = get_current_async_app()
-    collection = async_app.mongo.get_collection_async("archive")
-    await collection.insert_one(doc)
-
-
-@given('an archive item "{item_id}"')
-@async_run_until_complete
-async def step_given_archive_item(context, item_id):
-    await _insert_archive_item(item_id)
-
-
-@given('an archive item "{item_id}" with data')
-@async_run_until_complete
-async def step_given_archive_item_with_data(context, item_id):
-    """Insert an archive document with extra fields taken from the docstring."""
-    await _insert_archive_item(item_id, json.loads(context.text))
-
-
-@when('we head "{url}"')
-@async_run_until_complete
-async def step_when_we_head(context, url):
-    url = apply_placeholders(context, url)
-    context.response = await context.client.head(get_prefixed_url(context.app, url), headers=context.headers)
 
 
 @when('we bulk patch items for "{url}"')
@@ -64,18 +29,6 @@ async def step_bulk_patch_items_for(context, url):
         if item.get("_id"):
             resource = get_resource_name(url)
             _store(context, resource, item)
-
-
-@step('we store response as "{resource}"')
-@async_run_until_complete
-async def step_store_response_as(context, resource):
-    """Store the current response body as a named placeholder.
-
-    Useful after a GET or custom endpoint call to make fields available
-    for use in subsequent steps as #resource.field# placeholders.
-    """
-    item = await get_json_data(context.response)
-    _store(context, resource, item)
 
 
 def _store(context, name, item):

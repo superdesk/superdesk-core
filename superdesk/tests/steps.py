@@ -31,7 +31,7 @@ from pathlib import Path
 import yaml
 import re
 
-from behave import given, when, then  # @UnresolvedImport
+from behave import given, when, then, step  # @UnresolvedImport
 from behave.api.async_step import async_run_until_complete
 from bson import ObjectId
 from eve.io.mongo import MongoJSONEncoder
@@ -1030,6 +1030,13 @@ async def _when_we_get_raw_url(context, url):
     url = encode_url_query(apply_placeholders(context, url))
     async with context.app.app_context():
         context.response = await context.client.get(url, headers=context.headers)
+
+
+@when('we head "{url}"')
+@async_run_until_complete
+async def step_when_we_head(context, url):
+    url = apply_placeholders(context, url)
+    context.response = await context.client.head(get_prefixed_url(context.app, url), headers=context.headers)
 
 
 async def when_we_get_url(context, url):
@@ -3064,6 +3071,43 @@ async def step_impl_store_indexed_item_to_ctx(context, tag, index):
 async def step_impl_store_response_in_cts(context, tag):
     data = await get_json_data(context.response)
     setattr(context, tag, data)
+
+
+@step('we store response as "{resource}"')
+@async_run_until_complete
+async def step_store_response_as(context, resource):
+    """Store the current response body as a named placeholder.
+
+    Unlike ``we store response in``, the fields can then be used in later steps as
+    ``#resource.field#`` placeholders.
+    """
+    item = await get_json_data(context.response)
+    setattr(context, resource, item)
+    set_placeholder(context, resource, item)
+
+
+async def _insert_archive_item(item_id, extra=None):
+    """Insert a minimal archive document directly into MongoDB.
+
+    Skips the validation of the archive service, so a scenario can set up only the fields it needs.
+    """
+    doc = {"_id": item_id, "guid": item_id, "type": "text"}
+    if extra:
+        doc.update(extra)
+    await get_current_async_app().mongo.get_collection_async("archive").insert_one(doc)
+
+
+@given('an archive item "{item_id}"')
+@async_run_until_complete
+async def step_given_archive_item(context, item_id):
+    await _insert_archive_item(item_id)
+
+
+@given('an archive item "{item_id}" with data')
+@async_run_until_complete
+async def step_given_archive_item_with_data(context, item_id):
+    """Insert an archive document with extra fields taken from the docstring."""
+    await _insert_archive_item(item_id, json.loads(context.text))
 
 
 def test_items_contain_items(items, context_items):

@@ -72,7 +72,7 @@ def step_given_provider_refuses_first_connection(context, base_url):
     )
     mock_http(context).post(f"{base_url}/chat/completions", exception=refused)
 
-    patcher = patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY", 0)
+    patcher = patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY_SECONDS", 0)
     patcher.start()
     context.add_cleanup(patcher.stop)
 

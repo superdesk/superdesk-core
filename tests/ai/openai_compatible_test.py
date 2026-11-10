@@ -292,7 +292,7 @@ class OpenAICompatibleClientTestCase(TestCase):
                 self.http_mock.clear()
 
     async def _without_retry_delay(self, awaitable, delay=0):
-        with mock.patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY", delay):
+        with mock.patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY_SECONDS", delay):
             return await awaitable
 
     def _capture_requests(self, url: str, method: str, repeat: bool = False, **result_kwargs) -> list[dict]:
@@ -320,7 +320,7 @@ class AIRequestTimeoutConfigTestCase(TestCase):
         self.http_mock.get(MODELS_URL, exception=refused_connection())
         requests = capture_requests(self.http_mock, MODELS_URL, "GET", payload=MODELS_PAYLOAD)
 
-        with mock.patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY", 1):
+        with mock.patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY_SECONDS", 1):
             await OpenAICompatibleClient(base_url=BASE_URL, api_key=API_KEY).list_models()
 
         self.assertLessEqual(requests[0]["timeout"].total, 4)

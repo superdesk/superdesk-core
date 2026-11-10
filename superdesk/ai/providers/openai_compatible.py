@@ -13,10 +13,10 @@ from .base import AIProviderClient, CompletionRequest, CompletionResult
 #: A connection that could not be opened within this many seconds failed instantly, a refused
 #: connection or a failed DNS lookup, and is tried once more. A slower failure is not: it has used up
 #: time the run does not have.
-CONNECT_RETRY_WITHIN = 2.0
+CONNECT_RETRY_WITHIN_SECONDS = 2.0
 
-#: Seconds to wait before trying a refused connection again
-CONNECT_RETRY_DELAY = 0.5
+#: How long to wait before trying a refused connection again
+CONNECT_RETRY_DELAY_SECONDS = 0.5
 
 
 def _clock() -> float:
@@ -93,10 +93,10 @@ class OpenAICompatibleClient(AIProviderClient):
                 return await self._send(method, path, payload, timeout)
             except aiohttp.ClientConnectorError:
                 elapsed = _clock() - started
-                if elapsed > CONNECT_RETRY_WITHIN or timeout - elapsed - CONNECT_RETRY_DELAY <= 0:
+                if elapsed > CONNECT_RETRY_WITHIN_SECONDS or timeout - elapsed - CONNECT_RETRY_DELAY_SECONDS <= 0:
                     raise
 
-                await asyncio.sleep(CONNECT_RETRY_DELAY)
+                await asyncio.sleep(CONNECT_RETRY_DELAY_SECONDS)
 
                 # A busy server can wake up well after the delay, so the time left is read again
                 time_left = timeout - (_clock() - started)
