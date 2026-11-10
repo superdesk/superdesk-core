@@ -105,7 +105,7 @@ A user who runs actions more often than ``AI_RATE_LIMIT_PER_MINUTE`` allows, 20 
 answered with a ``429`` before the provider is called, an ``error_kind`` of ``too_many_runs`` and
 ``retry_after``, the seconds until the count starts again, also sent as the ``Retry-After`` header.
 The count is kept per user in Redis, so every server process shares it; ``0`` turns the limit off.
-When Redis cannot be reached the limit is not enforced rather than blocking every run.
+When Redis cannot be reached, or does not answer within a second, the limit is not enforced rather than blocking every run.
 
 A connection to the provider that cannot be opened at all, refused or failing its DNS lookup
 within two seconds, is tried once more half a second later, within what is left of

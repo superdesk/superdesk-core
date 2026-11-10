@@ -214,7 +214,11 @@ class AIEventsTestCase(AIRunLogTestCase):
                 self.assertEqual(event["input_chars"], len(BODY_TEXT))
 
     async def test_a_completion_that_cannot_be_read_writes_an_event_with_an_invalid_response(self):
-        contents = ["   ", json.dumps({"result": {"headline": "One"}})]
+        contents = [
+            "   ",
+            json.dumps({"result": {"headline": "One"}}),
+            json.dumps({"suggestions": ['<?xml version="1.0" encoding="UTF-8"?><p>One</p>']}),
+        ]
 
         for content in contents:
             with self.subTest(content=content):

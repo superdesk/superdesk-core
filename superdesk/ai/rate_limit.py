@@ -10,8 +10,11 @@ import logging
 import math
 import time
 
+import redis
 from quart_babel import gettext
+from redis.backoff import NoBackoff
 from redis.exceptions import RedisError
+from redis.retry import Retry
 
 from superdesk.core import get_current_app
 
@@ -21,6 +24,12 @@ from .errors import AIApiError
 logger = logging.getLogger(__name__)
 
 WINDOW_SECONDS = 60
+
+#: How long connecting to Redis, and then counting, may each take before the run goes ahead without
+#: being counted. Redis answers in well under a millisecond, so a slower answer means it is not there.
+REDIS_TIMEOUT_SECONDS = 1.0
+
+_clients: dict[str, redis.Redis] = {}
 
 #: Value of ``error_kind`` for a user over their limit, apart from ``rate_limit``, which is the
 #: provider limiting Superdesk as a whole
@@ -64,7 +73,7 @@ async def check_run_rate(user_id: str) -> None:
     try:
         # The Redis client is synchronous, so it runs in a thread to keep a slow Redis from stalling
         # every other request on this worker
-        count = await asyncio.to_thread(_count_run, get_current_app().redis, key)
+        count = await asyncio.to_thread(_count_run, _get_redis(), key)
     except RedisError:
         logger.warning("AI run rate could not be counted, the limit is not enforced", exc_info=True)
         return
@@ -74,8 +83,28 @@ async def check_run_rate(user_id: str) -> None:
         raise TooManyRunsError(retry_after=max(1, math.ceil(WINDOW_SECONDS - now % WINDOW_SECONDS)))
 
 
-def _count_run(redis, key: str) -> int:
-    pipeline = redis.pipeline()
+def _get_redis() -> redis.Redis:
+    """Redis client of the limit, which gives up quickly when Redis does not answer
+
+    ``app.redis`` has no timeouts, so it waits on a Redis that stopped answering for as long as the
+    operating system keeps the connection open, far past the time a request has. Retries are off,
+    as each would wait the full timeout again.
+    """
+
+    url = get_current_app().config["REDIS_URL"]
+    client = _clients.get(url)
+    if client is None:
+        client = _clients[url] = redis.from_url(
+            url,
+            socket_timeout=REDIS_TIMEOUT_SECONDS,
+            socket_connect_timeout=REDIS_TIMEOUT_SECONDS,
+            retry=Retry(NoBackoff(), 0),
+        )
+    return client
+
+
+def _count_run(client: redis.Redis, key: str) -> int:
+    pipeline = client.pipeline()
     pipeline.incr(key)
     pipeline.expire(key, WINDOW_SECONDS * 2)
     count, _ = pipeline.execute()

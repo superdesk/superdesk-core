@@ -69,6 +69,13 @@ _ARTICLE_TAG_RE = re.compile(r"<(\s*/?\s*article)", re.IGNORECASE)
 
 _LINE_BREAKS_RE = re.compile(r"\s*\n\s*")
 
+# Something shaped like a tag, a comment or a declaration
+_MARKUP_RE = re.compile(r"<[a-zA-Z/!?][^<>]*>")
+
+# A ``<`` that does not start one of those, which the HTML parser would still read as the start of a
+# tag and drop the rest of the answer with ("Why A<B matters" would come back as "Why A")
+_BARE_LESS_THAN_RE = re.compile(r"<(?![a-zA-Z/!?][^<>]*>)")
+
 # Markdown code fence around a whole answer, which several models add even in JSON mode
 _CODE_FENCE_RE = re.compile(r"^\s*```[a-zA-Z]*\s*\n?|\n?\s*```\s*$")
 
@@ -176,13 +183,24 @@ def _plain_text(suggestion: str) -> str:
 
     The prompt asks for no formatting, so markup is either a provider ignoring that or an article
     that talked the provider into writing some. Clients still have to insert answers as text.
+
+    :raises AIProviderError: If the markup cannot be parsed at all
     """
 
-    if "<" not in suggestion:
+    if not _MARKUP_RE.search(suggestion):
         return suggestion
 
-    # Blocks and line breaks become a space, so the text on either side of them does not run together
-    text = get_text(suggestion, content="html", lf_on_block=True)
+    markup = _BARE_LESS_THAN_RE.sub("&lt;", suggestion)
+
+    try:
+        # Blocks and line breaks become a space, so the text on either side of them does not run together
+        text = get_text(markup, content="html", lf_on_block=True)
+    except ValueError as error:
+        # lxml refuses some input outright, an XML declaration naming an encoding for one
+        raise AIProviderError(
+            AIErrorKind.INVALID_RESPONSE,
+            gettext("The AI provider answered with markup that could not be read"),
+        ) from error
 
     return _LINE_BREAKS_RE.sub(" ", text).strip()
 

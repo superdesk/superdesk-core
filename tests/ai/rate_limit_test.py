@@ -10,6 +10,7 @@
 
 import asyncio
 import json
+import socket
 import time
 from unittest.mock import MagicMock, patch
 
@@ -125,15 +126,29 @@ class AIRunRateLimitTestCase(TestCase):
             await self._run_times(3)
 
     async def test_runs_are_not_blocked_when_redis_cannot_be_reached(self):
-        app = MagicMock()
-        app.redis.pipeline.side_effect = RedisError("connection refused")
+        client = MagicMock()
+        client.pipeline.side_effect = RedisError("connection refused")
 
-        with patch("superdesk.ai.rate_limit.get_current_app", return_value=app):
+        with patch("superdesk.ai.rate_limit._get_redis", return_value=client):
             await self._run_times(3)
 
+    async def test_runs_are_not_blocked_when_redis_stops_answering(self):
+        # Takes connections and never answers them, like a Redis that hangs
+        server = socket.socket()
+        server.bind(("127.0.0.1", 0))
+        server.listen()
+        self.addCleanup(server.close)
+        url = "redis://127.0.0.1:{}/0".format(server.getsockname()[1])
+
+        started = time.monotonic()
+        with patch.dict(self.app.config, {"REDIS_URL": url}), patch("superdesk.ai.rate_limit._clients", {}):
+            await asyncio.wait_for(self._run_times(3), timeout=20)
+
+        self.assertLess(time.monotonic() - started, 10)
+
     async def test_a_slow_redis_does_not_hold_up_other_requests(self):
-        app = MagicMock()
-        app.redis.pipeline.return_value.execute.side_effect = lambda: time.sleep(0.3) or [1, True]
+        client = MagicMock()
+        client.pipeline.return_value.execute.side_effect = lambda: time.sleep(0.3) or [1, True]
         events = []
 
         async def count_run():
@@ -145,7 +160,7 @@ class AIRunRateLimitTestCase(TestCase):
                 await asyncio.sleep(0.02)
                 events.append("other request")
 
-        with patch("superdesk.ai.rate_limit.get_current_app", return_value=app):
+        with patch("superdesk.ai.rate_limit._get_redis", return_value=client):
             await asyncio.gather(count_run(), other_request())
 
         self.assertEqual(events, ["other request"] * 3 + ["counted"])
