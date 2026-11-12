@@ -245,13 +245,17 @@ class ParseSuggestionsTestCase(IsolatedAsyncioTestCase):
             ["Why A<B matters for voters", "Kurs <target, rynek czeka", "Why A<B matters"],
         )
 
-    async def test_markup_that_cannot_be_parsed_is_an_invalid_response(self):
-        content = json.dumps({"suggestions": ['<?xml version="1.0" encoding="UTF-8"?><p>Council meets</p>']})
+    async def test_the_text_of_an_answer_written_as_a_whole_document_is_kept(self):
+        content = json.dumps(
+            {
+                "suggestions": [
+                    "<html><body>Council <b>approves</b> budget</body></html>",
+                    '<?xml version="1.0" encoding="UTF-8"?><p>Council meets</p>',
+                ]
+            }
+        )
 
-        with self.assertRaises(AIProviderError) as context:
-            parse_suggestions(content, 1)
-
-        self.assertEqual(context.exception.kind, AIErrorKind.INVALID_RESPONSE)
+        self.assertEqual(parse_suggestions(content, 2), ["Council approves budget", "Council meets"])
 
     async def test_an_answer_that_is_only_markup_is_dropped(self):
         content = json.dumps({"suggestions": ["<br><hr>", "Council meets"]})

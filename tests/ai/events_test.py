@@ -217,7 +217,6 @@ class AIEventsTestCase(AIRunLogTestCase):
         contents = [
             "   ",
             json.dumps({"result": {"headline": "One"}}),
-            json.dumps({"suggestions": ['<?xml version="1.0" encoding="UTF-8"?><p>One</p>']}),
         ]
 
         for content in contents:

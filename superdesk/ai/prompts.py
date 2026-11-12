@@ -184,23 +184,16 @@ def _plain_text(suggestion: str) -> str:
     The prompt asks for no formatting, so markup is either a provider ignoring that or an article
     that talked the provider into writing some. Clients still have to insert answers as text.
 
-    :raises AIProviderError: If the markup cannot be parsed at all
     """
 
     if not _MARKUP_RE.search(suggestion):
         return suggestion
 
-    markup = _BARE_LESS_THAN_RE.sub("&lt;", suggestion)
-
-    try:
-        # Blocks and line breaks become a space, so the text on either side of them does not run together
-        text = get_text(markup, content="html", lf_on_block=True)
-    except ValueError as error:
-        # lxml refuses some input outright, an XML declaration naming an encoding for one
-        raise AIProviderError(
-            AIErrorKind.INVALID_RESPONSE,
-            gettext("The AI provider answered with markup that could not be read"),
-        ) from error
+    # The <div> keeps a whole document a fragment: `get_text` drops the text directly inside <body>,
+    # and lxml refuses a string that opens with an XML declaration naming an encoding.
+    # Blocks and line breaks become a space, so the text on either side of them does not run together
+    markup = "<div>" + _BARE_LESS_THAN_RE.sub("&lt;", suggestion) + "</div>"
+    text = get_text(markup, content="html", lf_on_block=True)
 
     return _LINE_BREAKS_RE.sub(" ", text).strip()
 
