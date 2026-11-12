@@ -42,6 +42,8 @@ class AuditResource(Resource):
         "archive_lock",
         "preferences",
         "usage_metrics",
+        # The create response carries a one-time sign-in code that must not be copied into the audit log.
+        "mobile_pairing",
     }
 
 

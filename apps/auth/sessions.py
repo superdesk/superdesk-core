@@ -11,6 +11,10 @@
 from superdesk.resource import Resource
 from superdesk.metadata.utils import item_url
 
+#: ``session_type`` of sessions created by mobile pairing. They expire after
+#: ``MOBILE_SESSION_EXPIRY_MINUTES`` of inactivity instead of ``SESSION_EXPIRY_MINUTES``.
+MOBILE_SESSION_TYPE = "mobile"
+
 
 class SessionsResource(Resource):
     schema = {

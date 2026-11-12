@@ -580,6 +580,39 @@ Default: ``240``
 
 The number of minutes since the last update of the Mongo auth object after which it will be deleted.
 
+Sessions are not checked against this on each request: the ``session:gc`` task (every 5 minutes) deletes
+the ones that have not been refreshed for longer. A session is refreshed at most every 30 seconds by
+requests that are not marked ``auto``.
+
+``MOBILE_PAIRING_ENABLED``
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``False``
+
+Lets a signed-in web user sign in to the mobile app by showing it a QR code ("Connect mobile app" in the
+user menu). The phone scans the code, the web user checks that both screens show the same number and
+approves, and the phone gets its own session for the same user. Off by default, since it adds two public endpoints; enable it per instance.
+
+Creating a pairing needs the ``mobile_pairing`` privilege, which administrators have and other roles must
+be granted. When set to ``False`` the ``mobile_pairing``, ``mobile_pairing_claim`` and
+``auth_mobile_pairing`` endpoints are not registered and the client hides the menu entry.
+
+The two endpoints the phone calls are public. Consider rate limiting ``/api/mobile_pairing_claim`` and
+``/api/auth_mobile_pairing`` at the proxy, as you would ``/api/auth_db``.
+
+.. versionadded:: 3.6
+
+``MOBILE_SESSION_EXPIRY_MINUTES``
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Default: ``10080`` (7 days)
+
+``SESSION_EXPIRY_MINUTES`` for sessions created by mobile pairing, so a phone that is used every few days
+stays signed in. Like web sessions, they expire after this many minutes without activity, and signing out
+on the phone or clearing the user's sessions ends them immediately.
+
+.. versionadded:: 3.6
+
 ``RESET_PASSWORD_TOKEN_TIME_TO_LIVE``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

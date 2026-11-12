@@ -550,6 +550,7 @@ SENTRY_PROFILES_SAMPLE_RATE = (
 
 CORE_APPS = [
     "apps.auth",
+    "apps.auth.mobile_pairing",
     "superdesk.roles",
     "superdesk.storage",
     "superdesk.allowed_values",
@@ -985,6 +986,18 @@ PASSWORD_EXPIRY_DAYS = int(env("PASSWORD_EXPIRY_DAYS", 0))
 
 #: The number of minutes since the last update of the Mongo auth object after which it will be deleted
 SESSION_EXPIRY_MINUTES = int(env("SESSION_EXPIRY_MINUTES", 240))
+
+#: Let a signed-in web user sign in to the mobile app by showing it a QR code
+#:
+#: .. versionadded:: 3.6
+#:
+MOBILE_PAIRING_ENABLED = strtobool(env("MOBILE_PAIRING_ENABLED", "false"))
+
+#: Like ``SESSION_EXPIRY_MINUTES``, for sessions created by mobile pairing (default 7 days)
+#:
+#: .. versionadded:: 3.6
+#:
+MOBILE_SESSION_EXPIRY_MINUTES = int(env("MOBILE_SESSION_EXPIRY_MINUTES", 60 * 24 * 7))
 
 #: How often update user session/activity timestamp
 SESSION_UPDATE_SECONDS = 30

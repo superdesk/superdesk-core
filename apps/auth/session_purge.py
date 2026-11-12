@@ -17,6 +17,7 @@ from superdesk.commands import cli
 from superdesk.utc import utcnow
 from superdesk import get_resource_service
 from superdesk.core import get_app_config
+from apps.auth.sessions import MOBILE_SESSION_TYPE
 
 
 logger = logging.getLogger(__name__)
@@ -26,7 +27,8 @@ logger = logging.getLogger(__name__)
 async def cli_session_gc():
     """Remove expired sessions from db.
 
-    Using ``SESSION_EXPIRY_MINUTES`` config.
+    Using ``SESSION_EXPIRY_MINUTES`` config, or ``MOBILE_SESSION_EXPIRY_MINUTES`` for sessions created by
+    mobile pairing. Also removes expired mobile pairing requests.
 
     Example:
     ::
@@ -41,17 +43,35 @@ async def cli_session_gc():
 class RemoveExpiredSessions:
     async def run(self):
         await self.remove_expired_sessions()
+        await self.remove_expired_mobile_pairings()
 
     async def remove_expired_sessions(self):
+        now = utcnow()
+        web_expiration_time = now - timedelta(minutes=get_app_config("SESSION_EXPIRY_MINUTES"))
+        mobile_expiration_time = now - timedelta(minutes=get_app_config("MOBILE_SESSION_EXPIRY_MINUTES"))
+        logger.info(
+            "Deleting sessions not updated since {} (mobile sessions since {})".format(
+                web_expiration_time, mobile_expiration_time
+            )
+        )
+        await self._remove_sessions(
+            {"session_type": {"$ne": MOBILE_SESSION_TYPE}, "_updated": {"$lte": date_to_str(web_expiration_time)}}
+        )
+        await self._remove_sessions(
+            {"session_type": MOBILE_SESSION_TYPE, "_updated": {"$lte": date_to_str(mobile_expiration_time)}}
+        )
+        await self._update_online_users()
+
+    async def _remove_sessions(self, query):
         auth_service = get_resource_service("auth")
-        expiry_minutes = get_app_config("SESSION_EXPIRY_MINUTES")
-        expiration_time = utcnow() - timedelta(minutes=expiry_minutes)
-        logger.info("Deleting session not updated since {}".format(expiration_time))
-        query = {"_updated": {"$lte": date_to_str(expiration_time)}}
         sessions = await (await auth_service.get_async(req=None, lookup=query)).to_list()
         if sessions:
             await auth_service.delete_docs_async(sessions)
-        await self._update_online_users()
+
+    async def remove_expired_mobile_pairings(self):
+        # The resource is not registered when the feature is off.
+        if get_app_config("MOBILE_PAIRING_ENABLED"):
+            await get_resource_service("mobile_pairing").remove_expired()
 
     async def _update_online_users(self):
         online_users = await self._get_online_users()

@@ -59,6 +59,8 @@ class AuthResource(Resource):
         "password": {"type": "string", "required": True},
         "token": {"type": "string"},
         "user": Resource.rel("users", True),
+        # Set by the server ("mobile" for sessions created by mobile pairing); decides which expiry applies.
+        "session_type": {"type": "string", "readonly": True},
     }
 
     resource_methods = ["POST"]
