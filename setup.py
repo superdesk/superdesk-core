@@ -55,7 +55,7 @@ install_requires = [
     # Async libraries
     "motor>=3.4.0,<4.0",
     # There's a breaking change in 2.13 that's affecting our usage, so pinning to 2.12
-    "pydantic>=2.7.4,<2.13",
+    "pydantic>=2.7.4,<2.15",
     # Custom repos, with patches applied
     "eve @ git+https://github.com/superdesk/eve@1cc21d9f831479642abd6d060c836b01ff8f0472",
     "eve-elastic @ git+https://github.com/superdesk/eve-elastic@8d1c3c4818a39f3e35037fc4ca723041285da80f",
