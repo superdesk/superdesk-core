@@ -44,7 +44,7 @@ install_requires = [
     "unidecode>=0.04.21,<=1.4.0",
     "authlib>0.14,<1.5",
     "draftjs-exporter[lxml]<5.3",
-    "regex>=2020.7.14,<=2026.1.15",
+    "regex>=2020.7.14,<=2026.9.29",
     "flask-oidc-ex>=0.5.5,<0.7",
     # Fix an issue with MarkupSafe 2.1.0 not exporting `soft_unicode`
     "MarkupSafe>2.1",
