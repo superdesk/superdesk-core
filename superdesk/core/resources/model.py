@@ -436,7 +436,6 @@ class ResourceModelWithObjectId(ResourceModel):
     ]
 
 
-@dataclass
 class ModelWithVersions:
     """Mixin model class to be used to automatically add versions when managed through ``AsyncResourceService``"""
 
