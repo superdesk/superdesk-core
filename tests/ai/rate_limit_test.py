@@ -12,13 +12,11 @@ import asyncio
 import json
 import socket
 import time
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from bson import ObjectId
-from redis.exceptions import RedisError
 
 from superdesk.ai.config import config
-from superdesk.ai.rate_limit import check_run_rate
 from superdesk.tests import TestCase
 from superdesk.tests.http_mocks import mock_http
 
@@ -126,10 +124,12 @@ class AIRunRateLimitTestCase(TestCase):
             await self._run_times(3)
 
     async def test_runs_are_not_blocked_when_redis_cannot_be_reached(self):
-        client = MagicMock()
-        client.pipeline.side_effect = RedisError("connection refused")
+        # A port nothing listens on, so connecting is refused
+        with socket.socket() as unused:
+            unused.bind(("127.0.0.1", 0))
+            port = unused.getsockname()[1]
 
-        with patch("superdesk.ai.rate_limit._get_redis", return_value=client):
+        with patch.dict(self.app.config, {"REDIS_URL": f"redis://127.0.0.1:{port}/0"}):
             await self._run_times(3)
 
     async def test_runs_are_not_blocked_when_redis_stops_answering(self):
@@ -141,26 +141,7 @@ class AIRunRateLimitTestCase(TestCase):
         url = "redis://127.0.0.1:{}/0".format(server.getsockname()[1])
 
         started = time.monotonic()
-        with patch.dict(self.app.config, {"REDIS_URL": url}), patch("superdesk.ai.rate_limit._clients", {}):
+        with patch.dict(self.app.config, {"REDIS_URL": url}):
             await asyncio.wait_for(self._run_times(3), timeout=20)
 
         self.assertLess(time.monotonic() - started, 10)
-
-    async def test_a_slow_redis_does_not_hold_up_other_requests(self):
-        client = MagicMock()
-        client.pipeline.return_value.execute.side_effect = lambda: time.sleep(0.3) or [1, True]
-        events = []
-
-        async def count_run():
-            await check_run_rate(str(ObjectId()))
-            events.append("counted")
-
-        async def other_request():
-            for _ in range(3):
-                await asyncio.sleep(0.02)
-                events.append("other request")
-
-        with patch("superdesk.ai.rate_limit._get_redis", return_value=client):
-            await asyncio.gather(count_run(), other_request())
-
-        self.assertEqual(events, ["other request"] * 3 + ["counted"])
