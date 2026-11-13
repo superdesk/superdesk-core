@@ -69,7 +69,7 @@ async def check_run_rate(user_id: str) -> None:
 
     try:
         count = await _count_run(key)
-    except RedisError:
+    except (RedisError, ValueError):
         logger.warning("AI run rate could not be counted, the limit is not enforced", exc_info=True)
         return
 
