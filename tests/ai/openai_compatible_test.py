@@ -48,6 +48,14 @@ def capture_requests(http_mock, url: str, method: str, repeat: bool = False, **r
     return requests
 
 
+def refused_connection() -> aiohttp.ClientConnectorError:
+    """The error aiohttp raises when the connection to the provider cannot be opened at all"""
+
+    return aiohttp.ClientConnectorError(
+        mock.MagicMock(host="provider.test", port=443, ssl=True), ConnectionRefusedError()
+    )
+
+
 def completion_request(**updates) -> CompletionRequest:
     return CompletionRequest(
         model="gpt-4o-mini",
@@ -203,6 +211,90 @@ class OpenAICompatibleClientTestCase(TestCase):
 
                 self.assertNotIn("Authorization", requests[0]["headers"])
 
+    async def test_a_connection_refused_at_once_is_tried_again(self):
+        self.http_mock.post(COMPLETIONS_URL, exception=refused_connection())
+        requests = self._capture_requests(COMPLETIONS_URL, "POST", payload=COMPLETION_PAYLOAD)
+
+        result = await self._without_retry_delay(self.client.complete(completion_request()))
+
+        self.assertEqual(result.content, "A headline")
+        self.assertEqual(len(requests), 1)
+
+    async def test_a_connection_refused_twice_is_reported_as_unreachable(self):
+        self.http_mock.post(COMPLETIONS_URL, exception=refused_connection())
+        self.http_mock.post(COMPLETIONS_URL, exception=refused_connection())
+        requests = self._capture_requests(COMPLETIONS_URL, "POST", payload=COMPLETION_PAYLOAD)
+
+        with self.assertRaises(AIProviderError) as context:
+            await self._without_retry_delay(self.client.complete(completion_request()))
+
+        self.assertEqual(context.exception.kind, AIErrorKind.UPSTREAM)
+        self.assertEqual(requests, [])
+
+    async def test_a_connection_that_took_long_to_fail_is_not_tried_again(self):
+        self.http_mock.post(COMPLETIONS_URL, exception=refused_connection())
+        requests = self._capture_requests(COMPLETIONS_URL, "POST", payload=COMPLETION_PAYLOAD)
+        clock = iter([100.0, 103.0])
+
+        with mock.patch("superdesk.ai.providers.openai_compatible._clock", side_effect=lambda: next(clock)):
+            with self.assertRaises(AIProviderError) as context:
+                await self._without_retry_delay(self.client.complete(completion_request()))
+
+        self.assertEqual(context.exception.kind, AIErrorKind.UPSTREAM)
+        self.assertEqual(requests, [])
+
+    async def test_a_refused_connection_is_not_tried_again_without_time_left(self):
+        """A retry with no time left would run without any timeout"""
+
+        self.http_mock.post(COMPLETIONS_URL, exception=refused_connection())
+        requests = self._capture_requests(COMPLETIONS_URL, "POST", payload=COMPLETION_PAYLOAD)
+        clock = iter([100.0, 101.6])
+
+        with (
+            mock.patch.object(ai_config, "request_timeout", 2),
+            mock.patch("superdesk.ai.providers.openai_compatible._clock", side_effect=lambda: next(clock)),
+        ):
+            with self.assertRaises(AIProviderError) as context:
+                await self._without_retry_delay(self.client.complete(completion_request()), delay=0.5)
+
+        self.assertEqual(context.exception.kind, AIErrorKind.UPSTREAM)
+        self.assertEqual(requests, [])
+
+    async def test_a_refused_connection_is_not_tried_again_when_the_pause_ends_after_the_deadline(self):
+        """A busy server can resume the run long after the pause it asked for"""
+
+        self.http_mock.post(COMPLETIONS_URL, exception=refused_connection())
+        requests = self._capture_requests(COMPLETIONS_URL, "POST", payload=COMPLETION_PAYLOAD)
+        clock = iter([100.0, 100.1, 106.0])
+
+        with (
+            mock.patch.object(ai_config, "request_timeout", 5),
+            mock.patch("superdesk.ai.providers.openai_compatible._clock", side_effect=lambda: next(clock)),
+        ):
+            with self.assertRaises(AIProviderError) as context:
+                await self._without_retry_delay(self.client.complete(completion_request()))
+
+        self.assertEqual(context.exception.kind, AIErrorKind.UPSTREAM)
+        self.assertEqual(requests, [])
+
+    async def test_a_failure_after_the_request_was_sent_is_not_tried_again(self):
+        """The provider may already be working on it, and would be paid twice"""
+
+        for error in (aiohttp.ServerDisconnectedError(), asyncio.TimeoutError()):
+            with self.subTest(error=type(error).__name__):
+                self.http_mock.post(COMPLETIONS_URL, exception=error)
+                requests = self._capture_requests(COMPLETIONS_URL, "POST", payload=COMPLETION_PAYLOAD)
+
+                with self.assertRaises(AIProviderError):
+                    await self._without_retry_delay(self.client.complete(completion_request()))
+
+                self.assertEqual(requests, [])
+                self.http_mock.clear()
+
+    async def _without_retry_delay(self, awaitable, delay=0):
+        with mock.patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY_SECONDS", delay):
+            return await awaitable
+
     def _capture_requests(self, url: str, method: str, repeat: bool = False, **result_kwargs) -> list[dict]:
         return capture_requests(self.http_mock, url, method, repeat=repeat, **result_kwargs)
 
@@ -218,12 +310,20 @@ class AIRequestTimeoutConfigTestCase(TestCase):
         self.assertEqual(ai_config.request_timeout, 5)
 
     async def test_requests_use_the_configured_request_timeout(self):
-        self.http_mock.get(MODELS_URL, payload=MODELS_PAYLOAD)
+        requests = capture_requests(self.http_mock, MODELS_URL, "GET", payload=MODELS_PAYLOAD)
 
-        with mock.patch("aiohttp.ClientSession", side_effect=aiohttp.ClientSession) as session_class:
+        await OpenAICompatibleClient(base_url=BASE_URL, api_key=API_KEY).list_models()
+
+        self.assertEqual(requests[0]["timeout"].total, 5)
+
+    async def test_a_retried_connection_only_gets_the_time_left(self):
+        self.http_mock.get(MODELS_URL, exception=refused_connection())
+        requests = capture_requests(self.http_mock, MODELS_URL, "GET", payload=MODELS_PAYLOAD)
+
+        with mock.patch("superdesk.ai.providers.openai_compatible.CONNECT_RETRY_DELAY_SECONDS", 1):
             await OpenAICompatibleClient(base_url=BASE_URL, api_key=API_KEY).list_models()
 
-        self.assertEqual(session_class.call_args.kwargs["timeout"].total, 5)
+        self.assertLessEqual(requests[0]["timeout"].total, 4)
 
 
 class AIProviderEndpointsTestCase(TestCase):
@@ -303,8 +403,12 @@ class AIProviderEndpointsTestCase(TestCase):
 
         response = await self.test_client.get(f"/api/ai_providers/{self.provider_id}/models")
 
+        body = await response.get_json()
         self.assertEqual(response.status_code, 502)
-        self.assertNotIn(API_KEY, (await response.get_json())["_message"])
+        self.assertNotIn(API_KEY, body["_message"])
+        # Administrators set the provider up, so they are told what the provider answered
+        self.assertIn("HTTP 401", body["_message"])
+        self.assertEqual(body["error_kind"], "auth")
 
     async def test_models_endpoint_answers_429_when_the_provider_rate_limits(self):
         self.http_mock.get(MODELS_URL, status=429)

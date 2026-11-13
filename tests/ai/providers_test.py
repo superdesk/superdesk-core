@@ -9,8 +9,10 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import os
+from unittest.mock import patch
 
-from superdesk.ai.config import AIConfig
+from superdesk.ai.config import AIConfig, check_request_timeout
 from superdesk.ai.config import config as ai_config
 from superdesk.ai.errors import AIErrorKind, AIProviderError
 from superdesk.ai.models import AIProvider
@@ -25,7 +27,7 @@ from superdesk.ai.providers.openai_compatible import OpenAICompatibleClient
 from superdesk.ai.providers_service import AIProvidersService
 from superdesk.core.auth.user_auth import UserAuthProtocol
 from superdesk.core.types import Request
-from superdesk.default_settings import AI_REQUEST_TIMEOUT
+from superdesk.default_settings import AI_RATE_LIMIT_PER_MINUTE, AI_REQUEST_TIMEOUT
 from superdesk.errors import AlreadyExistsError
 from superdesk.tests import TestCase
 
@@ -43,8 +45,9 @@ class StubUserAuth(UserAuthProtocol):
         return self.user
 
 
-ADMIN_USER = {"_id": "test-admin", "user_type": "administrator"}
-USER_WITHOUT_PRIVILEGES = {"_id": "test-user", "user_type": "user", "privileges": {}}
+# User IDs are ObjectIds, as stored ones are: checking the desks of a user needs a real one
+ADMIN_USER = {"_id": "6a0000000000000000000001", "user_type": "administrator"}
+USER_WITHOUT_PRIVILEGES = {"_id": "6a0000000000000000000002", "user_type": "user", "privileges": {}}
 
 PROVIDER = {
     "name": "OpenRouter",
@@ -394,6 +397,39 @@ class AIConfigTestCase(TestCase):
     async def test_the_module_config_default_matches_the_ai_request_timeout_setting(self):
         self.assertEqual(AIConfig.model_fields["request_timeout"].default, AI_REQUEST_TIMEOUT)
         self.assertEqual(ai_config.request_timeout, AI_REQUEST_TIMEOUT)
+
+    async def test_the_module_config_default_matches_the_ai_rate_limit_setting(self):
+        self.assertEqual(AIConfig.model_fields["rate_limit_per_minute"].default, AI_RATE_LIMIT_PER_MINUTE)
+
+    def _check_request_timeout(self, request_timeout, web_timeout=None):
+        environ = {"WEB_TIMEOUT": web_timeout} if web_timeout is not None else {}
+        with (
+            patch.dict(os.environ, environ),
+            patch.object(ai_config, "request_timeout", request_timeout),
+        ):
+            if web_timeout is None:
+                os.environ.pop("WEB_TIMEOUT", None)
+            check_request_timeout()
+
+    async def test_the_default_request_timeout_is_below_the_server_timeout(self):
+        with self.assertNoLogs("superdesk.ai.config", "WARNING"):
+            self._check_request_timeout(AI_REQUEST_TIMEOUT)
+
+    async def test_a_request_timeout_the_server_gives_up_before_is_warned_about(self):
+        for request_timeout, web_timeout in ((30, None), (40, "40"), (45, "not a number")):
+            with self.subTest(request_timeout=request_timeout, web_timeout=web_timeout):
+                with self.assertLogs("superdesk.ai.config", "WARNING") as logs:
+                    self._check_request_timeout(request_timeout, web_timeout)
+
+                self.assertIn("AI_REQUEST_TIMEOUT", logs.output[0])
+
+    async def test_a_request_timeout_under_a_raised_server_timeout_is_accepted(self):
+        with self.assertNoLogs("superdesk.ai.config", "WARNING"):
+            self._check_request_timeout(45, "90")
+
+    async def test_a_request_timeout_the_proxy_gives_up_before_is_warned_about(self):
+        with self.assertLogs("superdesk.ai.config", "WARNING"):
+            self._check_request_timeout(60, "90")
 
 
 class AIProviderClientTestCase(TestCase):

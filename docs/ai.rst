@@ -68,18 +68,73 @@ action and reporting what was done with its answers need ``ai``, which is the ri
 holds: provider credentials are stored unencrypted, so ``ai_studio`` amounts to access to every
 key and belongs to administrators only.
 
+What is sent to the provider
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The instructions go in the system message and the article in the user message, between
+``<article>`` and ``</article>``. The instructions say everything between those tags is text to work
+on and never instructions to follow, and a reminder after the article repeats it, so an article
+saying "ignore your instructions" is edited rather than obeyed. An ``<article>`` tag inside the
+article is escaped, so the text cannot close the article early. A ``system_prompt`` set on an
+action only replaces the first line of the instructions; these rules and the answer format are
+always kept.
+
+This makes injection harder, it does not make it impossible: no prompt wording can guarantee what a
+model does. Answers are therefore treated as untrusted. Suggestions and summaries are plain text, so any
+markup in them is dropped before they are returned, and clients have to insert them as text, never
+as HTML.
+
+Errors
+^^^^^^
+
+A run that fails at the provider is answered with a message written for an editor and an
+``error_kind`` the client can word its own message on:
+
+=====================  ======  ======================================================================
+``error_kind``         Status  Meaning
+=====================  ======  ======================================================================
+``auth``               502     The provider refused the stored credentials, an administrator has to
+                               fix them
+``rate_limit``         429     The provider is rate limiting Superdesk
+``timeout``            504     The provider did not answer within ``AI_REQUEST_TIMEOUT``
+``upstream``           502     The provider could not be reached or failed
+``invalid_response``   502     The provider answered with something no suggestion could be read from
+=====================  ======  ======================================================================
+
+A user who runs actions more often than ``AI_RATE_LIMIT_PER_MINUTE`` allows, 20 by default, is
+answered with a ``429`` before the provider is called, an ``error_kind`` of ``too_many_runs`` and
+``retry_after``, the seconds until the count starts again, also sent as the ``Retry-After`` header.
+The count is kept per user in Redis, so every server process shares it; ``0`` turns the limit off.
+When Redis cannot be reached, or does not answer within a second, the limit is not enforced rather than blocking every run.
+
+A connection to the provider that cannot be opened at all, refused or failing its DNS lookup
+within two seconds, is tried once more half a second later, within what is left of
+``AI_REQUEST_TIMEOUT``. Nothing else is retried: once the request has been sent the provider may be
+working on it, and a second request would be paid for twice.
+
+What the provider itself answered is written to the server log. ``GET /api/ai_providers/<id>/models``
+is used by administrators setting a provider up, so it returns that detail as its message instead.
+
 Timeouts
 ^^^^^^^^
 
-``AI_REQUEST_TIMEOUT``, 60 seconds by default, is how long Superdesk waits for a provider before it
+``AI_REQUEST_TIMEOUT``, 25 seconds by default, is how long Superdesk waits for a provider before it
 gives up on a run and answers with a ``timeout`` error.
 
-It is not the only timeout in the path. Hypercorn and whatever proxy sits in front of it, usually
-nginx, each have their own request timeout, and a run is one HTTP request the client holds open for
-as long as the provider takes. The shortest of the three wins: when the proxy gives up first the
-editor gets a gateway error instead of the ``timeout`` message, and the run carries on server side
-until the provider answers. Large models and long articles take tens of seconds, so raising
-``AI_REQUEST_TIMEOUT`` has no effect unless the proxy and server timeouts are above it.
+It is not the only timeout in the path. A run is one HTTP request the client holds open for as long
+as the provider takes, and the server and the proxy in front of it each stop waiting at some point:
+
+* Hypercorn drops the connection of a request it has not answered within ``WEB_TIMEOUT``, 30 seconds
+  by default in a Superdesk deployment (its ``read_timeout``).
+* nginx answers a gateway error after ``proxy_read_timeout``, 60 seconds unless configured.
+
+The shortest of the three wins. When the server or the proxy gives up first the editor gets a
+dropped connection or a gateway error instead of the ``timeout`` message, and the provider is paid
+for a run nobody sees. Large models and long articles can take tens of seconds, so raising
+``AI_REQUEST_TIMEOUT`` only helps together with ``WEB_TIMEOUT`` and the proxy timeout. Superdesk logs
+a warning at startup when ``AI_REQUEST_TIMEOUT`` is not below ``WEB_TIMEOUT`` or the nginx default;
+it cannot read the proxy configuration, so a proxy with a shorter timeout still has to be checked
+by hand.
 
 Walkthrough
 ^^^^^^^^^^^
@@ -136,6 +191,33 @@ than the field allows:
     }'
 
     {"_id": "68af1c0e2b1a4c0f9a3d1e02", "name": "Headline suggestions", "_status": "OK", ...}
+
+Ask which actions can be run against an item. This is the call an editor makes, so it needs only
+``ai``, and it describes each action without its provider, model or prompt. Actions that are
+inactive, that belong to an inactive provider, that are limited to other content profiles, that
+have no model to run with or whose type cannot be run yet are left out:
+
+.. code:: sh
+
+    curl "$API/ai_actions/available?item_id=urn:newsml:localhost:2026-08-27T10:00:00:1234" -H "$AUTH"
+
+    {
+        "_items": [
+            {
+                "_id": "68af1c0e2b1a4c0f9a3d1e02",
+                "name": "Headline suggestions",
+                "action_type": "suggestion",
+                "input_fields": ["body_html"],
+                "output_field": "headline",
+                "suggestions_count": 3
+            }
+        ],
+        "_meta": {"total": 1}
+    }
+
+Both this call and a run refuse an item the user cannot read with a ``403``: one in a stage hidden
+from them, or one in the personal space of another user. An item with no desk that is assigned to
+nobody belongs to the users who created and last changed it.
 
 Run it against an item. ``fields`` is optional and holds the text as the client currently has it,
 which is what an editor with unsaved changes should send; without it the stored item is used. An
