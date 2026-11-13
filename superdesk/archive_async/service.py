@@ -230,7 +230,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             doc.version_creator = doc.original_creator or None  # avoid ""
             remove_unwanted(doc)
             update_word_count(doc)
-            set_item_expiry({}, doc)
+            await set_item_expiry({}, doc)
 
             if doc.item_type == ContentTypes.COMPOSITE:
                 await self.packageService.on_create_async([doc])
@@ -330,7 +330,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
             update_state(original, updates, publish_from_personal)
 
         remove_unwanted(updates)
-        self._add_system_updates(original, updates, user)
+        await self._add_system_updates(original, updates, user)
         await self._handle_media_updates(updates, original, user)
         await self._handle_attachment_updates(updates, original)
         flush_renditions(updates, original)
@@ -372,7 +372,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
                 if not stored_item:
                     continue
 
-            track_usage(
+            await track_usage(
                 media_item.to_dict() if media_item else None,
                 stored_item,
                 item_obj,
@@ -472,7 +472,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         if lock_user and str(lock_user) != user_id and not force_unlock:
             raise SuperdeskApiError.forbiddenError(_("The item was locked by another user"))
         document["versioncreated"] = utcnow()
-        set_item_expiry(document, original)
+        await set_item_expiry(document, original)
         document["version_creator"] = user_id
         if force_unlock:
             del document["force_unlock"]
@@ -588,7 +588,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
 
         old["_id"] = old["_id_document"]
         old["_updated"] = old["versioncreated"] = utcnow()
-        set_item_expiry(old, doc)
+        await set_item_expiry(old, doc)
         old.pop("_id_document", None)
         old.pop(SIGN_OFF, None)
         old[ITEM_OPERATION] = ITEM_RESTORE
@@ -1066,7 +1066,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         if subject_qcodes and len(subject_qcodes) != len(set(subject_qcodes)):
             raise SuperdeskApiError.badRequestError(_("Duplicate subjects are not allowed"))
 
-    def _add_system_updates(self, original, updates, user):
+    async def _add_system_updates(self, original, updates, user):
         """Add system updates to the item.
 
         :param original: Original item
@@ -1084,7 +1084,7 @@ class AsyncArchiveService(AsyncResourceService[ArchiveResourceModel], Highlights
         update_word_count(updates, original)
         update_version(updates, original)
 
-        set_item_expiry(updates, original)
+        await set_item_expiry(updates, original)
         set_sign_off(updates, original=original)
         set_dateline(updates, original)
 
