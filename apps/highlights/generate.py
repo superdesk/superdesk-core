@@ -12,10 +12,11 @@ from superdesk.resource_fields import (
     ITEM_STATE,
     ITEM_TYPE,
 )
-from superdesk.flask import render_template, render_template_string, abort
+from superdesk.flask import render_template, abort
 from superdesk.errors import SuperdeskApiError
 from .service import get_highlight_name
 from apps.archive.common import ITEM_EXPORT_HIGHLIGHT, ITEM_CREATE_HIGHLIGHT
+from apps.templates.content_templates import render_template_string_safe
 
 PACKAGE_FIELDS = {
     "type",
@@ -114,7 +115,9 @@ class GenerateHighlightsService(AsyncBaseService):
                                 )
 
             if string_template:
-                doc["body_html"] = await render_template_string(string_template, package=package, items=items)
+                # Render the user-authored template in a sandboxed environment to prevent
+                # server-side template injection (same sandbox used for content templates, #3111).
+                doc["body_html"] = await render_template_string_safe(string_template, package=package, items=items)
             else:
                 doc["body_html"] = await render_template("default_highlight_template.txt", package=package, items=items)
         if preview:
