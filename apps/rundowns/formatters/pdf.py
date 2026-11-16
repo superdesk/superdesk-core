@@ -112,9 +112,9 @@ class TablePDFFormatter(PrompterPDFFormatter):
         data = [columns]
         for i, item in enumerate(items, start=1):
             item_cols = utils.item_table_data(show, rundown, item, i, subitems)
-            for i in range(1, len(item_cols) - 1):
+            for column_index in range(1, len(item_cols) - 1):
                 # use paragraph for all columns but first and last, it allows for line breaks
-                item_cols[i] = Paragraph(item_cols[i])
+                item_cols[column_index] = Paragraph(item_cols[column_index])
             data.append(item_cols)
         t = Table(
             data,
