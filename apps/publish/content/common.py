@@ -193,6 +193,7 @@ class BasePublishService(AsyncBaseService):
         if not original:
             raise SuperdeskApiError.notFoundError(_("Cannot find article to publish"))
 
+        self._raise_if_scheduled(original, allow_scheduled=allow_scheduled)
         updated = original.copy()
         await self.on_update_async(updates, original)
         updated.update(updates)
@@ -202,6 +203,16 @@ class BasePublishService(AsyncBaseService):
         res = await self._update_for_patch(id, updates, original, raise_errors, allow_scheduled=allow_scheduled)
         await self.on_updated_async(updates, original)
         return res
+
+    def _raise_if_scheduled(self, original, *, allow_scheduled: bool):
+        if (
+            self.publish_type == ITEM_PUBLISH
+            and original.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED
+            and not allow_scheduled
+        ):
+            raise SuperdeskApiError.conflictError(
+                _("This article is already scheduled. Deschedule it before publishing again.")
+            )
 
     async def _update_for_patch(self, id, updates, original, raise_errors: bool, *, allow_scheduled: bool):
         if allow_scheduled:

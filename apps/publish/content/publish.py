@@ -76,10 +76,7 @@ class ArchivePublishService(BasePublishService):
             current = await self.find_one_async(req=None, _id=id)
             if not current:
                 raise SuperdeskApiError.notFoundError(_("Cannot find article to publish"))
-            if current.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED and not allow_scheduled:
-                raise SuperdeskApiError.conflictError(
-                    _("This article is already scheduled. Deschedule it before publishing again.")
-                )
+            self._raise_if_scheduled(current, allow_scheduled=allow_scheduled)
             if original.get(ETAG) != current.get(ETAG):
                 raise SuperdeskApiError.preconditionFailedError(_("The article has changed. Please reload it."))
             return await super().update_async(id, updates, original, raise_errors)
