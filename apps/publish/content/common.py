@@ -1063,6 +1063,11 @@ class BasePublishService(AsyncBaseService):
                     # check for marking that the association item has been queued
                     associated_item["is_queued"] = True
                 elif associated_item.get("state") != self.published_state:
+                    if self.publish_type == ITEM_PUBLISH and associated_item.get("state") == CONTENT_STATE.SCHEDULED:
+                        archive_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
+                        if archive_item and archive_item.get("state") == CONTENT_STATE.SCHEDULED:
+                            continue
+
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
 

@@ -61,9 +61,6 @@ class ArchivePublishService(BasePublishService):
     published_state = "published"
     item_operation = ITEM_PUBLISH
 
-    async def patch_async(self, id, updates, raise_errors: bool = False, *, allow_scheduled: bool = True):
-        return await super().patch_async(id, updates, raise_errors, allow_scheduled=allow_scheduled)
-
     async def _update_for_patch(self, id, updates, original, raise_errors: bool, *, allow_scheduled: bool):
         if allow_scheduled:
             return await self.update_async(id, updates, original, raise_errors, allow_scheduled=True)

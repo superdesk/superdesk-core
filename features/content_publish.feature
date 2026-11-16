@@ -5605,6 +5605,10 @@ Feature: Content Publishing
     @auth
     Scenario: Scheduling an article with an already scheduled image
       Given empty "subscribers"
+      And config update
+      """
+      {"PUBLISH_ASSOCIATED_ITEMS": true}
+      """
       And "desks"
       """
       [{"name": "News", "content_expiry": 60}]
@@ -5625,6 +5629,11 @@ Feature: Content Publishing
       {"publish_schedule": "#DATE+2#"}
       """
       Then we get OK response
+      When we publish "scheduled-image" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      Then we get error 400
       Given "archive"
       """
       [{"_id": "article-with-scheduled-image", "guid": "article-with-scheduled-image",
@@ -5645,4 +5654,9 @@ Feature: Content Publishing
       Then we get existing resource
       """
       {"state": "scheduled", "operation": "publish"}
+      """
+      When we get "/published?published_id=1&where=%7B%22item_id%22%3A%22scheduled-image%22%7D"
+      Then we get list with 1 items
+      """
+      {"_items": [{"item_id": "scheduled-image"}]}
       """

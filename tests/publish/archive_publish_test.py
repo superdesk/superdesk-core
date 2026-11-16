@@ -4,6 +4,7 @@ from unittest import IsolatedAsyncioTestCase
 from eve.utils import ParsedRequest
 
 from apps.publish.content.common import BasePublishService
+from apps.publish.content.publish import ArchivePublishService
 from superdesk import get_resource_service, json
 from superdesk.tests import TestCase, utils as test_utils
 from superdesk.errors import SuperdeskApiError
@@ -18,6 +19,33 @@ class PublishPatchDispatchTest(IsolatedAsyncioTestCase):
             with self.assertRaises(TypeError):
                 await service._update_for_patch("item", {}, {}, False, allow_scheduled=True)
             update.assert_awaited_once()
+
+    async def test_scheduled_association_is_not_published_again(self):
+        service = ArchivePublishService()
+        archive = mock.Mock()
+        archive.find_one_async = mock.AsyncMock(
+            return_value={"_id": "image", "state": "scheduled", "operation": "publish"}
+        )
+        publish = mock.Mock()
+        publish.patch_async = mock.AsyncMock()
+
+        with (
+            mock.patch("apps.publish.content.common.get_config", return_value=True),
+            mock.patch(
+                "apps.publish.content.common.get_resource_service",
+                side_effect=lambda name: {"archive": archive, "archive_publish": publish}[name],
+            ),
+            mock.patch.object(service, "_refresh_associated_items"),
+        ):
+            for has_updates in (False, True):
+                with self.subTest(has_updates=has_updates):
+                    image = {"_id": "image", "state": "scheduled", "operation": "publish"}
+                    original = {"associations": {"media--1": image}}
+                    updates = {"state": "scheduled"}
+                    if has_updates:
+                        updates["associations"] = {"media--1": image.copy()}
+                    await service._publish_associated_items(original, updates)
+                    publish.patch_async.assert_not_awaited()
 
 
 class MockAutosaveComponent:
