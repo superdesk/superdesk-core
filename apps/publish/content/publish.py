@@ -64,6 +64,11 @@ class ArchivePublishService(BasePublishService):
     async def patch_async(self, id, updates, raise_errors: bool = False, *, allow_scheduled: bool = True):
         return await super().patch_async(id, updates, raise_errors, allow_scheduled=allow_scheduled)
 
+    async def _update_for_patch(self, id, updates, original, raise_errors: bool, *, allow_scheduled: bool):
+        if allow_scheduled:
+            return await self.update_async(id, updates, original, raise_errors, allow_scheduled=True)
+        return await self.update_async(id, updates, original, raise_errors)
+
     async def update_async(self, id, updates, original, raise_errors: bool = False, *, allow_scheduled: bool = False):
         lock_id = get_lock_id("archive", "publish", id)
         owner = str(uuid4())

@@ -1,10 +1,23 @@
 from unittest import mock
+from unittest import IsolatedAsyncioTestCase
 
 from eve.utils import ParsedRequest
 
+from apps.publish.content.common import BasePublishService
 from superdesk import get_resource_service, json
 from superdesk.tests import TestCase, utils as test_utils
 from superdesk.errors import SuperdeskApiError
+
+
+class PublishPatchDispatchTest(IsolatedAsyncioTestCase):
+    async def test_other_publish_operations_reject_scheduled_flag(self):
+        service = BasePublishService()
+        with mock.patch.object(service, "update_async") as update:
+            await service._update_for_patch("item", {}, {}, False, allow_scheduled=False)
+            update.assert_awaited_once_with("item", {}, {}, False)
+            with self.assertRaises(TypeError):
+                await service._update_for_patch("item", {}, {}, False, allow_scheduled=True)
+            update.assert_awaited_once()
 
 
 class MockAutosaveComponent:

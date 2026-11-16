@@ -199,12 +199,14 @@ class BasePublishService(AsyncBaseService):
         if get_config(bool, "IF_MATCH"):
             resolve_document_etag(updated, self.datasource)
             updates[ETAG] = updated[ETAG]
-        if allow_scheduled:
-            res = await self.update_async(id, updates, original, raise_errors, allow_scheduled=True)
-        else:
-            res = await self.update_async(id, updates, original, raise_errors)
+        res = await self._update_for_patch(id, updates, original, raise_errors, allow_scheduled=allow_scheduled)
         await self.on_updated_async(updates, original)
         return res
+
+    async def _update_for_patch(self, id, updates, original, raise_errors: bool, *, allow_scheduled: bool):
+        if allow_scheduled:
+            raise TypeError("allow_scheduled is only supported for publishing")
+        return await self.update_async(id, updates, original, raise_errors)
 
     async def on_update_async(self, updates, original):
         await self._refresh_associated_items(original)
