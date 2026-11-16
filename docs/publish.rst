@@ -42,6 +42,9 @@ Following is a high level overview of the main stages in publishing an item:
 
 The publishing strategy used by the system can be configured in the :ref:`app settings <settings.publishing>`.
 
+An article that is already scheduled must be descheduled before submitting another publish request.
+Concurrent publish requests for the same article are rejected.
+
 Common Publishing Terms:
 ^^^^^^^^^^^^^^^^^^^^^^^^
 

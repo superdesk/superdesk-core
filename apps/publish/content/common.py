@@ -188,7 +188,7 @@ class BasePublishService(AsyncBaseService):
     item_operation = ITEM_PUBLISH
     package_service = PackageService()
 
-    async def patch_async(self, id, updates, raise_errors: bool = False):
+    async def patch_async(self, id, updates, raise_errors: bool = False, *, allow_scheduled: bool = False):
         original = await self.find_one_async(req=None, _id=id)
         if not original:
             raise SuperdeskApiError.notFoundError(_("Cannot find article to publish"))
@@ -199,7 +199,10 @@ class BasePublishService(AsyncBaseService):
         if get_config(bool, "IF_MATCH"):
             resolve_document_etag(updated, self.datasource)
             updates[ETAG] = updated[ETAG]
-        res = await self.update_async(id, updates, original, raise_errors)
+        if allow_scheduled:
+            res = await self.update_async(id, updates, original, raise_errors, allow_scheduled=True)
+        else:
+            res = await self.update_async(id, updates, original, raise_errors)
         await self.on_updated_async(updates, original)
         return res
 
