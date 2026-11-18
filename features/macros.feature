@@ -149,3 +149,34 @@ Feature: Macros
             """
         When we get "/published"
         Then we get list with 0 items
+
+    @auth
+    @clean
+    Scenario: Auto publish macro skips items that are already published
+        Given "desks"
+            """
+            [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
+            """
+        And "archive"
+            """
+            [{"guid": "123", "type": "text", "headline": "test", "slugline": "test", "state": "published",
+              "_current_version": 2, "body_html": "Test body",
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+            """
+        When we post to "/stages"
+            """
+            [{"name": "Auto publish", "task_status": "in_progress", "desk": "#desks._id#",
+              "onstage_macro": "Auto Publish"}]
+            """
+        And we post to "/archive/123/move"
+            """
+            [{"task": {"desk": "#desks._id#", "stage": "#stages._id#"}}]
+            """
+        Then we get OK response
+        When we get "/archive/123"
+        Then we get existing resource
+            """
+            {"state": "published", "task": {"stage": "#stages._id#"}}
+            """
+        When we get "/published"
+        Then we get list with 0 items

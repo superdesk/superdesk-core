@@ -11,8 +11,9 @@
 from quart_babel import gettext as _, lazy_gettext
 from superdesk import get_resource_service
 from superdesk.errors import SuperdeskApiError
-from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE
+from superdesk.metadata.item import ITEM_STATE, CONTENT_STATE, PUBLISH_STATES
 from superdesk.resource_fields import ID_FIELD
+from superdesk.workflow import is_workflow_state_transition_valid
 
 
 async def auto_publish(item, **kwargs):
@@ -25,6 +26,11 @@ async def auto_publish(item, **kwargs):
     # which would skip the publish privilege check.
     if not kwargs.get("stage"):
         raise SuperdeskApiError.forbiddenError(_("Auto Publish can only run as an on stage macro."))
+
+    # Already published items (e.g. package items published with their package) can't be published again.
+    state = item.get(ITEM_STATE)
+    if state in PUBLISH_STATES and not is_workflow_state_transition_valid("publish", state):
+        return item
 
     await get_resource_service("archive_publish").patch_async(
         id=item[ID_FIELD], updates={ITEM_STATE: CONTENT_STATE.PUBLISHED, "auto_publish": True}
