@@ -547,9 +547,7 @@ def remove_media_files(doc, published=False):
                 continue
             seen_media.add(media)
             try:
-                references = get_resource_service("media_references").get(
-                    req=None, lookup={"media_id": media, "published": True}
-                )
+                references = get_resource_service("media_references").get(req=None, lookup={"media_id": media})
 
                 if references.count() == 0:
                     logger.info("Deleting media:%s", media)

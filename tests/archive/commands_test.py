@@ -104,6 +104,66 @@ class RemoveExpiredContentTestCase(TestCase):
     def test_final_archived_expiry_cleans_media_retained_from_older_snapshot(self):
         self._assert_retained_media_cleanup(keep_newer_snapshot=True)
 
+    def test_production_delete_preserves_media_used_by_unpublished_duplicate(self):
+        item_id = "expired-original"
+        duplicate_id = "surviving-duplicate"
+        media_id = "shared-media"
+        archived_id = ObjectId.from_datetime(datetime(2024, 1, 1))
+        self.app.data.insert(
+            "archive",
+            [
+                {
+                    "_id": item_id,
+                    "guid": item_id,
+                    "type": "picture",
+                    "state": "spiked",
+                    "renditions": {"original": {"media": media_id}},
+                },
+                {
+                    "_id": duplicate_id,
+                    "guid": duplicate_id,
+                    "type": "picture",
+                    "state": "draft",
+                    "renditions": {"original": {"media": media_id}},
+                },
+            ],
+        )
+        self.app.data.insert(
+            "archived",
+            [
+                {
+                    "_id": archived_id,
+                    "item_id": item_id,
+                    "guid": item_id,
+                    "type": "picture",
+                    "renditions": {"original": {"media": media_id}},
+                },
+            ],
+        )
+        self.app.data.insert(
+            "media_references",
+            [
+                {"item_id": item_id, "media_id": media_id, "published": True},
+                {"item_id": duplicate_id, "media_id": media_id, "published": False},
+            ],
+        )
+        references = get_resource_service("media_references")
+
+        with (
+            patch.dict(self.app.config, {"ARCHIVED_EXPIRY_MINUTES": 1, "LEGAL_ARCHIVE": False}),
+            patch.object(self.app.media, "delete") as delete_media,
+        ):
+            RemoveExpiredContent()._remove_expired_archived_items(utcnow())
+
+            assert self.app.data.find_one("archived", None, _id=archived_id) is None
+            assert references.find_one(None, item_id=item_id, media_id=media_id, published=True) is not None
+
+            get_resource_service("archive").delete_by_article_ids([item_id])
+
+        assert self.app.data.find_one("archive", None, _id=duplicate_id) is not None
+        assert references.find_one(None, item_id=duplicate_id, media_id=media_id, published=False) is not None
+        delete_media.assert_not_called()
+
     def _assert_retained_media_cleanup(self, keep_newer_snapshot):
         item_id = "deferred-media"
         item_guid = "external-media-guid"
