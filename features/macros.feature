@@ -105,6 +105,7 @@ Feature: Macros
             [{"task": {"desk": "#desks._id#", "stage": "#stages._id#"}}]
             """
         Then we get OK response
+        And we get etag matching "/archive/123"
         When we get "/archive/123"
         Then we get existing resource
             """
@@ -115,3 +116,36 @@ Feature: Macros
             """
             {"_items": [{"_id": "123", "state": "published", "auto_publish": true}]}
             """
+
+    @auth
+    @clean
+    Scenario: Auto publish macro can not be run directly
+        Given the "validators"
+            """
+            [{"_id": "auto_publish_text", "act": "auto_publish", "type": "text", "schema": {}}]
+            """
+        And "desks"
+            """
+            [{"name": "Sports", "members": [{"user": "#CONTEXT_USER_ID#"}]}]
+            """
+        And "archive"
+            """
+            [{"_id": "123", "guid": "123", "type": "text", "headline": "test", "slugline": "test",
+              "state": "in_progress", "body_html": "Test body",
+              "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}]
+            """
+        When we post to "/macros"
+            """
+            {"macro": "Auto Publish", "item": {"_id": "123"}}
+            """
+        Then we get error 500
+            """
+            {"_message": "403: Auto Publish can only run as an on stage macro."}
+            """
+        When we get "/archive/123"
+        Then we get existing resource
+            """
+            {"state": "in_progress"}
+            """
+        When we get "/published"
+        Then we get list with 0 items
