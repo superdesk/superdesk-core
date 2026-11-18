@@ -36,6 +36,13 @@ from .providers_service import AIProvidersService
 logger = logging.getLogger(__name__)
 
 
+def _new_names(names: list[Any], stored: list[str]) -> list[str]:
+    """Return the names, stripped, that are not already ``stored``"""
+
+    stripped = [name.strip() for name in names if isinstance(name, str)]
+    return [name for name in stripped if name not in stored]
+
+
 class AIActionsService(AsyncResourceService[AIAction]):
     """Service for the ``ai_actions`` resource.
 
@@ -55,9 +62,6 @@ class AIActionsService(AsyncResourceService[AIAction]):
         await super().on_create(docs)
 
     async def on_update(self, updates: dict[str, Any], original: AIAction) -> None:
-        # Before the merge, which copies the stored parameters into the updates
-        await self._validate_changes(updates, original)
-
         self._merge_parameters(updates, original)
 
         action_type = updates.get("action_type", original.action_type)
@@ -80,18 +84,18 @@ class AIActionsService(AsyncResourceService[AIAction]):
         await self._check_model_available(doc.provider, doc.model)
 
     async def _validate_changes(self, fields: dict[str, Any], original: AIAction | None = None) -> None:
-        """Check what a create or an update changes, leaving out everything it does not change
+        """Check the field names a create or update sets
 
-        Not on the model, so an action keeps loading after a custom field it names is removed. An
-        update is only checked for the values it changes, so a form sending back the stored action
-        goes through.
+        An update is only checked for names it adds, so an action naming a custom field that was
+        later deleted can still be saved. These checks are not on the model because the model also
+        runs on every load, and such an action must keep loading.
 
         Errors are reported per field like the model's own. Values of the wrong type are left for
         the model to report.
 
         :param fields: The fields of the action the request sets, as the client sent them
         :param original: The stored action an update applies to, ``None`` on create
-        :raises SuperdeskApiError: If the request sets a value it may not
+        :raises SuperdeskApiError: If a key is not allowed or a name is not a text field
         """
 
         issues: dict[str, Any] = {}
@@ -102,21 +106,13 @@ class AIActionsService(AsyncResourceService[AIAction]):
             if "." in key or key.startswith("$"):
                 issues[key] = {"field_name": gettext("Not a field of an AI action")}
 
-        stored_inputs = set(original.input_fields) if original is not None else set()
-        stored_output = original.output_field if original is not None else None
-
         input_fields = fields.get("input_fields")
-        input_names = (
-            [name.strip() for name in input_fields if isinstance(name, str) and name.strip() not in stored_inputs]
-            if isinstance(input_fields, list)
-            else []
-        )
         output_field = fields.get("output_field")
-        output_names = (
-            [output_field.strip()]
-            if isinstance(output_field, str) and output_field.strip() and output_field.strip() != stored_output
-            else []
+        input_names = _new_names(
+            input_fields if isinstance(input_fields, list) else [],
+            original.input_fields if original is not None else [],
         )
+        output_names = _new_names([output_field], [original.output_field] if original is not None else [])
 
         text_fields = await self._find_text_fields(input_names + output_names)
         for field, names in (("input_fields", input_names), ("output_field", output_names)):
@@ -132,11 +128,12 @@ class AIActionsService(AsyncResourceService[AIAction]):
             raise SuperdeskApiError.badRequestError(message=gettext("Invalid AI action"), payload=issues)
 
     async def _find_text_fields(self, names: list[str]) -> set[str]:
-        """Those of the names that are a built-in text field or the ID of a custom text field
+        """Return the names that are a built-in text field or the ID of a custom text field
 
         Custom fields are vocabularies with a ``field_type``, and only those of type ``text`` hold
         prose. They are read from the database as stored, so a vocabulary that does not pass the
-        vocabulary model cannot fail the check. A deleted vocabulary is only marked ``_deleted``.
+        vocabulary model cannot fail the check. A vocabulary deleted through the API stays in the
+        database marked ``_deleted``, so those are filtered out.
         """
 
         found = {name for name in names if name in BUILT_IN_TEXT_FIELDS}
@@ -153,6 +150,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
     async def validate_update(self, updates: dict[str, Any], original: AIAction, etag: str | None) -> dict[str, Any]:
         updated = await super().validate_update(updates, original, etag)
 
+        await self._validate_changes(updates, original)
         await self._check_model_available(updated["provider"], updated.get("model"))
 
         return updated
@@ -445,10 +443,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
     def _get_input_texts(self, action: AIAction, payload: RunActionPayload, item: dict[str, Any]) -> dict[str, str]:
         """Collect the text of every input field, preferring what the client sent over the item
 
-        A built-in field is read from the top level of the item, any other name from ``extra``, where
-        custom fields are stored. A custom field can share its ID with a top-level key of the item
-        (``source``, for one), which holds something else. Other names fall back to the top level,
-        so an action stored before the field names were checked keeps reading what it used to.
+        Built-in fields are read from the top level of the item, custom fields from ``extra``.
         """
 
         provided = payload.fields or {}
@@ -457,13 +452,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
         texts: dict[str, str] = {}
 
         for name in action.input_fields:
-            if name in BUILT_IN_TEXT_FIELDS:
-                stored = item.get(name)
-            else:
-                stored = extra.get(name)
-                if not isinstance(stored, str):
-                    stored = item.get(name)
-
+            stored = item.get(name) if name in BUILT_IN_TEXT_FIELDS else extra.get(name)
             value = provided.get(name, stored)
             if not isinstance(value, str):
                 continue

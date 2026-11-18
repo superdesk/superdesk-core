@@ -1,9 +1,9 @@
 import enum
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 
 from pydantic import AfterValidator, AnyHttpUrl, BeforeValidator, Field, TypeAdapter
 from pydantic_core import PydanticCustomError
-from quart_babel import gettext
+from quart_babel import gettext, lazy_gettext
 
 from superdesk.core.resources import BaseModel, Dataclass, ResourceModelWithObjectId, fields
 from superdesk.core.resources.validators import (
@@ -94,10 +94,11 @@ class AIUserAction(str, enum.Enum):
 
 
 #: Top-level item fields an action may read from or write to, besides the custom text fields.
-#: Limited to prose an editor writes whose name is the same on the item and in the content profile,
-#: since the profile is where the length of the output field comes from. Left out are fields holding
-#: names or codes (``byline``, ``sign_off``, ``anpa_take_key``), legal or boilerplate text
-#: (``usageterms``, ``body_footer``) and ``sms_message``, which a content profile calls ``sms``.
+#: Limited to prose an editor writes whose key on the item is also its key in a content profile that
+#: has it, since the profile is where the length of the output field comes from. ``description_text``
+#: is not in the default schema, so it only gets a length from a profile that adds it. Left out are
+#: fields holding names or codes (``byline``, ``sign_off``, ``anpa_take_key``), legal or boilerplate
+#: text (``usageterms``, ``body_footer``) and ``sms_message``, which a content profile calls ``sms``.
 BUILT_IN_TEXT_FIELDS: tuple[str, ...] = (
     "headline",
     "slugline",
@@ -121,9 +122,18 @@ class AIActionParameters(Dataclass):
 
     temperature: float = 0.7
 
-    #: Text added to the instructions built from the action type, between them and the rules that
-    #: carry the answer format, which it can neither replace nor come after
-    extra_instructions: Annotated[str | None, validate_maxlength(EXTRA_INSTRUCTIONS_MAX_LENGTH)] = None
+    #: Text added after the built-in instructions of the action type and before the fixed rules. It
+    #: cannot replace either.
+    extra_instructions: Annotated[
+        str | None,
+        validate_maxlength(
+            EXTRA_INSTRUCTIONS_MAX_LENGTH,
+            # ``validate_maxlength`` calls ``str()`` on it, so it is translated when the error is raised
+            error_string=cast(
+                str, lazy_gettext("At most %(count)s characters", count=f"{EXTRA_INSTRUCTIONS_MAX_LENGTH:,}")
+            ),
+        ),
+    ] = None
 
     max_characters: int | None = None
     suggestions_count: Annotated[int, validate_minlength(1), validate_maxlength(10)] = 3

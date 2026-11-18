@@ -55,6 +55,10 @@ def require_request_user_id(request: Request) -> str:
     return user_id
 
 
+def get_user_actions(action_type: AIActionType) -> list[str]:
+    return [user_action.value for user_action in USER_ACTIONS.get(action_type, ())]
+
+
 class AIProvidersEndpoints(ResourceRestEndpoints):
     """Adds the routes an administrator needs to check a provider before saving actions against it"""
 
@@ -117,9 +121,7 @@ class AIProvidersEndpoints(ResourceRestEndpoints):
 
 
 class AIActionsEndpoints(ResourceRestEndpoints):
-    """Adds the routes an editor uses, the actions available for an item and running one, and the
-    options a form building an action is made from
-    """
+    """Adds the editor routes (available actions, run) and the options an admin form is built from"""
 
     def add_endpoints(self):
         super().add_endpoints()
@@ -190,7 +192,7 @@ class AIActionsEndpoints(ResourceRestEndpoints):
             "input_fields": action.input_fields,
             "output_field": action.output_field,
             "suggestions_count": action.parameters.suggestions_count,
-            "user_actions": [user_action.value for user_action in USER_ACTIONS.get(action.action_type, ())],
+            "user_actions": get_user_actions(action.action_type),
         }
 
     async def list_options(self, request: Request) -> Response:
@@ -203,7 +205,7 @@ class AIActionsEndpoints(ResourceRestEndpoints):
                 "action_types": [
                     {
                         "action_type": action_type.value,
-                        "user_actions": [user_action.value for user_action in USER_ACTIONS.get(action_type, ())],
+                        "user_actions": get_user_actions(action_type),
                         "uses_suggestions_count": action_type not in SINGLE_ANSWER_ACTION_TYPES,
                     }
                     # The enum rather than the set, so the order is stable

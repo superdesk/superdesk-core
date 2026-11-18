@@ -159,7 +159,10 @@ class AIActionsRestTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("extra_instructions", (await response.get_json())["_issues"]["parameters"])
+        self.assertEqual(
+            (await response.get_json())["_issues"]["parameters"]["extra_instructions"],
+            {"maxlength": "At most 2,000 characters"},
+        )
 
     async def test_extra_instructions_over_the_length_cap_are_rejected_on_patch(self):
         created = await self._create_action()
@@ -171,7 +174,10 @@ class AIActionsRestTestCase(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("extra_instructions", (await response.get_json())["_issues"]["parameters"])
+        self.assertEqual(
+            (await response.get_json())["_issues"]["parameters"]["extra_instructions"],
+            {"maxlength": "At most 2,000 characters"},
+        )
 
     async def test_extra_instructions_at_the_length_cap_are_stored(self):
         created = await self._create_action(parameters={"extra_instructions": "x" * EXTRA_INSTRUCTIONS_MAX_LENGTH})
@@ -923,18 +929,18 @@ class AIActionRunTestCase(TestCase):
 
         self.assertEqual(requests[0]["json"]["messages"][1]["content"], article("Council budget vote."))
 
-    async def test_an_action_stored_before_the_request_rules_still_lists_runs_and_updates(self):
-        """An action naming a custom field that no longer exists keeps working
+    async def test_an_action_naming_a_removed_custom_field_keeps_listing_running_and_updating(self):
+        """The field names of a stored action are not checked again when it is loaded, run or updated
 
-        Such an action is never written through a request, so it is inserted as stored.
+        A request cannot name a field that does not exist, so the action is inserted as stored.
         """
 
         action_id = ObjectId()
         await self.async_app.mongo.get_collection_async("ai_actions").insert_one(
             {
                 "_id": action_id,
-                "_etag": "legacy",
-                "name": "Legacy action",
+                "_etag": "stored",
+                "name": "Stored action",
                 "action_type": "suggestion",
                 "active": True,
                 "input_fields": ["body_html", "removed_custom_field"],
@@ -950,7 +956,7 @@ class AIActionRunTestCase(TestCase):
 
         listing = await self.test_client.get("/api/ai_actions")
         self.assertEqual(listing.status_code, 200, await listing.get_data())
-        self.assertEqual([action["name"] for action in (await listing.get_json())["_items"]], ["Legacy action"])
+        self.assertEqual([action["name"] for action in (await listing.get_json())["_items"]], ["Stored action"])
 
         available = await self.test_client.get(f"/api/ai_actions/available?item_id={ITEM_ID}")
         self.assertEqual(available.status_code, 200, await available.get_data())
@@ -963,7 +969,7 @@ class AIActionRunTestCase(TestCase):
         patch_response = await self.test_client.patch(
             f"/api/ai_actions/{action_id}",
             json={"name": "Renamed", "parameters": {"max_characters": 50}},
-            headers={"If-Match": "legacy"},
+            headers={"If-Match": "stored"},
         )
         self.assertEqual(patch_response.status_code, 200, await patch_response.get_data())
         updated = await AIActionsService().find_by_id(action_id)
@@ -984,28 +990,23 @@ class AIActionRunTestCase(TestCase):
 
         self.assertEqual(requests[0]["json"]["messages"][1]["content"], article("Custom source text."))
 
-    async def test_a_stored_name_outside_the_built_in_fields_falls_back_to_the_top_level_of_the_item(self):
-        """An action saved before the field names were checked keeps reading what it used to"""
-
-        action_id = ObjectId()
-        await self.async_app.mongo.get_collection_async("ai_actions").insert_one(
-            {
-                **ACTION,
-                "_id": action_id,
-                "active": True,
-                "content_profiles": [],
-                "input_fields": ["byline"],
-                "provider": ObjectId(self.provider_id),
-            }
+    async def test_a_custom_field_with_no_value_in_extra_is_not_read_from_the_top_level_of_the_item(self):
+        await self.async_app.mongo.get_collection_async("vocabularies").insert_one(
+            {**CUSTOM_TEXT_FIELD, "_id": "source"}
         )
         await self.async_app.mongo.get_collection_async("archive").update_one(
-            {"_id": ITEM_ID}, {"$set": {"byline": "Jane Doe"}}
+            {"_id": ITEM_ID}, {"$set": {"source": "AAP", "extra": {}}}
         )
         requests = await self._capture_completion()
+        action = await self._create_action(input_fields=["source", "body_html"])
 
-        await self._run(str(action_id))
+        response = await self._run(action["_id"])
 
-        self.assertEqual(requests[0]["json"]["messages"][1]["content"], article("Jane Doe"))
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertEqual(
+            requests[0]["json"]["messages"][1]["content"],
+            article("The council met on Tuesday.\nIt voted on the budget."),
+        )
 
     async def test_an_item_with_no_text_in_the_input_fields_is_rejected(self):
         action = await self._create_action(input_fields=["abstract"])
