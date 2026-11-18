@@ -99,14 +99,22 @@ class RemoveExpiredContentTestCase(TestCase):
                     assert remove_media.call_args.args[0]["item_id"] == "expired"
 
     def test_production_delete_cleans_media_retained_after_archived_expiry(self):
+        self._assert_retained_media_cleanup(keep_newer_snapshot=False)
+
+    def test_final_archived_expiry_cleans_media_retained_from_older_snapshot(self):
+        self._assert_retained_media_cleanup(keep_newer_snapshot=True)
+
+    def _assert_retained_media_cleanup(self, keep_newer_snapshot):
         item_id = "deferred-media"
+        item_guid = "external-media-guid"
         archived_id = ObjectId.from_datetime(datetime(2024, 1, 1))
+        newer_id = ObjectId()
         self.app.data.insert(
             "archive",
             [
                 {
                     "_id": item_id,
-                    "guid": item_id,
+                    "guid": item_guid,
                     "type": "picture",
                     "state": "spiked",
                     "renditions": {
@@ -122,12 +130,25 @@ class RemoveExpiredContentTestCase(TestCase):
                 {
                     "_id": archived_id,
                     "item_id": item_id,
-                    "guid": item_id,
+                    "guid": item_guid,
                     "type": "picture",
                     "renditions": {"original": {"media": "old-media"}},
                 },
             ],
         )
+        if keep_newer_snapshot:
+            self.app.data.insert(
+                "archived",
+                [
+                    {
+                        "_id": newer_id,
+                        "item_id": item_id,
+                        "guid": item_guid,
+                        "type": "picture",
+                        "renditions": {"original": {"media": "current-media"}},
+                    },
+                ],
+            )
         self.app.data.insert(
             "media_references",
             [
@@ -149,11 +170,57 @@ class RemoveExpiredContentTestCase(TestCase):
 
             get_resource_service("archive").delete_by_article_ids([item_id])
 
+            if keep_newer_snapshot:
+                assert self.app.data.find_one("archive", None, _id=item_id) is None
+                assert self.app.data.find_one("archived", None, _id=newer_id) is not None
+                assert references.get_from_mongo(None, {"item_id": item_id}).count() == 3
+                delete_media.assert_not_called()
+
+                RemoveExpiredContent()._remove_expired_archived_items(utcnow() + timedelta(minutes=2))
+
         assert self.app.data.find_one("archive", None, _id=item_id) is None
+        assert self.app.data.find_one("archived", None, item_id=item_id) is None
         assert references.get_from_mongo(None, {"item_id": item_id}).count() == 0
         assert references.find_one(None, item_id="other-item", media_id="shared-media") is not None
         self.assertCountEqual(
             ["current-media", "old-media"],
+            [call.args[0] for call in delete_media.call_args_list],
+        )
+
+    def test_archive_version_cleanup_uses_production_id_instead_of_version_id_or_guid(self):
+        item_id = "version-production-id"
+        version_id = ObjectId()
+        self.app.data.insert(
+            "archive_versions",
+            [
+                {
+                    "_id": version_id,
+                    "_id_document": item_id,
+                    "guid": "external-media-guid",
+                    "type": "picture",
+                    "renditions": {
+                        "original": {"media": "version-media"},
+                        "thumbnail": {"media": "unpublished-media"},
+                    },
+                },
+            ],
+        )
+        self.app.data.insert(
+            "media_references",
+            [
+                {"item_id": item_id, "media_id": "version-media", "published": True},
+                {"item_id": item_id, "media_id": "unpublished-media", "published": False},
+            ],
+        )
+        with patch.dict(self.app.config, {"LEGAL_ARCHIVE": False}), patch.object(
+            self.app.media, "delete"
+        ) as delete_media:
+            get_resource_service("archive_versions").delete_action({"_id": version_id})
+
+        assert self.app.data.find_one("archive_versions", None, _id=version_id) is None
+        assert list(get_resource_service("media_references").get_from_mongo(None, {"item_id": item_id})) == []
+        self.assertCountEqual(
+            ["version-media", "unpublished-media"],
             [call.args[0] for call in delete_media.call_args_list],
         )
 

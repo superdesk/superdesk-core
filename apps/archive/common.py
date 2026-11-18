@@ -497,11 +497,15 @@ def remove_media_files(doc, published=False):
 
     If media files are not references by any other
     story then delete the media files
-    Published references retained for production are released once the item
-    has no production, published or archived copy and Legal Archive is disabled.
+    Collect media IDs before releasing retained published references, whether
+    the production copy or the final archived snapshot is deleted last.
+    This sweep requires no remaining copies and Legal Archive to be disabled.
+    Reference ownership uses _id_document for archive versions, item_id for
+    archived snapshots, and _id for production items, not the item's guid.
     :param dict doc: document for which the media are being deleted
     :return boolean: True if files are deleted else false.
     """
+    item_id = doc.get("_id_document") or doc.get("item_id") or doc.get(config.ID_FIELD)
     references = []
 
     if doc.get("renditions"):
@@ -517,21 +521,21 @@ def remove_media_files(doc, published=False):
     if references:
         logger.info("Removing media files for %s", doc.get("guid"))
 
-    if doc.get("guid"):
-        remove_media_references(doc["guid"], published)
+    if item_id:
         if (
-            not published
-            and not app.config.get("LEGAL_ARCHIVE")
-            and not get_resource_service("archive").find_one(req=None, _id=doc["guid"])
-            and not get_resource_service("published").find_one(req=None, item_id=doc["guid"])
-            and not get_resource_service("archived").find_one(req=None, item_id=doc["guid"])
+            not app.config.get("LEGAL_ARCHIVE")
+            and not get_resource_service("archive").find_one(req=None, _id=item_id)
+            and not get_resource_service("published").find_one(req=None, item_id=item_id)
+            and not get_resource_service("archived").find_one(req=None, item_id=item_id)
         ):
             media_references = get_resource_service("media_references")
-            lookup = {"item_id": doc["guid"], "published": True}
+            lookup = {"item_id": item_id, "published": True}
             retained = list(media_references.get_from_mongo(req=None, lookup=lookup))
             if retained:
                 references.append({ref["media_id"]: {"media": ref["media_id"]} for ref in retained})
-                media_references.delete_action(lookup)
+                if not published:
+                    media_references.delete_action(lookup)
+        remove_media_references(item_id, published)
 
     seen_media = set()
     for renditions in references:
