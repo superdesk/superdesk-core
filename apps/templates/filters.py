@@ -11,6 +11,7 @@
 import logging
 from lxml import etree
 from datetime import timedelta
+from markupsafe import Markup
 
 from superdesk.core import get_app_config
 from superdesk.utc import get_date, timezone
@@ -58,7 +59,7 @@ def first_paragraph_filter(input_string):
         # all non-empty paragraphs: ignores <p><br></p> sections
         for p in elem.iterfind(".//p"):
             if p.text:
-                return etree.tostring(p, encoding="unicode")
+                return Markup(etree.tostring(p, encoding="unicode"))
 
     logger.warning("Failed to locate the first paragraph from input_string: {}.".format(input_string))
     return ""
