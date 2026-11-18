@@ -192,9 +192,11 @@ refused with a ``400`` that has the error under ``_issues.input_fields`` or
 ``abstract``, ``body_html``, ``description_text`` and ``ednote``, or the ``_id`` of a custom field
 of type text (a vocabulary with a ``field_type`` of ``text``), whose value is read from ``extra``
 of the item. A built-in field is read from the top level of the item instead. These checks and the
-length of ``extra_instructions`` apply to what a request changes. An action stored before them keeps loading and running, and an update is only checked for
-the values it changes, so one that sends the stored values back goes through. Field names are
-compared without surrounding whitespace, and keys holding a ``.`` (a path into a field) are refused.
+length of ``extra_instructions`` run when an action is created or updated, not every time one is
+loaded. If a custom field is deleted later, the actions using it keep loading, listing and running,
+and an update is only checked for the values it changes, so one that sends the stored values back
+goes through. Field names are compared without surrounding whitespace, and keys holding a ``.``
+(a path into a field) are refused.
 
 ``max_characters`` can be left out, in which case the length comes from the ``maxlength`` the
 content profile of the item gives ``output_field``. That is the length the field can actually
