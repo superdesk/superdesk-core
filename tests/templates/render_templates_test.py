@@ -11,8 +11,12 @@
 from unittest.mock import patch
 from datetime import datetime, timedelta
 
-from apps.templates.filters import format_datetime_filter
-from apps.templates.content_templates import get_item_from_template, render_content_template
+from apps.templates.filters import first_paragraph_filter, format_datetime_filter
+from apps.templates.content_templates import (
+    get_item_from_template,
+    render_content_template,
+    render_template_string_safe,
+)
 from superdesk.tests import AsyncFlaskTestCase
 
 
@@ -23,7 +27,19 @@ class RenderTemplateTestCase(AsyncFlaskTestCase):
 
     async def asyncSetUp(self):
         await super().asyncSetUp()
+        self.app.jinja_env.filters["first_paragraph"] = first_paragraph_filter
         self.app.jinja_env.filters["format_datetime"] = format_datetime_filter
+
+    async def test_first_paragraph_filter_preserves_html(self):
+        rendered = await render_template_string_safe(
+            "{{ item.body_html | first_paragraph() }} {{ item.headline }}",
+            item={
+                "body_html": "<p>First paragraph</p><p>Second paragraph</p>",
+                "headline": "<script>alert(1)</script>",
+            },
+        )
+
+        self.assertEqual("<p>First paragraph</p> &lt;script&gt;alert(1)&lt;/script&gt;", rendered)
 
     async def test_render_content_template(self):
         template = {
