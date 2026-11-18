@@ -497,10 +497,12 @@ def remove_media_files(doc, published=False):
 
     If media files are not references by any other
     story then delete the media files
+    Published references retained for production are released once the item
+    has no production, published or archived copy and Legal Archive is disabled.
     :param dict doc: document for which the media are being deleted
     :return boolean: True if files are deleted else false.
     """
-    references = None
+    references = []
 
     if doc.get("renditions"):
         references = [doc.get("renditions")]
@@ -517,12 +519,29 @@ def remove_media_files(doc, published=False):
 
     if doc.get("guid"):
         remove_media_references(doc["guid"], published)
+        if (
+            not published
+            and not app.config.get("LEGAL_ARCHIVE")
+            and not get_resource_service("archive").find_one(req=None, _id=doc["guid"])
+            and not get_resource_service("published").find_one(req=None, item_id=doc["guid"])
+            and not get_resource_service("archived").find_one(req=None, item_id=doc["guid"])
+        ):
+            media_references = get_resource_service("media_references")
+            lookup = {"item_id": doc["guid"], "published": True}
+            retained = list(media_references.get_from_mongo(req=None, lookup=lookup))
+            if retained:
+                references.append({ref["media_id"]: {"media": ref["media_id"]} for ref in retained})
+                media_references.delete_action(lookup)
 
+    seen_media = set()
     for renditions in references:
         for rendition in renditions.values():
             if not rendition.get("media"):
                 continue
             media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
+            if media in seen_media:
+                continue
+            seen_media.add(media)
             try:
                 references = get_resource_service("media_references").get(
                     req=None, lookup={"media_id": media, "published": True}
