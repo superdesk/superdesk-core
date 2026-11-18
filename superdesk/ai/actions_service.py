@@ -36,9 +36,6 @@ from .providers_service import AIProvidersService
 
 logger = logging.getLogger(__name__)
 
-# Stands for a key the stored action does not have, which ``None`` cannot since it is a stored value
-_MISSING = object()
-
 
 class AIActionsService(AsyncResourceService[AIAction]):
     """Service for the ``ai_actions`` resource.
@@ -146,16 +143,6 @@ class AIActionsService(AsyncResourceService[AIAction]):
 
     def _check_parameters(self, parameters: dict[str, Any], stored: dict[str, Any]) -> dict[str, Any]:
         issues: dict[str, Any] = {}
-
-        # The model allows unknown keys, so without this the old name would be accepted and ignored.
-        # The value an action stored before the rename is accepted back unchanged.
-        if "system_prompt" in parameters and parameters["system_prompt"] != stored.get("system_prompt", _MISSING):
-            issues["system_prompt"] = {
-                "renamed": gettext(
-                    "'system_prompt' was renamed to 'extra_instructions', which is added to the built-in "
-                    "instructions rather than replacing them"
-                )
-            }
 
         extra_instructions = parameters.get("extra_instructions")
         if (

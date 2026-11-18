@@ -152,30 +152,6 @@ class AIActionsRestTestCase(TestCase):
         self.assertIsNone(action.parameters.extra_instructions)
         self.assertEqual(action.parameters.max_characters, 60)
 
-    async def test_system_prompt_in_a_create_is_rejected_as_renamed(self):
-        response = await self.test_client.post(
-            "/api/ai_actions", json=self._payload(parameters={"system_prompt": "Be brief"})
-        )
-
-        self.assertEqual(response.status_code, 400)
-        issues = (await response.get_json())["_issues"]
-        self.assertIn("extra_instructions", issues["parameters"]["system_prompt"]["renamed"])
-        self.assertEqual(await self.async_app.mongo.get_collection_async("ai_actions").count_documents({}), 0)
-
-    async def test_system_prompt_in_a_patch_is_rejected_as_renamed(self):
-        created = await self._create_action()
-
-        response = await self.test_client.patch(
-            f"/api/ai_actions/{created['_id']}",
-            json={"parameters": {"system_prompt": "Be brief"}},
-            headers={"If-Match": created["_etag"]},
-        )
-
-        self.assertEqual(response.status_code, 400)
-        issues = (await response.get_json())["_issues"]
-        self.assertIn("extra_instructions", issues["parameters"]["system_prompt"]["renamed"])
-        self.assertNotIn("system_prompt", (await self.service.find_by_id_raw(created["_id"]))["parameters"])
-
     async def test_extra_instructions_over_the_length_cap_are_rejected_on_create(self):
         response = await self.test_client.post(
             "/api/ai_actions",
@@ -269,7 +245,7 @@ class AIActionsRestTestCase(TestCase):
         created = await self._create_action()
 
         for updates in (
-            {"parameters.system_prompt": "Be brief"},
+            {"parameters.suggestions_count": 99},
             {"parameters.extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 500)},
             {"input_fields.0": "urgency"},
         ):
@@ -285,16 +261,16 @@ class AIActionsRestTestCase(TestCase):
 
         stored = await self._stored(created["_id"])
         self.assertEqual(stored["input_fields"], ["body_html"])
-        self.assertNotIn("system_prompt", stored["parameters"])
+        self.assertEqual(stored["parameters"]["suggestions_count"], 3)
         self.assertNotIn("extra_instructions", stored["parameters"])
 
     async def test_a_create_with_a_dotted_key_is_rejected(self):
         response = await self.test_client.post(
-            "/api/ai_actions", json={**self._payload(), "parameters.system_prompt": "Be brief"}
+            "/api/ai_actions", json={**self._payload(), "parameters.suggestions_count": 99}
         )
 
         self.assertEqual(response.status_code, 400, await response.get_data())
-        self.assertIn("parameters.system_prompt", (await response.get_json())["_issues"])
+        self.assertIn("parameters.suggestions_count", (await response.get_json())["_issues"])
         self.assertEqual(await self.async_app.mongo.get_collection_async("ai_actions").count_documents({}), 0)
 
     async def test_a_deleted_custom_text_field_is_rejected(self):
@@ -328,7 +304,6 @@ class AIActionsRestTestCase(TestCase):
         parameters = {
             "temperature": 0.7,
             "suggestions_count": 3,
-            "system_prompt": "Old replacement prompt",
             "extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 1),
         }
         action_id = await self._insert_stored_action(
@@ -350,19 +325,6 @@ class AIActionsRestTestCase(TestCase):
 
         self.assertEqual(response.status_code, 200, await response.get_data())
         self.assertEqual((await self._stored(action_id))["name"], "Renamed")
-
-    async def test_a_patch_changing_the_stored_system_prompt_is_rejected_as_renamed(self):
-        action_id = await self._insert_stored_action(parameters={"system_prompt": "Old replacement prompt"})
-
-        response = await self.test_client.patch(
-            f"/api/ai_actions/{action_id}",
-            json={"parameters": {"system_prompt": "New replacement prompt"}},
-            headers={"If-Match": "stored"},
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("renamed", (await response.get_json())["_issues"]["parameters"]["system_prompt"])
-        self.assertEqual((await self._stored(action_id))["parameters"]["system_prompt"], "Old replacement prompt")
 
     async def test_a_patch_setting_a_field_that_is_not_a_text_field_is_rejected(self):
         created = await self._create_action()
@@ -963,7 +925,7 @@ class AIActionRunTestCase(TestCase):
         self.assertEqual(requests[0]["json"]["messages"][1]["content"], article("Council budget vote."))
 
     async def test_an_action_stored_before_the_request_rules_still_lists_runs_and_updates(self):
-        """An action that predates the rename, the length cap and the field check keeps working
+        """An action that predates the length cap and the field check keeps working
 
         Such an action is never written through a request, so it is inserted as stored.
         """
@@ -983,7 +945,6 @@ class AIActionRunTestCase(TestCase):
                 "parameters": {
                     "temperature": 0.7,
                     "suggestions_count": 2,
-                    "system_prompt": "Old replacement prompt",
                     "extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 1),
                 },
             }
@@ -1000,9 +961,7 @@ class AIActionRunTestCase(TestCase):
         requests = await self._capture_completion()
         run = await self._run(str(action_id))
         self.assertEqual(run.status_code, 200, await run.get_data())
-        self.assertNotIn("Old replacement prompt", self._system_prompt(requests))
 
-        # Sending parameters merges the stored ones, the old key among them, into the update
         patch_response = await self.test_client.patch(
             f"/api/ai_actions/{action_id}",
             json={"name": "Renamed", "parameters": {"max_characters": 50}},

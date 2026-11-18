@@ -186,21 +186,13 @@ are asked for: ``suggestions_count``, ``max_characters``, ``temperature`` and
 become a new field on the resource, and a parameter is cleared by sending it as ``null``. A summary
 always has a single answer, so its ``suggestions_count`` is forced to 1.
 
-``extra_instructions`` used to be ``system_prompt``, which replaced the instructions of the action
-type instead of adding to them. A request that still sets ``parameters.system_prompt`` is refused
-with a ``400`` saying so, rather than accepted and ignored. Sending back the value an action stored
-before the rename is accepted, so a client saving what it read keeps working until data update
-``00036`` has moved stored values to the new name. Those values were written as a whole prompt, so
-they are worth reading again.
-
 Every name in ``input_fields`` and ``output_field`` has to be a text field, or the request is
 refused with a ``400`` that has the error under ``_issues.input_fields`` or
 ``_issues.output_field``. That is one of the built-in text fields ``headline``, ``slugline``,
 ``abstract``, ``body_html``, ``description_text`` and ``ednote``, or the ``_id`` of a custom field
 of type text (a vocabulary with a ``field_type`` of ``text``), whose value is read from ``extra``
-of the item. A built-in field is read from the top level of the item instead. These checks, the
-length of ``extra_instructions`` and the refusal of ``system_prompt`` apply to what a request
-changes. An action stored before them keeps loading and running, and an update is only checked for
+of the item. A built-in field is read from the top level of the item instead. These checks and the
+length of ``extra_instructions`` apply to what a request changes. An action stored before them keeps loading and running, and an update is only checked for
 the values it changes, so one that sends the stored values back goes through. Field names are
 compared without surrounding whitespace, and keys holding a ``.`` (a path into a field) are refused.
 

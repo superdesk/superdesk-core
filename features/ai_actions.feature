@@ -100,36 +100,6 @@ Feature: AI actions
         """
 
     @auth
-    Scenario: A request still sending system_prompt is told it was renamed
-        When we post to "/ai_providers"
-        """
-        {
-            "name": "OpenRouter",
-            "provider_type": "openai_compatible",
-            "base_url": "https://provider.test/v1",
-            "default_model": "openai/gpt-4o-mini"
-        }
-        """
-        Then we get OK response
-        When we post to "/ai_actions"
-        """
-        {
-            "name": "Headline suggestions",
-            "action_type": "suggestion",
-            "input_fields": ["body_html"],
-            "output_field": "headline",
-            "parameters": {"system_prompt": "Write tabloid headlines."},
-            "provider": "#ai_providers._id#"
-        }
-        """
-        Then we get error 400
-        """
-        {"_issues": {"parameters": {"system_prompt": {"renamed": "__any_value__"}}}}
-        """
-        When we get "/ai_actions"
-        Then we get list with 0 items
-
-    @auth
     Scenario: An action reads and writes built-in or custom text fields only
         Given "vocabularies"
         """
