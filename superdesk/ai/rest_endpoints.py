@@ -12,8 +12,17 @@ from superdesk.errors import SuperdeskApiError
 
 from .actions_service import AIActionsService
 from .errors import AIProviderError, to_api_error
-from .models import AIAction, AIEvent, AIProvider, RunActionPayload
+from .models import (
+    BUILT_IN_TEXT_FIELDS,
+    SINGLE_ANSWER_ACTION_TYPES,
+    AIAction,
+    AIActionType,
+    AIEvent,
+    AIProvider,
+    RunActionPayload,
+)
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
+from .prompts import SUPPORTED_ACTION_TYPES, USER_ACTIONS
 from .providers import get_client
 from .rate_limit import TooManyRunsError, check_run_rate
 
@@ -108,10 +117,22 @@ class AIProvidersEndpoints(ResourceRestEndpoints):
 
 
 class AIActionsEndpoints(ResourceRestEndpoints):
-    """Adds the routes an editor uses: the actions available for an item, and running one"""
+    """Adds the routes an editor uses, the actions available for an item and running one, and the
+    options a form building an action is made from
+    """
 
     def add_endpoints(self):
         super().add_endpoints()
+        self.endpoints.append(
+            Endpoint(
+                url=f"{self.get_resource_url()}/options",
+                name="ai_actions_options",
+                func=self.list_options,
+                methods=["GET"],
+                auth=[required_privilege_rule(AI_STUDIO_PRIVILEGE)],
+                parent=self,
+            )
+        )
         self.endpoints.append(
             Endpoint(
                 url=f"{self.get_resource_url()}/available",
@@ -158,7 +179,8 @@ class AIActionsEndpoints(ResourceRestEndpoints):
         """What an editor is told about an action
 
         The provider, the model and the prompt are left out: they belong to the holders of
-        ``ai_studio``, and the editor only needs what to send and where the answers go.
+        ``ai_studio``, and the editor only needs what to send, where the answers go and what can be
+        done with them.
         """
 
         return {
@@ -168,7 +190,30 @@ class AIActionsEndpoints(ResourceRestEndpoints):
             "input_fields": action.input_fields,
             "output_field": action.output_field,
             "suggestions_count": action.parameters.suggestions_count,
+            "user_actions": [user_action.value for user_action in USER_ACTIONS.get(action.action_type, ())],
         }
+
+    async def list_options(self, request: Request) -> Response:
+        """Describe what an action can be built from: the types that can be created and the
+        built-in text fields. Custom text fields are left to the client, which has the vocabularies.
+        """
+
+        return Response(
+            body={
+                "action_types": [
+                    {
+                        "action_type": action_type.value,
+                        "user_actions": [user_action.value for user_action in USER_ACTIONS.get(action_type, ())],
+                        "uses_suggestions_count": action_type not in SINGLE_ANSWER_ACTION_TYPES,
+                    }
+                    # The enum rather than the set, so the order is stable
+                    for action_type in AIActionType
+                    if action_type in SUPPORTED_ACTION_TYPES
+                ],
+                "built_in_text_fields": list(BUILT_IN_TEXT_FIELDS),
+            },
+            status_code=200,
+        )
 
     async def run(self, request: Request) -> Response:
         action = await self._get_action(request)

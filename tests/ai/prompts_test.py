@@ -12,12 +12,13 @@ import json
 from unittest import IsolatedAsyncioTestCase
 
 from superdesk.ai.errors import AIErrorKind, AIProviderError, NotSupportedError
-from superdesk.ai.models import AIActionType
+from superdesk.ai.models import AIActionType, AIUserAction
 from superdesk.ai.prompts import (
     CONTENT_REMINDER,
     JSON_CONTRACT,
     PLAIN_TEXT_ACTION_TYPES,
     SUPPORTED_ACTION_TYPES,
+    USER_ACTIONS,
     parse_suggestions,
     render_system_prompt,
     render_user_message,
@@ -85,15 +86,41 @@ class RenderSystemPromptTestCase(IsolatedAsyncioTestCase):
         self.assertIn("Write every version in fi.", with_language)
         self.assertNotIn("Write every version in", without_language)
 
-    async def test_a_custom_system_prompt_replaces_the_template_but_keeps_the_answer_format(self):
+    async def test_extra_instructions_sit_between_the_template_and_the_rules(self):
         prompt = render_system_prompt(
             AIActionType.SUGGESTION,
             output_field="headline",
             count=3,
-            system_prompt="Write tabloid headlines.",
+            max_characters=60,
+            language="fi",
+            extra_instructions="Write tabloid headlines.",
         )
 
-        self.assertEqual(prompt, "\n".join(["Write tabloid headlines.", CONTENT_LINE, FACTS_LINE, JSON_LINE]))
+        self.assertEqual(
+            prompt,
+            "\n".join(
+                [
+                    "You are an experienced news editor. Write 3 alternative versions of the "
+                    "'headline' of the article the user sends.",
+                    "Additional instructions:",
+                    "Write tabloid headlines.",
+                    CONTENT_LINE,
+                    FACTS_LINE,
+                    "Keep every version under 60 characters.",
+                    "Write every version in fi.",
+                    JSON_LINE,
+                ]
+            ),
+        )
+
+    async def test_empty_extra_instructions_add_no_lead_in(self):
+        for extra_instructions in (None, ""):
+            with self.subTest(extra_instructions=extra_instructions):
+                prompt = render_system_prompt(
+                    AIActionType.SUMMARY, output_field="abstract", count=1, extra_instructions=extra_instructions
+                )
+
+                self.assertNotIn("Additional instructions", prompt)
 
     async def test_an_action_type_without_a_template_is_not_supported(self):
         for action_type in (AIActionType.REWRITE, AIActionType.TRANSLATION):
@@ -111,6 +138,18 @@ class RenderSystemPromptTestCase(IsolatedAsyncioTestCase):
 
         self.assertIn('{"suggestions": ["first", "second"]}', JSON_CONTRACT)
         self.assertIn('{"suggestions": ["first", "second"]}', prompt)
+
+
+class UserActionsTestCase(IsolatedAsyncioTestCase):
+    async def test_every_supported_action_type_has_user_actions(self):
+        for action_type in SUPPORTED_ACTION_TYPES:
+            with self.subTest(action_type=action_type):
+                self.assertTrue(USER_ACTIONS.get(action_type))
+
+    async def test_suggestions_and_summaries_can_be_applied_or_copied(self):
+        for action_type in (AIActionType.SUGGESTION, AIActionType.SUMMARY):
+            with self.subTest(action_type=action_type):
+                self.assertEqual(USER_ACTIONS[action_type], (AIUserAction.APPLY, AIUserAction.COPY))
 
 
 class RenderUserMessageTestCase(IsolatedAsyncioTestCase):

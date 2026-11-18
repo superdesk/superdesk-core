@@ -10,10 +10,18 @@ from superdesk.errors import SuperdeskApiError
 from superdesk.text_utils import get_text
 from superdesk.users.services import get_invisible_stages_async
 from superdesk.utc import utcnow
+from superdesk.vocabularies_async.service import VocabulariesService
 
 from .errors import AIErrorKind, AIProviderError
 from .events_service import AIRunRecord, record_run
-from .models import AIAction, AIActionType, AIProvider, RunActionPayload
+from .models import (
+    BUILT_IN_TEXT_FIELDS,
+    EXTRA_INSTRUCTIONS_MAX_LENGTH,
+    SINGLE_ANSWER_ACTION_TYPES,
+    AIAction,
+    AIProvider,
+    RunActionPayload,
+)
 from .prompts import (
     PLAIN_TEXT_ACTION_TYPES,
     SUPPORTED_ACTION_TYPES,
@@ -28,27 +36,42 @@ from .providers_service import AIProvidersService
 
 logger = logging.getLogger(__name__)
 
+# Stands for a key the stored action does not have, which ``None`` cannot since it is a stored value
+_MISSING = object()
+
 
 class AIActionsService(AsyncResourceService[AIAction]):
     """Service for the ``ai_actions`` resource.
 
-    A summary has a single answer by definition, so ``suggestions_count`` is forced to 1 for that
-    action type. It is forced here rather than in a model validator because only the fields present
-    in the client's payload are written to the database on a PATCH, so a value a validator derived
-    from another field would be validated and then dropped.
+    A summary has a single answer by definition, so ``suggestions_count`` is forced to 1 for the
+    types in ``SINGLE_ANSWER_ACTION_TYPES``. It is forced here rather than in a model validator
+    because only the fields present in the client's payload are written to the database on a PATCH,
+    so a value a validator derived from another field would be validated and then dropped.
+
+    Some rules apply to what a request sets and not to what is stored, see ``_check_request``.
     """
 
     async def on_create(self, docs: List[AIAction]) -> None:
         for doc in docs:
-            if doc.action_type == AIActionType.SUMMARY:
+            if doc.action_type in SINGLE_ANSWER_ACTION_TYPES:
                 doc.parameters.suggestions_count = 1
 
         await super().on_create(docs)
 
     async def on_update(self, updates: dict[str, Any], original: AIAction) -> None:
+        # Before the merge: it copies the stored parameters, legacy keys included, into the updates
+        await self._check_request(updates, original)
+
         self._merge_parameters(updates, original)
 
-        if updates.get("action_type", original.action_type) == AIActionType.SUMMARY:
+        action_type = updates.get("action_type", original.action_type)
+        # A value of the wrong type may not be hashable, and is left for the model to report, as are
+        # parameters that are not an object
+        if (
+            isinstance(action_type, str)
+            and action_type in SINGLE_ANSWER_ACTION_TYPES
+            and isinstance(updates.get("parameters", {}), dict)
+        ):
             parameters = updates.setdefault("parameters", original.parameters.to_dict())
             parameters["suggestions_count"] = 1
 
@@ -57,7 +80,113 @@ class AIActionsService(AsyncResourceService[AIAction]):
     async def validate_create(self, doc: AIAction) -> None:
         await super().validate_create(doc)
 
+        await self._check_request(doc.to_dict())
         await self._check_model_available(doc.provider, doc.model)
+
+    async def _check_request(self, fields: dict[str, Any], original: AIAction | None = None) -> None:
+        """Check what a create or an update sets, leaving out everything it does not set
+
+        These rules are not on the model because a stored action is validated again every time it is
+        loaded. An action saved before a rule existed, or naming a custom field that has since been
+        removed, has to keep loading, listing and running. An update that does not touch the
+        offending value has to go through too, including one that sends the stored value back
+        unchanged, as a form saving the whole action does.
+
+        Errors are reported per field like the model's own, with the parameters nested under
+        ``parameters``. Values of the wrong type are left for the model to report.
+
+        :param fields: The fields of the action the request sets, as the client sent them
+        :param original: The stored action an update applies to, ``None`` on create
+        :raises SuperdeskApiError: If the request sets a value it may not
+        """
+
+        issues: dict[str, Any] = {}
+
+        # The model allows unknown keys. A dotted one would reach MongoDB's ``$set`` as a path into a
+        # field, writing a parameter or a list entry past every check here and in the model.
+        for key in fields:
+            if "." in key or key.startswith("$"):
+                issues[key] = {"field_name": gettext("Not a field of an AI action")}
+
+        parameters = fields.get("parameters")
+        if isinstance(parameters, dict):
+            stored_parameters = original.parameters.to_dict() if original is not None else {}
+            parameter_issues = self._check_parameters(parameters, stored_parameters)
+            if parameter_issues:
+                issues["parameters"] = parameter_issues
+
+        stored_inputs = set(original.input_fields) if original is not None else set()
+        stored_output = original.output_field if original is not None else None
+
+        input_fields = fields.get("input_fields")
+        input_names = (
+            [name.strip() for name in input_fields if isinstance(name, str) and name.strip() not in stored_inputs]
+            if isinstance(input_fields, list)
+            else []
+        )
+        output_field = fields.get("output_field")
+        output_names = (
+            [output_field.strip()]
+            if isinstance(output_field, str) and output_field.strip() and output_field.strip() != stored_output
+            else []
+        )
+
+        text_fields = await self._find_text_fields(input_names + output_names)
+        for field, names in (("input_fields", input_names), ("output_field", output_names)):
+            unknown = [name for name in names if name not in text_fields]
+            if unknown:
+                issues[field] = {
+                    "text_field": gettext("Not a built-in or custom text field: {fields}").format(
+                        fields=", ".join(unknown)
+                    )
+                }
+
+        if issues:
+            raise SuperdeskApiError.badRequestError(message=gettext("Invalid AI action"), payload=issues)
+
+    def _check_parameters(self, parameters: dict[str, Any], stored: dict[str, Any]) -> dict[str, Any]:
+        issues: dict[str, Any] = {}
+
+        # The model allows unknown keys, so without this the old name would be accepted and ignored.
+        # The value an action stored before the rename is accepted back unchanged.
+        if "system_prompt" in parameters and parameters["system_prompt"] != stored.get("system_prompt", _MISSING):
+            issues["system_prompt"] = {
+                "renamed": gettext(
+                    "'system_prompt' was renamed to 'extra_instructions', which is added to the built-in "
+                    "instructions rather than replacing them"
+                )
+            }
+
+        extra_instructions = parameters.get("extra_instructions")
+        if (
+            isinstance(extra_instructions, str)
+            and len(extra_instructions.strip()) > EXTRA_INSTRUCTIONS_MAX_LENGTH
+            and extra_instructions.strip() != stored.get("extra_instructions")
+        ):
+            issues["extra_instructions"] = {
+                "maxlength": gettext("At most {max_length} characters").format(max_length=EXTRA_INSTRUCTIONS_MAX_LENGTH)
+            }
+
+        return issues
+
+    async def _find_text_fields(self, names: list[str]) -> set[str]:
+        """Those of the names that are a built-in text field or the ID of a custom text field
+
+        Custom fields are vocabularies with a ``field_type``, and only those of type ``text`` hold
+        prose. They are read from the database as stored, so a vocabulary that does not pass the
+        vocabulary model cannot fail the check. A deleted vocabulary is only marked ``_deleted``.
+        """
+
+        found = {name for name in names if name in BUILT_IN_TEXT_FIELDS}
+        custom = list(set(names) - found)
+
+        if custom:
+            cursor = VocabulariesService().mongo_async.find(
+                {"_id": {"$in": custom}, "field_type": "text", "_deleted": {"$ne": True}}, projection={"_id": 1}
+            )
+            found.update([vocabulary["_id"] async for vocabulary in cursor])
+
+        return found
 
     async def validate_update(self, updates: dict[str, Any], original: AIAction, etag: str | None) -> dict[str, Any]:
         updated = await super().validate_update(updates, original, etag)
@@ -144,7 +273,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
                         count=action.parameters.suggestions_count,
                         max_characters=max_characters,
                         language=language,
-                        system_prompt=action.parameters.system_prompt,
+                        extra_instructions=action.parameters.extra_instructions,
                     ),
                 ),
                 CompletionMessage(role="user", content=render_user_message(texts)),
@@ -352,13 +481,28 @@ class AIActionsService(AsyncResourceService[AIAction]):
             )
 
     def _get_input_texts(self, action: AIAction, payload: RunActionPayload, item: dict[str, Any]) -> dict[str, str]:
-        """Collect the text of every input field, preferring what the client sent over the item"""
+        """Collect the text of every input field, preferring what the client sent over the item
+
+        A built-in field is read from the top level of the item, any other name from ``extra``, where
+        custom fields are stored. A custom field can share its ID with a top-level key of the item
+        (``source``, for one), which holds something else. Other names fall back to the top level,
+        so an action stored before the field names were checked keeps reading what it used to.
+        """
 
         provided = payload.fields or {}
+        extra = item.get("extra")
+        extra = extra if isinstance(extra, dict) else {}
         texts: dict[str, str] = {}
 
         for name in action.input_fields:
-            value = provided.get(name, item.get(name))
+            if name in BUILT_IN_TEXT_FIELDS:
+                stored = item.get(name)
+            else:
+                stored = extra.get(name)
+                if not isinstance(stored, str):
+                    stored = item.get(name)
+
+            value = provided.get(name, stored)
             if not isinstance(value, str):
                 continue
 

@@ -79,6 +79,37 @@ class AIActionType(str, enum.Enum):
 #: article, so storing its answers would make the log a second copy of the content.
 SHORT_OUTPUT_ACTION_TYPES = frozenset({AIActionType.SUGGESTION, AIActionType.SUMMARY})
 
+#: Action types that answer with a single text by definition, so ``suggestions_count`` is forced to 1
+#: on them and a form has no use for it
+SINGLE_ANSWER_ACTION_TYPES = frozenset({AIActionType.SUMMARY})
+
+
+class AIUserAction(str, enum.Enum):
+    """What an editor can do with an answer, which follows from the action type rather than being
+    configured per action
+    """
+
+    APPLY = "apply"
+    COPY = "copy"
+
+
+#: Top-level item fields an action may read from or write to, besides the custom text fields.
+#: Limited to prose an editor writes whose name is the same on the item and in the content profile,
+#: since the profile is where the length of the output field comes from. Left out are fields holding
+#: names or codes (``byline``, ``sign_off``, ``anpa_take_key``), legal or boilerplate text
+#: (``usageterms``, ``body_footer``) and ``sms_message``, which a content profile calls ``sms``.
+BUILT_IN_TEXT_FIELDS: tuple[str, ...] = (
+    "headline",
+    "slugline",
+    "abstract",
+    "body_html",
+    "description_text",
+    "ednote",
+)
+
+#: Longest ``parameters.extra_instructions`` a request may set
+EXTRA_INSTRUCTIONS_MAX_LENGTH = 2000
+
 
 class AIActionParameters(Dataclass):
     """How an action asks for its answers, as opposed to which fields it is wired to.
@@ -86,13 +117,17 @@ class AIActionParameters(Dataclass):
     Everything that tunes a run lives here so that a new knob does not become a new field on
     the resource. A PATCH of ``parameters`` is merged onto the stored ones by
     ``AIActionsService``, the way a PATCH of the action itself is merged onto the action.
+
+    Limits that only a request has to respect, such as the length of ``extra_instructions``, are
+    checked by ``AIActionsService`` rather than declared here: a stored action is validated again
+    every time it is loaded, and one saved before a limit existed has to keep loading and running.
     """
 
     temperature: float = 0.7
 
-    #: Replaces the system prompt built from the action type, leaving the instructions that carry
-    #: the answer format in place
-    system_prompt: str | None = None
+    #: Text added to the instructions built from the action type, between them and the rules that
+    #: carry the answer format, which it can neither replace nor come after
+    extra_instructions: str | None = None
 
     max_characters: int | None = None
     suggestions_count: Annotated[int, validate_minlength(1), validate_maxlength(10)] = 3
@@ -103,10 +138,12 @@ class AIAction(ResourceModelWithObjectId):
     action_type: AIActionType
     active: bool = True
 
-    #: Names of the item fields whose text is sent to the provider
+    #: Names of the item fields whose text is sent to the provider, each one of
+    #: ``BUILT_IN_TEXT_FIELDS`` or the ID of a custom text field
     input_fields: Annotated[list[str], validate_minlength(1)]
 
-    #: Name of the item field the suggestions are written back to by the client
+    #: Name of the item field the suggestions are written back to by the client, one of
+    #: ``BUILT_IN_TEXT_FIELDS`` or the ID of a custom text field
     output_field: Annotated[str, validate_not_empty()]
 
     #: Content profiles the action is offered for, an empty list means every profile

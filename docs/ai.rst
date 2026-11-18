@@ -75,9 +75,21 @@ The instructions go in the system message and the article in the user message, b
 ``<article>`` and ``</article>``. The instructions say everything between those tags is text to work
 on and never instructions to follow, and a reminder after the article repeats it, so an article
 saying "ignore your instructions" is edited rather than obeyed. An ``<article>`` tag inside the
-article is escaped, so the text cannot close the article early. A ``system_prompt`` set on an
-action only replaces the first line of the instructions; these rules and the answer format are
-always kept.
+article is escaped, so the text cannot close the article early.
+
+The instructions are built in three parts, always in this order:
+
+#. the instructions of the action type, which are part of Superdesk and cannot be changed;
+#. the ``extra_instructions`` of the action, if it has any, under an "Additional instructions:"
+   line. An administrator uses them to add to the instructions (a house style, a tone), never to
+   replace them;
+#. the rules: the article is data, only its facts may be used, the length, the language and the
+   answer format.
+
+The rules come last so the provider reads them after any extra instructions. What matters is
+enforced in code rather than by the prompt anyway: the number of answers, the parsing of the
+answer and the removal of markup, so badly worded extra instructions can only produce worse
+answers, never a broken one. ``extra_instructions`` holds at most 2,000 characters.
 
 This makes injection harder, it does not make it impossible: no prompt wording can guarantee what a
 model does. Answers are therefore treated as untrusted. Suggestions and summaries are plain text, so any
@@ -169,9 +181,28 @@ picks the shortlist from:
 
 Add an action for it. ``input_fields`` are read from the item, ``output_field`` is the field the
 client writes an accepted answer to, and ``parameters`` holds everything that tunes how the answers
-are asked for: ``suggestions_count``, ``max_characters``, ``temperature`` and ``system_prompt``.
-Patching one parameter leaves the others alone, so a new knob does not become a new field on the
-resource.
+are asked for: ``suggestions_count``, ``max_characters``, ``temperature`` and
+``extra_instructions``. Patching one parameter leaves the others alone, so a new knob does not
+become a new field on the resource, and a parameter is cleared by sending it as ``null``. A summary
+always has a single answer, so its ``suggestions_count`` is forced to 1.
+
+``extra_instructions`` used to be ``system_prompt``, which replaced the instructions of the action
+type instead of adding to them. A request that still sets ``parameters.system_prompt`` is refused
+with a ``400`` saying so, rather than accepted and ignored. Sending back the value an action stored
+before the rename is accepted, so a client saving what it read keeps working until data update
+``00036`` has moved stored values to the new name. Those values were written as a whole prompt, so
+they are worth reading again.
+
+Every name in ``input_fields`` and ``output_field`` has to be a text field, or the request is
+refused with a ``400`` that has the error under ``_issues.input_fields`` or
+``_issues.output_field``. That is one of the built-in text fields ``headline``, ``slugline``,
+``abstract``, ``body_html``, ``description_text`` and ``ednote``, or the ``_id`` of a custom field
+of type text (a vocabulary with a ``field_type`` of ``text``), whose value is read from ``extra``
+of the item. A built-in field is read from the top level of the item instead. These checks, the
+length of ``extra_instructions`` and the refusal of ``system_prompt`` apply to what a request
+changes. An action stored before them keeps loading and running, and an update is only checked for
+the values it changes, so one that sends the stored values back goes through. Field names are
+compared without surrounding whitespace, and keys holding a ``.`` (a path into a field) are refused.
 
 ``max_characters`` can be left out, in which case the length comes from the ``maxlength`` the
 content profile of the item gives ``output_field``. That is the length the field can actually
@@ -192,6 +223,23 @@ than the field allows:
 
     {"_id": "68af1c0e2b1a4c0f9a3d1e02", "name": "Headline suggestions", "_status": "OK", ...}
 
+A form for building an action can ask what it is built from. ``GET /api/ai_actions/options`` needs
+``ai_studio`` and answers with the action types that can be created, what an editor can do with
+their answers, whether ``suggestions_count`` applies to them, and the built-in text fields. Custom
+text fields are not in it, the client has the vocabularies already:
+
+.. code:: sh
+
+    curl $API/ai_actions/options -H "$AUTH"
+
+    {
+        "action_types": [
+            {"action_type": "suggestion", "user_actions": ["apply", "copy"], "uses_suggestions_count": true},
+            {"action_type": "summary", "user_actions": ["apply", "copy"], "uses_suggestions_count": false}
+        ],
+        "built_in_text_fields": ["headline", "slugline", "abstract", "body_html", "description_text", "ednote"]
+    }
+
 Ask which actions can be run against an item. This is the call an editor makes, so it needs only
 ``ai``, and it describes each action without its provider, model or prompt. Actions that are
 inactive, that belong to an inactive provider, that are limited to other content profiles, that
@@ -209,11 +257,15 @@ have no model to run with or whose type cannot be run yet are left out:
                 "action_type": "suggestion",
                 "input_fields": ["body_html"],
                 "output_field": "headline",
-                "suggestions_count": 3
+                "suggestions_count": 3,
+                "user_actions": ["apply", "copy"]
             }
         ],
         "_meta": {"total": 1}
     }
+
+``user_actions`` is what the editor can do with an answer: ``apply`` it to ``output_field`` or
+``copy`` it. It comes from the action type, not from the action, so it cannot be configured.
 
 Both this call and a run refuse an item the user cannot read with a ``403``: one in a stage hidden
 from them, or one in the personal space of another user. An item with no desk that is assigned to
