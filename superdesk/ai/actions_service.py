@@ -16,7 +16,6 @@ from .errors import AIErrorKind, AIProviderError
 from .events_service import AIRunRecord, record_run
 from .models import (
     BUILT_IN_TEXT_FIELDS,
-    EXTRA_INSTRUCTIONS_MAX_LENGTH,
     SINGLE_ANSWER_ACTION_TYPES,
     AIAction,
     AIProvider,
@@ -81,16 +80,14 @@ class AIActionsService(AsyncResourceService[AIAction]):
         await self._check_model_available(doc.provider, doc.model)
 
     async def _validate_changes(self, fields: dict[str, Any], original: AIAction | None = None) -> None:
-        """Check what a create or an update sets, leaving out everything it does not set
+        """Check what a create or an update changes, leaving out everything it does not change
 
-        These rules are not on the model because a stored action is validated again every time it is
-        loaded. An action saved before a rule existed, or naming a custom field that has since been
-        removed, has to keep loading, listing and running. An update that does not touch the
-        offending value has to go through too, including one that sends the stored value back
-        unchanged, as a form saving the whole action does.
+        Not on the model, so an action keeps loading after a custom field it names is removed. An
+        update is only checked for the values it changes, so a form sending back the stored action
+        goes through.
 
-        Errors are reported per field like the model's own, with the parameters nested under
-        ``parameters``. Values of the wrong type are left for the model to report.
+        Errors are reported per field like the model's own. Values of the wrong type are left for
+        the model to report.
 
         :param fields: The fields of the action the request sets, as the client sent them
         :param original: The stored action an update applies to, ``None`` on create
@@ -104,13 +101,6 @@ class AIActionsService(AsyncResourceService[AIAction]):
         for key in fields:
             if "." in key or key.startswith("$"):
                 issues[key] = {"field_name": gettext("Not a field of an AI action")}
-
-        parameters = fields.get("parameters")
-        if isinstance(parameters, dict):
-            stored_parameters = original.parameters.to_dict() if original is not None else {}
-            parameter_issues = self._check_parameters(parameters, stored_parameters)
-            if parameter_issues:
-                issues["parameters"] = parameter_issues
 
         stored_inputs = set(original.input_fields) if original is not None else set()
         stored_output = original.output_field if original is not None else None
@@ -140,21 +130,6 @@ class AIActionsService(AsyncResourceService[AIAction]):
 
         if issues:
             raise SuperdeskApiError.badRequestError(message=gettext("Invalid AI action"), payload=issues)
-
-    def _check_parameters(self, parameters: dict[str, Any], stored: dict[str, Any]) -> dict[str, Any]:
-        issues: dict[str, Any] = {}
-
-        extra_instructions = parameters.get("extra_instructions")
-        if (
-            isinstance(extra_instructions, str)
-            and len(extra_instructions.strip()) > EXTRA_INSTRUCTIONS_MAX_LENGTH
-            and extra_instructions.strip() != stored.get("extra_instructions")
-        ):
-            issues["extra_instructions"] = {
-                "maxlength": gettext("At most {max_length} characters").format(max_length=EXTRA_INSTRUCTIONS_MAX_LENGTH)
-            }
-
-        return issues
 
     async def _find_text_fields(self, names: list[str]) -> set[str]:
         """Those of the names that are a built-in text field or the ID of a custom text field

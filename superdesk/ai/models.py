@@ -117,17 +117,13 @@ class AIActionParameters(Dataclass):
     Everything that tunes a run lives here so that a new knob does not become a new field on
     the resource. A PATCH of ``parameters`` is merged onto the stored ones by
     ``AIActionsService``, the way a PATCH of the action itself is merged onto the action.
-
-    Limits that only a request has to respect, such as the length of ``extra_instructions``, are
-    checked by ``AIActionsService`` rather than declared here: a stored action is validated again
-    every time it is loaded, and one saved before a limit existed has to keep loading and running.
     """
 
     temperature: float = 0.7
 
     #: Text added to the instructions built from the action type, between them and the rules that
     #: carry the answer format, which it can neither replace nor come after
-    extra_instructions: str | None = None
+    extra_instructions: Annotated[str | None, validate_maxlength(EXTRA_INSTRUCTIONS_MAX_LENGTH)] = None
 
     max_characters: int | None = None
     suggestions_count: Annotated[int, validate_minlength(1), validate_maxlength(10)] = 3

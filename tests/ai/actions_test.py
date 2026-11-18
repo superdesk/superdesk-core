@@ -299,12 +299,11 @@ class AIActionsRestTestCase(TestCase):
         self.assertEqual(stored["output_field"], "abstract")
 
     async def test_a_patch_sending_back_the_stored_values_of_an_older_action_goes_through(self):
-        """A form saving the whole action sends back what it read, rules the action predates included"""
+        """A form saving the whole action sends back what it read, a removed custom field included"""
 
         parameters = {
             "temperature": 0.7,
             "suggestions_count": 3,
-            "extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 1),
         }
         action_id = await self._insert_stored_action(
             input_fields=["body_html", "removed_custom_field"],
@@ -925,7 +924,7 @@ class AIActionRunTestCase(TestCase):
         self.assertEqual(requests[0]["json"]["messages"][1]["content"], article("Council budget vote."))
 
     async def test_an_action_stored_before_the_request_rules_still_lists_runs_and_updates(self):
-        """An action that predates the length cap and the field check keeps working
+        """An action naming a custom field that no longer exists keeps working
 
         Such an action is never written through a request, so it is inserted as stored.
         """
@@ -945,7 +944,6 @@ class AIActionRunTestCase(TestCase):
                 "parameters": {
                     "temperature": 0.7,
                     "suggestions_count": 2,
-                    "extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 1),
                 },
             }
         )
