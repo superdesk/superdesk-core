@@ -95,6 +95,12 @@ class RemoveExpiredItemsTest(TestCase):
         has_expired = self.command._has_expired(deepcopy(items[0]), self.now)
         self.assertFalse(has_expired)
 
+    async def test_has_expired_with_naive_item_datetimes(self):
+        naive_expired = expired.replace(tzinfo=None)
+
+        self.assertTrue(self.command._has_expired({"_updated": naive_expired}, self.now))
+        self.assertTrue(self.command._has_expired({"_updated": expired, "expiry": naive_expired}, self.now))
+
     async def test_get_children(self):
         service = get_resource_service("items")
         children = self.command._get_children(service, items[0])

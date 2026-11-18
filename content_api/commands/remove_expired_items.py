@@ -16,7 +16,7 @@ from superdesk.core import get_app_config
 from superdesk import get_resource_service
 from superdesk.celery_task_utils import get_lock_id
 from superdesk.lock import lock, unlock
-from superdesk.utc import utcnow
+from superdesk.utc import utc, utcnow
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +124,12 @@ class RemoveExpiredItems(superdesk.Command):
         :param datetime expiry_datetime: The date and time items should be expired
         :return bool: True if the item has expired, otherwise False
         """
-        item.setdefault("expiry", item["_updated"] + timedelta(days=self.expiry_days))
-        return item.get("expiry") <= expiry_datetime
+        expiry = item.setdefault("expiry", item["_updated"] + timedelta(days=self.expiry_days))
+        if expiry.tzinfo is None or expiry.utcoffset() is None:
+            expiry = expiry.replace(tzinfo=utc)
+        if expiry_datetime.tzinfo is None or expiry_datetime.utcoffset() is None:
+            expiry_datetime = expiry_datetime.replace(tzinfo=utc)
+        return expiry <= expiry_datetime
 
     def _get_children(self, service, item):
         """Get the list of children to the root item using the ancestors dictionary key
