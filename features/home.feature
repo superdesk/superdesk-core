@@ -536,14 +536,6 @@ Feature: Home API
                     "title": "locations"
                 },
                 {
-                    "href": "events/<item_id>/lock",
-                    "title": "events_lock"
-                },
-                {
-                    "href": "events/<item_id>/unlock",
-                    "title": "events_unlock"
-                },
-                {
                     "href": "events",
                     "title": "events"
                 },
@@ -568,11 +560,11 @@ Feature: Home API
                     "title": "planning"
                 },
                 {
-                    "href": "planning/<item_id>/lock",
+                    "href": "planning/<string:item_id>/lock",
                     "title": "planning_lock"
                 },
                 {
-                    "href": "planning/<item_id>/unlock",
+                    "href": "planning/<string:item_id>/unlock",
                     "title": "planning_unlock"
                 },
                 {
@@ -584,7 +576,7 @@ Feature: Home API
                     "title": "planning_files"
                 },
                 {
-                    "href": "planning/cancel",
+                    "href": "planning/cancel/<string:planning_id>",
                     "title": "planning_cancel"
                 },
                 {
@@ -596,11 +588,11 @@ Feature: Home API
                     "title": "planning_featured_unlock"
                 },
                 {
-                    "href": "assignments/<item_id>/lock",
+                    "href": "assignments/<string:item_id>/lock",
                     "title": "assignments_lock"
                 },
                 {
-                    "href": "assignments/<item_id>/unlock",
+                    "href": "assignments/<string:item_id>/unlock",
                     "title": "assignments_unlock"
                 },
                 {
@@ -626,10 +618,6 @@ Feature: Home API
                 {
                     "href": "assignments/revert",
                     "title": "assignments_revert"
-                },
-                {
-                    "href": "planning_search",
-                    "title": "planning_search"
                 },
                 {
                     "href": "events_planning_search",
@@ -704,16 +692,8 @@ Feature: Home API
                     "title": "product_tests"
                 },
                 {
-                    "href": "events_history",
-                    "title": "events_history"
-                },
-                {
                     "href": "planning_history",
                     "title": "planning_history"
-                },
-                {
-                    "href": "event_autosave",
-                    "title": "event_autosave"
                 },
                 {
                     "href": "planning_featured",
@@ -733,7 +713,7 @@ Feature: Home API
                 },
                 {
                     "href": "planning_locks",
-                    "title": "planning_locks"
+                    "title": "get_planning_locks"
                 },
                 {
                     "href": "planning/spike/<string:planning_id>",

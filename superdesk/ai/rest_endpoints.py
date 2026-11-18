@@ -15,6 +15,7 @@ from .errors import AIProviderError, to_api_error
 from .models import AIAction, AIEvent, AIProvider, RunActionPayload
 from .privileges import AI_PRIVILEGE, AI_STUDIO_PRIVILEGE
 from .providers import get_client
+from .rate_limit import TooManyRunsError, check_run_rate
 
 
 def get_request_user_id(request: Request) -> str | None:
@@ -29,6 +30,20 @@ def get_request_user_id(request: Request) -> str | None:
     user_id = user.get("_id") if isinstance(user, dict) else None
 
     return str(user_id) if user_id else None
+
+
+def require_request_user_id(request: Request) -> str:
+    """ID of the authenticated user, refusing a request that is not made for one
+
+    Running an action checks the item against the user it is run for, so a request with no user
+    has nothing to check against and is refused rather than let through unchecked.
+    """
+
+    user_id = get_request_user_id(request)
+    if user_id is None:
+        raise SuperdeskApiError.forbiddenError(message=gettext("AI actions can only be used by a signed in user"))
+
+    return user_id
 
 
 class AIProvidersEndpoints(ResourceRestEndpoints):
@@ -61,7 +76,7 @@ class AIProvidersEndpoints(ResourceRestEndpoints):
         try:
             models = await get_client(provider).list_models()
         except AIProviderError as error:
-            raise to_api_error(error)
+            raise to_api_error(error, for_administrator=True)
 
         return Response(body={"models": models}, status_code=200)
 
@@ -93,10 +108,20 @@ class AIProvidersEndpoints(ResourceRestEndpoints):
 
 
 class AIActionsEndpoints(ResourceRestEndpoints):
-    """Adds the route that runs an action against an item"""
+    """Adds the routes an editor uses: the actions available for an item, and running one"""
 
     def add_endpoints(self):
         super().add_endpoints()
+        self.endpoints.append(
+            Endpoint(
+                url=f"{self.get_resource_url()}/available",
+                name="ai_actions_available",
+                func=self.list_available,
+                methods=["GET"],
+                auth=[required_privilege_rule(AI_PRIVILEGE)],
+                parent=self,
+            )
+        )
         self.endpoints.append(
             Endpoint(
                 url=f"{self.get_item_url()}/run",
@@ -110,6 +135,41 @@ class AIActionsEndpoints(ResourceRestEndpoints):
             )
         )
 
+    async def list_available(self, request: Request) -> Response:
+        """List the actions the authenticated user can run against the item named by ``item_id``"""
+
+        item_id = request.get_url_arg("item_id")
+        if not item_id:
+            raise SuperdeskApiError.badRequestError(message=gettext("'item_id' is required"))
+
+        service = cast(AIActionsService, self.service)
+        item = await service.get_item(item_id, require_request_user_id(request))
+        actions = await service.find_available(item)
+
+        return Response(
+            body={
+                "_items": [self._describe_available(action) for action in actions],
+                "_meta": {"total": len(actions)},
+            },
+            status_code=200,
+        )
+
+    def _describe_available(self, action: AIAction) -> dict:
+        """What an editor is told about an action
+
+        The provider, the model and the prompt are left out: they belong to the holders of
+        ``ai_studio``, and the editor only needs what to send and where the answers go.
+        """
+
+        return {
+            "_id": str(action.id),
+            "name": action.name,
+            "action_type": action.action_type.value,
+            "input_fields": action.input_fields,
+            "output_field": action.output_field,
+            "suggestions_count": action.parameters.suggestions_count,
+        }
+
     async def run(self, request: Request) -> Response:
         action = await self._get_action(request)
 
@@ -122,9 +182,15 @@ class AIActionsEndpoints(ResourceRestEndpoints):
             )
 
         service = cast(AIActionsService, self.service)
+        user_id = require_request_user_id(request)
 
         try:
-            result = await service.run(action, payload, user_id=get_request_user_id(request))
+            await check_run_rate(user_id)
+        except TooManyRunsError as error:
+            return Response(body=error.to_dict(), status_code=429, headers=[("Retry-After", str(error.retry_after))])
+
+        try:
+            result = await service.run(action, payload, user_id=user_id)
         except AIProviderError as error:
             raise to_api_error(error)
 

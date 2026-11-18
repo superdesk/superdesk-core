@@ -69,10 +69,16 @@ def http_method_privilege_based_rules(rules: dict[HTTP_METHOD, str]) -> dict[str
     Returns:
         dict[str, list[AuthRule]]: A dictionary where each HTTP method is mapped to a list of authentication
         rules that restrict access based on the specified privilege.
+
+    ``HEAD`` is answered by the ``GET`` handler, so when the rules name ``GET`` but not ``HEAD`` it
+    gets the ``GET`` rule. A method left out of the rules is only checked for a login.
     """
 
     auth_rules: dict[str, AuthRule] = {}
     for method, privilege_name in rules.items():
         auth_rules[method] = required_privilege_rule(privilege_name)
+
+    if "GET" in auth_rules and "HEAD" not in auth_rules:
+        auth_rules["HEAD"] = auth_rules["GET"]
 
     return auth_rules

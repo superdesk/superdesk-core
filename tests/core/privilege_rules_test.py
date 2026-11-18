@@ -65,3 +65,18 @@ class TestPrivilegeRules(IsolatedAsyncioTestCase):
         self.assertIn("GET", auth_rules)
         self.assertIn("POST", auth_rules)
         self.assertIn("DELETE", auth_rules)
+
+    def test_head_gets_the_rule_of_get_when_the_rules_leave_it_out(self):
+        auth_rules = http_method_privilege_based_rules({"GET": "read_articles", "POST": "create_articles"})
+
+        self.assertIs(auth_rules["HEAD"], auth_rules["GET"])
+
+    def test_head_keeps_its_own_rule_when_the_rules_name_it(self):
+        auth_rules = http_method_privilege_based_rules({"GET": "read_articles", "HEAD": "count_articles"})
+
+        self.assertIsNot(auth_rules["HEAD"], auth_rules["GET"])
+
+    def test_head_is_left_to_the_login_rule_when_the_rules_do_not_name_get(self):
+        auth_rules = http_method_privilege_based_rules({"POST": "create_articles"})
+
+        self.assertNotIn("HEAD", auth_rules)
