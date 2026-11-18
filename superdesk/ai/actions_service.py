@@ -45,7 +45,7 @@ class AIActionsService(AsyncResourceService[AIAction]):
     because only the fields present in the client's payload are written to the database on a PATCH,
     so a value a validator derived from another field would be validated and then dropped.
 
-    Some rules apply to what a request sets and not to what is stored, see ``_check_request``.
+    Some rules apply only to what a create or update changes, see ``_validate_changes``.
     """
 
     async def on_create(self, docs: List[AIAction]) -> None:
@@ -56,8 +56,8 @@ class AIActionsService(AsyncResourceService[AIAction]):
         await super().on_create(docs)
 
     async def on_update(self, updates: dict[str, Any], original: AIAction) -> None:
-        # Before the merge: it copies the stored parameters, legacy keys included, into the updates
-        await self._check_request(updates, original)
+        # Before the merge, which copies the stored parameters into the updates
+        await self._validate_changes(updates, original)
 
         self._merge_parameters(updates, original)
 
@@ -77,10 +77,10 @@ class AIActionsService(AsyncResourceService[AIAction]):
     async def validate_create(self, doc: AIAction) -> None:
         await super().validate_create(doc)
 
-        await self._check_request(doc.to_dict())
+        await self._validate_changes(doc.to_dict())
         await self._check_model_available(doc.provider, doc.model)
 
-    async def _check_request(self, fields: dict[str, Any], original: AIAction | None = None) -> None:
+    async def _validate_changes(self, fields: dict[str, Any], original: AIAction | None = None) -> None:
         """Check what a create or an update sets, leaving out everything it does not set
 
         These rules are not on the model because a stored action is validated again every time it is
@@ -168,8 +168,8 @@ class AIActionsService(AsyncResourceService[AIAction]):
         custom = list(set(names) - found)
 
         if custom:
-            cursor = VocabulariesService().mongo_async.find(
-                {"_id": {"$in": custom}, "field_type": "text", "_deleted": {"$ne": True}}, projection={"_id": 1}
+            cursor = VocabulariesService().get_all_raw(
+                {"_id": {"$in": custom}, "field_type": "text", "_deleted": {"$ne": True}}
             )
             found.update([vocabulary["_id"] async for vocabulary in cursor])
 
