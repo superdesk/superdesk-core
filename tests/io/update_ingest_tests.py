@@ -665,6 +665,9 @@ class UpdateIngestTest(TestCase):
         self.assertEqual("story", items[1].get("profile"))
 
     async def test_edited_planning_item_is_not_update(self):
+        from planning.tests import fixtures as planning_fixtures
+        from planning.types import UnifiedPlanningResource
+
         item = {
             "guid": "urn:onclusive:4112034",
             "type": "event",
@@ -688,29 +691,28 @@ class UpdateIngestTest(TestCase):
         await test_utils.post_items("users", [fixtures.users.admin()])
         g.user = {"_id": fixtures.users.ADMIN_USER_ID}
 
-        provider = {
-            "_id": "asdnjsandkajsdnjkasnd",
-            "source": "sf",
-            "name": "Onclusive",
-            "content_expiry": 525700,
-        }
-        event_service = get_resource_service("events")
-        events_post_service = get_resource_service("events_post")
+        await test_utils.post_items("vocabularies", planning_fixtures.cvs.all_cvs())
+        provider = await self._get_provider("AAP")
+        provider["content_expiry"] = 525700
+        planning_service = UnifiedPlanningResource.get_service()
 
         # ingest first version
         ingested, ids = await ingest_item(item, provider=provider, feeding_service={})
         self.assertTrue(ingested)
         self.assertIn(item["guid"], ids)
+        await planning_service.elastic.insert([item])
 
-        dest = await (await event_service.get_from_mongo_async(req=None, lookup={"guid": item["guid"]})).next()
-        self.assertEqual(dest["name"], "Annual Forum on Anti-Money Laundering and Financial Crime")
-        self.assertEqual(dest["state"], "ingested")
-        self.assertEqual(dest.get("version_creator"), None)
+        dest = await planning_service.find_by_id(item["_id"])
+        assert dest is not None
+        self.assertEqual(dest.name, "Annual Forum on Anti-Money Laundering and Financial Crime")
+        self.assertEqual(dest.state, "ingested")
+        self.assertIsNone(dest.version_creator)
 
         # edit event
-        await event_service.patch_async(dest["_id"], {"name": "Edit event Name", "update_method": "single"})
-        dest = await (await event_service.get_from_mongo_async(req=None, lookup={"guid": item["guid"]})).next()
-        self.assertEqual(dest.get("version_creator"), fixtures.users.ADMIN_USER_ID)
+        await planning_service.update(dest.id, {"name": "Edit event Name", "update_method": "single"})
+        dest = await planning_service.find_by_id(item["_id"])
+        assert dest is not None
+        self.assertEqual(dest.version_creator, fixtures.users.ADMIN_USER_ID)
 
         # update event
         ingested, ids = await ingest_item(item, provider=provider, feeding_service={})
@@ -718,6 +720,9 @@ class UpdateIngestTest(TestCase):
         self.assertIn(item["guid"], ids)
 
     async def test_unpublished_event_is_not_update(self):
+        from planning.tests import fixtures as planning_fixtures
+        from planning.types import UnifiedPlanningResource
+
         item = {
             "guid": "urn:onclusive:411202222",
             "type": "event",
@@ -741,19 +746,17 @@ class UpdateIngestTest(TestCase):
         await test_utils.post_items("users", [fixtures.users.admin()])
         g.user = {"_id": fixtures.users.ADMIN_USER_ID}
 
-        provider = {
-            "_id": "asdnjsandkajsdnjkasnd",
-            "source": "sf",
-            "name": "Onclusive",
-            "content_expiry": 525700,
-        }
-        event_service = get_resource_service("events")
+        await test_utils.post_items("vocabularies", planning_fixtures.cvs.all_cvs())
+        provider = await self._get_provider("AAP")
+        provider["content_expiry"] = 525700
+        planning_service = UnifiedPlanningResource.get_service()
         events_post_service = get_resource_service("events_post")
 
         # ingest first version
         ingested, ids = await ingest_item(item, provider=provider, feeding_service={})
         self.assertTrue(ingested)
         self.assertIn(item["guid"], ids)
+        await planning_service.elastic.insert([item])
 
         # post an event
         await events_post_service.post_async(
@@ -765,8 +768,9 @@ class UpdateIngestTest(TestCase):
                 }
             ]
         )
-        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
-        self.assertEqual(dest.get("state"), "scheduled")
+        dest = await planning_service.find_by_id(item["_id"])
+        assert dest is not None
+        self.assertEqual(dest.state, "scheduled")
 
         # Un-post an event
         await events_post_service.post_async(
@@ -778,8 +782,9 @@ class UpdateIngestTest(TestCase):
                 }
             ]
         )
-        dest = list(event_service.get_from_mongo(req=None, lookup={"guid": item["guid"]}))[0]
-        self.assertEqual(dest.get("state"), "killed")
+        dest = await planning_service.find_by_id(item["_id"])
+        assert dest is not None
+        self.assertEqual(dest.state, "killed")
 
         # update an event
         ingested, ids = await ingest_item(item, provider=provider, feeding_service={})
