@@ -190,7 +190,12 @@ class EmailPublishServiceIDMLTest(TestCase):
                     "email": "a@b.cd",
                     "is_active": True,
                     "destinations": [
-                        {"name": "InDesign", "format": "idml", "delivery_type": "email", "config": {"recipients": "a@b.cd"}}
+                        {
+                            "name": "InDesign",
+                            "format": "idml",
+                            "delivery_type": "email",
+                            "config": {"recipients": "a@b.cd"},
+                        }
                     ],
                 }
             ]
