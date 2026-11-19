@@ -22,6 +22,7 @@ class IDMLFormatter(Formatter):
         # super().__init__()
         super(self.__class__, self).__init__()
         self.format_type = "idml"
+        self.can_export = True
 
     async def format(
         self, article: dict, subscriber: dict | None, codes: list | None = None
@@ -40,9 +41,9 @@ class IDMLFormatter(Formatter):
             }
         ]
 
-    def export(self, article, subscriber, codes=None):
-        """Formats the article and returns the output string for export"""
-        raise NotImplementedError()
+    def export(self, article, subscriber=None, codes=None):
+        """Return the IDML package of the article as bytes."""
+        return Converter().create_idml(article)
 
     def can_format(self, format_type, article):
         """

@@ -1,3 +1,4 @@
+import base64
 import logging
 import re
 from inspect import isawaitable
@@ -51,8 +52,9 @@ class ExportService(AsyncBaseService):
                     continue
 
                 # Remove invalid filename chars (for windows OS) and create the filename
+                extension = ".{}".format(formatter.format_type) if isinstance(contents, bytes) else ".txt"
                 filename = (
-                    re.sub(r'[\\/*?:"<>|]', "", item.get("slugline", "")) + "_" + str(item.get("unique_id")) + ".txt"
+                    re.sub(r'[\\/*?:"<>|]', "", item.get("slugline", "")) + "_" + str(item.get("unique_id")) + extension
                 )
 
                 items[item_id] = filename, contents
@@ -65,6 +67,9 @@ class ExportService(AsyncBaseService):
         if doc.get("inline"):
             doc["export"] = {}
             for item_id, (filename, contents) in items.items():
+                if isinstance(contents, bytes):
+                    doc["export"][item_id] = base64.b64encode(contents).decode("ascii")
+                    continue
                 try:
                     doc["export"][item_id] = json.loads(contents)
                 except ValueError:
@@ -73,7 +78,7 @@ class ExportService(AsyncBaseService):
             in_memory_zip = BytesIO()
             with ZipFile(in_memory_zip, "a") as zip:
                 for item_id, (filename, contents) in items.items():
-                    zip.writestr(filename, contents.encode("UTF-8"))
+                    zip.writestr(filename, contents if isinstance(contents, bytes) else contents.encode("UTF-8"))
 
             app = get_current_app()
             zip_id = await app.media.put_async(
