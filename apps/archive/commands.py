@@ -295,18 +295,28 @@ class RemoveExpiredContent:
             logger.info("%s No items found to expire in archived.", self.log_msg)
         else:
             logger.info("%s Removing %d expired items from archived.", self.log_msg, len(expired))
-
-        removed = await archived_service.delete_docs_without_callbacks_async(expired)
+        removed = await archived_service.delete_expired_docs_async(expired)
         for item in expired:
             if item["_id"] not in removed:
                 logger.error("%s Item was not removed from archived item=%s", self.log_msg, item["item_id"])
                 continue
-            # TODO-PR: Use async version
-            signals.archived_item_removed.send(archived_service, item=item)
-            if not get_app_config("LEGAL_ARCHIVE") and not await archived_service.find_one_async(
-                req=None, item_id=item["item_id"]
-            ):
-                await remove_media_files(item, published=True)
+            try:
+                signals.archived_item_removed.send(archived_service, item=item)
+                if (
+                    not get_app_config("LEGAL_ARCHIVE")
+                    and not await archived_service.find_one_async(req=None, item_id=item["item_id"])
+                    and not await get_resource_service(ARCHIVE).find_one_async(req=None, _id=item["item_id"])
+                ):
+                    await remove_media_files(item, published=True)
+            except SoftTimeLimitExceeded:
+                raise
+            except Exception:
+                logger.exception(
+                    "%s Failed to clean up deleted archived item _id=%s item_id=%s",
+                    self.log_msg,
+                    item["_id"],
+                    item["item_id"],
+                )
 
     async def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.
