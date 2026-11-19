@@ -188,6 +188,14 @@ class ArchivedService(BaseService):
     def command_delete(self, lookup):
         super().delete(lookup)
 
+    def delete_expired_docs(self, docs):
+        """Purge archived snapshots without applying article-kill validation."""
+        removed = self.backend.delete_docs(self.datasource, docs)
+        for doc in docs:
+            if doc[config.ID_FIELD] in removed:
+                self.on_deleted(doc)
+        return removed
+
     def find_one(self, req, **lookup):
         item = super().find_one(req, **lookup)
         user = get_user()

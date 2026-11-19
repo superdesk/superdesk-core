@@ -286,14 +286,28 @@ class RemoveExpiredContent(superdesk.Command):
             logger.info("%s No items found to expire in archived.", self.log_msg)
         else:
             logger.info("%s Removing %d expired items from archived.", self.log_msg, len(expired))
-        removed = archived_service.delete_docs(expired)
+        removed = archived_service.delete_expired_docs(expired)
         for item in expired:
             if item["_id"] not in removed:
                 logger.error("%s Item was not removed from archived item=%s", self.log_msg, item["item_id"])
                 continue
-            signals.archived_item_removed.send(archived_service, item=item)
-            if not app.config.get("LEGAL_ARCHIVE") and not archived_service.find_one(req=None, item_id=item["item_id"]):
-                remove_media_files(item, published=True)
+            try:
+                signals.archived_item_removed.send(archived_service, item=item)
+                if (
+                    not app.config.get("LEGAL_ARCHIVE")
+                    and not archived_service.find_one(req=None, item_id=item["item_id"])
+                    and not get_resource_service(ARCHIVE).find_one(req=None, _id=item["item_id"])
+                ):
+                    remove_media_files(item, published=True)
+            except SoftTimeLimitExceeded:
+                raise
+            except Exception:
+                logger.exception(
+                    "%s Failed to clean up deleted archived item _id=%s item_id=%s",
+                    self.log_msg,
+                    item["_id"],
+                    item["item_id"],
+                )
 
     def _can_remove_item(self, item, now, processed_item=None, preserve_published_desks=None):
         """Recursively checks if the item can be removed.

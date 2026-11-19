@@ -497,10 +497,16 @@ def remove_media_files(doc, published=False):
 
     If media files are not references by any other
     story then delete the media files
+    Collect media IDs before releasing retained published references, whether
+    the production copy or the final archived snapshot is deleted last.
+    This sweep requires no remaining copies and Legal Archive to be disabled.
+    Reference ownership uses _id_document for archive versions, item_id for
+    archived snapshots, and _id for production items, not the item's guid.
     :param dict doc: document for which the media are being deleted
     :return boolean: True if files are deleted else false.
     """
-    references = None
+    item_id = doc.get("_id_document") or doc.get("item_id") or doc.get(config.ID_FIELD)
+    references = []
 
     if doc.get("renditions"):
         references = [doc.get("renditions")]
@@ -515,18 +521,33 @@ def remove_media_files(doc, published=False):
     if references:
         logger.info("Removing media files for %s", doc.get("guid"))
 
-    if doc.get("guid"):
-        remove_media_references(doc["guid"], published)
+    if item_id:
+        if (
+            not app.config.get("LEGAL_ARCHIVE")
+            and not get_resource_service("archive").find_one(req=None, _id=item_id)
+            and not get_resource_service("published").find_one(req=None, item_id=item_id)
+            and not get_resource_service("archived").find_one(req=None, item_id=item_id)
+        ):
+            media_references = get_resource_service("media_references")
+            lookup = {"item_id": item_id, "published": True}
+            retained = list(media_references.get_from_mongo(req=None, lookup=lookup))
+            if retained:
+                references.append({ref["media_id"]: {"media": ref["media_id"]} for ref in retained})
+                if not published:
+                    media_references.delete_action(lookup)
+        remove_media_references(item_id, published)
 
+    seen_media = set()
     for renditions in references:
         for rendition in renditions.values():
             if not rendition.get("media"):
                 continue
             media = rendition.get("media") if isinstance(rendition.get("media"), str) else str(rendition.get("media"))
+            if media in seen_media:
+                continue
+            seen_media.add(media)
             try:
-                references = get_resource_service("media_references").get(
-                    req=None, lookup={"media_id": media, "published": True}
-                )
+                references = get_resource_service("media_references").get(req=None, lookup={"media_id": media})
 
                 if references.count() == 0:
                     logger.info("Deleting media:%s", media)
