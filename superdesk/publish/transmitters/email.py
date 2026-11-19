@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import json
+import re
 
 from superdesk.core import get_app_config, get_current_app
 from superdesk.core.emails import send_email_async, EmailAttachment
@@ -84,6 +85,20 @@ class EmailPublishService(PublishService):
                             cid=cid,
                         )
                     )
+
+            # Binary formats (IDML) leave formatted_item empty; the file itself is the deliverable.
+            if queue_item.get("destination", {}).get("format") == "idml":
+                headline = queue_item.get("headline") or queue_item["item_id"]
+                filename = "{}.idml".format(re.sub(r"[^\w]+", "-", headline).strip("-")[:80] or "story")
+                subject = item.get("message_subject", headline)
+                text_body = html_body = "{}\n\nInDesign file attached: {}".format(headline, filename)
+                attachments.append(
+                    EmailAttachment(
+                        filename=filename,
+                        content_type="application/vnd.adobe.indesign-idml-package",
+                        data=queue_item["encoded_item"],
+                    )
+                )
 
             # sending email in this task (don't send this as a Celery Task)
             await send_email_async(

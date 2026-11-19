@@ -145,3 +145,32 @@ class EmailPublishServiceAsyncWorkerTest(TestCase):
             attachments=[],
             raise_exceptions=True,
         )
+
+
+class EmailPublishServiceIDMLTest(TestCase):
+    async def test_idml_is_attached(self):
+        queue_item = {
+            "item_id": "123",
+            "headline": "Posto de saúde abre aos sábados",
+            "destination": {
+                "delivery_type": "email",
+                "config": {"recipients": "a@b.c.d"},
+                "name": "InDesign",
+                "format": "idml",
+            },
+            "formatted_item": "",
+            "encoded_item": b"PK\x03\x04idml",
+        }
+
+        transmitter = EmailPublishService()
+        send_email_async = AsyncMock()
+        with patch("superdesk.publish.transmitters.email.send_email_async", send_email_async):
+            await transmitter._transmit(queue_item=queue_item, subscriber={})
+
+        kwargs = send_email_async.await_args.kwargs
+        self.assertEqual(kwargs["subject"], "Posto de saúde abre aos sábados")
+        self.assertEqual(len(kwargs["attachments"]), 1)
+        attachment = kwargs["attachments"][0]
+        self.assertEqual(attachment.filename, "Posto-de-saúde-abre-aos-sábados.idml")
+        self.assertEqual(attachment.content_type, "application/vnd.adobe.indesign-idml-package")
+        self.assertEqual(attachment.data, b"PK\x03\x04idml")
