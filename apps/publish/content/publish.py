@@ -9,6 +9,7 @@
 # at https://www.sourcefabric.org/superdesk/license
 
 import logging
+from uuid import uuid4
 
 from superdesk.flask import request
 from superdesk.errors import SuperdeskApiError
@@ -29,7 +30,10 @@ from superdesk.lifecycle_timing import duration_ms, to_epoch_ms, duration_ms_fro
 from datetime import datetime
 
 from superdesk.utc import utcnow
+from superdesk.celery_task_utils import get_lock_id
+from superdesk.lock import lock, unlock
 from superdesk.publish_async.utils import get_residrefs
+from superdesk.resource_fields import ETAG
 
 from .common import BasePublishService, BasePublishResource, ITEM_PUBLISH
 from quart_babel import gettext as _
@@ -56,6 +60,28 @@ class ArchivePublishService(BasePublishService):
     publish_type = "publish"
     published_state = "published"
     item_operation = ITEM_PUBLISH
+
+    async def _update_for_patch(self, id, updates, original, raise_errors: bool, *, allow_scheduled: bool):
+        if allow_scheduled:
+            return await self.update_async(id, updates, original, raise_errors, allow_scheduled=True)
+        return await self.update_async(id, updates, original, raise_errors)
+
+    async def update_async(self, id, updates, original, raise_errors: bool = False, *, allow_scheduled: bool = False):
+        lock_id = get_lock_id("archive", "publish", id)
+        owner = str(uuid4())
+        if not lock(lock_id, host=owner, expire=600):
+            raise SuperdeskApiError.conflictError(_("This article is already being published."))
+
+        try:
+            current = await self.find_one_async(req=None, _id=id)
+            if not current:
+                raise SuperdeskApiError.notFoundError(_("Cannot find article to publish"))
+            self._raise_if_scheduled(current, allow_scheduled=allow_scheduled)
+            if original.get(ETAG) != current.get(ETAG):
+                raise SuperdeskApiError.preconditionFailedError(_("The article has changed. Please reload it."))
+            return await super().update_async(id, updates, original, raise_errors)
+        finally:
+            unlock(lock_id, host=owner)
 
     async def _validate(self, original, updates):
         await super()._validate(original, updates)

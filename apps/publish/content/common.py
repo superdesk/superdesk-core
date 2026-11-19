@@ -188,20 +188,36 @@ class BasePublishService(AsyncBaseService):
     item_operation = ITEM_PUBLISH
     package_service = PackageService()
 
-    async def patch_async(self, id, updates, raise_errors: bool = False):
+    async def patch_async(self, id, updates, raise_errors: bool = False, *, allow_scheduled: bool = False):
         original = await self.find_one_async(req=None, _id=id)
         if not original:
             raise SuperdeskApiError.notFoundError(_("Cannot find article to publish"))
 
+        self._raise_if_scheduled(original, allow_scheduled=allow_scheduled)
         updated = original.copy()
         await self.on_update_async(updates, original)
         updated.update(updates)
         if get_config(bool, "IF_MATCH"):
             resolve_document_etag(updated, self.datasource)
             updates[ETAG] = updated[ETAG]
-        res = await self.update_async(id, updates, original, raise_errors)
+        res = await self._update_for_patch(id, updates, original, raise_errors, allow_scheduled=allow_scheduled)
         await self.on_updated_async(updates, original)
         return res
+
+    def _raise_if_scheduled(self, original, *, allow_scheduled: bool):
+        if (
+            self.publish_type == ITEM_PUBLISH
+            and original.get(ITEM_STATE) == CONTENT_STATE.SCHEDULED
+            and not allow_scheduled
+        ):
+            raise SuperdeskApiError.conflictError(
+                _("This article is already scheduled. Deschedule it before publishing again.")
+            )
+
+    async def _update_for_patch(self, id, updates, original, raise_errors: bool, *, allow_scheduled: bool):
+        if allow_scheduled:
+            raise TypeError("allow_scheduled is only supported for publishing")
+        return await self.update_async(id, updates, original, raise_errors)
 
     async def on_update_async(self, updates, original):
         await self._refresh_associated_items(original)
@@ -1058,6 +1074,11 @@ class BasePublishService(AsyncBaseService):
                     # check for marking that the association item has been queued
                     associated_item["is_queued"] = True
                 elif associated_item.get("state") != self.published_state:
+                    if self.publish_type == ITEM_PUBLISH and associated_item.get("state") == CONTENT_STATE.SCHEDULED:
+                        archive_item = await archive_service.find_one_async(req=None, _id=associated_item[ID_FIELD])
+                        if archive_item and archive_item.get("state") == CONTENT_STATE.SCHEDULED:
+                            continue
+
                     # Check if there are updates to associated item
                     association_updates = updates.get(ASSOCIATIONS, {}).get(associations_key)
 

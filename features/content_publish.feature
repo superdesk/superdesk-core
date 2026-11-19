@@ -755,6 +755,55 @@ Feature: Content Publishing
       And we publish "#archive._id#" with "publish" type and "published" state
       Then we get response code 200
 
+    @auth
+    Scenario: Scheduled content must be descheduled before publishing again
+      Given empty "subscribers"
+      And "desks"
+      """
+      [{"name": "Sports", "content_expiry": 60}]
+      """
+      And "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema":{}}]
+      """
+      And "archive"
+      """
+      [{"guid": "scheduled-once", "headline": "test", "_current_version": 1, "state": "fetched",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "slugline": "test", "body_html": "Test Document body"}]
+      """
+      When we concurrently schedule "#archive._id#"
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      When we get "/published"
+      Then we get list with 1 items
+      When we publish "#archive._id#" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+3#"}
+      """
+      Then we get error 400
+      """
+      {"_issues": {"validator exception": "409: This article is already scheduled. Deschedule it before publishing again."}}
+      """
+      When we get "/published"
+      Then we get list with 1 items
+      When we patch "/archive/scheduled-once"
+      """
+      {"publish_schedule": null}
+      """
+      Then we get OK response
+      When we publish "scheduled-once" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+3#"}
+      """
+      Then we get OK response
+      When we get "/archive/scheduled-once"
+      Then we get existing resource
+      """
+      {"state": "scheduled", "operation": "publish"}
+      """
+
     @auth @notification
     Scenario: Schedule a user content publish
       Given empty "subscribers"
@@ -5551,4 +5600,63 @@ Feature: Content Publishing
             "utc_publish_schedule": "2035-04-01T12:00:00+0000"
         }
       }
+      """
+
+    @auth
+    Scenario: Scheduling an article with an already scheduled image
+      Given empty "subscribers"
+      And config update
+      """
+      {"PUBLISH_ASSOCIATED_ITEMS": true}
+      """
+      And "desks"
+      """
+      [{"name": "News", "content_expiry": 60}]
+      """
+      And "validators"
+      """
+      [{"_id": "publish_text", "act": "publish", "type": "text", "schema": {}}]
+      """
+      And "archive"
+      """
+      [{"_id": "scheduled-image", "guid": "scheduled-image", "_current_version": 1,
+        "type": "picture", "headline": "Image", "slugline": "Image", "state": "in_progress",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "renditions": {}}]
+      """
+      When we publish "scheduled-image" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      Then we get OK response
+      When we publish "scheduled-image" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      Then we get error 400
+      Given "archive"
+      """
+      [{"_id": "article-with-scheduled-image", "guid": "article-with-scheduled-image",
+        "_current_version": 1, "headline": "Article", "slugline": "Article",
+        "body_html": "Article body", "state": "in_progress",
+        "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"},
+        "associations": {"media--1": {"_id": "scheduled-image", "guid": "scheduled-image",
+          "_current_version": 2, "type": "picture", "headline": "Image", "slugline": "Image",
+          "state": "scheduled", "operation": "publish", "renditions": {},
+          "task": {"desk": "#desks._id#", "stage": "#desks.incoming_stage#", "user": "#CONTEXT_USER_ID#"}}}}]
+      """
+      When we publish "article-with-scheduled-image" with "publish" type and "published" state
+      """
+      {"publish_schedule": "#DATE+2#"}
+      """
+      Then we get OK response
+      When we get "/archive/scheduled-image"
+      Then we get existing resource
+      """
+      {"state": "scheduled", "operation": "publish"}
+      """
+      When we get "/published?published_id=1&where=%7B%22item_id%22%3A%22scheduled-image%22%7D"
+      Then we get list with 1 items
+      """
+      {"_items": [{"item_id": "scheduled-image"}]}
       """
