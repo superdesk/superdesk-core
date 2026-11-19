@@ -207,6 +207,15 @@ class ArchivedService(AsyncBaseService):
     async def command_delete(self, lookup):
         await super().delete_async(lookup)
 
+    async def delete_expired_docs_async(self, docs):
+        """Purge archived snapshots without applying article-kill validation."""
+        removed = await self.delete_docs_without_callbacks_async(docs)
+        for doc in docs:
+            if doc[ID_FIELD] in removed:
+                self.on_deleted(doc)
+                await self.on_deleted_async(doc)
+        return removed
+
     async def find_one_async(self, req, **lookup):
         item = await super().find_one_async(req, **lookup)
         user = get_user()
