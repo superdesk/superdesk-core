@@ -174,3 +174,43 @@ class EmailPublishServiceIDMLTest(TestCase):
         self.assertEqual(attachment.filename, "Posto-de-saúde-abre-aos-sábados.idml")
         self.assertEqual(attachment.content_type, "application/vnd.adobe.indesign-idml-package")
         self.assertEqual(attachment.data, b"PK\x03\x04idml")
+
+    async def test_idml_transmit_reads_stored_encoded_item(self):
+        from io import BytesIO
+        from bson import ObjectId
+        from superdesk.types import SubscribersResource
+
+        subscriber_id = ObjectId()
+        await SubscribersResource.get_service().create(
+            [
+                {
+                    "_id": subscriber_id,
+                    "name": "InDesign",
+                    "subscriber_type": "digital",
+                    "email": "a@b.cd",
+                    "is_active": True,
+                    "destinations": [
+                        {"name": "InDesign", "format": "idml", "delivery_type": "email", "config": {"recipients": "a@b.cd"}}
+                    ],
+                }
+            ]
+        )
+        encoded_item_id = self.app.storage.put(BytesIO(b"PK\x03\x04idml"))
+        queue_item = {
+            "item_id": "123",
+            "subscriber_id": subscriber_id,
+            "headline": "Posto de saúde",
+            "destination": {
+                "delivery_type": "email",
+                "config": {"recipients": "a@b.c.d"},
+                "name": "InDesign",
+                "format": "idml",
+            },
+            "formatted_item": "",
+            "encoded_item_id": encoded_item_id,
+        }
+        send_email_async = AsyncMock()
+        with patch("superdesk.publish.transmitters.email.send_email_async", send_email_async):
+            await EmailPublishService().transmit(queue_item)
+
+        self.assertEqual(send_email_async.await_args.kwargs["attachments"][0].data, b"PK\x03\x04idml")

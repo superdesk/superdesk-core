@@ -57,9 +57,12 @@ class PublishServiceBase:
                 # if "encoded_item_id" exists we use it, else
                 # we fill encoded_item using "formatted_item" and "item_encoding"
                 if "encoded_item_id" in queue_item:
-                    encoded_item_id = queue_item["encoded_item_id"]
-                    async_file = await get_current_app().storage.get_async(encoded_item_id)
-                    queue_item["encoded_item"] = await async_file.to_bytes()
+                    # app.storage is eve's synchronous GridFS storage (no get_async); the
+                    # formatter stored the encoded item with its synchronous put.
+                    encoded_file = get_current_app().storage.get(queue_item["encoded_item_id"])
+                    if encoded_file is None:
+                        raise FileNotFoundError("encoded item {} not found".format(queue_item["encoded_item_id"]))
+                    queue_item["encoded_item"] = encoded_file.read()
                 else:
                     encoding = queue_item.get("item_encoding", "utf-8")
                     queue_item["encoded_item"] = queue_item["formatted_item"].encode(encoding, errors="replace")
