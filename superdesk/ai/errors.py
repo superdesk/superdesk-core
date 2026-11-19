@@ -1,8 +1,11 @@
 import enum
+import logging
 
 from quart_babel import gettext
 
 from superdesk.errors import SuperdeskApiError
+
+logger = logging.getLogger(__name__)
 
 
 class AIErrorKind(str, enum.Enum):
@@ -13,6 +16,21 @@ class AIErrorKind(str, enum.Enum):
     TIMEOUT = "timeout"
     UPSTREAM = "upstream"
     INVALID_RESPONSE = "invalid_response"
+
+
+class AIApiError(SuperdeskApiError):
+    """An AI request that failed, answered with the kind of failure next to the message
+
+    ``error_kind`` is meant for the client to word its own message on, so the wording shown to an
+    editor does not depend on what the server happens to say.
+    """
+
+    def __init__(self, status_code: int, message: str, error_kind: str) -> None:
+        super().__init__(message=message, status_code=status_code)
+        self.error_kind = error_kind
+
+    def to_dict(self) -> dict:
+        return {**super().to_dict(), "error_kind": self.error_kind}
 
 
 class NotSupportedError(SuperdeskApiError):
@@ -41,22 +59,35 @@ class AIProviderError(Exception):
         self.status_code = status_code
 
 
-def to_api_error(error: AIProviderError) -> SuperdeskApiError:
+def to_api_error(error: AIProviderError, for_administrator: bool = False) -> AIApiError:
     """Convert a provider failure into the HTTP error to answer the client with
+
+    The message is written for an editor unless ``for_administrator`` is set. The provider's own
+    detail, the HTTP status it answered with for instance, means nothing to an editor, so it is
+    logged for the administrator instead, and only returned on the routes administrators use to
+    set a provider up.
 
     An ``auth`` failure is answered with a gateway error rather than a 401 or 403: the request
     itself was authenticated, it is the stored provider credentials that an administrator has to
     fix, and a 401 would send the client to the login screen.
     """
 
-    if error.kind == AIErrorKind.RATE_LIMIT:
-        return SuperdeskApiError(status_code=429, message=error.message)
-    elif error.kind == AIErrorKind.TIMEOUT:
-        return SuperdeskApiError(status_code=504, message=error.message)
-    elif error.kind == AIErrorKind.AUTH:
-        return SuperdeskApiError(
-            status_code=502,
-            message=gettext("The AI provider rejected the configured credentials"),
-        )
+    logger.warning("AI provider request failed (%s): %s", error.kind.value, error.message)
 
-    return SuperdeskApiError(status_code=502, message=error.message)
+    if error.kind == AIErrorKind.RATE_LIMIT:
+        status_code = 429
+        message = gettext("The AI service is busy. Try again in a minute.")
+    elif error.kind == AIErrorKind.TIMEOUT:
+        status_code = 504
+        message = gettext("The AI service took too long to answer. Try again later.")
+    elif error.kind == AIErrorKind.AUTH:
+        status_code = 502
+        message = gettext("The AI service is not set up correctly. Ask an administrator to check it.")
+    elif error.kind == AIErrorKind.INVALID_RESPONSE:
+        status_code = 502
+        message = gettext("The AI service answered with something that could not be read. Try again.")
+    else:
+        status_code = 502
+        message = gettext("The AI service could not be reached. Try again later.")
+
+    return AIApiError(status_code, error.message if for_administrator else message, error.kind.value)

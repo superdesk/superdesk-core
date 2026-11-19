@@ -686,6 +686,24 @@ Feature: Content Lists
         Then we get list with 0 items
 
     @auth
+    Scenario: Reading webhooks needs the content_lists privilege, HEAD included
+        When we post to "/content_list_webhooks"
+        """
+        {"url": "https://example.com/hook?token=secret"}
+        """
+        Then we get OK response
+        When we login as user "no_lists" with password "nolists123" and user type "user"
+        """
+        {"privileges": {}}
+        """
+        And we get "/content_list_webhooks"
+        Then we get error 403
+        When we head "/content_list_webhooks"
+        Then we get error 403
+        When we head "/content_list_webhooks/#content_list_webhooks._id#"
+        Then we get error 403
+
+    @auth
     Scenario: Create a webhook
         When we post to "/content_list_webhooks"
         """
