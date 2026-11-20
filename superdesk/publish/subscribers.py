@@ -370,7 +370,17 @@ class SubscribersService(CacheableService):
                     "destinations": [
                         {
                             **destination,
-                            "config": {key: value for key, value in destination["config"].items() if key not in fields},
+                            **(
+                                {
+                                    "config": {
+                                        key: value
+                                        for key, value in (destination.get("config") or {}).items()
+                                        if key not in fields
+                                    }
+                                }
+                                if "config" in destination
+                                else {}
+                            ),
                             "_id": get_destination_id(destination),
                         }
                         for destination in doc.get("destinations", [])

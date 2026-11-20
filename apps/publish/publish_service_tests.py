@@ -89,6 +89,16 @@ class PublishServiceTests(TestCase):
                 }
             ],
         },
+        {
+            "_id": "4",
+            "name": "Test4",
+            "subscriber_type": SUBSCRIBER_TYPES.WIRE,
+            "media_type": "media",
+            "is_active": True,
+            "sequence_num_settings": {"max": 10, "min": 1},
+            "critical_errors": {"9004": True},
+            "destinations": [{"name": "Missing Config"}],
+        },
     ]
 
     def setUp(self):
@@ -170,3 +180,8 @@ class PublishServiceTests(TestCase):
         self.assertEqual("Test3", item["name"])
         self.assertNotIn("access_key_id", item["destinations"][0]["config"])
         self.assertNotIn("secret_access_key", item["destinations"][0]["config"])
+
+        item = data[3]
+        self.assertEqual("Test4", item["name"])
+        self.assertEqual("Missing Config", item["destinations"][0]["name"])
+        self.assertNotIn("config", item["destinations"][0])
