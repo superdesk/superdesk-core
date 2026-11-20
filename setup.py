@@ -72,6 +72,10 @@ install_requires = [
     "aioimaplib>=2.0.1,<2.1",
 ]
 
+extras_require = {
+    "exiv2": ["pyexiv2>=2.12.0,<2.16"],
+}
+
 package_data = {
     "superdesk": [
         "templates/*.txt",
@@ -105,6 +109,7 @@ setup(
     include_package_data=True,
     # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
+    extras_require=extras_require,
     python_requires=">=3.12",
     classifiers=[
         "Development Status :: 4 - Beta",

@@ -25,7 +25,10 @@ If `pip` cannot find a compatible wheel for your Python version, architecture,
 or libc (for example, on Alpine's musl), use a glibc-based image with a matching
 wheel or follow the [upstream build instructions](https://github.com/LeoHsiao1/pyexiv2/blob/master/pyexiv2/lib/README.md).
 A manual build requires a C++ compiler, Python development headers, `pybind11`,
-and matching Exiv2 headers and libraries.
+and matching Exiv2 headers and libraries. On Debian/Ubuntu, these are provided
+by `build-essential`, the development package for the Python version in use
+(for example, `python3-dev`), and `libexiv2-dev`; install `libstdc++6` in the
+runtime image as well.
 
 Workers that process staged media uploads also need the separate `exiftool`
 executable (`libimage-exiftool-perl` on Debian/Ubuntu).
