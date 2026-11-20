@@ -962,7 +962,7 @@ class AIActionRunTestCase(TestCase):
         self.assertEqual(available.status_code, 200, await available.get_data())
         self.assertEqual([action["_id"] for action in (await available.get_json())["_items"]], [str(action_id)])
 
-        requests = await self._capture_completion()
+        await self._capture_completion()
         run = await self._run(str(action_id))
         self.assertEqual(run.status_code, 200, await run.get_data())
 

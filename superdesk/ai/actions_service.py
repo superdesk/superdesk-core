@@ -39,8 +39,7 @@ logger = logging.getLogger(__name__)
 def _new_names(names: list[Any], stored: list[str]) -> list[str]:
     """Return the names, stripped, that are not already ``stored``"""
 
-    stripped = [name.strip() for name in names if isinstance(name, str)]
-    return [name for name in stripped if name not in stored]
+    return [stripped for name in names if isinstance(name, str) and (stripped := name.strip()) not in stored]
 
 
 class AIActionsService(AsyncResourceService[AIAction]):
@@ -140,10 +139,12 @@ class AIActionsService(AsyncResourceService[AIAction]):
         custom = list(set(names) - found)
 
         if custom:
-            cursor = VocabulariesService().get_all_raw(
-                {"_id": {"$in": custom}, "field_type": "text", "_deleted": {"$ne": True}}
+            cursor = await VocabulariesService().search(
+                {"_id": {"$in": custom}, "field_type": "text", "_deleted": {"$ne": True}},
+                use_mongo=True,
+                projection=["_id"],
             )
-            found.update([vocabulary["_id"] async for vocabulary in cursor])
+            found.update(vocabulary["_id"] for vocabulary in await cursor.to_list_raw())
 
         return found
 
