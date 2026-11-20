@@ -18,6 +18,8 @@ install_requires = [
     "aiosmtplib>=5.1.1,<5.2",
     "arrow>=0.4,<=1.4.0",
     "pillow>=9.2,<12.1",
+    "pyexiftool>=0.5.6,<0.6",
+    "pyexiv2>=2.12.0,<2.16; sys_platform == 'linux'",
     "bcrypt>=3.1.1,<5.1",
     "blinker>=1.3,<1.10",
     "celery[redis]>=5.6.2,<5.7",
@@ -103,9 +105,6 @@ setup(
     include_package_data=True,
     # setup_requires=["setuptools_scm"],
     install_requires=install_requires,
-    extras_require={  # type: ignore[arg-type]
-        "exiv2": ["pyexiv2>=2.12.0,<2.16"],
-    },
     python_requires=">=3.12",
     classifiers=[
         "Development Status :: 4 - Beta",
