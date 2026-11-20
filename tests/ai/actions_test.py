@@ -17,6 +17,7 @@ import aiohttp
 from bson import ObjectId
 
 from superdesk.ai.actions_service import AIActionsService
+from superdesk.ai.models import BUILT_IN_TEXT_FIELDS, EXTRA_INSTRUCTIONS_MAX_LENGTH
 from superdesk.ai.prompts import CONTENT_REMINDER
 from superdesk.tests import TestCase
 from superdesk.tests.http_mocks import mock_http
@@ -49,6 +50,16 @@ USER_WITH_AI_STUDIO_PRIVILEGE = {
     "_id": "6a0000000000000000000004",
     "user_type": "user",
     "privileges": {"ai_studio": 1},
+}
+
+
+#: A custom field of type text, stored under ``extra`` of an item
+CUSTOM_TEXT_FIELD = {
+    "_id": "seo_description",
+    "display_name": "SEO description",
+    "type": "manageable",
+    "items": [],
+    "field_type": "text",
 }
 
 
@@ -101,18 +112,18 @@ class AIActionsRestTestCase(TestCase):
         self.assertEqual(action.content_profiles, [])
         self.assertIsNone(action.model)
         self.assertEqual(action.parameters.temperature, 0.7)
-        self.assertIsNone(action.parameters.system_prompt)
+        self.assertIsNone(action.parameters.extra_instructions)
 
     async def test_action_parameters_are_stored(self):
-        created = await self._create_action(parameters={"temperature": 0.2, "system_prompt": "Be brief"})
+        created = await self._create_action(parameters={"temperature": 0.2, "extra_instructions": "Be brief"})
 
         action = await self.service.find_by_id(created["_id"])
         self.assertEqual(action.parameters.temperature, 0.2)
-        self.assertEqual(action.parameters.system_prompt, "Be brief")
+        self.assertEqual(action.parameters.extra_instructions, "Be brief")
 
     async def test_patching_one_parameter_leaves_the_others_alone(self):
         created = await self._create_action(
-            parameters={"temperature": 0.2, "system_prompt": "Be brief", "suggestions_count": 5}
+            parameters={"temperature": 0.2, "extra_instructions": "Be brief", "suggestions_count": 5}
         )
 
         response = await self.test_client.patch(
@@ -124,22 +135,219 @@ class AIActionsRestTestCase(TestCase):
 
         action = await self.service.find_by_id(created["_id"])
         self.assertEqual(action.parameters.temperature, 0.9)
-        self.assertEqual(action.parameters.system_prompt, "Be brief")
+        self.assertEqual(action.parameters.extra_instructions, "Be brief")
         self.assertEqual(action.parameters.suggestions_count, 5)
 
     async def test_a_parameter_patched_to_null_is_cleared(self):
-        created = await self._create_action(parameters={"system_prompt": "Be brief", "max_characters": 60})
+        created = await self._create_action(parameters={"extra_instructions": "Be brief", "max_characters": 60})
 
         response = await self.test_client.patch(
             f"/api/ai_actions/{created['_id']}",
-            json={"parameters": {"system_prompt": None}},
+            json={"parameters": {"extra_instructions": None}},
             headers={"If-Match": created["_etag"]},
         )
         self.assertEqual(response.status_code, 200, await response.get_data())
 
         action = await self.service.find_by_id(created["_id"])
-        self.assertIsNone(action.parameters.system_prompt)
+        self.assertIsNone(action.parameters.extra_instructions)
         self.assertEqual(action.parameters.max_characters, 60)
+
+    async def test_extra_instructions_over_the_length_cap_are_rejected_on_create(self):
+        response = await self.test_client.post(
+            "/api/ai_actions",
+            json=self._payload(parameters={"extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 1)}),
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            (await response.get_json())["_issues"]["parameters"]["extra_instructions"],
+            {"maxlength": "At most 2,000 characters"},
+        )
+
+    async def test_extra_instructions_over_the_length_cap_are_rejected_on_patch(self):
+        created = await self._create_action()
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{created['_id']}",
+            json={"parameters": {"extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 1)}},
+            headers={"If-Match": created["_etag"]},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(
+            (await response.get_json())["_issues"]["parameters"]["extra_instructions"],
+            {"maxlength": "At most 2,000 characters"},
+        )
+
+    async def test_extra_instructions_at_the_length_cap_are_stored(self):
+        created = await self._create_action(parameters={"extra_instructions": "x" * EXTRA_INSTRUCTIONS_MAX_LENGTH})
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertEqual(len(action.parameters.extra_instructions), EXTRA_INSTRUCTIONS_MAX_LENGTH)
+
+    async def test_every_built_in_text_field_is_accepted_as_input_and_output(self):
+        for name in BUILT_IN_TEXT_FIELDS:
+            with self.subTest(field=name):
+                await self._create_action(input_fields=[name], output_field=name)
+
+    async def test_a_custom_text_field_is_accepted_as_input_and_output(self):
+        await self.async_app.mongo.get_collection_async("vocabularies").insert_one(dict(CUSTOM_TEXT_FIELD))
+
+        created = await self._create_action(
+            input_fields=["body_html", "seo_description"], output_field="seo_description"
+        )
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertEqual(action.input_fields, ["body_html", "seo_description"])
+        self.assertEqual(action.output_field, "seo_description")
+
+    async def test_an_input_field_that_is_not_a_text_field_is_rejected(self):
+        await self.async_app.mongo.get_collection_async("vocabularies").insert_one(
+            {**CUSTOM_TEXT_FIELD, "_id": "embargo_date", "field_type": "date"}
+        )
+
+        for name in ("no_such_field", "urgency", "embargo_date"):
+            with self.subTest(field=name):
+                response = await self.test_client.post(
+                    "/api/ai_actions", json=self._payload(input_fields=["body_html", name])
+                )
+
+                self.assertEqual(response.status_code, 400)
+                issues = (await response.get_json())["_issues"]
+                self.assertIn(name, issues["input_fields"]["text_field"])
+                self.assertNotIn("body_html", issues["input_fields"]["text_field"])
+                self.assertNotIn("output_field", issues)
+
+    async def test_an_output_field_that_is_not_a_text_field_is_rejected(self):
+        response = await self.test_client.post("/api/ai_actions", json=self._payload(output_field="subject"))
+
+        self.assertEqual(response.status_code, 400)
+        issues = (await response.get_json())["_issues"]
+        self.assertIn("subject", issues["output_field"]["text_field"])
+        self.assertNotIn("input_fields", issues)
+
+    async def _insert_stored_action(self, **updates):
+        """Insert an action as stored, past the checks a request goes through"""
+
+        action_id = ObjectId()
+        await self.async_app.mongo.get_collection_async("ai_actions").insert_one(
+            {
+                **ACTION,
+                "_id": action_id,
+                "_etag": "stored",
+                "active": True,
+                "content_profiles": [],
+                "provider": ObjectId(self.provider_id),
+                **updates,
+            }
+        )
+
+        return action_id
+
+    async def _stored(self, action_id):
+        return await self.async_app.mongo.get_collection_async("ai_actions").find_one({"_id": ObjectId(action_id)})
+
+    async def test_a_patch_with_a_dotted_key_is_rejected_and_writes_nothing(self):
+        created = await self._create_action()
+
+        for updates in (
+            {"parameters.suggestions_count": 99},
+            {"parameters.extra_instructions": "x" * (EXTRA_INSTRUCTIONS_MAX_LENGTH + 500)},
+            {"input_fields.0": "urgency"},
+        ):
+            with self.subTest(updates=updates):
+                response = await self.test_client.patch(
+                    f"/api/ai_actions/{created['_id']}",
+                    json=updates,
+                    headers={"If-Match": created["_etag"]},
+                )
+
+                self.assertEqual(response.status_code, 400, await response.get_data())
+                self.assertIn(next(iter(updates)), (await response.get_json())["_issues"])
+
+        stored = await self._stored(created["_id"])
+        self.assertEqual(stored["input_fields"], ["body_html"])
+        self.assertEqual(stored["parameters"]["suggestions_count"], 3)
+        self.assertNotIn("extra_instructions", stored["parameters"])
+
+    async def test_a_create_with_a_dotted_key_is_rejected(self):
+        response = await self.test_client.post(
+            "/api/ai_actions", json={**self._payload(), "parameters.suggestions_count": 99}
+        )
+
+        self.assertEqual(response.status_code, 400, await response.get_data())
+        self.assertIn("parameters.suggestions_count", (await response.get_json())["_issues"])
+        self.assertEqual(await self.async_app.mongo.get_collection_async("ai_actions").count_documents({}), 0)
+
+    async def test_a_deleted_custom_text_field_is_rejected(self):
+        await self.async_app.mongo.get_collection_async("vocabularies").insert_one(
+            {**CUSTOM_TEXT_FIELD, "_deleted": True}
+        )
+
+        response = await self.test_client.post("/api/ai_actions", json=self._payload(output_field="seo_description"))
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("seo_description", (await response.get_json())["_issues"]["output_field"]["text_field"])
+
+    async def test_field_names_are_checked_and_stored_without_surrounding_whitespace(self):
+        created = await self._create_action(output_field=" headline ")
+        self.assertEqual((await self._stored(created["_id"]))["output_field"], "headline")
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{created['_id']}",
+            json={"input_fields": [" headline "], "output_field": " abstract "},
+            headers={"If-Match": created["_etag"]},
+        )
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        stored = await self._stored(created["_id"])
+        self.assertEqual(stored["input_fields"], ["headline"])
+        self.assertEqual(stored["output_field"], "abstract")
+
+    async def test_a_patch_sending_back_the_stored_values_of_an_older_action_goes_through(self):
+        """A form saving the whole action sends back what it read, a removed custom field included"""
+
+        parameters = {
+            "temperature": 0.7,
+            "suggestions_count": 3,
+        }
+        action_id = await self._insert_stored_action(
+            input_fields=["body_html", "removed_custom_field"],
+            output_field="removed_custom_field",
+            parameters=parameters,
+        )
+
+        response = await self.test_client.patch(
+            f"/api/ai_actions/{action_id}",
+            json={
+                "name": "Renamed",
+                "input_fields": ["body_html", "removed_custom_field"],
+                "output_field": "removed_custom_field",
+                "parameters": parameters,
+            },
+            headers={"If-Match": "stored"},
+        )
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertEqual((await self._stored(action_id))["name"], "Renamed")
+
+    async def test_a_patch_setting_a_field_that_is_not_a_text_field_is_rejected(self):
+        created = await self._create_action()
+
+        for updates in ({"output_field": "byline"}, {"input_fields": ["genre"]}):
+            with self.subTest(updates=updates):
+                response = await self.test_client.patch(
+                    f"/api/ai_actions/{created['_id']}",
+                    json=updates,
+                    headers={"If-Match": created["_etag"]},
+                )
+
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(next(iter(updates)), (await response.get_json())["_issues"])
+
+        action = await self.service.find_by_id(created["_id"])
+        self.assertEqual(action.output_field, "headline")
+        self.assertEqual(action.input_fields, ["body_html"])
 
     async def test_action_provider_is_stored_as_the_provider_id(self):
         created = await self._create_action()
@@ -300,6 +508,34 @@ class AIActionsRestTestCase(TestCase):
         action = await self.service.find_by_id(created["_id"])
         self.assertEqual(action.parameters.suggestions_count, 1)
 
+    async def test_a_patch_with_an_action_type_of_the_wrong_type_is_rejected(self):
+        created = await self._create_action()
+
+        for action_type in ([], {}):
+            with self.subTest(action_type=action_type):
+                response = await self.test_client.patch(
+                    f"/api/ai_actions/{created['_id']}",
+                    json={"action_type": action_type},
+                    headers={"If-Match": created["_etag"]},
+                )
+
+                self.assertEqual(response.status_code, 400, await response.get_data())
+                self.assertIn("action_type", (await response.get_json())["_issues"])
+
+    async def test_a_summary_patched_with_parameters_that_are_not_an_object_is_rejected(self):
+        created = await self._create_action(action_type="summary", output_field="abstract")
+
+        for parameters in (None, "x", [], 5):
+            with self.subTest(parameters=parameters):
+                response = await self.test_client.patch(
+                    f"/api/ai_actions/{created['_id']}",
+                    json={"parameters": parameters},
+                    headers={"If-Match": created["_etag"]},
+                )
+
+                self.assertEqual(response.status_code, 400, await response.get_data())
+                self.assertIn("parameters", (await response.get_json())["_issues"])
+
     async def test_a_suggestion_action_keeps_the_requested_suggestions_count(self):
         created = await self._create_action(parameters={"suggestions_count": 5})
 
@@ -324,6 +560,48 @@ class AIActionsRestTestCase(TestCase):
         response = await self.test_client.get("/api/ai_actions")
 
         self.assertEqual(response.status_code, 403)
+
+
+class AIActionOptionsTestCase(TestCase):
+    async def asyncSetUp(self):
+        await super().asyncSetUp()
+        self._original_auth = self.async_app.auth
+        self.async_app.auth = StubUserAuth(ADMIN_USER)
+        self.addCleanup(self._restore_auth)
+
+    def _restore_auth(self):
+        self.async_app.auth = self._original_auth
+
+    async def test_options_list_the_supported_action_types_and_the_built_in_text_fields(self):
+        response = await self.test_client.get("/api/ai_actions/options")
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertEqual(
+            await response.get_json(),
+            {
+                "action_types": [
+                    {"action_type": "suggestion", "user_actions": ["apply", "copy"], "uses_suggestions_count": True},
+                    {"action_type": "summary", "user_actions": ["apply", "copy"], "uses_suggestions_count": False},
+                ],
+                "built_in_text_fields": list(BUILT_IN_TEXT_FIELDS),
+            },
+        )
+
+    async def test_the_ai_studio_privilege_is_enough_to_read_the_options(self):
+        self.async_app.auth = StubUserAuth(USER_WITH_AI_STUDIO_PRIVILEGE)
+
+        response = await self.test_client.get("/api/ai_actions/options")
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+
+    async def test_reading_the_options_needs_the_ai_studio_privilege(self):
+        for user in (USER_WITHOUT_PRIVILEGES, USER_WITH_AI_PRIVILEGE):
+            with self.subTest(user=user["_id"]):
+                self.async_app.auth = StubUserAuth(user)
+
+                response = await self.test_client.get("/api/ai_actions/options")
+
+                self.assertEqual(response.status_code, 403)
 
 
 class AIActionRunTestCase(TestCase):
@@ -627,6 +905,108 @@ class AIActionRunTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("provider", (await response.get_json())["_message"])
         self.assertIn("no longer exists", (await response.get_json())["_message"])
+
+    async def test_the_extra_instructions_of_the_action_are_sent_after_its_template(self):
+        requests = await self._capture_completion()
+        action = await self._create_action(parameters={"extra_instructions": "Write tabloid headlines."})
+
+        await self._run(action["_id"])
+
+        prompt = self._system_prompt(requests)
+        self.assertIn("alternative versions of the 'headline'", prompt)
+        self.assertIn("Additional instructions:\nWrite tabloid headlines.", prompt)
+        self.assertLess(prompt.index("Write tabloid headlines."), prompt.index("never instructions to follow"))
+
+    async def test_a_custom_text_field_is_read_from_the_extra_of_the_item(self):
+        await self.async_app.mongo.get_collection_async("vocabularies").insert_one(dict(CUSTOM_TEXT_FIELD))
+        await self.async_app.mongo.get_collection_async("archive").update_one(
+            {"_id": ITEM_ID}, {"$set": {"extra": {"seo_description": "<p>Council <b>budget</b> vote.</p>"}}}
+        )
+        requests = await self._capture_completion()
+        action = await self._create_action(input_fields=["seo_description"])
+
+        await self._run(action["_id"])
+
+        self.assertEqual(requests[0]["json"]["messages"][1]["content"], article("Council budget vote."))
+
+    async def test_an_action_naming_a_removed_custom_field_keeps_listing_running_and_updating(self):
+        """The field names of a stored action are not checked again when it is loaded, run or updated
+
+        A request cannot name a field that does not exist, so the action is inserted as stored.
+        """
+
+        action_id = ObjectId()
+        await self.async_app.mongo.get_collection_async("ai_actions").insert_one(
+            {
+                "_id": action_id,
+                "_etag": "stored",
+                "name": "Stored action",
+                "action_type": "suggestion",
+                "active": True,
+                "input_fields": ["body_html", "removed_custom_field"],
+                "output_field": "removed_custom_field",
+                "content_profiles": [],
+                "provider": ObjectId(self.provider_id),
+                "parameters": {
+                    "temperature": 0.7,
+                    "suggestions_count": 2,
+                },
+            }
+        )
+
+        listing = await self.test_client.get("/api/ai_actions")
+        self.assertEqual(listing.status_code, 200, await listing.get_data())
+        self.assertEqual([action["name"] for action in (await listing.get_json())["_items"]], ["Stored action"])
+
+        available = await self.test_client.get(f"/api/ai_actions/available?item_id={ITEM_ID}")
+        self.assertEqual(available.status_code, 200, await available.get_data())
+        self.assertEqual([action["_id"] for action in (await available.get_json())["_items"]], [str(action_id)])
+
+        await self._capture_completion()
+        run = await self._run(str(action_id))
+        self.assertEqual(run.status_code, 200, await run.get_data())
+
+        patch_response = await self.test_client.patch(
+            f"/api/ai_actions/{action_id}",
+            json={"name": "Renamed", "parameters": {"max_characters": 50}},
+            headers={"If-Match": "stored"},
+        )
+        self.assertEqual(patch_response.status_code, 200, await patch_response.get_data())
+        updated = await AIActionsService().find_by_id(action_id)
+        self.assertEqual(updated.name, "Renamed")
+        self.assertEqual(updated.parameters.max_characters, 50)
+
+    async def test_a_custom_field_sharing_its_id_with_an_item_key_is_read_from_extra(self):
+        await self.async_app.mongo.get_collection_async("vocabularies").insert_one(
+            {**CUSTOM_TEXT_FIELD, "_id": "source"}
+        )
+        await self.async_app.mongo.get_collection_async("archive").update_one(
+            {"_id": ITEM_ID}, {"$set": {"source": "AAP", "extra": {"source": "<p>Custom source text.</p>"}}}
+        )
+        requests = await self._capture_completion()
+        action = await self._create_action(input_fields=["source"])
+
+        await self._run(action["_id"])
+
+        self.assertEqual(requests[0]["json"]["messages"][1]["content"], article("Custom source text."))
+
+    async def test_a_custom_field_with_no_value_in_extra_is_not_read_from_the_top_level_of_the_item(self):
+        await self.async_app.mongo.get_collection_async("vocabularies").insert_one(
+            {**CUSTOM_TEXT_FIELD, "_id": "source"}
+        )
+        await self.async_app.mongo.get_collection_async("archive").update_one(
+            {"_id": ITEM_ID}, {"$set": {"source": "AAP", "extra": {}}}
+        )
+        requests = await self._capture_completion()
+        action = await self._create_action(input_fields=["source", "body_html"])
+
+        response = await self._run(action["_id"])
+
+        self.assertEqual(response.status_code, 200, await response.get_data())
+        self.assertEqual(
+            requests[0]["json"]["messages"][1]["content"],
+            article("The council met on Tuesday.\nIt voted on the budget."),
+        )
 
     async def test_an_item_with_no_text_in_the_input_fields_is_rejected(self):
         action = await self._create_action(input_fields=["abstract"])
@@ -987,7 +1367,7 @@ class AIAvailableActionsTestCase(TestCase):
 
     async def test_an_action_is_described_without_its_provider_model_or_prompt(self):
         action = await self._create_action(
-            model="openai/gpt-4o", parameters={"system_prompt": "Be brief", "suggestions_count": 2}
+            model="openai/gpt-4o", parameters={"extra_instructions": "Be brief", "suggestions_count": 2}
         )
 
         response = await self._available()
@@ -1002,8 +1382,18 @@ class AIAvailableActionsTestCase(TestCase):
                     "input_fields": ["body_html"],
                     "output_field": "headline",
                     "suggestions_count": 2,
+                    "user_actions": ["apply", "copy"],
                 }
             ],
+        )
+
+    async def test_a_summary_is_described_as_one_to_apply_or_copy(self):
+        await self._create_action(action_type="summary", output_field="abstract")
+
+        response = await self._available()
+
+        self.assertEqual(
+            [action["user_actions"] for action in (await response.get_json())["_items"]], [["apply", "copy"]]
         )
 
     async def test_the_ai_privilege_is_enough_to_list_the_available_actions(self):

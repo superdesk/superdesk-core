@@ -14,7 +14,7 @@ from quart_babel import gettext
 from superdesk.text_utils import get_text
 
 from .errors import AIErrorKind, AIProviderError, NotSupportedError
-from .models import AIActionType
+from .models import AIActionType, AIUserAction
 
 SYSTEM_TEMPLATES: dict[AIActionType, str] = {
     AIActionType.SUGGESTION: (
@@ -29,6 +29,16 @@ SYSTEM_TEMPLATES: dict[AIActionType, str] = {
 
 #: Action types the run flow can build a prompt for, the rest are rejected as not supported
 SUPPORTED_ACTION_TYPES = frozenset(SYSTEM_TEMPLATES)
+
+#: What an editor can do with the answers of each action type. Suggestions and summaries are a
+#: value for the output field, so they can be applied to it or copied.
+USER_ACTIONS: dict[AIActionType, tuple[AIUserAction, ...]] = {
+    AIActionType.SUGGESTION: (AIUserAction.APPLY, AIUserAction.COPY),
+    AIActionType.SUMMARY: (AIUserAction.APPLY, AIUserAction.COPY),
+}
+
+#: Introduces the ``extra_instructions`` of an action, after the instructions of its type
+EXTRA_INSTRUCTIONS_LEAD_IN = "Additional instructions:"
 
 #: Action types whose answers are plain text, so any markup in them is dropped. A rewrite or a
 #: translation of an HTML field answers with markup that has to be kept, and cleaned against the
@@ -98,18 +108,21 @@ def render_system_prompt(
     count: int,
     max_characters: int | None = None,
     language: str | None = None,
-    system_prompt: str | None = None,
+    extra_instructions: str | None = None,
 ) -> str:
     """Build the system message for one run of an action
+
+    The template of the action type comes first, then the extra instructions of the action, then
+    the rules: the article is data, only its facts are used, the length, the language and the
+    answer format. The rules come last so the provider reads them after any extra instructions.
 
     :param action_type: Type of the action, picks the template
     :param output_field: Name of the item field the answers are written to, named in the prompt
     :param count: Number of versions to ask for
     :param max_characters: Optional length the answers should stay under
     :param language: Optional language to answer in, left out of the prompt when not known
-    :param system_prompt: Optional replacement for the template of the action type. The instructions
-        that follow it are always appended, so a custom prompt cannot drop the answer format or the
-        rule that the article is data.
+    :param extra_instructions: Optional text an administrator added to the template, never in
+        place of it
     :raises NotSupportedError: If the action type has no template
     """
 
@@ -117,11 +130,12 @@ def render_system_prompt(
     if template is None:
         raise unsupported_action_type(action_type)
 
-    parts = [
-        system_prompt or template.format(count=count, output_field=output_field),
-        CONTENT_INSTRUCTION,
-        FACTS_INSTRUCTION,
-    ]
+    parts = [template.format(count=count, output_field=output_field)]
+
+    if extra_instructions:
+        parts.append(f"{EXTRA_INSTRUCTIONS_LEAD_IN}\n{extra_instructions}")
+
+    parts += [CONTENT_INSTRUCTION, FACTS_INSTRUCTION]
 
     if max_characters is not None:
         parts.append(MAX_CHARACTERS_INSTRUCTION.format(max_characters=max_characters))
