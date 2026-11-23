@@ -10,6 +10,7 @@ Staged media uploads
 Upload a binary as multipart ``media`` to ``POST /upload_staging``. The response includes
 processing ``status`` and ``metadata_status``. The request only stores the binary and
 queues processing: metadata extraction and rendition generation run in a Celery worker.
+Workers need the ExifTool executable installed (``libimage-exiftool-perl`` on Debian/Ubuntu).
 Workers stream stored files to temporary disk files for metadata parsing rather than
 loading the whole binary into Python memory.
 
