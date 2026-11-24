@@ -439,7 +439,7 @@ class ContentTemplatesService(AsyncBaseService):
         template_type = updates.get("template_type", original.get("template_type"))
         if (
             template_type != TemplateType.CREATE.value
-            and type(updates.get("template_desks")) == list
+            and type(updates.get("template_desks")) is list
             and len(updates["template_desks"]) > 1
         ):
             raise SuperdeskApiError.badRequestError(

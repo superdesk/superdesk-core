@@ -165,7 +165,7 @@ class ArchiveRewriteService(AsyncBaseService):
 
         if (
             original.get("rewrite_of")
-            and not (original.get(ITEM_STATE) in PUBLISH_STATES)
+            and original.get(ITEM_STATE) not in PUBLISH_STATES
             and not get_app_config("WORKFLOW_ALLOW_MULTIPLE_UPDATES")
         ):
             raise SuperdeskApiError.badRequestError(

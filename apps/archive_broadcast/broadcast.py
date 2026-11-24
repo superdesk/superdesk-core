@@ -123,7 +123,7 @@ class ArchiveBroadcastService(AsyncBaseService):
         if not item:
             raise SuperdeskApiError.notFoundError(message=_("Cannot find the requested item id."))
 
-        if not item.get(ITEM_TYPE) in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
+        if item.get(ITEM_TYPE) not in [CONTENT_TYPE.TEXT, CONTENT_TYPE.PREFORMATTED]:
             raise SuperdeskApiError.badRequestError(message=_("Invalid content type."))
 
         if item.get(ITEM_STATE) not in [CONTENT_STATE.CORRECTED, CONTENT_STATE.PUBLISHED]:
@@ -212,7 +212,7 @@ class ArchiveBroadcastService(AsyncBaseService):
                 if not updates["broadcast"]["rewrite_id"] and rewrite_id:
                     updates["broadcast"]["rewrite_id"] = rewrite_id
 
-                if not broadcast_item.get(ID_FIELD) in processed_ids:
+                if broadcast_item.get(ID_FIELD) not in processed_ids:
                     await self._update_broadcast_status(broadcast_item, updates)
                     # list of ids that are processed.
                     processed_ids.add(broadcast_item.get(ID_FIELD))

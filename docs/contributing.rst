@@ -3,6 +3,21 @@
 Contributing
 ============
 
+Linting and formatting
+----------------------
+Install the development requirements and run the same checks as CI::
+
+    pip install -r dev-requirements.txt
+    flake8
+    ruff check .
+    black --check .
+    mypy .
+
+Ruff is configured to check the same rule families as Flake8 (pycodestyle,
+Pyflakes, Bugbear, and docstrings) with similar exclusions. Their implementations
+can differ, so both checks run in CI. Black remains the formatter; use ``black .``
+to format code.
+
 Documentation
 -------------
 Superdesk documentation is written using `rst <http://docutils.sourceforge.net/rst.html>`_ format and generated via `Sphinx <http://www.sphinx-doc.org/>`_. It's organized by topic, using `autodoc <http://www.sphinx-doc.org/en/stable/ext/autodoc.html>`_ as much as possible to include docstrings from python code.
