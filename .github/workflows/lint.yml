@@ -31,6 +31,20 @@ jobs:
     - run: pip install -Ur dev-requirements.txt
     - run: flake8
 
+  ruff:
+    strategy:
+      matrix:
+        python-version: ['3.12']
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v7.0.1
+    - uses: actions/setup-python@v7.1.0
+      with:
+        cache: 'pip'
+        python-version: ${{ matrix.python-version }}
+    - run: pip install -Ur dev-requirements.txt
+    - run: ruff check .
+
   mypy:
     strategy:
       matrix:

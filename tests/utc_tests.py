@@ -23,7 +23,7 @@ from superdesk.utc import (
     get_timezone_offset,
     query_datetime,
 )
-from pytz import utc, timezone  # flake8: noqa
+from pytz import utc
 
 
 class UTCTestCase(unittest.TestCase):

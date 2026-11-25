@@ -547,7 +547,7 @@ async def ingest_items(items, provider, feeding_service, rule_set=None, routing_
             provider,
             feeding_service,
             rule_set,
-            routing_scheme=routing_scheme if not item[GUID_FIELD] in items_in_package else None,
+            routing_scheme=routing_scheme if item[GUID_FIELD] not in items_in_package else None,
         )
         if ingested:
             created_ids = created_ids + ids

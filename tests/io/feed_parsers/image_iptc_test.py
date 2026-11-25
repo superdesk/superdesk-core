@@ -14,6 +14,14 @@ from superdesk.tests import TestCase
 import os
 
 
+def test_parse_date_time_fallback():
+    parser = ImageIPTCFeedParser()
+
+    assert parser.parse_date_time("2024-01-02", "12:34:56").isoformat() == "2024-01-02T12:34:56+00:00"
+    assert parser.parse_date_time("invalid", "date") is None
+    assert parser.parse_date_time(None, "12:34:56") is None
+
+
 class BaseImageIPTCTestCase(TestCase):
     filename = ""
 

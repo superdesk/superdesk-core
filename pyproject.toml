@@ -17,6 +17,44 @@ exclude = '''
 )
 '''
 
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+include = ["*.py"]
+extend-exclude = ["src"]
+
+[tool.ruff.lint]
+exclude = ["bin", "build", "dist", "docs", "env", "include", "lib", "node_modules", "src"]
+select = ["E", "W", "F", "B", "D"]
+# Mirror the existing Flake8 exclusions; these can be revisited as the backlog is addressed.
+ignore = [
+    "E203",  # Whitespace before punctuation
+    "E261",  # Spaces before inline comments
+    "E501",  # Line length (Black can leave some lines over 120 characters)
+    "W605",  # Invalid escape sequences
+    "F401",  # Unused imports
+    "F811",  # Redefinition of unused names
+    "F841",  # Unused variables
+    "B007",  # Unused loop variables
+    "B009",  # getattr with a constant attribute
+    "B010",  # setattr with a constant attribute
+    "B011",  # assert False
+    "B017",  # Assertions that catch Exception
+    "B019",  # Cached instance methods
+    "B020",  # Loop variable overriding its iterable
+    "B023",  # Functions referencing loop variables
+    "B028",  # Warnings without an explicit stacklevel
+    # Bugbear's B9 rules are opt-in in Flake8.
+    "B9",
+    # Missing docstrings for public modules, packages, classes, functions, and methods.
+    "D100", "D101", "D102", "D103", "D104", "D105", "D107",
+    # Docstring layout, punctuation, and imperative mood.
+    "D200", "D202", "D205", "D400", "D401",
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "pep257"
+
 [tool.pytest.ini_options]
 testpaths = ["tests", "superdesk", "apps", "content_api"]
 python_files = "*_test.py *_tests.py test_*.py tests_*.py tests.py test.py"

@@ -481,7 +481,7 @@ class ValidateService(AsyncBaseService):
                     doc[field_schema] = doc["associations"][media_field]
                     if media_field != "featuremedia":
                         del doc["associations"][media_field]
-                    elif not doc.get("feature_media", None) is None and "description_text" in doc["feature_media"]:
+                    elif doc.get("feature_media", None) is not None and "description_text" in doc["feature_media"]:
                         doc["media_description"] = doc["feature_media"]["description_text"]
 
     def _process_sms(self, doc, schema):
