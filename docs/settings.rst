@@ -647,6 +647,8 @@ Default: ``''``
 
 Default: ``'superdesk@localhost'``
 
+Can be overridden with the ``MAIL_DEFAULT_SENDER`` environment variable.
+
 ``ADMINS``
 ^^^^^^^^^^
 
