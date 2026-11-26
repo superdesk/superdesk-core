@@ -967,7 +967,7 @@ MAIL_USERNAME = env("MAIL_USERNAME", "")
 #: email account password
 MAIL_PASSWORD = env("MAIL_PASSWORD", "")
 #: default sender for superdesk emails
-MAIL_DEFAULT_SENDER = MAIL_USERNAME or "superdesk@localhost"
+MAIL_DEFAULT_SENDER = env("MAIL_DEFAULT_SENDER", MAIL_USERNAME or "superdesk@localhost")
 
 _MAIL_FROM = env("MAIL_FROM", MAIL_USERNAME)
 
