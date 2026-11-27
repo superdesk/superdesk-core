@@ -43,9 +43,9 @@ def setup_before_all(
 
     TODO: it needs to be cleaned on each superdesk repo.
     """
-    setup_before_all.config = config
-    setup_before_all.app_factory = app_factory
-    setup_before_all.before_test = before_test
+    setup_before_all.config = config  # type: ignore[attr-defined]
+    setup_before_all.app_factory = app_factory  # type: ignore[attr-defined]
+    setup_before_all.before_test = before_test  # type: ignore[attr-defined]
 
 
 async def before_scenario_async(context, scenario):
