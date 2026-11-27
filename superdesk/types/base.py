@@ -9,7 +9,7 @@ from datetime import datetime
 from enum import Enum, unique
 from typing import Annotated, Any, NamedTuple
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from superdesk.core.resources import (
     Dataclass,
@@ -23,6 +23,7 @@ from superdesk.core.resources.validators import (
     validate_minlength,
     validate_unique_value_async,
 )
+from superdesk.core.utils import generate_guid, GUID_NEWSML
 from superdesk.utc import utcnow
 
 
@@ -355,8 +356,8 @@ class ItemSchema(ResourceModel):
 
 
 class BaseContentItem(ResourceModel):
-    id: Annotated[str, Field(alias="_id"), validate_unique_value_async(field_name="_id")]
-    guid: Annotated[str | None, validate_unique_value_async(field_name="guid")] = None
+    id: fields.Keyword = Field(validation_alias="_id", serialization_alias="_id", default="")
+    guid: str | None = None
     uri: Annotated[fields.Keyword | None, validators.validate_iunique_value_async("items", "uri")] = None
     versioncreated: datetime = Field(default_factory=utcnow)
     firstcreated: datetime = Field(default_factory=utcnow)
@@ -386,6 +387,22 @@ class BaseContentItem(ResourceModel):
     associations: ContentAssociation | None = None
     refs: list[ContentReference] = Field(default_factory=list)
     extra: dict | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def populate_ids(cls, data: "BaseContentItem | dict") -> "BaseContentItem | dict":
+        # raise Exception("Not implemented")
+        if isinstance(data, BaseContentItem):
+            return data
+
+        if not data.get("guid") and not data.get("_id"):
+            data["_id"] = data["guid"] = generate_guid(type=GUID_NEWSML)
+        elif data.get("guid") and not data.get("_id"):
+            data["_id"] = data["guid"]
+        elif not data.get("guid") and data.get("_id"):
+            data["guid"] = data["_id"]
+
+        return data
 
 
 class MetadataResource(BaseContentItem):
