@@ -8,6 +8,7 @@
 # AUTHORS and LICENSE files distributed with this source code, or
 # at https://www.sourcefabric.org/superdesk/license
 
+from typing import Any, Callable, Awaitable
 import os
 from copy import deepcopy
 import asyncio
@@ -17,7 +18,8 @@ from superdesk.core import json
 from apps.prepopulate.app_populate import AppPopulateCommand
 from apps.prepopulate.app_initialize import app_initialize_data_handler
 from superdesk import tests
-from superdesk.factory.app import get_app
+from superdesk.factory.app import get_app, SuperdeskApp
+from superdesk.cache import cache
 from superdesk.default_settings import PUBLISH_MODULES
 from superdesk.tests import setup_auth_user, stop_storage_mocks
 from superdesk.tests.mocks import TestSearchProvider
@@ -30,17 +32,27 @@ readonly_fields = ["display_name", "password", "phone", "first_name", "last_name
 LDAP_SERVER = os.environ.get("LDAP_SERVER")
 
 
-def setup_before_all(context, config, app_factory):
+def setup_before_all(
+    context: Any,
+    config: dict | None,
+    app_factory: Callable[[dict], SuperdeskApp] | None = None,
+    before_test: Callable[[Any, Any], Awaitable[None]] | None = None,
+):
     """
     Keep it for backwards compatibility.
 
     TODO: it needs to be cleaned on each superdesk repo.
     """
-    setup_before_all.config = config
-    setup_before_all.app_factory = app_factory
+    setup_before_all.config = config  # type: ignore[attr-defined]
+    setup_before_all.app_factory = app_factory  # type: ignore[attr-defined]
+    setup_before_all.before_test = before_test  # type: ignore[attr-defined]
 
 
 async def before_scenario_async(context, scenario):
+    if "skip" in scenario.tags:
+        scenario.skip("Marked with @skip")
+        return
+
     current_app = context.app
 
     # Make sure to reset the config for each scenario, based on the config
@@ -55,8 +67,16 @@ async def before_scenario_async(context, scenario):
 
     async with current_app.app_context():
         await tests.clean_dbs(current_app, init_indexes=False)
+        if hasattr(current_app, "cache"):
+            current_app.cache.clear()
+        cache.clean()
+        context.app.mail.reset()
 
     context.headers = [("Content-Type", "application/json"), ("Origin", "localhost")]
+
+    if before_test_cb := getattr(setup_before_all, "before_test", None):
+        await before_test_cb(context, scenario)
+        return
 
     if "dbauth" in scenario.tags and LDAP_SERVER:
         scenario.mark_skipped()

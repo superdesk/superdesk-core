@@ -2,6 +2,7 @@ from typing import Any
 from bson import ObjectId
 
 from superdesk.core import get_current_async_app, get_current_app
+from superdesk.core.app import SuperdeskAsyncApp
 from superdesk.core.resources import ResourceModel
 from superdesk import get_resource_service
 
@@ -13,9 +14,18 @@ def _get_eve_service(resource: str) -> Any | None:
         return None
 
 
-async def find_one(resource: str, use_eve: bool = True, **kwargs) -> dict | None:
+def set_use_eve(app: SuperdeskAsyncApp, use_eve: bool):
+    setattr(app, "_use_eve", use_eve)
+
+
+def _use_eve(app: SuperdeskAsyncApp) -> bool | None:
+    return getattr(app, "_use_eve", True) is True
+
+
+async def find_one(resource: str, use_eve: bool | None = None, **kwargs) -> dict | None:
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
 
     try:
         if not eve_service or not use_eve:
@@ -32,9 +42,10 @@ async def find_one(resource: str, use_eve: bool = True, **kwargs) -> dict | None
         return eve_service.find_one(req=None, **kwargs)
 
 
-async def find_by_id(resource: str, item_id: str | ObjectId, use_eve: bool = True, **kwargs) -> dict | None:
+async def find_by_id(resource: str, item_id: str | ObjectId, use_eve: bool | None = None, **kwargs) -> dict | None:
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
 
     try:
         if not eve_service or not use_eve:
@@ -51,9 +62,10 @@ async def find_by_id(resource: str, item_id: str | ObjectId, use_eve: bool = Tru
         return eve_service.find_one(req=None, _id=item_id, **kwargs)
 
 
-async def find_many(resource: str, lookup: dict | None = None, use_eve: bool = True, **kwargs) -> list[dict]:
+async def find_many(resource: str, lookup: dict | None = None, use_eve: bool | None = None, **kwargs) -> list[dict]:
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
 
     try:
         if not eve_service or not use_eve:
@@ -70,9 +82,10 @@ async def find_many(resource: str, lookup: dict | None = None, use_eve: bool = T
         return list(eve_service.get(req=None, lookup=lookup, **kwargs))
 
 
-async def count(resource: str, lookup: dict | None = None, use_eve: bool = True) -> int:
+async def count(resource: str, lookup: dict | None = None, use_eve: bool | None = None) -> int:
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
 
     try:
         if not eve_service or not use_eve:
@@ -89,13 +102,15 @@ async def count(resource: str, lookup: dict | None = None, use_eve: bool = True)
 
 
 async def post_items(
-    resource: str, items: list[dict] | list[ResourceModel], use_eve: bool = True
+    resource: str, items: list[dict] | list[ResourceModel], use_eve: bool | None = None
 ) -> list[str | ObjectId]:
     if not len(items):
         return []
 
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
+
     if isinstance(items[0], ResourceModel):
         use_eve = False
 
@@ -119,9 +134,10 @@ async def post_items(
         return eve_service.post(items)
 
 
-async def patch_item(resource: str, item_id: str | ObjectId, updates: dict, use_eve: bool = True) -> None:
+async def patch_item(resource: str, item_id: str | ObjectId, updates: dict, use_eve: bool | None = None) -> None:
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
 
     try:
         if not eve_service or not use_eve:
@@ -138,9 +154,12 @@ async def patch_item(resource: str, item_id: str | ObjectId, updates: dict, use_
         return eve_service.patch(item_id, updates)
 
 
-async def system_update(resource: str, item_id: str | ObjectId, updates: dict, original: dict, use_eve=True) -> None:
+async def system_update(
+    resource: str, item_id: str | ObjectId, updates: dict, original: dict, use_eve: bool | None = None
+) -> None:
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
 
     try:
         if not eve_service or not use_eve:
@@ -157,11 +176,12 @@ async def system_update(resource: str, item_id: str | ObjectId, updates: dict, o
         return eve_service.system_update(item_id, updates, original)
 
 
-async def delete_items(resource: str, lookup: dict | None = None, use_eve: bool = True) -> None:
+async def delete_items(resource: str, lookup: dict | None = None, use_eve: bool | None = None) -> None:
     if lookup is None:
         lookup = {}
     async_app = get_current_async_app()
     eve_service = _get_eve_service(resource)
+    use_eve = _use_eve(async_app) if use_eve is None else use_eve
 
     try:
         if not eve_service or not use_eve:

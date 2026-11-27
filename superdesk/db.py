@@ -108,5 +108,10 @@ async def clean_dbs(app=None, async_app: SuperdeskAsyncApp | None = None, force=
                     print(f"ES Index not found for {resource_config.name}")
                     pass
 
-        if app and getattr(cache, "app", None):
-            cache.clean()
+        if app:
+            app.init_indexes()
+        elif async_app:
+            async_app.mongo.create_indexes_for_all_resources()
+
+    if app and getattr(cache, "app", None):
+        cache.clean()

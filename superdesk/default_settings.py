@@ -969,6 +969,16 @@ MAIL_PASSWORD = env("MAIL_PASSWORD", "")
 #: default sender for superdesk emails
 MAIL_DEFAULT_SENDER = env("MAIL_DEFAULT_SENDER", MAIL_USERNAME or "superdesk@localhost")
 
+#: use_celery
+#:
+#: True: Send all emails using celery tasks
+#: False: Send all emails in current asyncio event loop
+#: None: Send email using celery, if inside Quart context, otherwise sends in current asyncio event loop
+#:
+#: .. versionadded:: 3.7
+#:
+MAIL_USE_CELERY = None
+
 _MAIL_FROM = env("MAIL_FROM", MAIL_USERNAME)
 
 #: list of admin emails - get error notifications by default

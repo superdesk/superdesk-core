@@ -15,6 +15,7 @@ import logging
 import socket
 from pathlib import Path
 from dataclasses import dataclass
+from urllib.parse import quote, urlparse, urlsplit, urlunsplit
 
 from copy import deepcopy
 from unittest.mock import patch
@@ -185,7 +186,8 @@ def foreach_mongo(fn):
 def setup_config(config, auto_add_apps: bool = True):
     app_abspath = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
     app_config = Config(app_abspath)
-    app_config.from_object("superdesk.default_settings")
+    default_config_path = config.get("_default_config")
+    app_config.from_object(default_config_path or "superdesk.default_settings")
     app_config = deepcopy(app_config)
     cwd = Path.cwd()
     for p in [cwd] + list(cwd.parents):
@@ -199,9 +201,10 @@ def setup_config(config, auto_add_apps: bool = True):
 
     app_config["CELERY_USE_ASYNC_WORKER"] = config.get("CELERY_USE_ASYNC_WORKER", False)
     app_config["CELERY_TASK_ALWAYS_EAGER"] = config.get("CELERY_TASK_ALWAYS_EAGER", False)
-    update_config(app_config, auto_add_apps)
 
     app_config.setdefault("INSTALLED_APPS", [])
+    if not default_config_path:
+        update_config(app_config, auto_add_apps)
 
     # Extend the INSTALLED APPS with the list provided
     if config:
@@ -415,23 +418,19 @@ async def cleanup_db_connections(current_app):
     current_app.extensions["pymongo_async"] = {}
 
 
-async def cleanup_async_db_connections(current_app):
+async def cleanup_async_db_connections(async_app):
     # Close all async connections the MongoDB and Elasticsearch and clear app extension dicts
 
-    previous_app = getattr(setup, "app", None)
-    if not previous_app:
-        return
-
-    for mongo_con in previous_app.async_app.mongo._mongo_clients.values():
+    for mongo_con in async_app.mongo._mongo_clients.values():
         _close_db_connection(mongo_con[0])
 
-    for mongo_con in previous_app.async_app.mongo._mongo_clients_async.values():
+    for mongo_con in async_app.mongo._mongo_clients_async.values():
         _close_db_connection(mongo_con[0])
 
-    for es_con in previous_app.async_app.elastic._elastic_connections.values():
+    for es_con in async_app.elastic._elastic_connections.values():
         _close_db_connection(es_con)
 
-    for es_async_con in previous_app.async_app.elastic._elastic_async_connections.values():
+    for es_async_con in async_app.elastic._elastic_async_connections.values():
         await _close_async_db_connection(es_async_con)
 
 
@@ -441,7 +440,6 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
     if not previous_app or hasattr(setup, "reset") or config:  # type: ignore[attr-defined]
         cfg = setup_config(config, auto_add_apps)
         app = app_factory(cfg)  # type: ignore[attr-defined]
-        app.mail = MockEmailFactory()
 
         await cleanup_db_connections(app)
         await cleanup_async_db_connections(app.async_app)
@@ -462,6 +460,7 @@ async def setup(context=None, config=None, app_factory=get_app, reset=False, aut
 
     async with app.app_context():
         await clean_dbs(app, init_indexes=True)
+        app.mail = MockEmailFactory._new_instance()
 
     return app
 
@@ -698,13 +697,22 @@ class AsyncQuartTestCase(IsolatedAsyncioTestCase):
         self.addAsyncCleanup(clean_ctx)
 
 
+def encode_url_query(url):
+    url = url.encode("ascii", "backslashreplace").decode("unicode-escape")
+    url = url.replace("\t", "%09").replace("\r", "%0D").replace("\n", "%0A")
+    parsed_url = urlsplit(url)
+    query = quote(parsed_url.query, safe="/?:@-._~!$&'()*+,;=%")
+    return urlunsplit(parsed_url._replace(query=query))
+
+
 class TestClient(QuartClient):
-    async def open(self, *args, **kwargs) -> Response:
+    async def open(self, path: str, *args, **kwargs) -> Response:
         """
         Appends the request path to the response object for later debugging
         """
 
-        response = await super().open(*args, **kwargs)
+        url = encode_url_query(path)
+        response = await super().open(url, *args, **kwargs)
         response.request_path = kwargs.get("path", args[0] if args else "/")  # type: ignore[attr-defined]
         return response
 
@@ -735,6 +743,7 @@ class AsyncFlaskTestCase(AsyncTestCase):
     use_default_apps: bool = False
     test_client: TestClient
     clean_reset_db: bool = True
+    mail: MockEmailFactory
     _config_backup: dict = {}
 
     @classmethod
@@ -750,6 +759,7 @@ class AsyncFlaskTestCase(AsyncTestCase):
             await setup(cls, config=config, reset=True, auto_add_apps=False)
         cls.async_app = cls.app.async_app
         cls.app.test_client_class = TestClient
+        cls.mail = cls.async_app.wsgi.mail
         cls.test_client = cls.app.test_client()
         cls._config_backup = deepcopy(cls.app.config)
 
@@ -762,6 +772,7 @@ class AsyncFlaskTestCase(AsyncTestCase):
             self.app.config = deepcopy(self._config_backup)
             self.app.config["DOMAIN"] = domain_config
 
+        self.mail.reset()
         self.ctx = self.app.app_context()
         await self.ctx.push()
         await clean_dbs(self.app, init_indexes=self.clean_reset_db)

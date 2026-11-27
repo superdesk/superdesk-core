@@ -1,6 +1,7 @@
 from typing import TypeAlias
-from unittest.mock import patch
+from collections.abc import Iterator
 from contextlib import contextmanager
+from copy import copy
 
 from aiosmtplib import SMTP
 from aiosmtplib.response import SMTPResponse
@@ -14,13 +15,15 @@ RecordedEmail: TypeAlias = tuple[str, list[str], EmailMessage]
 class MockEmailFactory(EmailFactory):
     messages: list[EmailMessage]
 
-    def __init__(self):
-        super().__init__()
+    def _init_instance(self, *args, **kwargs) -> None:
         self.messages = []
 
-    @contextmanager
-    def record_messages(self):
+    def reset(self):
         self.messages.clear()
+
+    @contextmanager
+    def record_messages(self) -> Iterator[list[EmailMessage]]:
+        self.reset()
         yield self.messages
 
     def get_client(self, *args, **kwargs):
@@ -29,6 +32,28 @@ class MockEmailFactory(EmailFactory):
             *args,
             **kwargs,
         )
+
+
+class MockEmailMessage(EmailMessage):
+    @property
+    def subject(self) -> str:
+        return self["subject"]
+
+    @property
+    def recipients(self):
+        return self["to"]
+
+    @property
+    def sender(self):
+        return self["from"]
+
+    @property
+    def cc(self):
+        return self["cc"]
+
+    @property
+    def attachments(self) -> list[EmailMessage]:
+        return [part for part in self.iter_attachments()]
 
 
 class MockSMTP(SMTP):
@@ -77,7 +102,9 @@ class MockSMTP(SMTP):
     ) -> tuple[dict[str, SMTPResponse], str]:
         # Intercept and record the message before/after sending
         # self.messages.append((sender or "", recipients or [], message))
-        self.messages.append(message)
+        wrapped = copy(message)
+        wrapped.__class__ = MockEmailMessage
+        self.messages.append(wrapped)
 
         # Return a dummy tuple mimicking a successful SMTP send response
         # (aiosmtplib.send_message usually returns a tuple of (recipients, response_string))

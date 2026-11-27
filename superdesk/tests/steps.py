@@ -26,7 +26,7 @@ from datetime import datetime, timedelta, date
 from quart.datastructures import FileStorage
 from re import findall
 from inspect import isawaitable
-from urllib.parse import quote, urlparse, urlsplit, urlunsplit
+from urllib.parse import urlparse
 from pathlib import Path
 import yaml
 import re
@@ -56,7 +56,7 @@ from superdesk.io.feeding_services import ftp
 from superdesk.io.feed_parsers import XMLFeedParser, EMailRFC822FeedParser, STTNewsMLFeedParser
 from superdesk.media.image import read_metadata
 from superdesk.utc import utcnow, get_expiry_date
-from superdesk.tests import get_prefixed_url, set_placeholder, token_to_basic_auth_header
+from superdesk.tests import get_prefixed_url, set_placeholder, token_to_basic_auth_header, encode_url_query
 from apps.dictionaries.resource import DICTIONARY_FILE
 from superdesk.filemeta import get_filemeta
 from apps.preferences import enhance_document_with_default_prefs
@@ -494,14 +494,6 @@ def get_resource_name(url):
     return basename(parsed_url.path)
 
 
-def encode_url_query(url):
-    url = url.encode("ascii", "backslashreplace").decode("unicode-escape")
-    url = url.replace("\t", "%09").replace("\r", "%0D").replace("\n", "%0A")
-    parsed_url = urlsplit(url)
-    query = quote(parsed_url.query, safe="/?:@-._~!$&'()*+,;=%")
-    return urlunsplit(parsed_url._replace(query=query))
-
-
 def format_items(items):
     output = [""]  # insert empty line
     for item in items:
@@ -532,7 +524,7 @@ async def step_impl_given_(context, resource):
             for item in items:
                 item.setdefault("needs_activation", False)
 
-        await post_items(resource, items, use_eve=True)
+        await post_items(resource, items)
         context.data = items
         context.resource = resource
         try:
@@ -556,7 +548,7 @@ async def step_impl_given_with_objectid(context, resource):
             if "_id" in item:
                 item["_id"] = ObjectId(item["_id"])
 
-        await post_items(resource, items, use_eve=True)
+        await post_items(resource, items)
         context.data = items
         context.resource = resource
         setattr(context, resource, items[-1])
@@ -571,7 +563,7 @@ async def step_impl_given_the(context, resource):
 
         orig_items = {}
         items = [parse(item, resource) for item in json.loads(context.text)]
-        await post_items(resource, items, use_eve=True)
+        await post_items(resource, items)
         context.data = orig_items or items
         context.resource = resource
 
@@ -587,7 +579,7 @@ async def step_impl_given_resource_with_provider(context, provider):
         for item in items:
             item["ingest_provider"] = context.providers[provider]
             item["source"] = ingest_provider.get("source")
-        await post_items(resource, items, use_eve=True)
+        await post_items(resource, items)
         context.data = items
         context.resource = resource
 
