@@ -67,7 +67,8 @@ async def before_scenario_async(context, scenario):
 
     async with current_app.app_context():
         await tests.clean_dbs(current_app, init_indexes=False)
-        current_app.cache.clear()
+        if hasattr(current_app, "cache"):
+            current_app.cache.clear()
         cache.clean()
         context.app.mail.reset()
 
