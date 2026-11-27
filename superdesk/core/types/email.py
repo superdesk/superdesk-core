@@ -1,11 +1,12 @@
 from typing import TypeAlias, Protocol
-from dataclasses import dataclass
 import email.policy
 from email.message import EmailMessage as BaseEmailMessage
-from mimetypes import guess_type
+
+from pydantic import ConfigDict
 
 from ..config import ConfigModel
 from .model import BaseModel
+from .common import DefaultNoValue
 
 __all__ = [
     "EmailMessage",
@@ -34,7 +35,7 @@ class EmailMessage(BaseEmailMessage):
     @property
     def html(self) -> str | None:
         body_part = self.get_body(preferencelist=("html",))
-        return body_part.get_content() if body_part else None
+        return body_part.get_content().strip() if body_part else None
 
 
 class EmailConfig(ConfigModel):
@@ -47,43 +48,50 @@ class EmailConfig(ConfigModel):
     timeout: int = 60
     default_sender: str = "superdesk@localhost"
 
+    #: True: Send all emails using celery tasks
+    #: False: Send all emails in current asyncio event loop
+    #: None: Send email using celery, if inside Quart context, otherwise sends in current asyncio event loop
+    use_celery: bool | None = None
+
 
 class EmailAttachment(BaseModel):
+    model_config = ConfigDict(
+        str_strip_whitespace=True,
+        val_json_bytes="base64",  # Decodes incoming Base64 JSON `data` to bytes
+        ser_json_bytes="base64",  # Serializes `data` to URL-safe Base64 JSON strings
+        arbitrary_types_allowed=True,
+        validate_assignment=True,  # Revalidate on field assignment
+        populate_by_name=True,
+        revalidate_instances="always",
+        extra="allow",  # Allow any fields not defined in the ResourceModel/dataclass
+        protected_namespaces=(),
+    )
+
     data: str | bytes
     content_type: str | None = None
     filename: str | None = None
     disposition: str = "attachment"
     cid: str | None = None
-
-    def get_content_type(self) -> str:
-        content_type = self.content_type
-        if content_type is None and self.filename is not None:
-            content_type = guess_type(self.filename)[0]
-
-        if content_type is None:
-            if isinstance(self.data, str):
-                content_type = "text/plain"
-            else:
-                content_type = "application/octet-stream"
-
-        return content_type
+    description: str | None = None
+    headers: dict | None = None
 
 
 class EmailRequest(BaseModel):
     subject: str
     recipients: list[EmailAddress]
     text_body: str
-    html_body: str
+    html_body: str | None = None
     sender: EmailAddress | None = None  # Defaults to ``EmailConfig.default_sender``
     cc: list[EmailAddress] | None = None
     bcc: list[EmailAddress] | None = None
     attachments: list[EmailAttachment] | None = None
     use_lock: bool = True
+    use_celery: bool | None | object = DefaultNoValue
 
 
 class EmailFactoryProtocol(Protocol):
     async def send(self, request: EmailRequest, raise_exceptions: bool = False) -> None:
         ...
 
-    async def send_bulk_email(self, requests: list[EmailRequest]) -> None:
+    async def send_bulk_email(self, requests: list[EmailRequest], raise_exceptions: bool = False) -> None:
         ...

@@ -598,7 +598,7 @@ def get_app(config=None, media_storage=None, config_object=None, init_elastic=No
     )
 
     app.jinja_loader = custom_loader
-    app.mail = EmailFactory()
+    app.mail = EmailFactory._new_instance()
     cache_backend.init_app(app)
     setup_apm(app)
 

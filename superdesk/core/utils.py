@@ -155,14 +155,19 @@ class SingletonInstance(object):
     def _init_instance(self, *args, **kwargs) -> None:
         pass
 
+    @classmethod
+    def _new_instance(cls, *args, **kwargs) -> Self:
+        instance = super(SingletonInstance, cls).__new__(cls, *args, **kwargs)
+        instance._init_instance(*args, **kwargs)
+        return instance
+
     def __new__(cls, *args, **kwargs):
         if cls == SingletonInstance:
             raise RuntimeError("SingletonInstance cannot be used directly")
 
         instance = cls._get_instance()
         if not instance:
-            instance = super(SingletonInstance, cls).__new__(cls, *args, **kwargs)
-            instance._init_instance(*args, **kwargs)
+            instance = cls._new_instance(*args, **kwargs)
             cls._set_instance(instance)
 
         return instance
